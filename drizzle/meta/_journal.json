@@ -15,6 +15,13 @@
       "when": 1764766692044,
       "tag": "0001_far_nocturne",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1764771718372,
+      "tag": "0002_tiny_skrulls",
+      "breakpoints": true
     }
   ]
 }

@@ -1,7 +1,7 @@
 import { getDb } from "./db";
 import { leads, projects } from "../drizzle/schema";
 import { readGoogleSheet, extractSpreadsheetId } from "./googleSheets";
-import { eq, or } from "drizzle-orm";
+import { eq, or, inArray } from "drizzle-orm";
 
 interface ImportResult {
   total: number;
@@ -17,35 +17,7 @@ interface ImportResult {
 }
 
 /**
- * Verifica se um lead já existe no banco de dados
- * Critérios: ID da planilha, telefone ou email
- */
-async function isLeadDuplicate(
-  sheetId: string,
-  telefone: string,
-  email: string
-): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-
-  // Buscar por ID principal, telefone ou email
-  const existing = await db
-    .select()
-    .from(leads)
-    .where(
-      or(
-        eq(leads.idPrincipal, sheetId),
-        eq(leads.telefone, telefone),
-        email ? eq(leads.email, email) : undefined
-      )
-    )
-    .limit(1);
-
-  return existing.length > 0;
-}
-
-/**
- * Normaliza o telefone para formato padrão
+ * Normaliza o telefone para formato padrão (apenas números)
  */
 function normalizeTelefone(telefone: string): string {
   // Remove tudo que não é número
@@ -62,18 +34,32 @@ function normalizeTelefone(telefone: string): string {
 }
 
 /**
+ * Extrai apenas os números do telefone para comparação
+ */
+function extractPhoneNumbers(telefone: string): string {
+  return telefone.replace(/\D/g, "");
+}
+
+/**
  * Mapeia o status da planilha para o status do sistema
  */
 function mapStatus(sheetStatus: string): string {
+  if (!sheetStatus) return "novo";
+  
   const statusMap: Record<string, string> = {
     "novo": "novo",
     "aguardando atendimento": "aguardando_atendimento",
+    "aguardando_atendimento": "aguardando_atendimento",
     "em atendimento": "em_atendimento",
+    "em_atendimento": "em_atendimento",
     "agendado": "agendado",
     "visita realizada": "visita_realizada",
+    "visita_realizada": "visita_realizada",
     "análise de crédito": "analise_credito",
     "analise de credito": "analise_credito",
+    "analise_credito": "analise_credito",
     "contrato fechado": "contrato_fechado",
+    "contrato_fechado": "contrato_fechado",
     "perdido": "perdido",
   };
 
@@ -90,31 +76,59 @@ async function getOrCreateProject(origem: string): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
 
-  // Buscar projeto existente
-  const existing = await db
-    .select()
-    .from(projects)
-    .where(eq(projects.nome, origem))
-    .limit(1);
+  try {
+    // Buscar projeto existente
+    const existing = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.nome, origem))
+      .limit(1);
 
-  if (existing.length > 0) {
-    return existing[0].id;
+    if (existing.length > 0) {
+      return existing[0].id;
+    }
+
+    // Criar novo projeto
+    const [newProject] = await db.insert(projects).values({
+      nome: origem,
+      cidade: "A definir",
+      estado: "SP",
+      tipo: "mcmv",
+      status: "ativo",
+    });
+
+    return newProject.insertId;
+  } catch (error) {
+    console.error(`Erro ao buscar/criar projeto ${origem}:`, error);
+    return null;
   }
+}
 
-  // Criar novo projeto
-  const [newProject] = await db.insert(projects).values({
-    nome: origem,
-    cidade: "A definir",
-    estado: "SP",
-    tipo: "mcmv",
-    status: "ativo",
-  });
+/**
+ * Busca leads existentes em lote para otimizar performance
+ */
+async function getExistingLeads(telefones: string[]): Promise<Set<string>> {
+  const db = await getDb();
+  if (!db || telefones.length === 0) return new Set();
 
-  return newProject.insertId;
+  try {
+    // Buscar por telefones em lote
+    const existing = await db
+      .select({ telefone: leads.telefone })
+      .from(leads)
+      .where(inArray(leads.telefone, telefones));
+
+    // Retornar Set de telefones normalizados (apenas números)
+    return new Set(existing.map(l => extractPhoneNumbers(l.telefone)));
+  } catch (error) {
+    console.error("Erro ao buscar leads existentes:", error);
+    return new Set();
+  }
 }
 
 /**
  * Importa leads de uma planilha do Google Sheets
+ * Usa importação em lotes para melhor performance
  */
 export async function importLeadsFromSheet(
   sheetUrl: string,
@@ -139,73 +153,128 @@ export async function importLeadsFromSheet(
       throw new Error("Database não disponível");
     }
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowNumber = i + 2; // +2 porque linha 1 é header e arrays começam em 0
+    // Processar em lotes de 100 para melhor performance
+    const BATCH_SIZE = 100;
+    
+    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+      
+      // Buscar todos os telefones existentes deste lote de uma vez
+      const batchTelefones = batch
+        .filter(row => row.telefone)
+        .map(row => normalizeTelefone(row.telefone));
+      
+      const existingPhones = await getExistingLeads(batchTelefones);
 
-      try {
-        // Validar dados mínimos
-        if (!row.nome || !row.telefone) {
+      // Processar cada lead do lote
+      for (let i = 0; i < batch.length; i++) {
+        const row = batch[i];
+        const rowNumber = batchStart + i + 2; // +2 porque linha 1 é header e arrays começam em 0
+
+        try {
+          // Validar dados mínimos
+          if (!row.nome || row.nome.trim() === "") {
+            result.errors++;
+            result.details.push({
+              row: rowNumber,
+              nome: row.nome || "Sem nome",
+              status: "error",
+              message: "Nome ausente",
+            });
+            continue;
+          }
+
+          if (!row.telefone || row.telefone.trim() === "") {
+            result.errors++;
+            result.details.push({
+              row: rowNumber,
+              nome: row.nome,
+              status: "error",
+              message: "Telefone ausente",
+            });
+            continue;
+          }
+
+          // Verificar duplicata por telefone
+          const normalizedPhone = normalizeTelefone(row.telefone);
+          const phoneNumbers = extractPhoneNumbers(normalizedPhone);
+          
+          if (existingPhones.has(phoneNumbers)) {
+            result.duplicates++;
+            result.details.push({
+              row: rowNumber,
+              nome: row.nome,
+              status: "duplicate",
+              message: "Lead já existe no sistema (telefone duplicado)",
+            });
+            continue;
+          }
+
+          // Buscar ou criar projeto
+          const projectId = await getOrCreateProject(row.origem);
+
+          // Preparar dados do lead
+          const leadStatus = mapStatus(row.status || "");
+          
+          // Importar lead
+          await db.insert(leads).values({
+            idPrincipal: row.id || null,
+            nome: row.nome.trim(),
+            email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
+            telefone: normalizedPhone,
+            origem: row.origem && row.origem.trim() !== "" ? row.origem.trim() : null,
+            projectId: projectId,
+            status: leadStatus as any,
+            dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
+              ? new Date(row.dataDistribuicao) 
+              : null,
+          });
+
+          // Adicionar ao set de existentes para evitar duplicatas dentro do mesmo batch
+          existingPhones.add(phoneNumbers);
+
+          result.imported++;
+          
+          // Só adicionar aos detalhes se for erro ou primeiros 100 importados
+          if (result.imported <= 100) {
+            result.details.push({
+              row: rowNumber,
+              nome: row.nome,
+              status: "imported",
+              message: "Importado com sucesso",
+            });
+          }
+        } catch (error: any) {
           result.errors++;
+          
+          let errorMessage = "Erro desconhecido";
+          if (error.message) {
+            errorMessage = error.message;
+            // Simplificar mensagens de erro SQL
+            if (errorMessage.includes("Duplicate entry")) {
+              errorMessage = "Telefone duplicado";
+            } else if (errorMessage.length > 100) {
+              errorMessage = errorMessage.substring(0, 100) + "...";
+            }
+          }
+          
           result.details.push({
             row: rowNumber,
-            nome: row.nome || "Sem nome",
+            nome: row.nome || "Desconhecido",
             status: "error",
-            message: "Nome ou telefone ausente",
+            message: errorMessage,
           });
-          continue;
         }
-
-        // Verificar duplicata
-        const isDuplicate = await isLeadDuplicate(
-          row.id,
-          row.telefone,
-          row.email
-        );
-
-        if (isDuplicate) {
-          result.duplicates++;
-          result.details.push({
-            row: rowNumber,
-            nome: row.nome,
-            status: "duplicate",
-            message: "Lead já existe no sistema",
-          });
-          continue;
-        }
-
-        // Buscar ou criar projeto
-        const projectId = await getOrCreateProject(row.origem);
-
-        // Importar lead
-        const leadStatus = row.status ? mapStatus(row.status) : "novo";
-        await db.insert(leads).values({
-          idPrincipal: row.id,
-          nome: row.nome,
-          email: row.email || null,
-          telefone: normalizeTelefone(row.telefone),
-          origem: row.origem || null,
-          projectId: projectId,
-          status: leadStatus as "novo" | "aguardando_atendimento" | "em_atendimento" | "agendado" | "visita_realizada" | "analise_credito" | "contrato_fechado" | "perdido",
-          dataDistribuicao: row.dataDistribuicao ? new Date(row.dataDistribuicao) : null,
-        });
-
-        result.imported++;
-        result.details.push({
-          row: rowNumber,
-          nome: row.nome,
-          status: "imported",
-          message: "Importado com sucesso",
-        });
-      } catch (error: any) {
-        result.errors++;
-        result.details.push({
-          row: rowNumber,
-          nome: row.nome || "Desconhecido",
-          status: "error",
-          message: error.message || "Erro desconhecido",
-        });
       }
+    }
+
+    // Limitar detalhes para não sobrecarregar a resposta
+    if (result.details.length > 200) {
+      result.details = [
+        ...result.details.filter(d => d.status === "error").slice(0, 100),
+        ...result.details.filter(d => d.status === "duplicate").slice(0, 50),
+        ...result.details.filter(d => d.status === "imported").slice(0, 50),
+      ];
     }
 
     return result;

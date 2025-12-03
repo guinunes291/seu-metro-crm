@@ -111,3 +111,26 @@
 - [x] Atualizar código do googleSheets.ts para usar a API Key
 - [x] Testar importação com API Key configurada
 - [x] Documentar processo de obtenção da API Key no Google Cloud Console
+
+## Bug Fix: Importação Incompleta de Leads
+- [x] Investigar por que 9510 leads foram marcados como duplicatas
+- [x] Investigar os 88 erros de importação (Failed query)
+- [x] Corrigir lógica de detecção de duplicatas
+- [x] Melhorar tratamento de erros na importação
+- [x] Implementar importação em lotes (batch) para evitar timeout
+- [x] Adicionar logs detalhados de importação
+
+## Performance: Otimizar para Grande Volume de Leads
+- [ ] Implementar paginação na listagem de leads
+- [x] Adicionar índices no banco de dados para queries rápidas
+- [ ] Implementar lazy loading na interface
+- [x] Otimizar queries SQL para evitar N+1
+- [ ] Adicionar cache para estatísticas do dashboard
+- [ ] Implementar virtualização de listas longas
+
+## Feature: Replicar Interface de Projetos
+- [ ] Buscar código da página de projetos do outro projeto
+- [ ] Replicar layout em formato "estante" com cards visuais
+- [ ] Implementar filtros e busca de projetos
+- [ ] Adicionar imagens e informações detalhadas dos projetos
+- [ ] Apagar projetos de teste atuais
