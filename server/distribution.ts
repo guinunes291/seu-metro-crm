@@ -268,6 +268,15 @@ export async function distribuirLeadAutomatico(
     tipo: "automatica",
   });
 
+  // Sincronizar com Google Sheets (não bloqueia a distribuição se falhar)
+  try {
+    const { sincronizarLeadDistribuido } = await import("./sheetsSyncReal");
+    await sincronizarLeadDistribuido(leadId);
+    console.log(`[Distribuição] Lead ${leadId} sincronizado com Google Sheets`);
+  } catch (error) {
+    console.error(`[Distribuição] Erro ao sincronizar lead ${leadId} com Google Sheets:`, error);
+  }
+
   return { success: true, corretorId: melhorCorretor };
 }
 

@@ -424,3 +424,13 @@
 3. Implementar cache para estatísticas do dashboard
 4. Adicionar paginação na listagem de leads
 5. Implementar integração com WhatsApp Business API
+
+## Nova Feature: Integração Real com Google Sheets API
+- [x] Analisar estrutura completa da planilha (abas, colunas, formato)
+- [x] Implementar função de busca de linha por telefone na planilha
+- [x] Implementar atualização de status do lead na planilha MASTER_LEADS
+- [x] Implementar registro de distribuição na aba Histórico
+- [x] Implementar marcação como "Distribuído" na planilha central
+- [x] Criar testes de integração com planilha real (3 testes passando)
+- [x] Configurar sincronização automática após distribuição
+- [x] Integrar com sistema de distribuição automática

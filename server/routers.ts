@@ -602,8 +602,8 @@ export const appRouter = router({
         sheetName: z.string().default("Leads"),
       }))
       .mutation(async ({ input }) => {
-        const { sincronizarLeadsDistribuidos } = await import("./sheetsSync");
-        return await sincronizarLeadsDistribuidos(input.url, input.sheetName);
+        // TODO: Implementar sincronização em lote de leads distribuídos
+        return { success: false, message: "Sincronização em lote não implementada ainda" };
       }),
     
     // Atualizar lead específico na planilha
@@ -614,8 +614,8 @@ export const appRouter = router({
         sheetName: z.string().default("Leads"),
       }))
       .mutation(async ({ input }) => {
-        const { atualizarLeadNaPlanilha } = await import("./sheetsSync");
-        return await atualizarLeadNaPlanilha(input.leadId, input.url, input.sheetName);
+        const { atualizarLeadNaPlanilha } = await import("./sheetsSyncReal");
+        return await atualizarLeadNaPlanilha(input.leadId);
       }),
     
     // Marcar lead como distribuído na planilha
@@ -626,8 +626,8 @@ export const appRouter = router({
         sheetName: z.string().default("Leads"),
       }))
       .mutation(async ({ input }) => {
-        const { marcarComoDistribuidoNaPlanilha } = await import("./sheetsSync");
-        return await marcarComoDistribuidoNaPlanilha(input.leadId, input.url, input.sheetName);
+        const { sincronizarLeadDistribuido } = await import("./sheetsSyncReal");
+        return await sincronizarLeadDistribuido(input.leadId);
       }),
   }),
 
