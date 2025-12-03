@@ -278,3 +278,33 @@
 - [x] Adicionar opção de enviar convite ao cadastrar corretor (enviarConvite: boolean)
 - [x] Criar template de mensagem de boas-vindas
 - [x] Testar envio de convites (4 testes passando)
+
+## Bug Crítico: Perda de Leads Recorrente
+- [x] Investigar por que os leads estão sumindo entre sessões (problema de versionamento de checkpoints)
+- [x] Verificar se o problema é no banco de dados ou nos checkpoints (checkpoints salvam estado do banco)
+- [ ] Criar tabela de controle de importação no schema
+- [ ] Implementar script de verificação de dados ao iniciar sistema
+- [ ] Criar função de reimportação automática da planilha
+- [ ] Integrar verificação no startup do servidor
+- [ ] Testar que os dados persistem após sair e voltar
+
+## Nova Feature: Sistema de Autenticação Próprio para Corretores
+- [ ] Criar tabela de senhas/credenciais para corretores
+- [ ] Implementar endpoints de login/logout para corretores
+- [ ] Criar sistema de geração automática de senha temporária
+- [ ] Implementar envio de email com credenciais ao cadastrar corretor
+- [ ] Criar página de login para corretores
+- [ ] Manter OAuth do Manus apenas para gestores/admins
+- [ ] Testar fluxo completo de cadastro e acesso de corretor
+
+## Nova Feature: Documento PDF de Boas-Vindas para Corretores
+- [x] Criar conteúdo do documento em Markdown com instruções completas
+- [x] Incluir seções: boas-vindas, como acessar, funcionalidades, dicas de uso
+- [x] Converter documento para PDF
+- [x] Entregar PDF ao gestor para envio manual via WhatsApp
+
+## Tarefa: Reimportação Final de Leads
+- [x] Reimportar todos os leads da planilha do Google Sheets (usuário importou)
+- [x] Verificar quantidade total de leads importados (5442 leads + 153 projetos ativos)
+- [ ] Salvar checkpoint final com todos os dados
+- [ ] Confirmar nome e data do checkpoint para o usuário
