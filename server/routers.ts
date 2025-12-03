@@ -6,6 +6,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 import * as distribution from "./distribution";
+import * as sheetsImport from "./sheetsImport";
+import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -409,6 +411,88 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const elegivel = await distribution.isCorretorElegivel(input.corretorId);
         return { elegivel };
+      }),
+  }),
+
+  // ============================================================================
+  // IMPORTAÇÃO DO GOOGLE SHEETS
+  // ============================================================================
+  
+  sheets: router({
+    validateUrl: gestorProcedure
+      .input(z.object({
+        url: z.string().url(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const spreadsheetId = extractSpreadsheetId(input.url);
+          const isValid = await validateSheetAccess(spreadsheetId);
+          
+          if (!isValid) {
+            throw new TRPCError({ 
+              code: 'BAD_REQUEST', 
+              message: 'Planilha não acessível. Verifique se está com compartilhamento público.' 
+            });
+          }
+          
+          return { valid: true, spreadsheetId };
+        } catch (error: any) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: error.message || 'URL inválida' 
+          });
+        }
+      }),
+    
+    listTabs: gestorProcedure
+      .input(z.object({
+        url: z.string().url(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const spreadsheetId = extractSpreadsheetId(input.url);
+          const tabs = await listSheetTabs(spreadsheetId);
+          return { tabs };
+        } catch (error: any) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: error.message || 'Erro ao listar abas' 
+          });
+        }
+      }),
+    
+    import: gestorProcedure
+      .input(z.object({
+        url: z.string().url(),
+        range: z.string().default("MASTER_LEADS!A:H"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const result = await sheetsImport.importLeadsFromSheet(input.url, input.range);
+          return result;
+        } catch (error: any) {
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: error.message || 'Erro ao importar leads' 
+          });
+        }
+      }),
+    
+    sync: gestorProcedure
+      .input(z.object({
+        url: z.string().url(),
+        range: z.string().default("MASTER_LEADS!A:H"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const result = await sheetsImport.syncLeadsFromSheet(input.url, input.range);
+          return result;
+        } catch (error: any) {
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: error.message || 'Erro ao sincronizar leads' 
+          });
+        }
       }),
   }),
 

@@ -11,6 +11,7 @@ import Leads from "./pages/Leads";
 import Distribuicao from "./pages/Distribuicao";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
+import ImportarSheets from "./pages/ImportarSheets";
 
 function Router() {
   return (
@@ -20,8 +21,9 @@ function Router() {
       <Route path={"/projetos"} component={Projetos} />
       <Route path={"/leads"} component={Leads} />
       <Route path={"/distribuicao"} component={Distribuicao} />
-      <Route path={"/relatorios"} component={Relatorios} />
-      <Route path={"/configuracoes"} component={Configuracoes} />
+      <Route path="/relatorios" component={Relatorios} />
+      <Route path="/configuracoes" component={Configuracoes} />
+      <Route path="/importar-sheets" component={ImportarSheets} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

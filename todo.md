@@ -78,3 +78,14 @@
 - [x] Criar interface para trigger manual da distribuição automática
 - [ ] Criar job/cron para distribuição automática periódica
 - [ ] Testar algoritmo com dados reais
+
+## Nova Feature: Importação Automática do Google Sheets
+- [x] Configurar integração com Google Sheets API
+- [x] Criar função de leitura de dados da planilha
+- [x] Implementar mapeamento de colunas (ID, Nome, E-mail, Telefone, Origem, Status, Data Distribuição, Distribuído)
+- [x] Implementar detecção de duplicatas por ID ou telefone
+- [x] Criar procedure de importação no backend
+- [x] Criar interface de importação na página de Distribuição
+- [x] Implementar sincronização incremental (apenas novos leads)
+- [x] Testar importação com a planilha real
+- [x] Garantir preservação de dados durante importação
