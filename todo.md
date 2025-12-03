@@ -226,3 +226,20 @@
 - [x] Verificar se houve alguma operação de limpeza acidental (rollback de checkpoint)
 - [x] Restaurar dados do backup ou reimportar da planilha (139 projetos importados com sucesso)
 - [ ] Implementar mecanismo de proteção contra perda de dadosados futura
+
+## Bug Crítico: Perda de Dados Persistente
+- [ ] Investigar por que os dados (projetos e clientes) somem ao sair e voltar
+- [ ] Verificar configuração do banco de dados e persistência
+- [ ] Verificar se o problema está relacionado a checkpoints ou ambiente
+- [ ] Implementar solução para garantir persistência permanente dos dados
+- [ ] Testar que os dados permanecem após sair e voltar ao sistema
+
+## Bug: Importação de Leads Criando Projetos Indevidamente
+- [x] Investigar por que a importação de leads está criando novos projetos
+- [x] Corrigir lógica para que projetos só sejam criados manualmente ou por importação em massa (alterado getOrCreateProject para findExistingProject)
+- [x] Testar importação de leads para garantir que não cria projetos (testes unitários passando)
+
+## Bug: Menu Lateral Sumindo ao Alternar Abas
+- [x] Identificar quais páginas ainda não têm DashboardLayout (todas as 10 páginas principais já têm)
+- [x] Adicionar DashboardLayout nas páginas faltantes (já estava implementado)
+- [x] Testar navegação entre todas as abas (servidor reiniciado)

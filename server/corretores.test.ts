@@ -1,8 +1,22 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import * as db from "./db";
 
 describe("Gestão de Corretores", () => {
   let testCorretor: any;
+
+  beforeEach(async () => {
+    // Criar corretor de teste antes de cada teste
+    await db.createCorretor({
+      name: "João Silva Teste",
+      email: "joao.teste@exemplo.com",
+      telefone: "(11) 99999-9999",
+      status: "ausente",
+    });
+    
+    // Buscar o corretor recém-criado
+    const corretores = await db.getAllCorretores();
+    testCorretor = corretores.find(c => c.email === "joao.teste@exemplo.com");
+  });
 
   it("deve criar um novo corretor com email obrigatório", async () => {
     const result = await db.createCorretor({

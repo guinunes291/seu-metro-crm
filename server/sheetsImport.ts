@@ -68,16 +68,17 @@ function mapStatus(sheetStatus: string): string {
 }
 
 /**
- * Busca ou cria um projeto baseado na origem
+ * Busca um projeto existente baseado na origem
+ * NÃO cria novos projetos automaticamente
  */
-async function getOrCreateProject(origem: string): Promise<number | null> {
+async function findExistingProject(origem: string): Promise<number | null> {
   if (!origem || origem.trim() === "") return null;
 
   const db = await getDb();
   if (!db) return null;
 
   try {
-    // Buscar projeto existente
+    // Buscar projeto existente pelo nome exato
     const existing = await db
       .select()
       .from(projects)
@@ -88,18 +89,10 @@ async function getOrCreateProject(origem: string): Promise<number | null> {
       return existing[0].id;
     }
 
-    // Criar novo projeto
-    const [newProject] = await db.insert(projects).values({
-      nome: origem,
-      cidade: "A definir",
-      estado: "SP",
-      tipo: "mcmv",
-      status: "ativo",
-    });
-
-    return newProject.insertId;
+    // Se não encontrar, retorna null (não cria novo projeto)
+    return null;
   } catch (error) {
-    console.error(`Erro ao buscar/criar projeto ${origem}:`, error);
+    console.error(`Erro ao buscar projeto ${origem}:`, error);
     return null;
   }
 }
@@ -210,8 +203,8 @@ export async function importLeadsFromSheet(
             continue;
           }
 
-          // Buscar ou criar projeto
-          const projectId = await getOrCreateProject(row.origem);
+          // Buscar projeto existente (não cria automaticamente)
+          const projectId = await findExistingProject(row.origem);
 
           // Preparar dados do lead
           const leadStatus = mapStatus(row.status || "");
