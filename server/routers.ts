@@ -64,7 +64,7 @@ export const appRouter = router({
         construtora: z.string().optional(),
         endereco: z.string().optional(),
         bairro: z.string().optional(),
-        cidade: z.string().default("Su00e3o Paulo"),
+        cidade: z.string().default("São Paulo"),
         estado: z.string().default("SP"),
         descricao: z.string().optional(),
         tipo: z.enum(["mcmv", "sfh", "outro"]).default("mcmv"),
@@ -121,6 +121,19 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.deleteProject(input.id);
         return { success: true };
+      }),
+    
+    // Importação de projetos do Google Sheets
+    importFromSheets: gestorProcedure
+      .input(z.object({
+        sheetUrl: z.string(),
+        sheetName: z.string().default("GERAL"),
+        syncMode: z.enum(["all", "new"]).default("new"),
+      }))
+      .mutation(async ({ input }) => {
+        const { importProjectsFromSheet } = await import("./projectsImport");
+        const result = await importProjectsFromSheet(input.sheetUrl, input.sheetName, input.syncMode);
+        return result;
       }),
   }),
 

@@ -1,18 +1,113 @@
+import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { MapView } from "@/components/Map";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { toast } from "sonner";
 
 export default function ProjetoDetalhes() {
+  const { user } = useAuth();
   const [, params] = useRoute("/projetos/:id");
   const [, setLocation] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : 0;
   
-  const { data: projects = [], isLoading } = trpc.projects.list.useQuery();
+  const { data: projects = [], isLoading, refetch } = trpc.projects.list.useQuery();
   const project = projects.find((p) => p.id === projectId);
+  
+  const updateProjectMutation = trpc.projects.update.useMutation();
+  const deleteProjectMutation = trpc.projects.delete.useMutation();
+  
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: "",
+    construtora: "",
+    endereco: "",
+    bairro: "",
+    cidade: "São Paulo",
+    estado: "SP",
+    descricao: "",
+    tipo: "mcmv" as "mcmv" | "sfh" | "outro",
+    status: "ativo" as "ativo" | "inativo" | "esgotado",
+    valorMinimo: "",
+    valorMaximo: "",
+    metragemMinima: "",
+    metragemMaxima: "",
+    dormitorios: "",
+    vagas: 0,
+    zona: undefined as "norte" | "sul" | "leste" | "oeste" | "centro" | undefined,
+    enquadramento: undefined as "HIS1" | "HIS2" | "HMP" | "R2V" | undefined,
+    developer: "",
+  });
+
+  const isGestor = user?.role === "gestor" || user?.role === "admin";
+
+  const handleEdit = () => {
+    if (!project) return;
+    
+    setFormData({
+      nome: project.nome,
+      construtora: project.construtora || "",
+      endereco: project.endereco || "",
+      bairro: project.bairro || "",
+      cidade: project.cidade || "São Paulo",
+      estado: project.estado || "SP",
+      descricao: project.descricao || "",
+      tipo: project.tipo || "mcmv",
+      status: project.status || "ativo",
+      valorMinimo: project.valorMinimo ? (project.valorMinimo / 100).toString() : "",
+      valorMaximo: project.valorMaximo ? (project.valorMaximo / 100).toString() : "",
+      metragemMinima: project.metragemMinima?.toString() || "",
+      metragemMaxima: project.metragemMaxima?.toString() || "",
+      dormitorios: project.dormitorios || "",
+      vagas: project.vagas || 0,
+      zona: project.zona || undefined,
+      enquadramento: project.enquadramento || undefined,
+      developer: project.developer || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSubmitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      await updateProjectMutation.mutateAsync({
+        id: projectId,
+        data: {
+          ...formData,
+          valorMinimo: formData.valorMinimo ? parseInt(formData.valorMinimo) * 100 : undefined,
+          valorMaximo: formData.valorMaximo ? parseInt(formData.valorMaximo) * 100 : undefined,
+          metragemMinima: formData.metragemMinima ? parseInt(formData.metragemMinima) : undefined,
+          metragemMaxima: formData.metragemMaxima ? parseInt(formData.metragemMaxima) : undefined,
+        },
+      });
+      
+      toast.success("Projeto atualizado com sucesso!");
+      setEditDialogOpen(false);
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao atualizar projeto");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteProjectMutation.mutateAsync({ id: projectId });
+      toast.success("Projeto excluído com sucesso!");
+      setDeleteDialogOpen(false);
+      setLocation("/projetos");
+    } catch (error) {
+      toast.error("Erro ao excluir projeto");
+    }
+  };
 
   const handleMapReady = (map: google.maps.Map) => {
     if (!project?.endereco) return;
@@ -84,19 +179,34 @@ export default function ProjetoDetalhes() {
               )}
             </div>
             
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={project.status === "ativo" ? "default" : project.status === "esgotado" ? "destructive" : "secondary"} className="text-sm">
-                {project.status}
-              </Badge>
-              
-              {project.zona && (
-                <Badge variant="outline" className="text-sm">
-                  Zona {project.zona.charAt(0).toUpperCase() + project.zona.slice(1)}
+            <div className="flex items-center gap-4">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={project.status === "ativo" ? "default" : project.status === "esgotado" ? "destructive" : "secondary"} className="text-sm">
+                  {project.status}
                 </Badge>
-              )}
+                
+                {project.zona && (
+                  <Badge variant="outline" className="text-sm">
+                    Zona {project.zona.charAt(0).toUpperCase() + project.zona.slice(1)}
+                  </Badge>
+                )}
+                
+                {project.enquadramento && (
+                  <Badge variant="outline" className="text-sm">{project.enquadramento}</Badge>
+                )}
+              </div>
               
-              {project.enquadramento && (
-                <Badge variant="outline" className="text-sm">{project.enquadramento}</Badge>
+              {isGestor && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir
+                  </Button>
+                </div>
               )}
             </div>
           </div>
@@ -274,6 +384,200 @@ export default function ProjetoDetalhes() {
           </div>
         </div>
       </div>
+
+      {/* Dialog de Edição */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Projeto</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do empreendimento
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmitEdit} className="space-y-4">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nome">Nome do Projeto *</Label>
+                <Input
+                  id="nome"
+                  required
+                  value={formData.nome}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="construtora">Construtora</Label>
+                  <Input
+                    id="construtora"
+                    value={formData.construtora}
+                    onChange={(e) => setFormData({ ...formData, construtora: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="developer">Incorporadora</Label>
+                  <Input
+                    id="developer"
+                    value={formData.developer}
+                    onChange={(e) => setFormData({ ...formData, developer: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="endereco">Endereço</Label>
+                <Input
+                  id="endereco"
+                  value={formData.endereco}
+                  onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={formData.bairro}
+                    onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="zona">Zona</Label>
+                  <select
+                    id="zona"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.zona || ""}
+                    onChange={(e) => setFormData({ ...formData, zona: e.target.value as any })}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="norte">Zona Norte</option>
+                    <option value="sul">Zona Sul</option>
+                    <option value="leste">Zona Leste</option>
+                    <option value="oeste">Zona Oeste</option>
+                    <option value="centro">Centro</option>
+                  </select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="enquadramento">Enquadramento</Label>
+                  <select
+                    id="enquadramento"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.enquadramento || ""}
+                    onChange={(e) => setFormData({ ...formData, enquadramento: e.target.value as any })}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="HIS1">HIS1</option>
+                    <option value="HIS2">HIS2</option>
+                    <option value="HMP">HMP</option>
+                    <option value="R2V">R2V</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="descricao">Descrição</Label>
+                <textarea
+                  id="descricao"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="valorMinimo">Valor Mínimo (R$)</Label>
+                  <Input
+                    id="valorMinimo"
+                    type="number"
+                    value={formData.valorMinimo}
+                    onChange={(e) => setFormData({ ...formData, valorMinimo: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="valorMaximo">Valor Máximo (R$)</Label>
+                  <Input
+                    id="valorMaximo"
+                    type="number"
+                    value={formData.valorMaximo}
+                    onChange={(e) => setFormData({ ...formData, valorMaximo: e.target.value })}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="dormitorios">Dormitórios</Label>
+                  <Input
+                    id="dormitorios"
+                    placeholder="Ex: 1, 2, 3"
+                    value={formData.dormitorios}
+                    onChange={(e) => setFormData({ ...formData, dormitorios: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="vagas">Vagas</Label>
+                  <Input
+                    id="vagas"
+                    type="number"
+                    value={formData.vagas}
+                    onChange={(e) => setFormData({ ...formData, vagas: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                
+                <div className="grid gap-2">
+                  <Label htmlFor="status">Status</Label>
+                  <select
+                    id="status"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  >
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="esgotado">Esgotado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Salvar Alterações</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o projeto "{project.nome}"? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Excluir Projeto
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

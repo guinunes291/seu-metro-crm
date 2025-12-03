@@ -157,3 +157,24 @@
 - [ ] Implementar Google Maps na página de detalhes do projeto
 - [ ] Adicionar marcador no endereço do projeto
 - [ ] Adicionar botão "Ver no Google Maps" para abrir em nova aba
+
+## Nova Feature: Gestão Completa de Projetos
+- [x] Adicionar procedure de edição de projetos no backend
+- [x] Adicionar procedure de exclusão de projetos no backend
+- [x] Implementar botão de editar na página de detalhes (apenas gestor)
+- [x] Implementar botão de excluir na página de detalhes (apenas gestor)
+- [x] Criar modal de edição de projeto
+- [x] Criar confirmação de exclusão de projeto
+- [x] Apagar todos os projetos existentes do banco de dados
+- [ ] Criar funcionalidade de inclusão em massa (upload CSV/Excel ou formulário)
+- [ ] Testar edição, exclusão e inclusão em massa
+
+## Nova Feature: Importação de Projetos do Google Sheets
+- [x] Analisar estrutura da planilha de projetos
+- [x] Criar função de leitura da planilha de projetos
+- [x] Implementar mapeamento de colunas para campos do sistema
+- [x] Implementar detecção de duplicatas por nome do projeto
+- [x] Criar procedure de importação de projetos no backend
+- [x] Criar interface de importação na página de Projetos
+- [x] Implementar sincronização incremental (apenas novos projetos)
+- [ ] Testar importação com a planilha real
