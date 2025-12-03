@@ -252,3 +252,16 @@
 - [x] Atualizar função de importação de projetos para associar logo automaticamente
 - [x] Atualizar interface do catálogo de projetos para exibir logos
 - [x] Testar importação e exibição das logos (logos aparecendo corretamente nos cards)
+
+## Nova Feature: Dashboard Individual de Performance
+- [x] Criar função para calcular taxa de conversão do corretor
+- [x] Criar função para calcular tempo médio de resposta
+- [x] Criar função para listar leads convertidos por projeto
+- [x] Criar função para calcular ranking comparativo com a equipe
+- [x] Criar procedures tRPC para expor métricas (performance.minhas e performance.ranking)
+- [x] Criar página /minha-performance
+- [x] Implementar visualizações de métricas (cards, gráficos)
+- [x] Adicionar ranking visual com posição do corretor
+- [x] Implementar sistema de gamificação (badges, medalhas, posição)
+- [x] Adicionar item de menu no DashboardLayout
+- [x] Criar testes unitários para cálculos de performance (6 testes passando)

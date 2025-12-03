@@ -16,6 +16,7 @@ import ImportarSheets from "./pages/ImportarSheets";
 import ProjetoDetalhes from "@/pages/ProjetoDetalhes";
 import ImportarProjetos from "@/pages/ImportarProjetos";
 import Corretores from "@/pages/Corretores";
+import MinhaPerformance from "@/pages/MinhaPerformance";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/projetos/:id" component={ProjetoDetalhes} />
       <Route path="/importar-projetos" component={ImportarProjetos} />
       <Route path="/corretores" component={Corretores} />
+      <Route path="/minha-performance" component={MinhaPerformance} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

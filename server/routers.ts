@@ -596,6 +596,24 @@ export const appRouter = router({
         });
       }),
   }),
+
+  // ============================================================================
+  // PERFORMANCE
+  // ============================================================================
+  
+  performance: router({
+    // Métricas individuais do corretor
+    minhas: corretorProcedure.query(async ({ ctx }) => {
+      const { calcularPerformanceCorretor } = await import("./performance");
+      return await calcularPerformanceCorretor(ctx.user.id);
+    }),
+    
+    // Ranking de todos os corretores
+    ranking: corretorProcedure.query(async () => {
+      const { calcularRankingCorretores } = await import("./performance");
+      return await calcularRankingCorretores();
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
