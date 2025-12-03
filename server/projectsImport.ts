@@ -1,5 +1,6 @@
 import { readGoogleSheet, extractSpreadsheetId } from "./googleSheets";
 import * as db from "./db";
+import { google } from "googleapis";
 
 interface ProjectRow {
   zona?: string;
@@ -137,7 +138,6 @@ export async function importProjectsFromSheet(
       throw new Error("GOOGLE_SHEETS_API_KEY não configurada");
     }
     
-    const { google } = require("googleapis");
     const sheets = google.sheets({ version: "v4", auth: apiKey });
     
     const response = await sheets.spreadsheets.values.get({

@@ -178,3 +178,8 @@
 - [x] Criar interface de importação na página de Projetos
 - [x] Implementar sincronização incremental (apenas novos projetos)
 - [ ] Testar importação com a planilha real
+
+## Bug: Erro de Dynamic Import no googleapis
+- [x] Corrigir erro "Dynamic require of googleapis is not supported"
+- [x] Alterar importação dinu00e2mica para importação estu00e1tica
+- [ ] Testar importação de projetos apu00f3s correção
