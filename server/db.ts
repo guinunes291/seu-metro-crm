@@ -139,6 +139,67 @@ export async function updateUserStatus(userId: number, status: "presente" | "aus
     .where(eq(users.id, userId));
 }
 
+export async function createCorretor(data: {
+  name: string;
+  email?: string;
+  telefone?: string;
+  status?: "presente" | "ausente";
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Gera um openId temporário para corretores criados manualmente
+  const openId = `corretor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const result = await db.insert(users).values({
+    openId,
+    name: data.name,
+    email: data.email || null,
+    telefone: data.telefone || null,
+    role: "corretor",
+    status: data.status || "ausente",
+  });
+  
+  return result;
+}
+
+export async function updateCorretor(id: number, data: {
+  name?: string;
+  email?: string;
+  telefone?: string;
+  status?: "presente" | "ausente";
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(users.id, id));
+}
+
+export async function deleteCorretor(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verifica se o corretor tem leads atribuídos
+  const leadsCount = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(eq(leads.corretorId, id));
+  
+  if (Number(leadsCount[0]?.count) > 0) {
+    throw new Error("Não é possível excluir corretor que possui leads atribuídos");
+  }
+  
+  await db.delete(users).where(eq(users.id, id));
+}
+
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(users).orderBy(desc(users.createdAt));
+}
+
 // ============================================================================
 // PROJETOS
 // ============================================================================

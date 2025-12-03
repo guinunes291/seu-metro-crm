@@ -304,12 +304,72 @@ export const appRouter = router({
       return await db.getAllCorretores();
     }),
     
+    listAll: gestorProcedure.query(async () => {
+      return await db.getAllUsers();
+    }),
+    
+    getById: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getUserById(input.id);
+      }),
+    
+    create: gestorProcedure
+      .input(z.object({
+        name: z.string().min(1, "Nome é obrigatório"),
+        email: z.string().email("Email é obrigatório"),
+        telefone: z.string().optional(),
+        status: z.enum(["presente", "ausente"]).default("ausente"),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createCorretor(input);
+      }),
+    
+    update: gestorProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          name: z.string().optional(),
+          email: z.string().email().optional(),
+          telefone: z.string().optional(),
+          status: z.enum(["presente", "ausente"]).optional(),
+        })
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateCorretor(input.id, input.data);
+        return { success: true };
+      }),
+    
+    delete: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        try {
+          await db.deleteCorretor(input.id);
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: error.message 
+          });
+        }
+      }),
+    
     updateStatus: corretorProcedure
       .input(z.object({
         status: z.enum(["presente", "ausente"])
       }))
       .mutation(async ({ input, ctx }) => {
         await db.updateUserStatus(ctx.user.id, input.status);
+        return { success: true };
+      }),
+    
+    updateStatusGestor: gestorProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["presente", "ausente"]),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateUserStatus(input.id, input.status);
         return { success: true };
       }),
     

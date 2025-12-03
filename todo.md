@@ -183,3 +183,35 @@
 - [x] Corrigir erro "Dynamic require of googleapis is not supported"
 - [x] Alterar importação dinu00e2mica para importação estu00e1tica
 - [ ] Testar importação de projetos apu00f3s correção
+## Nova Feature: Gestão de Corretores
+- [x] Criar tabela de corretores no schema (já existia)
+- [x] Implementar CRUD de corretores no backend
+- [x] Criar página de listagem de corretores (/corretores)
+- [x] Implementar formulário de cadastro de corretor
+- [x] Implementar formulário de edição de corretor
+- [x] Adicionar campos: nome, email (obrigatório), telefone, status de plantão
+- [x] Implementar controle de status (Presente/Ausente)
+- [x] Adicionar permissões (apenas gestor pode gerenciar)
+- [x] Criar interface responsiva e moderna
+- [x] Criar testes unitários para CRUD de corretores
+
+## Nova Feature: Dashboard Individual de Performance
+- [ ] Criar página de performance individual (/minha-performance)
+- [ ] Implementar métricas pessoais (taxa de conversão, tempo médio de resposta)
+- [ ] Mostrar leads convertidos por projeto
+- [ ] Criar ranking comparativo com a equipe
+- [ ] Implementar gamificação (badges, conquistas)
+- [ ] Criar gráficos e visualizações de dados
+- [ ] Adicionar filtros por período (semana, mês, trimestre)
+- [ ] Implementar metas e objetivos pessoais
+
+## Nova Feature: Integração WhatsApp Business API
+- [ ] Pesquisar e configurar WhatsApp Business API
+- [ ] Implementar autenticação e webhook
+- [ ] Criar função de envio de mensagens
+- [ ] Implementar templates pré-aprovados
+- [ ] Registrar conversas automaticamente no histórico
+- [ ] Criar interface de envio de mensagem na página do lead
+- [ ] Implementar recebimento e processamento de mensagens
+- [ ] Adicionar botão de WhatsApp nos cards de leads
+- [ ] Testar fluxo completo de comunicação
