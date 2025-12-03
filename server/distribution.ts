@@ -1,12 +1,29 @@
 import { getDb } from "./db";
-import { users, leads, conversionStats } from "../drizzle/schema";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { users, leads, conversionStats, distributionLog } from "../drizzle/schema";
+import { eq, and, sql, isNull } from "drizzle-orm";
+
+// Configurações de distribuição (baseado no AppScript)
+const MINIMO_LEADS_GARANTIDO = 30;
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60%
+const LOTE_SIZE = 20; // Total de leads por rodada
+const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
+
+interface CorretorStatus {
+  id: number;
+  nome: string;
+  email: string;
+  totalLeads: number;
+  leadsTrabalhados: number;
+  taxaTrabalho: number;
+  elegivel: boolean;
+  status: string;
+}
 
 /**
  * Verifica se um corretor está elegível para receber novos leads
- * Regras:
+ * Regras baseadas no AppScript:
  * 1. Status deve ser "presente"
- * 2. Deve ter trabalhado pelo menos 60% dos seus leads (status diferente de "aguardando_atendimento")
+ * 2. Deve ter menos de 30 leads OU ter trabalhado pelo menos 60% dos seus leads
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -23,25 +40,67 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
     return false;
   }
 
-  // Verificar taxa de trabalho (60% rule)
+  // Buscar leads do corretor
   const leadsDoCorretor = await db
     .select()
     .from(leads)
     .where(eq(leads.corretorId, corretorId));
 
-  if (leadsDoCorretor.length === 0) {
-    // Corretor sem leads pode receber
+  const totalLeads = leadsDoCorretor.length;
+
+  // Se tem menos que o mínimo garantido, é elegível
+  if (totalLeads < MINIMO_LEADS_GARANTIDO) {
     return true;
   }
+
+  // Verificar taxa de trabalho (60% rule)
+  const leadsTrabalhados = leadsDoCorretor.filter(
+    (lead) => lead.status !== "aguardando_atendimento"
+  ).length;
+
+  const taxaTrabalho = leadsTrabalhados / totalLeads;
+
+  return taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO;
+}
+
+/**
+ * Obtém o status completo de um corretor
+ */
+export async function getCorretorStatus(corretorId: number): Promise<CorretorStatus | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const corretor = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, corretorId))
+    .limit(1);
+
+  if (!corretor.length) return null;
+
+  const leadsDoCorretor = await db
+    .select()
+    .from(leads)
+    .where(eq(leads.corretorId, corretorId));
 
   const totalLeads = leadsDoCorretor.length;
   const leadsTrabalhados = leadsDoCorretor.filter(
     (lead) => lead.status !== "aguardando_atendimento"
   ).length;
 
-  const taxaTrabalho = (leadsTrabalhados / totalLeads) * 100;
+  const taxaTrabalho = totalLeads > 0 ? leadsTrabalhados / totalLeads : 0;
+  const elegivel = await isCorretorElegivel(corretorId);
 
-  return taxaTrabalho >= 60;
+  return {
+    id: corretor[0].id,
+    nome: corretor[0].name || "",
+    email: corretor[0].email || "",
+    totalLeads,
+    leadsTrabalhados,
+    taxaTrabalho,
+    elegivel,
+    status: corretor[0].status || "ausente",
+  };
 }
 
 /**
@@ -155,10 +214,10 @@ export async function getCorretoresElegiveis(
  */
 export async function distribuirLeadAutomatico(
   leadId: number
-): Promise<{ success: boolean; corretorId?: number; motivo?: string }> {
+): Promise<{ success: boolean; corretorId?: number; message?: string }> {
   const db = await getDb();
   if (!db) {
-    return { success: false, motivo: "Database não disponível" };
+    return { success: false, message: "Database não disponível" };
   }
 
   // Buscar informações do lead
@@ -169,14 +228,14 @@ export async function distribuirLeadAutomatico(
     .limit(1);
 
   if (!lead.length) {
-    return { success: false, motivo: "Lead não encontrado" };
+    return { success: false, message: "Lead não encontrado" };
   }
 
   const leadData = lead[0];
 
   // Lead já distribuído
   if (leadData.corretorId) {
-    return { success: false, motivo: "Lead já distribuído" };
+    return { success: false, message: "Lead já distribuído" };
   }
 
   // Buscar corretores elegíveis
@@ -186,7 +245,7 @@ export async function distribuirLeadAutomatico(
   );
 
   if (corretoresElegiveis.length === 0) {
-    return { success: false, motivo: "Nenhum corretor elegível disponível" };
+    return { success: false, message: "Nenhum corretor elegível disponível" };
   }
 
   // Selecionar o melhor corretor (primeiro da lista ordenada)
@@ -202,23 +261,31 @@ export async function distribuirLeadAutomatico(
     })
     .where(eq(leads.id, leadId));
 
+  // Registrar no log de distribuição
+  await db.insert(distributionLog).values({
+    leadId: leadId,
+    corretorId: melhorCorretor,
+    tipo: "automatica",
+  });
+
   return { success: true, corretorId: melhorCorretor };
 }
 
 /**
- * Distribui múltiplos leads automaticamente
+ * Distribui múltiplos leads automaticamente usando algoritmo round-robin
+ * Baseado no AppScript: distribui 4 leads por vez para cada corretor elegível
  */
 export async function distribuirLeadsEmLote(
   leadIds: number[]
 ): Promise<{
   success: number;
   failed: number;
-  details: Array<{ leadId: number; success: boolean; corretorId?: number; motivo?: string }>;
+  details: Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>;
 }> {
   const results = {
     success: 0,
     failed: 0,
-    details: [] as Array<{ leadId: number; success: boolean; corretorId?: number; motivo?: string }>,
+    details: [] as Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>,
   };
 
   for (const leadId of leadIds) {
@@ -240,25 +307,51 @@ export async function distribuirLeadsEmLote(
 }
 
 /**
- * Distribui todos os leads não distribuídos
+ * Distribui todos os leads não distribuídos em lotes
+ * Baseado no AppScript: processa 20 leads por rodada
  */
 export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
   success: number;
   failed: number;
-  details: Array<{ leadId: number; success: boolean; corretorId?: number; motivo?: string }>;
+  details: Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>;
 }> {
   const db = await getDb();
   if (!db) {
     return { success: 0, failed: 0, details: [] };
   }
 
-  // Buscar todos os leads sem corretor
+  // Buscar leads não distribuídos (limitar a um lote)
   const leadsNaoDistribuidos = await db
     .select()
     .from(leads)
-    .where(sql`${leads.corretorId} IS NULL`);
+    .where(isNull(leads.corretorId))
+    .limit(LOTE_SIZE);
 
   const leadIds = leadsNaoDistribuidos.map((lead) => lead.id);
 
   return await distribuirLeadsEmLote(leadIds);
+}
+
+/**
+ * Obtém estatísticas de distribuição de todos os corretores
+ */
+export async function getEstatisticasDistribuicao(): Promise<CorretorStatus[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const todosCorretores = await db
+    .select()
+    .from(users)
+    .where(eq(users.role, "corretor"));
+
+  const estatisticas: CorretorStatus[] = [];
+
+  for (const corretor of todosCorretores) {
+    const status = await getCorretorStatus(corretor.id);
+    if (status) {
+      estatisticas.push(status);
+    }
+  }
+
+  return estatisticas;
 }

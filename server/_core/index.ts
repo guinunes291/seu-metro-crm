@@ -7,6 +7,8 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { agendarDistribuicaoAutomatica } from "../distribuicaoJob";
+import { agendarJobFollowUp } from "../followup";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -59,6 +61,12 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Agendar job de distribuição automática
+    agendarDistribuicaoAutomatica();
+    
+    // Agendar job de follow-up
+    agendarJobFollowUp();
   });
 }
 

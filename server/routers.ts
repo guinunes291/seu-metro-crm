@@ -452,7 +452,7 @@ export const appRouter = router({
         if (!result.success) {
           throw new TRPCError({ 
             code: 'BAD_REQUEST', 
-            message: result.motivo || 'Erro ao distribuir lead' 
+            message: result.message || 'Erro ao distribuir lead' 
           });
         }
         
@@ -497,6 +497,20 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const elegivel = await distribution.isCorretorElegivel(input.corretorId);
         return { elegivel };
+      }),
+    
+    // Estatísticas de distribuição
+    getEstatisticas: gestorProcedure
+      .query(async () => {
+        return await distribution.getEstatisticasDistribuicao();
+      }),
+    
+    getCorretorStatus: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await distribution.getCorretorStatus(input.corretorId);
       }),
   }),
 
@@ -580,6 +594,41 @@ export const appRouter = router({
           });
         }
       }),
+    
+    // Sincronização bidirecional (CRM → Sheets)
+    syncToSheets: gestorProcedure
+      .input(z.object({
+        url: z.string().url(),
+        sheetName: z.string().default("Leads"),
+      }))
+      .mutation(async ({ input }) => {
+        const { sincronizarLeadsDistribuidos } = await import("./sheetsSync");
+        return await sincronizarLeadsDistribuidos(input.url, input.sheetName);
+      }),
+    
+    // Atualizar lead específico na planilha
+    updateLeadInSheet: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        url: z.string().url(),
+        sheetName: z.string().default("Leads"),
+      }))
+      .mutation(async ({ input }) => {
+        const { atualizarLeadNaPlanilha } = await import("./sheetsSync");
+        return await atualizarLeadNaPlanilha(input.leadId, input.url, input.sheetName);
+      }),
+    
+    // Marcar lead como distribuído na planilha
+    markAsDistributed: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        url: z.string().url(),
+        sheetName: z.string().default("Leads"),
+      }))
+      .mutation(async ({ input }) => {
+        const { marcarComoDistribuidoNaPlanilha } = await import("./sheetsSync");
+        return await marcarComoDistribuidoNaPlanilha(input.leadId, input.url, input.sheetName);
+      }),
   }),
 
   // ============================================================================
@@ -603,6 +652,67 @@ export const appRouter = router({
           ...input,
           corretorId: ctx.user.id,
         });
+      }),
+  }),
+
+  // ============================================================================
+  // FOLLOW-UP
+  // ============================================================================
+  
+  followup: router({
+    // Obter leads pendentes de follow-up
+    getPendentes: corretorProcedure
+      .query(async ({ ctx }) => {
+        const { getLeadsPendentesFollowUp } = await import("./followup");
+        const todosPendentes = await getLeadsPendentesFollowUp();
+        
+        // Filtrar apenas os leads do corretor atual
+        if (ctx.user.role === "corretor") {
+          return todosPendentes.filter(l => l.corretorId === ctx.user.id);
+        }
+        
+        // Gestor vê todos
+        return todosPendentes;
+      }),
+    
+    // Calcular dias consecutivos de follow-up
+    getDiasConsecutivos: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { calcularDiasConsecutivosFollowUp } = await import("./followup");
+        const dias = await calcularDiasConsecutivosFollowUp(input.leadId);
+        return { dias };
+      }),
+    
+    // Calcular dias sem contato
+    getDiasSemContato: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { calcularDiasSemContato } = await import("./followup");
+        const dias = await calcularDiasSemContato(input.leadId);
+        return { dias };
+      }),
+    
+    // Verificar necessidade de follow-up
+    verificarNecessidade: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { verificarNecessidadeFollowUp } = await import("./followup");
+        const precisa = await verificarNecessidadeFollowUp(input.leadId);
+        return { precisa };
+      }),
+    
+    // Enviar notificações manualmente (apenas gestor)
+    enviarNotificacoes: gestorProcedure
+      .mutation(async () => {
+        const { enviarNotificacoesFollowUp } = await import("./followup");
+        return await enviarNotificacoesFollowUp();
       }),
   }),
 
@@ -639,6 +749,57 @@ export const appRouter = router({
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
         return await calcularRankingCorretores(periodo);
+      }),
+  }),
+
+  // ============================================================================
+  // RELATÓRIOS
+  // ============================================================================
+  
+  relatorios: router({
+    // Estatísticas gerais do CRM
+    estatisticasGerais: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { calcularEstatisticasGerais } = await import("./relatorios");
+        const periodo = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await calcularEstatisticasGerais(periodo);
+      }),
+    
+    // Conversão por projeto
+    conversaoPorProjeto: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { calcularConversaoPorProjeto } = await import("./relatorios");
+        const periodo = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await calcularConversaoPorProjeto(periodo);
+      }),
+    
+    // Conversão por corretor
+    conversaoPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { calcularConversaoPorCorretor } = await import("./relatorios");
+        const periodo = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await calcularConversaoPorCorretor(periodo);
       }),
   }),
 });

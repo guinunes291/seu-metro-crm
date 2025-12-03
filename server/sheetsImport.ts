@@ -1,7 +1,7 @@
 import { getDb } from "./db";
 import { leads, projects } from "../drizzle/schema";
 import { readGoogleSheet, extractSpreadsheetId } from "./googleSheets";
-import { eq, or, inArray } from "drizzle-orm";
+import { eq, or, inArray, sql, desc } from "drizzle-orm";
 
 interface ImportResult {
   total: number;
@@ -226,7 +226,24 @@ export async function importLeadsFromSheet(
           // Adicionar ao set de existentes para evitar duplicatas dentro do mesmo batch
           existingPhones.add(phoneNumbers);
 
+          // Buscar ID do lead recém-inserido para distribuição
+          const newLeadQuery = await db
+            .select()
+            .from(leads)
+            .where(eq(leads.telefone, normalizedPhone))
+            .orderBy(desc(leads.id))
+            .limit(1);
+          
+          const newLeadId = newLeadQuery[0]?.id;
+
           result.imported++;
+          
+          // Distribuir automaticamente se o lead não tiver corretor
+          if (newLeadId && !row.distribuido) {
+            // Importar função de distribuição
+            const { distribuirLeadAutomatico } = await import("./distribution");
+            await distribuirLeadAutomatico(newLeadId);
+          }
           
           // Só adicionar aos detalhes se for erro ou primeiros 100 importados
           if (result.imported <= 100) {
