@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -137,7 +138,7 @@ export default function Projetos() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <DashboardLayout>
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -523,6 +524,6 @@ export default function Projetos() {
       </div>
       
       <CompareBar />
-    </div>
+    </DashboardLayout>
   );
 }

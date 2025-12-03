@@ -215,3 +215,14 @@
 - [ ] Implementar recebimento e processamento de mensagens
 - [ ] Adicionar botão de WhatsApp nos cards de leads
 - [ ] Testar fluxo completo de comunicação
+
+## Bug Crítico: Menu Lateral Desaparecendo
+- [x] Investigar problema de navegação que faz o menu lateral desaparecer
+- [x] Corrigir roteamento para manter o DashboardLayout em todas as páginas (Projetos, ProjetoDetalhes, Corretores)
+- [x] Testar navegação entre todas as páginas
+
+## ## Bug Crítico: Perda de Dados de Projetos e Clientes
+- [x] Investigar por que os projetos e clientes sumiram do banco de dados
+- [x] Verificar se houve alguma operação de limpeza acidental (rollback de checkpoint)
+- [x] Restaurar dados do backup ou reimportar da planilha (139 projetos importados com sucesso)
+- [ ] Implementar mecanismo de proteção contra perda de dadosados futura
