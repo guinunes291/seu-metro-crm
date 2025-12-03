@@ -1,6 +1,15 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   TrendingUp, 
   Clock, 
@@ -14,8 +23,44 @@ import {
 } from "lucide-react";
 
 function MinhaPerformance() {
-  const { data: metricas, isLoading: loadingMetricas } = trpc.performance.minhas.useQuery();
-  const { data: ranking, isLoading: loadingRanking } = trpc.performance.ranking.useQuery();
+  const [periodo, setPeriodo] = useState<string>("mes");
+  
+  // Calcular datas baseado no período selecionado
+  const { dataInicio, dataFim } = useMemo(() => {
+    const hoje = new Date();
+    const fim = hoje.toISOString();
+    let inicio: string;
+    
+    switch (periodo) {
+      case "semana":
+        const semanaAtras = new Date(hoje);
+        semanaAtras.setDate(hoje.getDate() - 7);
+        inicio = semanaAtras.toISOString();
+        break;
+      case "mes":
+        const mesAtras = new Date(hoje);
+        mesAtras.setMonth(hoje.getMonth() - 1);
+        inicio = mesAtras.toISOString();
+        break;
+      case "ano":
+        const anoAtras = new Date(hoje);
+        anoAtras.setFullYear(hoje.getFullYear() - 1);
+        inicio = anoAtras.toISOString();
+        break;
+      case "tudo":
+      default:
+        return { dataInicio: undefined, dataFim: undefined };
+    }
+    
+    return { dataInicio: inicio, dataFim: fim };
+  }, [periodo]);
+  
+  const { data: metricas, isLoading: loadingMetricas } = trpc.performance.minhas.useQuery(
+    dataInicio && dataFim ? { dataInicio, dataFim } : undefined
+  );
+  const { data: ranking, isLoading: loadingRanking } = trpc.performance.ranking.useQuery(
+    dataInicio && dataFim ? { dataInicio, dataFim } : undefined
+  );
 
   if (loadingMetricas || loadingRanking) {
     return (
@@ -59,11 +104,29 @@ function MinhaPerformance() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Minha Performance</h1>
-          <p className="text-muted-foreground">
-            Acompanhe suas métricas e compare com a equipe
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Minha Performance</h1>
+            <p className="text-muted-foreground">
+              Acompanhe suas métricas e compare com a equipe
+            </p>
+          </div>
+          
+          {/* Seletor de Período */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Período:</span>
+            <Select value={periodo} onValueChange={setPeriodo}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Selecione o período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="semana">Últimos 7 dias</SelectItem>
+                <SelectItem value="mes">Últimos 30 dias</SelectItem>
+                <SelectItem value="ano">Último ano</SelectItem>
+                <SelectItem value="tudo">Todos os períodos</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Badge de Ranking */}

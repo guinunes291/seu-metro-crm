@@ -1,6 +1,6 @@
 import { getDb } from "./db";
 import { leads, leadHistory, users, projects } from "../drizzle/schema";
-import { eq, and, sql, desc } from "drizzle-orm";
+import { eq, and, sql, desc, gte, lte } from "drizzle-orm";
 
 /**
  * Métricas de performance de um corretor
@@ -47,17 +47,39 @@ export interface RankingCorretor {
 }
 
 /**
+ * Opções de filtro por período
+ */
+export interface PeriodoFiltro {
+  dataInicio?: Date;
+  dataFim?: Date;
+}
+
+/**
  * Calcula as métricas de performance de um corretor
  */
-export async function calcularPerformanceCorretor(corretorId: number): Promise<CorretorPerformance> {
+export async function calcularPerformanceCorretor(
+  corretorId: number,
+  periodo?: PeriodoFiltro
+): Promise<CorretorPerformance> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  // Construir condições de filtro
+  const conditions = [eq(leads.corretorId, corretorId)];
+  if (periodo?.dataInicio) {
+    conditions.push(gte(leads.createdAt, periodo.dataInicio));
+  }
+  if (periodo?.dataFim) {
+    conditions.push(lte(leads.createdAt, periodo.dataFim));
+  }
+
   // Total de leads
   const totalLeadsResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(leads)
-    .where(eq(leads.corretorId, corretorId));
+    .where(and(...conditions));
   
   const totalLeads = Number(totalLeadsResult[0]?.count || 0);
 
@@ -66,7 +88,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
     .select({ count: sql<number>`count(distinct ${leads.id})` })
     .from(leads)
     .innerJoin(leadHistory, eq(leadHistory.leadId, leads.id))
-    .where(eq(leads.corretorId, corretorId));
+    .where(and(...conditions));
   
   const leadsContatados = Number(leadsContatadosResult[0]?.count || 0);
 
@@ -76,7 +98,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
     .from(leads)
     .where(
       and(
-        eq(leads.corretorId, corretorId),
+        ...conditions,
         eq(leads.status, "contrato_fechado")
       )
     );
@@ -89,7 +111,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
     .from(leads)
     .where(
       and(
-        eq(leads.corretorId, corretorId),
+        ...conditions,
         eq(leads.status, "perdido")
       )
     );
@@ -113,7 +135,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
         eq(leadHistory.corretorId, corretorId)
       )
     )
-    .where(eq(leads.corretorId, corretorId))
+    .where(and(...conditions))
     .groupBy(leads.id);
   
   const tempoMedioResposta = Number(tempoRespostaResult[0]?.avgHours || 0);
@@ -125,7 +147,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
       count: sql<number>`count(*)`
     })
     .from(leads)
-    .where(eq(leads.corretorId, corretorId))
+    .where(and(...conditions))
     .groupBy(leads.status);
   
   const leadsPorStatus = leadsPorStatusResult.map((row: any) => ({
@@ -143,7 +165,7 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
     .from(leads)
     .where(
       and(
-        eq(leads.corretorId, corretorId),
+        ...conditions,
         sql`${leads.projectId} IS NOT NULL`
       )
     )
@@ -180,9 +202,18 @@ export async function calcularPerformanceCorretor(corretorId: number): Promise<C
 /**
  * Calcula o ranking de corretores por taxa de conversão
  */
-export async function calcularRankingCorretores(): Promise<RankingCorretor[]> {
+export async function calcularRankingCorretores(periodo?: PeriodoFiltro): Promise<RankingCorretor[]> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Construir condições de filtro
+  const conditions = [sql`${leads.corretorId} IS NOT NULL`];
+  if (periodo?.dataInicio) {
+    conditions.push(gte(leads.createdAt, periodo.dataInicio));
+  }
+  if (periodo?.dataFim) {
+    conditions.push(lte(leads.createdAt, periodo.dataFim));
+  }
   
   const rankingResult = await db
     .select({
@@ -191,7 +222,7 @@ export async function calcularRankingCorretores(): Promise<RankingCorretor[]> {
       leadsConvertidos: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`
     })
     .from(leads)
-    .where(sql`${leads.corretorId} IS NOT NULL`)
+    .where(and(...conditions))
     .groupBy(leads.corretorId);
 
   // Buscar nomes dos corretores e calcular taxa de conversão

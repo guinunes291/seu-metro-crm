@@ -265,3 +265,16 @@
 - [x] Implementar sistema de gamificação (badges, medalhas, posição)
 - [x] Adicionar item de menu no DashboardLayout
 - [x] Criar testes unitários para cálculos de performance (6 testes passando)
+## Nova Feature: Filtro por Período no Dashboard de Performance
+- [x] Adicionar parâmetro de período nos procedures tRPC (dataInicio, dataFim)
+- [x] Atualizar funções de cálculo para filtrar por período
+- [x] Criar componente de seleção de período na interface (Semana, Mês, Ano, Todos)
+- [x] Atualizar queries do frontend para passar período selecionado
+- [x] Testar filtros de período (4 testes passando)
+
+## Nova Feature: Sistema de Convite Automático para Corretores
+- [x] Criar função para gerar email de convite com instruções
+- [x] Integrar com sistema de notificações (notifica gestor para compartilhar projeto)
+- [x] Adicionar opção de enviar convite ao cadastrar corretor (enviarConvite: boolean)
+- [x] Criar template de mensagem de boas-vindas
+- [x] Testar envio de convites (4 testes passando)

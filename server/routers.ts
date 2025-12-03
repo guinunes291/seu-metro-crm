@@ -320,9 +320,18 @@ export const appRouter = router({
         email: z.string().email("Email é obrigatório"),
         telefone: z.string().optional(),
         status: z.enum(["presente", "ausente"]).default("ausente"),
+        enviarConvite: z.boolean().default(true),
       }))
       .mutation(async ({ input }) => {
-        return await db.createCorretor(input);
+        const resultado = await db.createCorretor(input);
+        
+        // Enviar convite automático se solicitado
+        if (input.enviarConvite) {
+          const { enviarConviteCorretor } = await import("./conviteCorretor");
+          await enviarConviteCorretor(input.name, input.email);
+        }
+        
+        return resultado;
       }),
     
     update: gestorProcedure
@@ -603,16 +612,34 @@ export const appRouter = router({
   
   performance: router({
     // Métricas individuais do corretor
-    minhas: corretorProcedure.query(async ({ ctx }) => {
-      const { calcularPerformanceCorretor } = await import("./performance");
-      return await calcularPerformanceCorretor(ctx.user.id);
-    }),
+    minhas: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { calcularPerformanceCorretor } = await import("./performance");
+        const periodo = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await calcularPerformanceCorretor(ctx.user.id, periodo);
+      }),
     
     // Ranking de todos os corretores
-    ranking: corretorProcedure.query(async () => {
-      const { calcularRankingCorretores } = await import("./performance");
-      return await calcularRankingCorretores();
-    }),
+    ranking: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { calcularRankingCorretores } = await import("./performance");
+        const periodo = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await calcularRankingCorretores(periodo);
+      }),
   }),
 });
 
