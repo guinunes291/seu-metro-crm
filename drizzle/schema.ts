@@ -69,6 +69,7 @@ export const projects = mysqlTable("projects", {
   developer: varchar("developer", { length: 255 }), // Incorporadora
   
   // Imagens
+  logoUrl: text("logoUrl"), // Logo da construtora
   imagemPrincipal: text("imagemPrincipal"),
   imagensAdicionais: text("imagensAdicionais"), // JSON array de URLs
   

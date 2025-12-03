@@ -460,6 +460,18 @@ export default function Projetos() {
                   }}
                 >
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
+                  
+                  {/* Logo da Construtora */}
+                  {project.logoUrl && (
+                    <div className="absolute top-4 right-4 bg-white rounded-lg p-2 shadow-lg">
+                      <img 
+                        src={project.logoUrl} 
+                        alt={project.construtora || 'Logo'}
+                        className="h-12 w-auto object-contain"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="absolute bottom-4 left-4 right-4">
                     <h3 className="text-white font-bold text-xl mb-1">{project.nome}</h3>
                     {project.construtora && (

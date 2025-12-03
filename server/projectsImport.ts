@@ -1,6 +1,7 @@
-import { readGoogleSheet, extractSpreadsheetId } from "./googleSheets";
+import { extractSpreadsheetId } from "./googleSheets";
 import * as db from "./db";
 import { google } from "googleapis";
+import { getLogoUrlByConstrutora } from "./construtoraLogos";
 
 interface ProjectRow {
   zona?: string;
@@ -243,6 +244,9 @@ export async function importProjectsFromSheet(
               }
             }
 
+            // Busca logo da construtora
+            const logoUrl = getLogoUrlByConstrutora(projectData.construtora);
+
             // Cria projeto
             await db.createProject({
               nome: nomeTrimmed,
@@ -254,6 +258,7 @@ export async function importProjectsFromSheet(
               estado,
               tipo: "mcmv",
               status: "ativo",
+              logoUrl: logoUrl || undefined,
               valorMinimo: valor,
               valorMaximo: valor,
               metragemMinima: metragem.min,

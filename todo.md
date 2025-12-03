@@ -243,3 +243,12 @@
 - [x] Identificar quais páginas ainda não têm DashboardLayout (todas as 10 páginas principais já têm)
 - [x] Adicionar DashboardLayout nas páginas faltantes (já estava implementado)
 - [x] Testar navegação entre todas as abas (servidor reiniciado)
+
+## Nova Feature: Logos de Construtoras nos Projetos
+- [x] Adicionar campo logoUrl ao schema de projetos
+- [x] Migrar banco de dados (pnpm db:push)
+- [x] Fazer upload das logos das construtoras (Cury, Plano&Plano, Metrocasa, Vivaz) para S3
+- [x] Criar mapeamento construtora → logo URL (arquivo construtoraLogos.ts)
+- [x] Atualizar função de importação de projetos para associar logo automaticamente
+- [x] Atualizar interface do catálogo de projetos para exibir logos
+- [x] Testar importação e exibição das logos (logos aparecendo corretamente nos cards)
