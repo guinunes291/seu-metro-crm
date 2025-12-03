@@ -134,3 +134,26 @@
 - [ ] Implementar filtros e busca de projetos
 - [ ] Adicionar imagens e informações detalhadas dos projetos
 - [ ] Apagar projetos de teste atuais
+
+## Nova Tarefa: Copiar Página de Projetos do Projeto Anterior
+- [x] Acessar projeto compartilhado em https://manus.im/share/JrHQID44wz77L9GalxDeZe?replay=1
+- [x] Analisar a estrutura e design da página de projetos
+- [x] Copiar código da página de projetos
+- [ ] Adaptar para o schema do CRM atual
+- [ ] Testar a nova interface
+- [ ] Validar responsividade e funcio## Implementau00e7u00e3o Completa - Funcionalidades do Projeto Anterior
+- [x] Adicionar campos especu00edficos ao schema de projetos (zona, enquadramento, dormitorios, vagas, developer)
+- [x] Migrar banco de dados com novos campos- [ ] Atualizar procedures do backend para suportar novos campos
+- [ ] Implementar filtros avançados na página de Projetos (zona, enquadramento, dormitórios, vagas)
+- [ ] Melhorar interface de cards com hover effects e badges
+- [ ] Criar CompareContext para gerenciar comparação de projetos
+- [ ] Criar componente CompareBar (barra flutuante)
+- [ ] Adicionar botões de adicionar/remover projetos nos cards
+- [ ] Criar página de comparação lado a lado
+- [ ] Criar página de detalhes completa do projeto
+- [ ] Testar todas as funcionalidades
+- [ ] Validar responsividade
+
+- [ ] Implementar Google Maps na página de detalhes do projeto
+- [ ] Adicionar marcador no endereço do projeto
+- [ ] Adicionar botão "Ver no Google Maps" para abrir em nova aba

@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { CompareProvider } from "./contexts/CompareContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Projetos from "./pages/Projetos";
@@ -12,6 +13,7 @@ import Distribuicao from "./pages/Distribuicao";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import ImportarSheets from "./pages/ImportarSheets";
+import ProjetoDetalhes from "./pages/ProjetoDetalhes";
 
 function Router() {
   return (
@@ -24,6 +26,7 @@ function Router() {
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/importar-sheets" component={ImportarSheets} />
+      <Route path="/projetos/:id" component={ProjetoDetalhes} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -34,10 +37,12 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <CompareProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </CompareProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -22,6 +22,20 @@
       "when": 1764771718372,
       "tag": "0002_tiny_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1764772771430,
+      "tag": "0003_adorable_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1764773605102,
+      "tag": "0004_brave_spyke",
+      "breakpoints": true
     }
   ]
 }

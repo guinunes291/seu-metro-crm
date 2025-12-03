@@ -45,11 +45,10 @@ export const projects = mysqlTable("projects", {
   construtora: varchar("construtora", { length: 255 }),
   endereco: text("endereco"),
   bairro: varchar("bairro", { length: 100 }),
-  cidade: varchar("cidade", { length: 100 }).default("São Paulo").notNull(),
+  cidade: varchar("cidade", { length: 100 }).default("Su00e3o Paulo").notNull(),
   estado: varchar("estado", { length: 2 }).default("SP").notNull(),
-  zona: varchar("zona", { length: 50 }), // Zona Norte, Zona Sul, etc.
   
-  // Informações do projeto
+  // Informau00e7u00f5es do projeto
   descricao: text("descricao"),
   tipo: mysqlEnum("tipo", ["mcmv", "sfh", "outro"]).default("mcmv").notNull(),
   status: mysqlEnum("status", ["ativo", "inativo", "esgotado"]).default("ativo").notNull(),
@@ -62,7 +61,12 @@ export const projects = mysqlTable("projects", {
   metragemMinima: int("metragemMinima"),
   metragemMaxima: int("metragemMaxima"),
   dormitorios: varchar("dormitorios", { length: 50 }), // "1, 2, 3"
-  vagas: boolean("vagas").default(false),
+  vagas: int("vagas").default(0), // Número de vagas de garagem
+  
+  // Campos específicos do mercado imobiliário
+  zona: mysqlEnum("zona", ["norte", "sul", "leste", "oeste", "centro"]),
+  enquadramento: mysqlEnum("enquadramento", ["HIS1", "HIS2", "HMP", "R2V"]),
+  developer: varchar("developer", { length: 255 }), // Incorporadora
   
   // Imagens
   imagemPrincipal: text("imagemPrincipal"),
