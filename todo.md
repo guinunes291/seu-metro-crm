@@ -434,3 +434,13 @@
 - [x] Criar testes de integração com planilha real (3 testes passando)
 - [x] Configurar sincronização automática após distribuição
 - [x] Integrar com sistema de distribuição automática
+
+## Nova Feature: Sincronização em Lote com Google Sheets
+- [x] Implementar função de sincronização em lote de leads distribuídos
+- [x] Implementar função de detecção de inconsistências
+- [x] Implementar função de correção automática de inconsistências
+- [x] Criar procedure tRPC para sincronização em lote (syncBatch)
+- [x] Criar procedure tRPC para verificação de inconsistências (detectInconsistencies)
+- [x] Criar procedure tRPC para correção automática (fixInconsistencies)
+- [x] Criar testes unitários para sincronização em lote (5 testes passando)
+- [x] Adicionar logging detalhado de operações

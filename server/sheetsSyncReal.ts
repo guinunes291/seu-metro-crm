@@ -338,3 +338,210 @@ export async function testarConexaoSheets(): Promise<{
     };
   }
 }
+
+/**
+ * Sincroniza múltiplos leads distribuídos em lote
+ * Útil para corrigir inconsistências ou sincronizar leads antigos
+ */
+export async function sincronizarLeadsEmLote(
+  leadIds: number[]
+): Promise<{
+  success: number;
+  failed: number;
+  details: Array<{
+    leadId: number;
+    success: boolean;
+    message: string;
+  }>;
+}> {
+  const results = {
+    success: 0,
+    failed: 0,
+    details: [] as Array<{
+      leadId: number;
+      success: boolean;
+      message: string;
+    }>,
+  };
+
+  console.log(`[Sheets Sync] Iniciando sincronização em lote de ${leadIds.length} leads`);
+
+  for (const leadId of leadIds) {
+    try {
+      const resultado = await sincronizarLeadDistribuido(leadId);
+      
+      if (resultado.success) {
+        results.success++;
+        results.details.push({
+          leadId,
+          success: true,
+          message: resultado.message,
+        });
+      } else {
+        results.failed++;
+        results.details.push({
+          leadId,
+          success: false,
+          message: resultado.message,
+        });
+      }
+    } catch (error) {
+      results.failed++;
+      results.details.push({
+        leadId,
+        success: false,
+        message: error instanceof Error ? error.message : "Erro desconhecido",
+      });
+    }
+  }
+
+  console.log(`[Sheets Sync] Sincronização em lote concluída: ${results.success} sucessos, ${results.failed} falhas`);
+
+  return results;
+}
+
+/**
+ * Detecta inconsistências entre CRM e planilha
+ * Retorna leads que estão distribuídos no CRM mas não na planilha
+ */
+export async function detectarInconsistencias(): Promise<{
+  total: number;
+  inconsistencias: Array<{
+    leadId: number;
+    nome: string;
+    telefone: string;
+    corretorNome: string;
+    problema: string;
+  }>;
+}> {
+  try {
+    const db = await getDb();
+    if (!db) {
+      throw new Error("Database não disponível");
+    }
+
+    // Buscar todos os leads distribuídos no CRM
+    const leadsDistribuidos = await db
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        corretorId: leads.corretorId,
+        corretorNome: users.name,
+      })
+      .from(leads)
+      .leftJoin(users, eq(leads.corretorId, users.id))
+      .where(eq(leads.status, "em_atendimento"));
+
+    const inconsistencias: Array<{
+      leadId: number;
+      nome: string;
+      telefone: string;
+      corretorNome: string;
+      problema: string;
+    }> = [];
+
+    console.log(`[Sheets Sync] Verificando ${leadsDistribuidos.length} leads distribuídos`);
+
+    for (const lead of leadsDistribuidos) {
+      // Verificar se existe na planilha
+      const rowIndex = await findLeadRowByPhone(lead.telefone);
+      
+      if (!rowIndex) {
+        inconsistencias.push({
+          leadId: lead.id,
+          nome: lead.nome,
+          telefone: lead.telefone,
+          corretorNome: lead.corretorNome || "Desconhecido",
+          problema: "Lead não encontrado na planilha",
+        });
+        continue;
+      }
+
+      // Verificar se está marcado como distribuído
+      const sheets = getGoogleSheetsClient();
+      const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${SHEET_NAME_LEADS}!${COLUMNS.DISTRIBUIDO}${rowIndex}`,
+      });
+
+      const distribuido = response.data.values?.[0]?.[0] || "";
+      
+      if (distribuido.toLowerCase() !== "sim") {
+        inconsistencias.push({
+          leadId: lead.id,
+          nome: lead.nome,
+          telefone: lead.telefone,
+          corretorNome: lead.corretorNome || "Desconhecido",
+          problema: "Lead não marcado como distribuído na planilha",
+        });
+      }
+    }
+
+    console.log(`[Sheets Sync] Encontradas ${inconsistencias.length} inconsistências`);
+
+    return {
+      total: inconsistencias.length,
+      inconsistencias,
+    };
+  } catch (error) {
+    console.error("[Sheets Sync] Erro ao detectar inconsistências:", error);
+    throw error;
+  }
+}
+
+/**
+ * Corrige todas as inconsistências detectadas
+ * Sincroniza automaticamente os leads com problemas
+ */
+export async function corrigirInconsistencias(): Promise<{
+  total: number;
+  corrigidos: number;
+  falhas: number;
+  detalhes: Array<{
+    leadId: number;
+    nome: string;
+    sucesso: boolean;
+    mensagem: string;
+  }>;
+}> {
+  try {
+    // Detectar inconsistências
+    const { inconsistencias } = await detectarInconsistencias();
+
+    if (inconsistencias.length === 0) {
+      return {
+        total: 0,
+        corrigidos: 0,
+        falhas: 0,
+        detalhes: [],
+      };
+    }
+
+    console.log(`[Sheets Sync] Corrigindo ${inconsistencias.length} inconsistências`);
+
+    // Sincronizar leads com problemas
+    const leadIds = inconsistencias.map((i) => i.leadId);
+    const resultado = await sincronizarLeadsEmLote(leadIds);
+
+    const detalhes = resultado.details.map((d) => {
+      const inconsistencia = inconsistencias.find((i) => i.leadId === d.leadId);
+      return {
+        leadId: d.leadId,
+        nome: inconsistencia?.nome || "Desconhecido",
+        sucesso: d.success,
+        mensagem: d.message,
+      };
+    });
+
+    return {
+      total: inconsistencias.length,
+      corrigidos: resultado.success,
+      falhas: resultado.failed,
+      detalhes,
+    };
+  } catch (error) {
+    console.error("[Sheets Sync] Erro ao corrigir inconsistências:", error);
+    throw error;
+  }
+}

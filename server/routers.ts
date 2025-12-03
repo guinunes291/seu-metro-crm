@@ -596,14 +596,28 @@ export const appRouter = router({
       }),
     
     // Sincronização bidirecional (CRM → Sheets)
-    syncToSheets: gestorProcedure
+    // Sincronizar múltiplos leads em lote
+    syncBatch: gestorProcedure
       .input(z.object({
-        url: z.string().url(),
-        sheetName: z.string().default("Leads"),
+        leadIds: z.array(z.number()),
       }))
       .mutation(async ({ input }) => {
-        // TODO: Implementar sincronização em lote de leads distribuídos
-        return { success: false, message: "Sincronização em lote não implementada ainda" };
+        const { sincronizarLeadsEmLote } = await import("./sheetsSyncReal");
+        return await sincronizarLeadsEmLote(input.leadIds);
+      }),
+    
+    // Detectar inconsistências entre CRM e planilha
+    detectInconsistencies: gestorProcedure
+      .query(async () => {
+        const { detectarInconsistencias } = await import("./sheetsSyncReal");
+        return await detectarInconsistencias();
+      }),
+    
+    // Corrigir todas as inconsistências automaticamente
+    fixInconsistencies: gestorProcedure
+      .mutation(async () => {
+        const { corrigirInconsistencias } = await import("./sheetsSyncReal");
+        return await corrigirInconsistencias();
       }),
     
     // Atualizar lead específico na planilha
