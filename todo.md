@@ -105,3 +105,9 @@
 - [x] Garantir que cada corretor veja apenas seus próprios leads
 - [x] Adicionar badges de status coloridos
 - [x] Implementar ações rápidas (ligar, WhatsApp, email)
+
+## Bug Fix: Erro de Autenticação da API do Google Sheets
+- [x] Solicitar GOOGLE_SHEETS_API_KEY via webdev_request_secrets
+- [x] Atualizar código do googleSheets.ts para usar a API Key
+- [x] Testar importação com API Key configurada
+- [x] Documentar processo de obtenção da API Key no Google Cloud Console

@@ -26,9 +26,13 @@ export async function readGoogleSheet(
   range: string
 ): Promise<SheetRow[]> {
   try {
-    // Para planilhas públicas, podemos usar a API sem autenticação
-    // Apenas precisamos que a planilha esteja com compartilhamento público
-    const sheets = google.sheets({ version: "v4" });
+    // Usar API Key para autenticação
+    const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
+    if (!apiKey) {
+      throw new Error("GOOGLE_SHEETS_API_KEY não configurada");
+    }
+
+    const sheets = google.sheets({ version: "v4", auth: apiKey });
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -92,7 +96,12 @@ export async function validateSheetAccess(
   spreadsheetId: string
 ): Promise<boolean> {
   try {
-    const sheets = google.sheets({ version: "v4" });
+    const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
+    if (!apiKey) {
+      throw new Error("GOOGLE_SHEETS_API_KEY não configurada");
+    }
+
+    const sheets = google.sheets({ version: "v4", auth: apiKey });
     
     await sheets.spreadsheets.get({
       spreadsheetId,
@@ -111,7 +120,12 @@ export async function listSheetTabs(
   spreadsheetId: string
 ): Promise<string[]> {
   try {
-    const sheets = google.sheets({ version: "v4" });
+    const apiKey = process.env.GOOGLE_SHEETS_API_KEY;
+    if (!apiKey) {
+      throw new Error("GOOGLE_SHEETS_API_KEY não configurada");
+    }
+
+    const sheets = google.sheets({ version: "v4", auth: apiKey });
     
     const response = await sheets.spreadsheets.get({
       spreadsheetId,
