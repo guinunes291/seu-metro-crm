@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
+import * as distribution from "./distribution";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -350,6 +351,64 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return await db.getDistributionHistory(input.corretorId);
+      }),
+    
+    // Distribuição automática
+    distribuirAutomatico: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await distribution.distribuirLeadAutomatico(input.leadId);
+        
+        if (!result.success) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: result.motivo || 'Erro ao distribuir lead' 
+          });
+        }
+        
+        // Registrar log
+        if (result.corretorId) {
+          await db.createDistributionLog({
+            leadId: input.leadId,
+            corretorId: result.corretorId,
+            tipo: "automatica",
+            motivo: "Distribuição automática baseada em taxa de conversão",
+            distribuidoPorId: ctx.user.id,
+          });
+        }
+        
+        return result;
+      }),
+    
+    distribuirTodosAutomatico: gestorProcedure
+      .mutation(async ({ ctx }) => {
+        const result = await distribution.distribuirTodosLeadsNaoDistribuidos();
+        
+        // Registrar logs para cada lead distribuído
+        for (const detail of result.details) {
+          if (detail.success && detail.corretorId) {
+            await db.createDistributionLog({
+              leadId: detail.leadId,
+              corretorId: detail.corretorId,
+              tipo: "automatica",
+              motivo: "Distribuição automática em lote",
+              distribuidoPorId: ctx.user.id,
+            });
+          }
+        }
+        
+        return result;
+      }),
+    
+    verificarElegibilidade: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const elegivel = await distribution.isCorretorElegivel(input.corretorId);
+        return { elegivel };
       }),
   }),
 

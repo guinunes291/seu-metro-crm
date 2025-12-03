@@ -69,3 +69,12 @@
 - [ ] Criar guia de usuário para corretores
 - [ ] Criar guia de usuário para gestores
 - [ ] Preparar checkpoint final
+
+## Nova Feature: Distribuição Automática Inteligente
+- [x] Implementar função de verificação de elegibilidade de corretores (status "Presente")
+- [x] Implementar cálculo de taxa de trabalho (60% dos leads trabalhados)
+- [x] Implementar otimização por taxa de conversão por projeto/região
+- [x] Criar procedure de distribuição automática no backend
+- [x] Criar interface para trigger manual da distribuição automática
+- [ ] Criar job/cron para distribuição automática periódica
+- [ ] Testar algoritmo com dados reais

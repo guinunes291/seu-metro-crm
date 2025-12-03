@@ -1,7 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { UserCircle, Phone, Mail, ArrowRight } from "lucide-react";
+import { UserCircle, Phone, Mail, ArrowRight, Zap, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +12,8 @@ export default function Distribuicao() {
   const { data: leadsNaoDistribuidos, isLoading: leadsLoading, refetch: refetchLeads } = trpc.distribution.getNaoDistribuidos.useQuery();
   const { data: corretores, isLoading: corretoresLoading } = trpc.corretores.list.useQuery();
   const distribuirMutation = trpc.distribution.distribuirManual.useMutation();
+  const distribuirAutomaticoMutation = trpc.distribution.distribuirAutomatico.useMutation();
+  const distribuirTodosAutomaticoMutation = trpc.distribution.distribuirTodosAutomatico.useMutation();
   
   const [selectedCorretor, setSelectedCorretor] = useState<Record<number, number>>({});
 
@@ -41,15 +43,67 @@ export default function Distribuicao() {
     }
   };
 
+  const handleDistribuirAutomatico = async (leadId: number) => {
+    try {
+      const result = await distribuirAutomaticoMutation.mutateAsync({ leadId });
+      
+      if (result.success && result.corretorId) {
+        const corretor = corretores?.find(c => c.id === result.corretorId);
+        toast.success(`Lead distribuído automaticamente para ${corretor?.name || 'corretor'}!`);
+      }
+      
+      refetchLeads();
+      setSelectedCorretor(prev => {
+        const newState = { ...prev };
+        delete newState[leadId];
+        return newState;
+      });
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao distribuir lead automaticamente");
+    }
+  };
+
+  const handleDistribuirTodosAutomatico = async () => {
+    if (!leadsNaoDistribuidos || leadsNaoDistribuidos.length === 0) {
+      toast.error("Nenhum lead para distribuir");
+      return;
+    }
+
+    try {
+      const result = await distribuirTodosAutomaticoMutation.mutateAsync();
+      
+      toast.success(
+        `Distribuição concluída! ${result.success} leads distribuídos, ${result.failed} falharam.`
+      );
+      
+      refetchLeads();
+      setSelectedCorretor({});
+    } catch (error) {
+      toast.error("Erro ao distribuir leads automaticamente");
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="container py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Distribuição de Leads</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie a distribuição manual de leads para os corretores
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Distribuição de Leads</h1>
+              <p className="text-muted-foreground mt-2">
+                Gerencie a distribuição manual ou automática de leads
+              </p>
+            </div>
+            <Button
+              onClick={handleDistribuirTodosAutomatico}
+              disabled={distribuirTodosAutomaticoMutation.isPending || !leadsNaoDistribuidos || leadsNaoDistribuidos.length === 0}
+              size="lg"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Distribuir Todos Automaticamente
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
@@ -89,32 +143,45 @@ export default function Distribuicao() {
                         )}
                       </div>
                       
-                      <div className="flex gap-2">
-                        <Select
-                          value={selectedCorretor[lead.id]?.toString() || ""}
-                          onValueChange={(value) => setSelectedCorretor(prev => ({
-                            ...prev,
-                            [lead.id]: parseInt(value)
-                          }))}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Selecione um corretor" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {corretores?.map((corretor) => (
-                              <SelectItem key={corretor.id} value={corretor.id.toString()}>
-                                {corretor.name} {corretor.status === "presente" && "✓"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <Select
+                            value={selectedCorretor[lead.id]?.toString() || ""}
+                            onValueChange={(value) => setSelectedCorretor(prev => ({
+                              ...prev,
+                              [lead.id]: parseInt(value)
+                            }))}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Selecione um corretor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {corretores?.map((corretor) => (
+                                <SelectItem key={corretor.id} value={corretor.id.toString()}>
+                                  {corretor.name} {corretor.status === "presente" && "✓"}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                          <Button
+                            size="sm"
+                            onClick={() => handleDistribuir(lead.id)}
+                            disabled={!selectedCorretor[lead.id] || distribuirMutation.isPending}
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
                         
                         <Button
+                          variant="outline"
                           size="sm"
-                          onClick={() => handleDistribuir(lead.id)}
-                          disabled={!selectedCorretor[lead.id] || distribuirMutation.isPending}
+                          className="w-full"
+                          onClick={() => handleDistribuirAutomatico(lead.id)}
+                          disabled={distribuirAutomaticoMutation.isPending}
                         >
-                          <ArrowRight className="h-4 w-4" />
+                          <Zap className="h-3 w-3 mr-2" />
+                          Distribuir Automaticamente
                         </Button>
                       </div>
                     </div>
