@@ -512,6 +512,109 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await distribution.getCorretorStatus(input.corretorId);
       }),
+    
+    // Listar leads por corretor
+    getLeadsPorCorretor: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        status: z.string().optional(),
+        projectId: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { leads, users, projects } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database não disponível' });
+        }
+        
+        const conditions = [];
+        
+        if (input.corretorId) {
+          conditions.push(eq(leads.corretorId, input.corretorId));
+        }
+        
+        if (input.status) {
+          conditions.push(eq(leads.status, input.status as any));
+        }
+        
+        if (input.projectId) {
+          conditions.push(eq(leads.projectId, input.projectId));
+        }
+        
+        const result = await db
+          .select({
+            id: leads.id,
+            nome: leads.nome,
+            telefone: leads.telefone,
+            email: leads.email,
+            status: leads.status,
+            origem: leads.origem,
+            dataDistribuicao: leads.dataDistribuicao,
+            corretorId: leads.corretorId,
+            corretorNome: users.name,
+            projectId: leads.projectId,
+            projectNome: projects.nome,
+          })
+          .from(leads)
+          .leftJoin(users, eq(leads.corretorId, users.id))
+          .leftJoin(projects, eq(leads.projectId, projects.id))
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(leads.dataDistribuicao);
+        
+        return result;
+      }),
+    
+    // Estatísticas de leads por corretor
+    getEstatisticasPorCorretor: gestorProcedure
+      .query(async () => {
+        const { getDb } = await import("./db");
+        const { leads, users } = await import("../drizzle/schema");
+        const { eq, count, sql } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database não disponível' });
+        }
+        
+        // Buscar todos os corretores
+        const corretores = await db
+          .select()
+          .from(users)
+          .where(eq(users.role, "corretor"));
+        
+        // Para cada corretor, calcular estatísticas
+        const estatisticas = await Promise.all(
+          corretores.map(async (corretor) => {
+            const leadsCorretor = await db
+              .select()
+              .from(leads)
+              .where(eq(leads.corretorId, corretor.id));
+            
+            const total = leadsCorretor.length;
+            const emAtendimento = leadsCorretor.filter(l => l.status === "em_atendimento").length;
+            const aguardando = leadsCorretor.filter(l => l.status === "aguardando_atendimento").length;
+            const convertidos = leadsCorretor.filter(l => l.status === "contrato_fechado").length;
+            const perdidos = leadsCorretor.filter(l => l.status === "perdido").length;
+            
+            return {
+              corretorId: corretor.id,
+              corretorNome: corretor.name,
+              corretorStatus: corretor.status,
+              total,
+              emAtendimento,
+              aguardando,
+              convertidos,
+              perdidos,
+              taxaConversao: total > 0 ? (convertidos / total) * 100 : 0,
+            };
+          })
+        );
+        
+        return estatisticas.sort((a, b) => b.total - a.total);
+      }),
   }),
 
   // ============================================================================

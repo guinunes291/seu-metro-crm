@@ -444,3 +444,12 @@
 - [x] Criar procedure tRPC para correção automática (fixInconsistencies)
 - [x] Criar testes unitários para sincronização em lote (5 testes passando)
 - [x] Adicionar logging detalhado de operações
+
+## Nova Feature: Dashboard de Leads por Corretor
+- [x] Ajustar job de distribuição para executar a cada 5 minutos
+- [x] Criar procedure para listar leads por corretor (getLeadsPorCorretor)
+- [x] Criar procedure para estatísticas de leads por corretor (getEstatisticasPorCorretor)
+- [x] Implementar página de dashboard de leads por corretor
+- [x] Adicionar filtros (status, corretor)
+- [x] Adicionar visualização de estatísticas por corretor
+- [x] Adicionar rota no App.tsx (/leads-por-corretor)

@@ -2,7 +2,7 @@ import { distribuirTodosLeadsNaoDistribuidos } from "./distribution";
 
 /**
  * Job de distribuição automática periódica
- * Executa a cada hora para distribuir leads não distribuídos
+ * Executa a cada 5 minutos para distribuir leads não distribuídos
  * Baseado no AppScript: processa 20 leads por rodada
  */
 export async function executarDistribuicaoAutomatica() {
@@ -35,11 +35,11 @@ export function agendarDistribuicaoAutomatica() {
     executarDistribuicaoAutomatica().catch(console.error);
   }, 30000);
 
-  // Executar a cada hora (3600000 ms)
+  // Executar a cada 5 minutos (300000 ms)
   setInterval(() => {
     console.log("[Job] Executando distribuição automática agendada...");
     executarDistribuicaoAutomatica().catch(console.error);
-  }, 3600000);
+  }, 300000);
 
-  console.log("[Job] Distribuição automática agendada para executar a cada hora");
+  console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
 }

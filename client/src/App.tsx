@@ -17,6 +17,7 @@ import ProjetoDetalhes from "@/pages/ProjetoDetalhes";
 import ImportarProjetos from "@/pages/ImportarProjetos";
 import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
+import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
 
 function Router() {
   return (
@@ -33,6 +34,7 @@ function Router() {
       <Route path="/importar-projetos" component={ImportarProjetos} />
       <Route path="/corretores" component={Corretores} />
       <Route path="/minha-performance" component={MinhaPerformance} />
+      <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
