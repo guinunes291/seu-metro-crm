@@ -5,7 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
-import * as distribution from "./distribution";
+
 import * as sheetsImport from "./sheetsImport";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 
@@ -399,223 +399,7 @@ export const appRouter = router({
       }),
   }),
 
-  // ============================================================================
-  // DISTRIBUIÇÃO
-  // ============================================================================
-  
-  distribution: router({
-    getNaoDistribuidos: gestorProcedure.query(async () => {
-      return await db.getLeadsNaoDistribuidos();
-    }),
-    
-    distribuirManual: gestorProcedure
-      .input(z.object({
-        leadId: z.number(),
-        corretorId: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        // Atualizar lead
-        await db.updateLead(input.leadId, {
-          corretorId: input.corretorId,
-          dataDistribuicao: new Date(),
-          status: "aguardando_atendimento",
-        });
-        
-        // Registrar log
-        await db.createDistributionLog({
-          leadId: input.leadId,
-          corretorId: input.corretorId,
-          tipo: "manual",
-          motivo: "Distribuição manual pelo gestor",
-          distribuidoPorId: ctx.user.id,
-        });
-        
-        return { success: true };
-      }),
-    
-    getHistory: gestorProcedure
-      .input(z.object({
-        corretorId: z.number().optional(),
-      }))
-      .query(async ({ input }) => {
-        return await db.getDistributionHistory(input.corretorId);
-      }),
-    
-    // Distribuição automática
-    distribuirAutomatico: gestorProcedure
-      .input(z.object({
-        leadId: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const result = await distribution.distribuirLeadAutomatico(input.leadId);
-        
-        if (!result.success) {
-          throw new TRPCError({ 
-            code: 'BAD_REQUEST', 
-            message: result.message || 'Erro ao distribuir lead' 
-          });
-        }
-        
-        // Registrar log
-        if (result.corretorId) {
-          await db.createDistributionLog({
-            leadId: input.leadId,
-            corretorId: result.corretorId,
-            tipo: "automatica",
-            motivo: "Distribuição automática baseada em taxa de conversão",
-            distribuidoPorId: ctx.user.id,
-          });
-        }
-        
-        return result;
-      }),
-    
-    distribuirTodosAutomatico: gestorProcedure
-      .mutation(async ({ ctx }) => {
-        const result = await distribution.distribuirTodosLeadsNaoDistribuidos();
-        
-        // Registrar logs para cada lead distribuído
-        for (const detail of result.details) {
-          if (detail.success && detail.corretorId) {
-            await db.createDistributionLog({
-              leadId: detail.leadId,
-              corretorId: detail.corretorId,
-              tipo: "automatica",
-              motivo: "Distribuição automática em lote",
-              distribuidoPorId: ctx.user.id,
-            });
-          }
-        }
-        
-        return result;
-      }),
-    
-    verificarElegibilidade: gestorProcedure
-      .input(z.object({
-        corretorId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const elegivel = await distribution.isCorretorElegivel(input.corretorId);
-        return { elegivel };
-      }),
-    
-    // Estatísticas de distribuição
-    getEstatisticas: gestorProcedure
-      .query(async () => {
-        return await distribution.getEstatisticasDistribuicao();
-      }),
-    
-    getCorretorStatus: gestorProcedure
-      .input(z.object({
-        corretorId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        return await distribution.getCorretorStatus(input.corretorId);
-      }),
-    
-    // Listar leads por corretor
-    getLeadsPorCorretor: gestorProcedure
-      .input(z.object({
-        corretorId: z.number().optional(),
-        status: z.string().optional(),
-        projectId: z.number().optional(),
-      }))
-      .query(async ({ input }) => {
-        const { getDb } = await import("./db");
-        const { leads, users, projects } = await import("../drizzle/schema");
-        const { eq, and } = await import("drizzle-orm");
-        
-        const db = await getDb();
-        if (!db) {
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database não disponível' });
-        }
-        
-        const conditions = [];
-        
-        if (input.corretorId) {
-          conditions.push(eq(leads.corretorId, input.corretorId));
-        }
-        
-        if (input.status) {
-          conditions.push(eq(leads.status, input.status as any));
-        }
-        
-        if (input.projectId) {
-          conditions.push(eq(leads.projectId, input.projectId));
-        }
-        
-        const result = await db
-          .select({
-            id: leads.id,
-            nome: leads.nome,
-            telefone: leads.telefone,
-            email: leads.email,
-            status: leads.status,
-            origem: leads.origem,
-            dataDistribuicao: leads.dataDistribuicao,
-            corretorId: leads.corretorId,
-            corretorNome: users.name,
-            projectId: leads.projectId,
-            projectNome: projects.nome,
-          })
-          .from(leads)
-          .leftJoin(users, eq(leads.corretorId, users.id))
-          .leftJoin(projects, eq(leads.projectId, projects.id))
-          .where(conditions.length > 0 ? and(...conditions) : undefined)
-          .orderBy(leads.dataDistribuicao);
-        
-        return result;
-      }),
-    
-    // Estatísticas de leads por corretor
-    getEstatisticasPorCorretor: gestorProcedure
-      .query(async () => {
-        const { getDb } = await import("./db");
-        const { leads, users } = await import("../drizzle/schema");
-        const { eq, count, sql } = await import("drizzle-orm");
-        
-        const db = await getDb();
-        if (!db) {
-          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database não disponível' });
-        }
-        
-        // Buscar todos os corretores
-        const corretores = await db
-          .select()
-          .from(users)
-          .where(eq(users.role, "corretor"));
-        
-        // Para cada corretor, calcular estatísticas
-        const estatisticas = await Promise.all(
-          corretores.map(async (corretor) => {
-            const leadsCorretor = await db
-              .select()
-              .from(leads)
-              .where(eq(leads.corretorId, corretor.id));
-            
-            const total = leadsCorretor.length;
-            const emAtendimento = leadsCorretor.filter(l => l.status === "em_atendimento").length;
-            const aguardando = leadsCorretor.filter(l => l.status === "aguardando_atendimento").length;
-            const convertidos = leadsCorretor.filter(l => l.status === "contrato_fechado").length;
-            const perdidos = leadsCorretor.filter(l => l.status === "perdido").length;
-            
-            return {
-              corretorId: corretor.id,
-              corretorNome: corretor.name,
-              corretorStatus: corretor.status,
-              total,
-              emAtendimento,
-              aguardando,
-              convertidos,
-              perdidos,
-              taxaConversao: total > 0 ? (convertidos / total) * 100 : 0,
-            };
-          })
-        );
-        
-        return estatisticas.sort((a, b) => b.total - a.total);
-      }),
-  }),
+
 
   // ============================================================================
   // IMPORTAÇÃO DO GOOGLE SHEETS
@@ -773,63 +557,62 @@ export const appRouter = router({
   }),
 
   // ============================================================================
-  // FOLLOW-UP
+  // IMPORTAÇÃO CSV
   // ============================================================================
   
-  followup: router({
-    // Obter leads pendentes de follow-up
-    getPendentes: corretorProcedure
-      .query(async ({ ctx }) => {
-        const { getLeadsPendentesFollowUp } = await import("./followup");
-        const todosPendentes = await getLeadsPendentesFollowUp();
+  csv: router({
+    // Preview do CSV (detecta delimitador e colunas)
+    preview: corretorProcedure
+      .input(z.object({
+        content: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const { detectDelimiter, parseCSV, detectColumnMapping } = await import("./csvImport");
         
-        // Filtrar apenas os leads do corretor atual
-        if (ctx.user.role === "corretor") {
-          return todosPendentes.filter(l => l.corretorId === ctx.user.id);
+        const delimiter = detectDelimiter(input.content);
+        const rows = parseCSV(input.content, delimiter);
+        
+        if (rows.length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Arquivo CSV vazio' });
         }
         
-        // Gestor vê todos
-        return todosPendentes;
+        const headers = rows[0];
+        const mapping = detectColumnMapping(headers);
+        const preview = rows.slice(1, 11); // Primeiras 10 linhas de dados
+        
+        return {
+          delimiter,
+          headers,
+          mapping,
+          preview,
+          totalRows: rows.length - 1,
+        };
       }),
     
-    // Calcular dias consecutivos de follow-up
-    getDiasConsecutivos: corretorProcedure
+    // Importar leads do CSV
+    import: corretorProcedure
       .input(z.object({
-        leadId: z.number(),
+        content: z.string(),
+        mapping: z.object({
+          nome: z.number().optional(),
+          telefone: z.number().optional(),
+          email: z.number().optional(),
+          origem: z.number().optional(),
+          observacoes: z.number().optional(),
+        }).optional(),
+        delimiter: z.string().optional(),
       }))
-      .query(async ({ input }) => {
-        const { calcularDiasConsecutivosFollowUp } = await import("./followup");
-        const dias = await calcularDiasConsecutivosFollowUp(input.leadId);
-        return { dias };
-      }),
-    
-    // Calcular dias sem contato
-    getDiasSemContato: corretorProcedure
-      .input(z.object({
-        leadId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const { calcularDiasSemContato } = await import("./followup");
-        const dias = await calcularDiasSemContato(input.leadId);
-        return { dias };
-      }),
-    
-    // Verificar necessidade de follow-up
-    verificarNecessidade: corretorProcedure
-      .input(z.object({
-        leadId: z.number(),
-      }))
-      .query(async ({ input }) => {
-        const { verificarNecessidadeFollowUp } = await import("./followup");
-        const precisa = await verificarNecessidadeFollowUp(input.leadId);
-        return { precisa };
-      }),
-    
-    // Enviar notificações manualmente (apenas gestor)
-    enviarNotificacoes: gestorProcedure
-      .mutation(async () => {
-        const { enviarNotificacoesFollowUp } = await import("./followup");
-        return await enviarNotificacoesFollowUp();
+      .mutation(async ({ input, ctx }) => {
+        const { importLeadsFromCSV } = await import("./csvImport");
+        
+        const result = await importLeadsFromCSV(
+          input.content,
+          ctx.user.id,
+          input.mapping,
+          input.delimiter
+        );
+        
+        return result;
       }),
   }),
 

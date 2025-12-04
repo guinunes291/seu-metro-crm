@@ -238,12 +238,7 @@ export async function importLeadsFromSheet(
 
           result.imported++;
           
-          // Distribuir automaticamente se o lead não tiver corretor
-          if (newLeadId && !row.distribuido) {
-            // Importar função de distribuição
-            const { distribuirLeadAutomatico } = await import("./distribution");
-            await distribuirLeadAutomatico(newLeadId);
-          }
+          // Lead importado sem distribuição automática
           
           // Só adicionar aos detalhes se for erro ou primeiros 100 importados
           if (result.imported <= 100) {

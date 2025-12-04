@@ -453,3 +453,57 @@
 - [x] Adicionar filtros (status, corretor)
 - [x] Adicionar visualização de estatísticas por corretor
 - [x] Adicionar rota no App.tsx (/leads-por-corretor)
+
+
+## 🔄 REFATORAÇÃO COMPLETA: CRM Pessoal de Leads
+
+### Fase 1: Remover Sistema de Distribuição Automática
+- [x] Remover jobs de distribuição automática (distribuicaoJob.ts, followupJob.ts)
+- [x] Remover procedures de distribuição do routers.ts
+- [x] Remover arquivos distribution.ts e distribution.test.ts
+- [x] Remover página de Distribuição (/distribuicao)
+- [x] Remover página de Leads por Corretor (/leads-por-corretor)
+- [x] Remover distribuição automática do sheetsImport.ts
+- [x] Limpar rotas não utilizadas do App.tsx
+- [x] Remover inicialização dos jobs no index.ts
+
+### Fase 2: Importação CSV Inteligente
+- [x] Criar função de detecção automática de delimitador (vírgula, ponto-e-vírgula, tab)
+- [x] Criar função de parsing CSV com detecção de encoding (UTF-8, Latin1)
+- [x] Criar função de detecção automática de mapeamento de colunas
+- [x] Implementar validação de dados (telefone, email)
+- [x] Implementar normalização de telefone (formato brasileiro)
+- [x] Criar procedure tRPC para preview do CSV
+- [x] Criar procedure tRPC para importação em massa
+- [ ] Criar interface de upload de arquivo CSV (frontend)
+- [ ] Criar testes unitários para importação CSV
+
+### Fase 3: Cadastro Pessoal de Leads
+- [ ] Adaptar formulário de cadastro para uso pessoal do corretor
+- [ ] Remover campo de "corretor" (sempre será o usuário logado)
+- [ ] Simplificar campos obrigatórios
+- [ ] Adicionar botão de "Adicionar Lead Rápido" no dashboard
+- [ ] Criar modal de cadastro rápido com campos essenciais
+
+### Fase 4: Checklist Diário de Follow-ups
+- [ ] Criar página de "Meus Follow-ups Hoje"
+- [ ] Listar leads que precisam de follow-up hoje
+- [ ] Adicionar checkbox para marcar follow-up como realizado
+- [ ] Implementar botão de "Adiar para amanhã"
+- [ ] Adicionar contador de dias sem contato
+- [ ] Criar notificações de follow-ups pendentes
+
+### Fase 5: Dashboards Pessoais
+- [ ] Refatorar dashboard principal para visão pessoal
+- [ ] Mostrar apenas leads do corretor logado
+- [ ] Adicionar card de "Follow-ups Hoje"
+- [ ] Adicionar card de "Leads Ativos"
+- [ ] Adicionar gráfico de funil de vendas pessoal
+- [ ] Remover funcionalidades de gestor (se não for admin)
+
+### Fase 6: Testes e Ajustes Finais
+- [ ] Executar todos os testes unitários
+- [ ] Testar importação CSV com diferentes formatos
+- [ ] Testar fluxo completo de cadastro e follow-up
+- [ ] Validar permissões (corretor só vê seus leads)
+- [ ] Salvar checkpoint final

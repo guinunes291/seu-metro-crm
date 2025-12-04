@@ -9,7 +9,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Projetos from "./pages/Projetos";
 import Leads from "./pages/Leads";
-import Distribuicao from "./pages/Distribuicao";
+
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import ImportarSheets from "./pages/ImportarSheets";
@@ -17,7 +17,8 @@ import ProjetoDetalhes from "@/pages/ProjetoDetalhes";
 import ImportarProjetos from "@/pages/ImportarProjetos";
 import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
-import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
+
+
 
 function Router() {
   return (
@@ -25,8 +26,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/projetos"} component={Projetos} />
-      <Route path={"/leads"} component={Leads} />
-      <Route path={"/distribuicao"} component={Distribuicao} />
+      <Route path="/leads" component={Leads} />
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/importar-sheets" component={ImportarSheets} />
@@ -34,7 +34,8 @@ function Router() {
       <Route path="/importar-projetos" component={ImportarProjetos} />
       <Route path="/corretores" component={Corretores} />
       <Route path="/minha-performance" component={MinhaPerformance} />
-      <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
+
+
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
