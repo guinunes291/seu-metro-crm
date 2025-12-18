@@ -608,3 +608,10 @@
 - [x] Adicionar tabela de leads com detalhes
 - [x] Adicionar rota no App.tsx (/leads-por-corretor)
 - [x] Adicionar link no menu lateral (apenas para gestores)
+
+
+## Bug: Menu Lateral Sumindo nas Páginas Notificações e Distribuição
+- [x] Verificar se as páginas Notificações e ControleDistribuicao estão usando DashboardLayout corretamente
+- [x] Adicionar DashboardLayout na página Notificacoes.tsx
+- [x] Adicionar DashboardLayout na página ControleDistribuicao.tsx
+- [x] Testar navegação entre todas as abas

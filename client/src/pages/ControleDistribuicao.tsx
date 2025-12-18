@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play, History, Clock } from "lucide-react";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function ControleDistribuicao() {
   const [resultado, setResultado] = useState<{
@@ -44,9 +45,11 @@ export default function ControleDistribuicao() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -54,7 +57,8 @@ export default function ControleDistribuicao() {
   const corretoresNaoElegiveis = estatisticas?.filter((c) => !c.elegivel) || [];
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Controle de Distribuição</h1>
@@ -355,6 +359,7 @@ export default function ControleDistribuicao() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

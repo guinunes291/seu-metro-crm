@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Bell, BellOff, Check, CheckCheck, UserPlus, Clock, AlertCircle } from "lucide-react";
 import { useLocation } from "wouter";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function Notificacoes() {
   const [, setLocation] = useLocation();
@@ -57,14 +58,17 @@ export default function Notificacoes() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -169,6 +173,7 @@ export default function Notificacoes() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
