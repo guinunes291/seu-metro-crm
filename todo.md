@@ -697,3 +697,13 @@
 - [x] Mostrar preview da foto antes de salvar (via FileReader)
 - [x] Atualizar avatar em tempo real após upload
 - [x] Criar testes unitários para o endpoint de upload (10 testes passando)
+
+
+## Nova Feature: Upload de Foto com Cropper na Aba Configurações
+- [x] Instalar biblioteca de crop de imagem (react-image-crop)
+- [x] Criar seção de foto de perfil na página de Configurações
+- [x] Implementar componente de cropper com preview circular
+- [x] Permitir ajuste de zoom e posição da imagem
+- [x] Salvar imagem recortada no formato correto para o pódio (400x400 JPEG)
+- [x] Exibir foto recortada no pódio de ranking
+- [x] Criar testes unitários para a funcionalidade (14 testes passando)
