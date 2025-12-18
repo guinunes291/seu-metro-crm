@@ -50,6 +50,13 @@
       "when": 1766080874083,
       "tag": "0006_large_major_mapleleaf",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1766088259615,
+      "tag": "0007_cultured_medusa",
+      "breakpoints": true
     }
   ]
 }

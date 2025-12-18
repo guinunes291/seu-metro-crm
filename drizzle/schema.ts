@@ -310,3 +310,35 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE METAS POR CORRETOR
+// ============================================================================
+
+export const metas = mysqlTable("metas", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull(),
+  
+  // Período da meta
+  mes: int("mes").notNull(), // 1-12
+  ano: int("ano").notNull(),
+  
+  // Metas
+  metaLeads: int("metaLeads").default(0).notNull(), // Quantidade de leads a converter
+  metaAgendamentos: int("metaAgendamentos").default(0).notNull(), // Quantidade de agendamentos
+  metaVisitas: int("metaVisitas").default(0).notNull(), // Quantidade de visitas
+  metaContratos: int("metaContratos").default(0).notNull(), // Quantidade de contratos fechados
+  metaVGV: int("metaVGV").default(0).notNull(), // Valor Geral de Venda em centavos
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorMesAnoIdx: index("corretor_mes_ano_idx").on(table.corretorId, table.mes, table.ano),
+}));
+
+export type Meta = typeof metas.$inferSelect;
+export type InsertMeta = typeof metas.$inferInsert;

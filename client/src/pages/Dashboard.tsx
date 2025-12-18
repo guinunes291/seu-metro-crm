@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange
+  CalendarDays, CalendarRange, BarChart3, TrendingDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +30,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 // Tipos de filtros predefinidos
 const FILTER_PRESETS = [
@@ -101,6 +114,11 @@ function formatCurrency(value: number): string {
   }).format(value / 100); // Valores estão em centavos
 }
 
+function formatDateShort(dateStr: string): string {
+  const date = new Date(dateStr);
+  return format(date, "dd/MM", { locale: ptBR });
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "admin";
@@ -142,6 +160,16 @@ export default function Dashboard() {
   );
   const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(
     dateFilter,
+    { enabled: isGestor }
+  );
+  
+  // Queries para gráficos
+  const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
+    { dias: 30 },
+    { enabled: isGestor }
+  );
+  const { data: dadosFunil } = trpc.graficos.funil.useQuery(
+    { dias: 30 },
     { enabled: isGestor }
   );
   
@@ -474,6 +502,119 @@ export default function Dashboard() {
                   <div className="text-2xl font-bold text-green-700 dark:text-green-300">
                     {formatCurrency(metrics?.vgv || 0)}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Gráficos */}
+            <div className="grid gap-6 md:grid-cols-2 mb-8">
+              {/* Gráfico de Evolução de Leads */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Evolução de Leads (30 dias)
+                  </CardTitle>
+                  <CardDescription>Quantidade de leads criados por dia</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {metricasHistoricas && metricasHistoricas.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={metricasHistoricas}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="data" 
+                          tickFormatter={formatDateShort}
+                          className="text-xs"
+                        />
+                        <YAxis className="text-xs" />
+                        <Tooltip 
+                          labelFormatter={(value) => format(new Date(value), "dd/MM/yyyy", { locale: ptBR })}
+                          formatter={(value: number, name: string) => {
+                            const labels: Record<string, string> = {
+                              total: "Total",
+                              novos: "Novos",
+                              contratosFechados: "Contratos",
+                              perdidos: "Perdidos",
+                            };
+                            return [value, labels[name] || name];
+                          }}
+                        />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="total" 
+                          stroke="#3b82f6" 
+                          strokeWidth={2}
+                          name="Total"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="contratosFechados" 
+                          stroke="#22c55e" 
+                          strokeWidth={2}
+                          name="Contratos"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="perdidos" 
+                          stroke="#ef4444" 
+                          strokeWidth={2}
+                          name="Perdidos"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Nenhum dado disponível</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Gráfico de Funil de Vendas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingDown className="h-5 w-5" />
+                    Funil de Vendas (30 dias)
+                  </CardTitle>
+                  <CardDescription>Distribuição de leads por etapa do funil</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {dadosFunil && dadosFunil.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={dadosFunil} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis type="number" className="text-xs" />
+                        <YAxis 
+                          dataKey="etapa" 
+                          type="category" 
+                          width={120}
+                          className="text-xs"
+                        />
+                        <Tooltip />
+                        <Bar dataKey="valor" name="Quantidade">
+                          {dadosFunil.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.cor} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Nenhum dado disponível</p>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

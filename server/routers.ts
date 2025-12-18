@@ -844,6 +844,126 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // GRÁFICOS E MÉTRICAS HISTÓRICAS
+  // ============================================================================
+  graficos: router({
+    // Métricas históricas para gráficos de linha
+    historico: gestorProcedure
+      .input(z.object({ dias: z.number().default(30) }).optional())
+      .query(async ({ input }) => {
+        return await db.getMetricasHistoricas(input?.dias || 30);
+      }),
+    
+    // Dados do funil de vendas
+    funil: gestorProcedure
+      .input(z.object({ dias: z.number().default(30) }).optional())
+      .query(async ({ input }) => {
+        return await db.getEvolucaoFunil(input?.dias || 30);
+      }),
+  }),
+
+  // ============================================================================
+  // METAS POR CORRETOR
+  // ============================================================================
+  metas: router({
+    // Criar nova meta
+    create: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        mes: z.number().min(1).max(12),
+        ano: z.number().min(2020).max(2100),
+        metaLeads: z.number().optional(),
+        metaAgendamentos: z.number().optional(),
+        metaVisitas: z.number().optional(),
+        metaContratos: z.number().optional(),
+        metaVGV: z.number().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        // Verificar se já existe meta para este corretor/mês/ano
+        const existente = await db.getMetaByCorretorMesAno(input.corretorId, input.mes, input.ano);
+        if (existente) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'Já existe uma meta para este corretor neste período' });
+        }
+        return await db.createMeta(input);
+      }),
+    
+    // Atualizar meta existente
+    update: gestorProcedure
+      .input(z.object({
+        id: z.number(),
+        metaLeads: z.number().optional(),
+        metaAgendamentos: z.number().optional(),
+        metaVisitas: z.number().optional(),
+        metaContratos: z.number().optional(),
+        metaVGV: z.number().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        await db.updateMeta(id, data);
+        return { success: true };
+      }),
+    
+    // Excluir meta
+    delete: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteMeta(input.id);
+        return { success: true };
+      }),
+    
+    // Buscar meta por corretor/mês/ano
+    getByCorretorMesAno: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getMetaByCorretorMesAno(input.corretorId, input.mes, input.ano);
+      }),
+    
+    // Buscar todas as metas do mês
+    getDoMes: gestorProcedure
+      .input(z.object({
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getMetasDoMes(input.mes, input.ano);
+      }),
+    
+    // Buscar metas de um corretor
+    getDoCorretor: corretorProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMetasDoCorretor(input.corretorId);
+      }),
+    
+    // Buscar progresso de uma meta
+    getProgresso: corretorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getProgressoMeta(input.corretorId, input.mes, input.ano);
+      }),
+    
+    // Buscar progresso de todos os corretores
+    getProgressoTodos: gestorProcedure
+      .input(z.object({
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getProgressoMetasTodosCorretores(input.mes, input.ano);
+      }),
+  }),
+
+  // ============================================================================
   // NOTIFICAÇÕES
   // ============================================================================
   notifications: router({

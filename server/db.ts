@@ -9,7 +9,8 @@ import {
   distributionLog, InsertDistributionLog,
   conversionStats, InsertConversionStats,
   quickMessages, InsertQuickMessage,
-  notifications, InsertNotification
+  notifications, InsertNotification,
+  metas, InsertMeta, Meta
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -927,4 +928,334 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   }));
   
   return result.filter(c => c.status === 'presente').sort((a, b) => b.vgv - a.vgv);
+}
+
+
+// ============================================================================
+// MÉTRICAS HISTÓRICAS PARA GRÁFICOS
+// ============================================================================
+
+export interface MetricasDiarias {
+  data: string; // YYYY-MM-DD
+  novos: number;
+  aguardando: number;
+  emAtendimento: number;
+  agendados: number;
+  visitasRealizadas: number;
+  analiseCredito: number;
+  contratosFechados: number;
+  perdidos: number;
+  total: number;
+}
+
+export async function getMetricasHistoricas(dias: number = 30): Promise<MetricasDiarias[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const resultado: MetricasDiarias[] = [];
+  const hoje = new Date();
+  
+  for (let i = dias - 1; i >= 0; i--) {
+    const data = new Date(hoje);
+    data.setDate(data.getDate() - i);
+    data.setHours(0, 0, 0, 0);
+    
+    const dataFim = new Date(data);
+    dataFim.setHours(23, 59, 59, 999);
+    
+    const dataStr = data.toISOString().split('T')[0];
+    
+    // Buscar leads criados nesse dia
+    const leadsNoDia = await db.select({
+      status: leads.status,
+      count: sql<number>`count(*)`
+    })
+      .from(leads)
+      .where(and(
+        gte(leads.createdAt, data),
+        lte(leads.createdAt, dataFim)
+      ))
+      .groupBy(leads.status);
+    
+    const metricas: MetricasDiarias = {
+      data: dataStr,
+      novos: 0,
+      aguardando: 0,
+      emAtendimento: 0,
+      agendados: 0,
+      visitasRealizadas: 0,
+      analiseCredito: 0,
+      contratosFechados: 0,
+      perdidos: 0,
+      total: 0,
+    };
+    
+    for (const row of leadsNoDia) {
+      const count = Number(row.count);
+      metricas.total += count;
+      
+      switch (row.status) {
+        case 'novo': metricas.novos = count; break;
+        case 'aguardando_atendimento': metricas.aguardando = count; break;
+        case 'em_atendimento': metricas.emAtendimento = count; break;
+        case 'agendado': metricas.agendados = count; break;
+        case 'visita_realizada': metricas.visitasRealizadas = count; break;
+        case 'analise_credito': metricas.analiseCredito = count; break;
+        case 'contrato_fechado': metricas.contratosFechados = count; break;
+        case 'perdido': metricas.perdidos = count; break;
+      }
+    }
+    
+    resultado.push(metricas);
+  }
+  
+  return resultado;
+}
+
+export async function getEvolucaoFunil(dias: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  const dataInicio = new Date(hoje);
+  dataInicio.setDate(dataInicio.getDate() - dias);
+  dataInicio.setHours(0, 0, 0, 0);
+  
+  // Buscar totais acumulados por status
+  const totais = await db.select({
+    status: leads.status,
+    count: sql<number>`count(*)`
+  })
+    .from(leads)
+    .where(gte(leads.createdAt, dataInicio))
+    .groupBy(leads.status);
+  
+  const funil = [
+    { etapa: 'Novos', valor: 0, cor: '#6366f1' },
+    { etapa: 'Aguardando', valor: 0, cor: '#f59e0b' },
+    { etapa: 'Em Atendimento', valor: 0, cor: '#3b82f6' },
+    { etapa: 'Agendados', valor: 0, cor: '#8b5cf6' },
+    { etapa: 'Visitas', valor: 0, cor: '#06b6d4' },
+    { etapa: 'Análise de Crédito', valor: 0, cor: '#f97316' },
+    { etapa: 'Contratos Fechados', valor: 0, cor: '#22c55e' },
+    { etapa: 'Perdidos', valor: 0, cor: '#ef4444' },
+  ];
+  
+  for (const row of totais) {
+    const count = Number(row.count);
+    switch (row.status) {
+      case 'novo': funil[0].valor = count; break;
+      case 'aguardando_atendimento': funil[1].valor = count; break;
+      case 'em_atendimento': funil[2].valor = count; break;
+      case 'agendado': funil[3].valor = count; break;
+      case 'visita_realizada': funil[4].valor = count; break;
+      case 'analise_credito': funil[5].valor = count; break;
+      case 'contrato_fechado': funil[6].valor = count; break;
+      case 'perdido': funil[7].valor = count; break;
+    }
+  }
+  
+  return funil;
+}
+
+// ============================================================================
+// SISTEMA DE METAS POR CORRETOR
+// ============================================================================
+
+export async function createMeta(meta: {
+  corretorId: number;
+  mes: number;
+  ano: number;
+  metaLeads?: number;
+  metaAgendamentos?: number;
+  metaVisitas?: number;
+  metaContratos?: number;
+  metaVGV?: number;
+  observacoes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(metas).values({
+    corretorId: meta.corretorId,
+    mes: meta.mes,
+    ano: meta.ano,
+    metaLeads: meta.metaLeads || 0,
+    metaAgendamentos: meta.metaAgendamentos || 0,
+    metaVisitas: meta.metaVisitas || 0,
+    metaContratos: meta.metaContratos || 0,
+    metaVGV: meta.metaVGV || 0,
+    observacoes: meta.observacoes,
+  });
+  
+  // Buscar a meta criada para retornar
+  const metaCriada = await getMetaByCorretorMesAno(meta.corretorId, meta.mes, meta.ano);
+  return metaCriada;
+}
+
+export async function updateMeta(id: number, meta: {
+  metaLeads?: number;
+  metaAgendamentos?: number;
+  metaVisitas?: number;
+  metaContratos?: number;
+  metaVGV?: number;
+  observacoes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const updateData: any = {};
+  if (meta.metaLeads !== undefined) updateData.metaLeads = meta.metaLeads;
+  if (meta.metaAgendamentos !== undefined) updateData.metaAgendamentos = meta.metaAgendamentos;
+  if (meta.metaVisitas !== undefined) updateData.metaVisitas = meta.metaVisitas;
+  if (meta.metaContratos !== undefined) updateData.metaContratos = meta.metaContratos;
+  if (meta.metaVGV !== undefined) updateData.metaVGV = meta.metaVGV;
+  if (meta.observacoes !== undefined) updateData.observacoes = meta.observacoes;
+  
+  await db.update(metas).set(updateData).where(eq(metas.id, id));
+}
+
+export async function deleteMeta(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(metas).where(eq(metas.id, id));
+}
+
+export async function getMetaByCorretorMesAno(corretorId: number, mes: number, ano: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(metas)
+    .where(and(
+      eq(metas.corretorId, corretorId),
+      eq(metas.mes, mes),
+      eq(metas.ano, ano)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function getMetasDoMes(mes: number, ano: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(metas)
+    .where(and(
+      eq(metas.mes, mes),
+      eq(metas.ano, ano)
+    ));
+}
+
+export async function getMetasDoCorretor(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(metas)
+    .where(eq(metas.corretorId, corretorId))
+    .orderBy(desc(metas.ano), desc(metas.mes));
+}
+
+export async function getProgressoMeta(corretorId: number, mes: number, ano: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar meta do corretor
+  const meta = await getMetaByCorretorMesAno(corretorId, mes, ano);
+  if (!meta) return null;
+  
+  // Calcular período do mês
+  const dataInicio = new Date(ano, mes - 1, 1);
+  const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
+  
+  // Buscar realizados no período
+  const leadsDoMes = await db.select({
+    status: leads.status,
+    count: sql<number>`count(*)`
+  })
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ))
+    .groupBy(leads.status);
+  
+  let totalLeads = 0;
+  let agendamentos = 0;
+  let visitas = 0;
+  let contratos = 0;
+  
+  for (const row of leadsDoMes) {
+    const count = Number(row.count);
+    totalLeads += count;
+    
+    if (row.status === 'agendado') agendamentos = count;
+    if (row.status === 'visita_realizada') visitas = count;
+    if (row.status === 'contrato_fechado') contratos = count;
+  }
+  
+  // Calcular VGV realizado
+  const vgvResult = await db.select({
+    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
+  })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      eq(leads.status, 'contrato_fechado'),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ));
+  
+  const vgvRealizado = Number(vgvResult[0]?.total || 0);
+  
+  return {
+    meta,
+    realizado: {
+      leads: totalLeads,
+      agendamentos,
+      visitas,
+      contratos,
+      vgv: vgvRealizado,
+    },
+    progresso: {
+      leads: meta.metaLeads > 0 ? Math.round((totalLeads / meta.metaLeads) * 100) : 0,
+      agendamentos: meta.metaAgendamentos > 0 ? Math.round((agendamentos / meta.metaAgendamentos) * 100) : 0,
+      visitas: meta.metaVisitas > 0 ? Math.round((visitas / meta.metaVisitas) * 100) : 0,
+      contratos: meta.metaContratos > 0 ? Math.round((contratos / meta.metaContratos) * 100) : 0,
+      vgv: meta.metaVGV > 0 ? Math.round((vgvRealizado / meta.metaVGV) * 100) : 0,
+    },
+  };
+}
+
+export async function getProgressoMetasTodosCorretores(mes: number, ano: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar todos os corretores ativos
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const resultados = [];
+  
+  for (const corretor of corretores) {
+    const progresso = await getProgressoMeta(corretor.id, mes, ano);
+    
+    resultados.push({
+      corretor: {
+        id: corretor.id,
+        nome: corretor.name || 'Sem nome',
+        status: corretor.status,
+      },
+      progresso,
+    });
+  }
+  
+  return resultados;
 }

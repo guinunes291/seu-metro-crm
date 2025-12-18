@@ -656,3 +656,22 @@
 - [x] Implementar filtros predefinidos (Hoje, Ontem, Esta Semana, Este Mês, Mês Passado, Este Ano)
 - [x] Criar procedures backend para métricas filtradas por data
 - [x] Criar testes unitários para as novas procedures (10 testes passando)
+
+
+## Nova Feature: Gráficos Visuais no Dashboard
+- [x] Criar procedure para buscar métricas históricas por período (últimos 7, 30, 90 dias)
+- [x] Implementar gráfico de linha para evolução de leads ao longo do tempo
+- [x] Implementar gráfico de barras para comparação de status por período
+- [x] Implementar gráfico de funil de vendas visual
+- [x] Adicionar componentes de gráficos usando Recharts
+- [x] Criar testes unitários para métricas históricas (6 testes passando)
+
+## Nova Feature: Sistema de Metas por Corretor
+- [x] Criar tabela de metas no schema (corretorId, mes, ano, metaLeads, metaConversao, metaVGV)
+- [x] Migrar banco de dados com nova tabela
+- [x] Implementar CRUD de metas no backend
+- [x] Criar interface de definição de metas (apenas gestor)
+- [x] Implementar indicador de progresso visual (barra de progresso)
+- [x] Mostrar metas vs realizado na página de Metas
+- [x] Adicionar badges de status (Meta Atingida, Quase lá, Em progresso)
+- [x] Criar testes unitários para sistema de metas (10 testes passando)
