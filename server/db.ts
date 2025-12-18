@@ -10,7 +10,9 @@ import {
   conversionStats, InsertConversionStats,
   quickMessages, InsertQuickMessage,
   notifications, InsertNotification,
-  metas, InsertMeta, Meta
+  metas, InsertMeta, Meta,
+  filaDistribuicao, InsertFilaDistribuicao, FilaDistribuicao,
+  webhookConfig, InsertWebhookConfig, WebhookConfig
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -285,7 +287,13 @@ export async function createLead(lead: InsertLead) {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(leads).values(lead);
-  return result;
+  const insertId = Number(result[0].insertId);
+  
+  // Retornar o lead criado
+  const createdLead = await getLeadById(insertId);
+  if (!createdLead) throw new Error("Failed to retrieve created lead");
+  
+  return createdLead;
 }
 
 export async function getAllLeads() {
@@ -1488,5 +1496,347 @@ export async function getPerformanceCorretor(corretorId: number, mes?: number, a
       contratos: meta.metaContratos > 0 ? Math.round((contratos / meta.metaContratos) * 100) : 0,
       vgv: meta.metaVGV > 0 ? Math.round((vgv / meta.metaVGV) * 100) : 0,
     } : null,
+  };
+}
+
+
+// ============================================================================
+// SISTEMA DE FILA/ROLETA DE DISTRIBUIÇÃO
+// ============================================================================
+
+/**
+ * Inicializa a fila de distribuição com todos os corretores ativos
+ */
+export async function inicializarFilaDistribuicao() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todos os corretores
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  // Verificar quais já estão na fila
+  const filaAtual = await db.select()
+    .from(filaDistribuicao);
+  
+  const corretoresNaFila = new Set(filaAtual.map(f => f.corretorId));
+  
+  // Adicionar corretores que não estão na fila
+  let posicaoAtual = filaAtual.length > 0 
+    ? Math.max(...filaAtual.map(f => f.posicao)) + 1 
+    : 1;
+  
+  for (const corretor of corretores) {
+    if (!corretoresNaFila.has(corretor.id)) {
+      await db.insert(filaDistribuicao).values({
+        corretorId: corretor.id,
+        posicao: posicaoAtual++,
+        ativo: corretor.status === 'presente',
+      });
+    }
+  }
+  
+  return await getFilaDistribuicao();
+}
+
+/**
+ * Busca a fila de distribuição ordenada por posição
+ */
+export async function getFilaDistribuicao() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const fila = await db.select({
+    id: filaDistribuicao.id,
+    corretorId: filaDistribuicao.corretorId,
+    posicao: filaDistribuicao.posicao,
+    ativo: filaDistribuicao.ativo,
+    maxLeadsDia: filaDistribuicao.maxLeadsDia,
+    leadsRecebidosHoje: filaDistribuicao.leadsRecebidosHoje,
+    ultimaDistribuicao: filaDistribuicao.ultimaDistribuicao,
+    corretorNome: users.name,
+    corretorStatus: users.status,
+    corretorFoto: users.fotoUrl,
+  })
+    .from(filaDistribuicao)
+    .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
+    .orderBy(filaDistribuicao.posicao);
+  
+  return fila;
+}
+
+/**
+ * Atualiza a posição de um corretor na fila
+ */
+export async function atualizarPosicaoFila(corretorId: number, novaPosicao: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(filaDistribuicao)
+    .set({ posicao: novaPosicao })
+    .where(eq(filaDistribuicao.corretorId, corretorId));
+}
+
+/**
+ * Ativa/desativa um corretor na fila
+ */
+export async function toggleCorretorFila(corretorId: number, ativo: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(filaDistribuicao)
+    .set({ ativo })
+    .where(eq(filaDistribuicao.corretorId, corretorId));
+}
+
+/**
+ * Atualiza o limite de leads por dia de um corretor
+ */
+export async function atualizarMaxLeadsDia(corretorId: number, maxLeadsDia: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(filaDistribuicao)
+    .set({ maxLeadsDia })
+    .where(eq(filaDistribuicao.corretorId, corretorId));
+}
+
+/**
+ * Reseta o contador de leads recebidos hoje (deve ser chamado diariamente)
+ */
+export async function resetarContadorLeadsDiarios() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(filaDistribuicao)
+    .set({ leadsRecebidosHoje: 0 });
+}
+
+/**
+ * Busca o próximo corretor disponível na fila (roleta)
+ * Considera: posição na fila, status presente, ativo na roleta, limite diário
+ */
+export async function getProximoCorretorFila(): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar fila ordenada por posição
+  const fila = await db.select({
+    corretorId: filaDistribuicao.corretorId,
+    posicao: filaDistribuicao.posicao,
+    ativo: filaDistribuicao.ativo,
+    maxLeadsDia: filaDistribuicao.maxLeadsDia,
+    leadsRecebidosHoje: filaDistribuicao.leadsRecebidosHoje,
+    corretorStatus: users.status,
+  })
+    .from(filaDistribuicao)
+    .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
+    .orderBy(filaDistribuicao.posicao);
+  
+  // Encontrar o primeiro corretor disponível
+  for (const item of fila) {
+    // Verificar se está ativo na roleta
+    if (!item.ativo) continue;
+    
+    // Verificar se está presente
+    if (item.corretorStatus !== 'presente') continue;
+    
+    // Verificar se não atingiu o limite diário
+    if (item.leadsRecebidosHoje >= item.maxLeadsDia) continue;
+    
+    return item.corretorId;
+  }
+  
+  return null; // Nenhum corretor disponível
+}
+
+/**
+ * Move um corretor para o final da fila após receber um lead
+ */
+export async function moverCorretorParaFinalFila(corretorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar a maior posição atual
+  const maxPosicaoResult = await db.select({
+    maxPosicao: sql<number>`MAX(${filaDistribuicao.posicao})`
+  }).from(filaDistribuicao);
+  
+  const novaPosicao = (maxPosicaoResult[0]?.maxPosicao || 0) + 1;
+  
+  // Atualizar posição do corretor e incrementar contador
+  await db.update(filaDistribuicao)
+    .set({ 
+      posicao: novaPosicao,
+      leadsRecebidosHoje: sql`${filaDistribuicao.leadsRecebidosHoje} + 1`,
+      ultimaDistribuicao: new Date(),
+    })
+    .where(eq(filaDistribuicao.corretorId, corretorId));
+}
+
+/**
+ * Distribui um lead para o próximo corretor da fila
+ * Retorna o ID do corretor que recebeu o lead, ou null se não houver corretor disponível
+ */
+export async function distribuirLeadPelaRoleta(leadId: number): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar próximo corretor disponível
+  const corretorId = await getProximoCorretorFila();
+  
+  if (!corretorId) {
+    console.log('[Roleta] Nenhum corretor disponível para receber o lead');
+    return null;
+  }
+  
+  // Atribuir lead ao corretor
+  await db.update(leads)
+    .set({ 
+      corretorId,
+      status: 'aguardando_atendimento',
+    })
+    .where(eq(leads.id, leadId));
+  
+  // Mover corretor para o final da fila
+  await moverCorretorParaFinalFila(corretorId);
+  
+  // Registrar log de distribuição
+  await db.insert(distributionLog).values({
+    leadId,
+    corretorId,
+    tipo: 'automatica',
+    motivo: 'Distribuição automática via roleta',
+  });
+  
+  // Buscar dados do lead para notificação
+  const lead = await getLeadById(leadId);
+  if (lead) {
+    await notifyLeadDistribuido(corretorId, leadId, lead.nome);
+  }
+  
+  console.log(`[Roleta] Lead ${leadId} distribuído para corretor ${corretorId}`);
+  
+  return corretorId;
+}
+
+// ============================================================================
+// WEBHOOK CONFIG
+// ============================================================================
+
+export async function createWebhookConfig(config: {
+  nome: string;
+  fonte?: 'facebook' | 'instagram' | 'google' | 'rdstation' | 'outro';
+  projectIdPadrao?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Gerar token único
+  const webhookToken = crypto.randomUUID().replace(/-/g, '');
+  
+  const result = await db.insert(webhookConfig).values({
+    webhookToken,
+    nome: config.nome,
+    fonte: config.fonte || 'facebook',
+    projectIdPadrao: config.projectIdPadrao,
+  });
+  
+  return {
+    id: Number(result[0].insertId),
+    webhookToken,
+  };
+}
+
+export async function getWebhookConfigs() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(webhookConfig)
+    .orderBy(desc(webhookConfig.createdAt));
+}
+
+export async function getWebhookConfigByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(webhookConfig)
+    .where(eq(webhookConfig.webhookToken, token));
+  
+  return result[0] || null;
+}
+
+export async function incrementarLeadsWebhook(webhookId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(webhookConfig)
+    .set({
+      leadsRecebidos: sql`${webhookConfig.leadsRecebidos} + 1`,
+      ultimoLeadRecebido: new Date(),
+    })
+    .where(eq(webhookConfig.id, webhookId));
+}
+
+export async function toggleWebhookConfig(webhookId: number, ativo: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(webhookConfig)
+    .set({ ativo })
+    .where(eq(webhookConfig.id, webhookId));
+}
+
+export async function deleteWebhookConfig(webhookId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(webhookConfig)
+    .where(eq(webhookConfig.id, webhookId));
+}
+
+/**
+ * Processa um lead recebido via webhook
+ * Cria o lead e distribui automaticamente pela roleta
+ */
+export async function processarLeadWebhook(webhookToken: string, dadosLead: {
+  nome: string;
+  email?: string;
+  telefone: string;
+  origem?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se o webhook é válido
+  const webhook = await getWebhookConfigByToken(webhookToken);
+  
+  if (!webhook || !webhook.ativo) {
+    throw new Error("Webhook inválido ou inativo");
+  }
+  
+  // Criar o lead
+  const lead = await createLead({
+    nome: dadosLead.nome,
+    email: dadosLead.email,
+    telefone: dadosLead.telefone,
+    origem: dadosLead.origem || webhook.fonte,
+    projectId: webhook.projectIdPadrao || undefined,
+    status: 'novo',
+  });
+  
+  // Incrementar contador do webhook
+  await incrementarLeadsWebhook(webhook.id);
+  
+  // Distribuir pela roleta
+  const corretorId = await distribuirLeadPelaRoleta(lead.id);
+  
+  return {
+    lead,
+    corretorId,
+    distribuido: corretorId !== null,
   };
 }

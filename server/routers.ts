@@ -193,6 +193,24 @@ export const appRouter = router({
         return await db.createLead(input);
       }),
     
+    // Corretor pode criar lead vinculado a si mesmo
+    createByCorretor: corretorProcedure
+      .input(z.object({
+        nome: z.string(),
+        email: z.string().email().optional(),
+        telefone: z.string(),
+        origem: z.enum(["facebook", "instagram", "google", "site", "indicacao", "outro"]).default("indicacao"),
+        projectId: z.number().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.createLead({
+          ...input,
+          corretorId: ctx.user.id, // Vincula ao corretor logado
+          status: "em_atendimento", // Já começa em atendimento
+        });
+      }),
+    
     update: corretorProcedure
       .input(z.object({
         id: z.number(),
@@ -1105,6 +1123,107 @@ export const appRouter = router({
     markAllAsRead: protectedProcedure
       .mutation(async ({ ctx }) => {
         await db.markAllNotificationsAsRead(ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // FILA DE DISTRIBUIÇÃO (ROLETA)
+  // ============================================================================
+  fila: router({
+    // Inicializar fila com todos os corretores
+    inicializar: gestorProcedure
+      .mutation(async () => {
+        return await db.inicializarFilaDistribuicao();
+      }),
+    
+    // Listar fila de distribuição
+    list: gestorProcedure
+      .query(async () => {
+        return await db.getFilaDistribuicao();
+      }),
+    
+    // Ativar/desativar corretor na fila
+    toggleAtivo: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        ativo: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.toggleCorretorFila(input.corretorId, input.ativo);
+        return { success: true };
+      }),
+    
+    // Atualizar limite de leads por dia
+    updateMaxLeads: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        maxLeadsDia: z.number().min(1).max(100),
+      }))
+      .mutation(async ({ input }) => {
+        await db.atualizarMaxLeadsDia(input.corretorId, input.maxLeadsDia);
+        return { success: true };
+      }),
+    
+    // Resetar contadores diários (manual)
+    resetarContadores: gestorProcedure
+      .mutation(async () => {
+        await db.resetarContadorLeadsDiarios();
+        return { success: true };
+      }),
+    
+    // Distribuir lead pela roleta
+    distribuirLead: gestorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .mutation(async ({ input }) => {
+        const corretorId = await db.distribuirLeadPelaRoleta(input.leadId);
+        return { 
+          success: corretorId !== null, 
+          corretorId,
+          message: corretorId 
+            ? 'Lead distribuído com sucesso' 
+            : 'Nenhum corretor disponível para receber o lead'
+        };
+      }),
+  }),
+
+  // ============================================================================
+  // WEBHOOK CONFIG (INTEGRAÇÕES EXTERNAS)
+  // ============================================================================
+  webhook: router({
+    // Listar webhooks configurados
+    list: gestorProcedure
+      .query(async () => {
+        return await db.getWebhookConfigs();
+      }),
+    
+    // Criar novo webhook
+    create: gestorProcedure
+      .input(z.object({
+        nome: z.string().min(3),
+        fonte: z.enum(['facebook', 'instagram', 'google', 'rdstation', 'outro']).default('facebook'),
+        projectIdPadrao: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createWebhookConfig(input);
+      }),
+    
+    // Ativar/desativar webhook
+    toggle: gestorProcedure
+      .input(z.object({
+        webhookId: z.number(),
+        ativo: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.toggleWebhookConfig(input.webhookId, input.ativo);
+        return { success: true };
+      }),
+    
+    // Excluir webhook
+    delete: gestorProcedure
+      .input(z.object({ webhookId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteWebhookConfig(input.webhookId);
         return { success: true };
       }),
   }),

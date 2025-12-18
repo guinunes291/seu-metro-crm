@@ -64,6 +64,13 @@
       "when": 1766090818400,
       "tag": "0008_slow_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1766093263791,
+      "tag": "0009_charming_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,7 @@ import Notificacoes from "@/pages/Notificacoes";
 import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
 import Kanban from "@/pages/Kanban";
 import Metas from "@/pages/Metas";
+import Roleta from "@/pages/Roleta";
 
 
 
@@ -46,6 +47,7 @@ function Router() {
       <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
       <Route path="/kanban" component={Kanban} />
       <Route path="/metas" component={Metas} />
+      <Route path="/roleta" component={Roleta} />
 
 
       <Route path={"/404"} component={NotFound} />

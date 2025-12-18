@@ -343,3 +343,68 @@ export const metas = mysqlTable("metas", {
 
 export type Meta = typeof metas.$inferSelect;
 export type InsertMeta = typeof metas.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE FILA DE DISTRIBUIÇÃO (ROLETA)
+// ============================================================================
+
+/**
+ * Sistema de roleta inteligente para distribuição de leads
+ * Cada corretor tem uma posição na fila. Quando recebe um lead, vai para o final.
+ * Apenas corretores com status "presente" participam da distribuição.
+ */
+export const filaDistribuicao = mysqlTable("fila_distribuicao", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull().unique(), // Cada corretor aparece uma única vez
+  
+  // Posição na fila (menor = próximo a receber)
+  posicao: int("posicao").notNull(),
+  
+  // Configurações
+  ativo: boolean("ativo").default(true).notNull(), // Se está participando da roleta
+  maxLeadsDia: int("maxLeadsDia").default(10).notNull(), // Máximo de leads por dia
+  leadsRecebidosHoje: int("leadsRecebidosHoje").default(0).notNull(),
+  
+  // Última distribuição
+  ultimaDistribuicao: timestamp("ultimaDistribuicao"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  posicaoIdx: index("posicao_idx").on(table.posicao),
+}));
+
+export type FilaDistribuicao = typeof filaDistribuicao.$inferSelect;
+export type InsertFilaDistribuicao = typeof filaDistribuicao.$inferInsert;
+
+// ============================================================================
+// TABELA DE CONFIGURAÇÃO DO WEBHOOK (FACEBOOK ADS)
+// ============================================================================
+
+export const webhookConfig = mysqlTable("webhook_config", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identificador único do webhook (para validação)
+  webhookToken: varchar("webhookToken", { length: 64 }).notNull().unique(),
+  
+  // Nome/descrição da integração
+  nome: varchar("nome", { length: 100 }).notNull(),
+  fonte: mysqlEnum("fonte", ["facebook", "instagram", "google", "rdstation", "outro"]).default("facebook").notNull(),
+  
+  // Projeto padrão para leads recebidos
+  projectIdPadrao: int("projectIdPadrao"),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  // Estatísticas
+  leadsRecebidos: int("leadsRecebidos").default(0).notNull(),
+  ultimoLeadRecebido: timestamp("ultimoLeadRecebido"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WebhookConfig = typeof webhookConfig.$inferSelect;
+export type InsertWebhookConfig = typeof webhookConfig.$inferInsert;

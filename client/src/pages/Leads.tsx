@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
-  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List
+  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -77,10 +77,54 @@ export default function Leads() {
 
   const updateLeadMutation = trpc.leads.update.useMutation();
   const addInteractionMutation = trpc.leads.addInteraction.useMutation();
+  const createLeadMutation = trpc.leads.createByCorretor.useMutation();
   const { data: leadHistory } = trpc.leads.getHistory.useQuery(
     { leadId: selectedLead?.id || 0 },
     { enabled: !!selectedLead }
   );
+
+  // Estado para o dialog de novo lead
+  const [newLeadDialog, setNewLeadDialog] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({
+    nome: "",
+    telefone: "",
+    email: "",
+    projectId: "",
+    origem: "indicacao" as "facebook" | "instagram" | "google" | "site" | "indicacao" | "outro",
+    observacoes: "",
+  });
+
+  const handleCreateLead = async () => {
+    if (!newLeadForm.nome || !newLeadForm.telefone) {
+      toast.error("Nome e telefone são obrigatórios");
+      return;
+    }
+
+    try {
+      await createLeadMutation.mutateAsync({
+        nome: newLeadForm.nome,
+        telefone: newLeadForm.telefone,
+        email: newLeadForm.email || undefined,
+        projectId: newLeadForm.projectId ? parseInt(newLeadForm.projectId) : undefined,
+        origem: newLeadForm.origem,
+        observacoes: newLeadForm.observacoes || undefined,
+      });
+
+      toast.success("Lead criado com sucesso!");
+      setNewLeadDialog(false);
+      setNewLeadForm({
+        nome: "",
+        telefone: "",
+        email: "",
+        projectId: "",
+        origem: "indicacao",
+        observacoes: "",
+      });
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar lead");
+    }
+  };
 
   const [interactionForm, setInteractionForm] = useState({
     tipo: "whatsapp" as "ligacao" | "whatsapp" | "email" | "sms" | "visita" | "outro",
@@ -188,11 +232,17 @@ export default function Leads() {
     <DashboardLayout>
       <div className="container py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Meus Leads</h1>
-          <p className="text-muted-foreground mt-2">
-            Gerencie seus contatos e acompanhe o funil de vendas
-          </p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Meus Leads</h1>
+            <p className="text-muted-foreground mt-2">
+              Gerencie seus contatos e acompanhe o funil de vendas
+            </p>
+          </div>
+          <Button onClick={() => setNewLeadDialog(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Novo Lead
+          </Button>
         </div>
 
         {/* Filtros e Busca */}
@@ -744,6 +794,125 @@ export default function Leads() {
               </Button>
               <Button onClick={handleAddInteraction} disabled={addInteractionMutation.isPending}>
                 {addInteractionMutation.isPending ? "Salvando..." : "Salvar Interação"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog de Novo Lead */}
+        <Dialog open={newLeadDialog} onOpenChange={setNewLeadDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="h-5 w-5" />
+                Novo Lead
+              </DialogTitle>
+              <DialogDescription>
+                Cadastre um novo lead manualmente. O lead será vinculado a você automaticamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="nome">Nome *</Label>
+                <Input
+                  id="nome"
+                  value={newLeadForm.nome}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, nome: e.target.value })}
+                  placeholder="Nome completo do lead"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="telefone">Telefone *</Label>
+                <Input
+                  id="telefone"
+                  value={newLeadForm.telefone}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, telefone: e.target.value })}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newLeadForm.email}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, email: e.target.value })}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="projeto">Projeto de Interesse</Label>
+                <Select 
+                  value={newLeadForm.projectId} 
+                  onValueChange={(value) => setNewLeadForm({ ...newLeadForm, projectId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um projeto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects?.map((project) => (
+                      <SelectItem key={project.id} value={project.id.toString()}>
+                        {project.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="origem">Origem do Lead</Label>
+                <Select 
+                  value={newLeadForm.origem} 
+                  onValueChange={(value: any) => setNewLeadForm({ ...newLeadForm, origem: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="indicacao">Indicação</SelectItem>
+                    <SelectItem value="facebook">Facebook</SelectItem>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="google">Google</SelectItem>
+                    <SelectItem value="site">Site</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="observacoes-novo">Observações</Label>
+                <Textarea
+                  id="observacoes-novo"
+                  value={newLeadForm.observacoes}
+                  onChange={(e) => setNewLeadForm({ ...newLeadForm, observacoes: e.target.value })}
+                  rows={3}
+                  placeholder="Informações adicionais sobre o lead..."
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setNewLeadDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleCreateLead} 
+                disabled={createLeadMutation.isPending}
+                className="gap-2"
+              >
+                {createLeadMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Criar Lead
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

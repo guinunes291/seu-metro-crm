@@ -707,3 +707,94 @@
 - [x] Salvar imagem recortada no formato correto para o pódio (400x400 JPEG)
 - [x] Exibir foto recortada no pódio de ranking
 - [x] Criar testes unitários para a funcionalidade (14 testes passando)
+
+
+## Nova Feature: Criação Manual de Leads por Corretores
+- [x] Adicionar botão "Novo Lead" na página Meus Leads
+- [x] Criar modal/formulário para cadastro de lead
+- [x] Permitir corretor criar lead já vinculado a si mesmo
+- [x] Criar procedure createByCorretor no backend
+
+## Nova Feature: Roleta Inteligente de Distribuição de Leads (Facebook Ads)
+- [x] Criar tabela de fila de corretores no schema (filaDistribuicao)
+- [x] Criar tabela de configuração de webhooks (webhookConfigs)
+- [x] Implementar lógica de roleta (próximo corretor disponível)
+- [x] Criar webhook público para receber leads do Facebook Ads (/api/webhook/facebook/:token)
+- [x] Distribuir lead automaticamente para corretor da fila
+- [x] Mover corretor para o final da fila após receber lead
+- [x] Considerar apenas corretores com status "presente" e ativo na fila
+- [x] Implementar limite de leads por dia por corretor (maxLeadsDia)
+- [x] Criar página de configuração da fila para gestores (/roleta)
+- [x] Criar procedures de gestão da fila (inicializar, toggle, updateMaxLeads, resetar)
+- [x] Criar procedures de gestão de webhooks (create, list, toggle, delete)
+- [x] Criar testes unitários para a roleta (14 testes passando)
+
+
+---
+
+## SUGESTÕES DE MELHORIAS FUTURAS
+
+### Prioridade Alta (Impacto Imediato)
+- [ ] **Notificações Push** - Implementar notificações em tempo real quando corretor receber novo lead
+- [ ] **Integração WhatsApp** - Conectar com WhatsApp Business API para envio automático de mensagens
+- [ ] **Alertas de Follow-up** - Notificar corretor quando lead está há X dias sem contato
+- [ ] **Exportar Relatórios** - Botão para exportar dashboard em PDF/Excel
+
+### Prioridade Média (Melhorias de UX)
+- [ ] **Histórico de Distribuição** - Página para visualizar log de todas as distribuições da roleta
+- [ ] **Ranking Histórico** - Gráfico mostrando evolução da posição no ranking ao longo dos meses
+- [ ] **Filtros Avançados no Kanban** - Filtrar por corretor, projeto ou período
+- [ ] **Modal de Detalhes no Kanban** - Abrir detalhes do lead ao clicar no card
+- [ ] **Drag-and-drop Múltiplo** - Selecionar vários leads e mover de uma vez
+
+### Prioridade Baixa (Nice to Have)
+- [ ] **Gamificação** - Sistema de badges e conquistas para corretores
+- [ ] **Dark Mode** - Tema escuro para o sistema
+- [ ] **App Mobile** - Versão PWA para acesso mobile
+- [ ] **Integração com CRM Externos** - Sincronizar com Salesforce, HubSpot, etc.
+- [ ] **Chatbot de Atendimento** - Bot para qualificação inicial de leads
+
+### Integrações Sugeridas
+- [ ] **Facebook Lead Ads** - Já implementado via webhook
+- [ ] **Instagram Lead Ads** - Usar mesmo webhook com fonte diferente
+- [ ] **Google Ads** - Webhook para leads de campanhas Google
+- [ ] **RD Station** - Integração com automação de marketing
+- [ ] **Zapier/Make** - Conectar com outras ferramentas via automação
+
+---
+
+## RESUMO DO SISTEMA ATUAL
+
+### Funcionalidades Implementadas:
+1. **Autenticação** - Login via Manus OAuth com roles (Gestor/Corretor)
+2. **Projetos** - CRUD completo, importação do Google Sheets, página de detalhes
+3. **Leads** - CRUD completo, histórico de interações, status de funil
+4. **Corretores** - Cadastro, status de plantão, foto de perfil
+5. **Dashboard Gestor** - Cards de métricas, tabelas por corretor, filtros de data
+6. **Gráficos** - Evolução de leads, funil de vendas
+7. **Metas** - Sistema de metas mensais por corretor com progresso visual
+8. **Kanban** - Visualização em colunas com drag-and-drop
+9. **Ranking** - Pódio visual com fotos dos corretores
+10. **Roleta** - Distribuição automática de leads do Facebook Ads
+11. **Webhooks** - Recebimento de leads de fontes externas
+
+### Páginas do Sistema:
+- /dashboard - Dashboard do gestor
+- /projetos - Lista de projetos/empreendimentos
+- /projetos/:id - Detalhes do projeto
+- /leads - Meus leads (corretor) ou todos os leads (gestor)
+- /kanban - Visualização Kanban dos leads
+- /minha-performance - Ranking e performance individual
+- /metas - Definição de metas por corretor
+- /corretores - Gestão de corretores
+- /controle-distribuicao - Distribuição manual de leads
+- /leads-por-corretor - Leads agrupados por corretor
+- /roleta - Configuração da roleta de distribuição
+- /importar-sheets - Importação de leads do Google Sheets
+- /importar-projetos - Importação de projetos
+- /configuracoes - Configurações e foto de perfil
+- /notificacoes - Central de notificações
+
+### Testes Unitários:
+- Total de testes: 100+ testes passando
+- Cobertura: Leads, Corretores, Dashboard, Kanban, Metas, Ranking, Roleta, Webhooks
