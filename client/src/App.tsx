@@ -17,6 +17,7 @@ import ProjetoDetalhes from "@/pages/ProjetoDetalhes";
 import ImportarProjetos from "@/pages/ImportarProjetos";
 import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
+import ImportarCSV from "@/pages/ImportarCSV";
 
 
 
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/importar-projetos" component={ImportarProjetos} />
       <Route path="/corretores" component={Corretores} />
       <Route path="/minha-performance" component={MinhaPerformance} />
+      <Route path="/importar-csv" component={ImportarCSV} />
 
 
       <Route path={"/404"} component={NotFound} />

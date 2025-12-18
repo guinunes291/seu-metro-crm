@@ -507,3 +507,12 @@
 - [ ] Testar fluxo completo de cadastro e follow-up
 - [ ] Validar permissões (corretor só vê seus leads)
 - [ ] Salvar checkpoint final
+
+
+## Nova Tarefa: Interface de Importação CSV
+- [x] Criar página ImportarCSV.tsx com área de upload
+- [x] Implementar preview visual dos dados do CSV
+- [x] Implementar mapeamento interativo de colunas
+- [x] Adicionar exibição de resultados da importação
+- [x] Adicionar rota no App.tsx (/importar-csv)
+- [x] Criar testes unitários (16 testes passando)
