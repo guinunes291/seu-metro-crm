@@ -24,6 +24,7 @@ import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
 import Kanban from "@/pages/Kanban";
 import Metas from "@/pages/Metas";
 import Roleta from "@/pages/Roleta";
+import HistoricoDistribuicao from "@/pages/HistoricoDistribuicao";
 
 
 
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/kanban" component={Kanban} />
       <Route path="/metas" component={Metas} />
       <Route path="/roleta" component={Roleta} />
+      <Route path="/historico-distribuicao" component={HistoricoDistribuicao} />
 
 
       <Route path={"/404"} component={NotFound} />

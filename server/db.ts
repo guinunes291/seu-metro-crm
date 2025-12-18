@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, gte, lte, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, inArray, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -1839,4 +1839,146 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     corretorId,
     distribuido: corretorId !== null,
   };
+}
+
+
+// Buscar novas notificações desde um timestamp (para polling em tempo real)
+export async function getNewNotificationsSince(userId: number, since: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(notifications)
+    .where(and(
+      eq(notifications.userId, userId),
+      gt(notifications.createdAt, since)
+    ))
+    .orderBy(desc(notifications.createdAt));
+}
+
+
+// ============================================================================
+// HISTÓRICO DE DISTRIBUIÇÃO
+// ============================================================================
+
+export interface HistoricoDistribuicaoItem {
+  id: number;
+  leadId: number;
+  leadNome: string;
+  leadTelefone: string | null;
+  corretorId: number;
+  corretorNome: string | null;
+  tipo: 'automatica' | 'manual' | 'inicial';
+  motivo: string | null;
+  distribuidoPorId: number | null;
+  distribuidoPorNome: string | null;
+  createdAt: Date;
+}
+
+export async function getHistoricoDistribuicao(filtros?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+  corretorId?: number;
+  tipo?: 'automatica' | 'manual' | 'inicial';
+  limit?: number;
+  offset?: number;
+}): Promise<{ items: HistoricoDistribuicaoItem[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { items: [], total: 0 };
+  
+  const conditions = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(distributionLog.createdAt, filtros.dataInicio));
+  }
+  
+  if (filtros?.dataFim) {
+    conditions.push(lte(distributionLog.createdAt, filtros.dataFim));
+  }
+  
+  if (filtros?.corretorId) {
+    conditions.push(eq(distributionLog.corretorId, filtros.corretorId));
+  }
+  
+  if (filtros?.tipo) {
+    conditions.push(eq(distributionLog.tipo, filtros.tipo));
+  }
+  
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  
+  // Contar total
+  const countResult = await db.select({ count: sql<number>`count(*)` })
+    .from(distributionLog)
+    .where(whereClause);
+  
+  const total = Number(countResult[0]?.count || 0);
+  
+  // Buscar items com joins
+  const items = await db.select({
+    id: distributionLog.id,
+    leadId: distributionLog.leadId,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    corretorId: distributionLog.corretorId,
+    corretorNome: users.name,
+    tipo: distributionLog.tipo,
+    motivo: distributionLog.motivo,
+    distribuidoPorId: distributionLog.distribuidoPorId,
+    createdAt: distributionLog.createdAt,
+  })
+    .from(distributionLog)
+    .leftJoin(leads, eq(distributionLog.leadId, leads.id))
+    .leftJoin(users, eq(distributionLog.corretorId, users.id))
+    .where(whereClause)
+    .orderBy(desc(distributionLog.createdAt))
+    .limit(filtros?.limit || 50)
+    .offset(filtros?.offset || 0);
+  
+  // Buscar nomes dos distribuidores (se manual)
+  const itemsWithDistribuidor = await Promise.all(items.map(async (item) => {
+    let distribuidoPorNome: string | null = null;
+    if (item.distribuidoPorId) {
+      const distribuidor = await db.select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, item.distribuidoPorId))
+        .limit(1);
+      distribuidoPorNome = distribuidor[0]?.name || null;
+    }
+    return {
+      ...item,
+      distribuidoPorNome,
+    } as HistoricoDistribuicaoItem;
+  }));
+  
+  return { items: itemsWithDistribuidor, total };
+}
+
+// Contar distribuições por período
+export async function getDistribuicoesPorPeriodo(dias: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const dataInicio = new Date();
+  dataInicio.setDate(dataInicio.getDate() - dias);
+  
+  // Usar raw SQL para evitar problemas com ONLY_FULL_GROUP_BY
+  const result = await db.execute(sql`
+    SELECT 
+      DATE(createdAt) as data,
+      SUM(CASE WHEN tipo = 'automatica' THEN 1 ELSE 0 END) as automaticas,
+      SUM(CASE WHEN tipo = 'manual' THEN 1 ELSE 0 END) as manuais,
+      COUNT(*) as total
+    FROM distribution_log
+    WHERE createdAt >= ${dataInicio}
+    GROUP BY DATE(createdAt)
+    ORDER BY DATE(createdAt)
+  `);
+  
+  const rows = (result as any)[0] as any[];
+  return rows.map(r => ({
+    data: String(r.data),
+    automaticas: Number(r.automaticas || 0),
+    manuais: Number(r.manuais || 0),
+    total: Number(r.total || 0),
+  }));
 }

@@ -1125,6 +1125,13 @@ export const appRouter = router({
         await db.markAllNotificationsAsRead(ctx.user.id);
         return { success: true };
       }),
+    
+    // Buscar novas notificações desde um timestamp (para polling)
+    getNewSince: protectedProcedure
+      .input(z.object({ since: z.number() })) // timestamp em ms
+      .query(async ({ ctx, input }) => {
+        return await db.getNewNotificationsSince(ctx.user.id, new Date(input.since));
+      }),
   }),
 
   // ============================================================================
@@ -1225,6 +1232,32 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.deleteWebhookConfig(input.webhookId);
         return { success: true };
+      }),
+  }),
+  
+  // ============================================================================
+  // HISTÓRICO DE DISTRIBUIÇÃO
+  // ============================================================================
+  historicoDistribuicao: router({
+    // Listar histórico de distribuições
+    list: gestorProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        corretorId: z.number().optional(),
+        tipo: z.enum(['automatica', 'manual', 'inicial']).optional(),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getHistoricoDistribuicao(input);
+      }),
+    
+    // Estatísticas de distribuição por período
+    estatisticas: gestorProcedure
+      .input(z.object({ dias: z.number().min(1).max(365).default(30) }).optional())
+      .query(async ({ input }) => {
+        return await db.getDistribuicoesPorPeriodo(input?.dias || 30);
       }),
   }),
 });

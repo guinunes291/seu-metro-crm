@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,16 +93,20 @@ export default function Roleta() {
   // Verificar permissão
   if (user?.role !== 'gestor' && user?.role !== 'admin') {
     return (
-      <div className="flex items-center justify-center h-full">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-500">Acesso Negado</CardTitle>
-            <CardDescription>
-              Apenas gestores podem acessar a configuração da roleta de distribuição.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
+      <DashboardLayout>
+        <div className="container py-8">
+          <div className="flex items-center justify-center h-full">
+            <Card className="max-w-md">
+              <CardHeader>
+                <CardTitle className="text-red-500">Acesso Negado</CardTitle>
+                <CardDescription>
+                  Apenas gestores podem acessar a configuração da roleta de distribuição.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      </DashboardLayout>
     );
   }
   
@@ -118,7 +123,8 @@ export default function Roleta() {
   };
   
   return (
-    <div className="space-y-6">
+    <DashboardLayout>
+      <div className="container py-8 space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Roleta de Distribuição</h1>
@@ -537,6 +543,7 @@ export default function Roleta() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

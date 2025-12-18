@@ -730,18 +730,37 @@
 - [x] Criar testes unitários para a roleta (14 testes passando)
 
 
+## Bug Fix: Página Roleta fecha o menu lateral
+- [x] Ajustar página Roleta para usar DashboardLayout corretamente
+
+## Nova Feature: Notificações Push em Tempo Real com Som
+- [x] Implementar polling de notificações a cada 5 segundos
+- [x] Adicionar som de notificação quando corretor receber novo lead
+- [x] Criar botão para ativar/desativar som de notificação
+- [x] Mostrar toast com detalhes do lead recebido
+- [x] Salvar preferência de som no localStorage
+- [x] Criar testes unitários (20 testes passando)
+
+## Nova Feature: Histórico de Distribuição
+- [x] Criar página para visualizar log de todas as distribuições (/historico-distribuicao)
+- [x] Mostrar data/hora, lead, corretor, tipo (automática/manual)
+- [x] Implementar filtros por data, corretor e tipo
+- [x] Adicionar paginação
+- [x] Criar gráfico de distribuições por dia (barras empilhadas)
+- [x] Criar testes unitários (20 testes passando)
+
 ---
 
 ## SUGESTÕES DE MELHORIAS FUTURAS
 
 ### Prioridade Alta (Impacto Imediato)
-- [ ] **Notificações Push** - Implementar notificações em tempo real quando corretor receber novo lead
+- [x] **Notificações Push** - Implementar notificações em tempo real quando corretor receber novo lead
 - [ ] **Integração WhatsApp** - Conectar com WhatsApp Business API para envio automático de mensagens
 - [ ] **Alertas de Follow-up** - Notificar corretor quando lead está há X dias sem contato
 - [ ] **Exportar Relatórios** - Botão para exportar dashboard em PDF/Excel
 
 ### Prioridade Média (Melhorias de UX)
-- [ ] **Histórico de Distribuição** - Página para visualizar log de todas as distribuições da roleta
+- [x] **Histórico de Distribuição** - Página para visualizar log de todas as distribuições da roleta
 - [ ] **Ranking Histórico** - Gráfico mostrando evolução da posição no ranking ao longo dos meses
 - [ ] **Filtros Avançados no Kanban** - Filtrar por corretor, projeto ou período
 - [ ] **Modal de Detalhes no Kanban** - Abrir detalhes do lead ao clicar no card
@@ -790,11 +809,30 @@
 - /controle-distribuicao - Distribuição manual de leads
 - /leads-por-corretor - Leads agrupados por corretor
 - /roleta - Configuração da roleta de distribuição
+- /historico-distribuicao - Histórico de todas as distribuições
 - /importar-sheets - Importação de leads do Google Sheets
 - /importar-projetos - Importação de projetos
 - /configuracoes - Configurações e foto de perfil
 - /notificacoes - Central de notificações
 
 ### Testes Unitários:
-- Total de testes: 100+ testes passando
-- Cobertura: Leads, Corretores, Dashboard, Kanban, Metas, Ranking, Roleta, Webhooks
+- Total de testes: 140+ testes passando
+- Cobertura: Leads, Corretores, Dashboard, Kanban, Metas, Ranking, Roleta, Webhooks, Notificações, Histórico
+
+
+## Bug Fix: Página Roleta fechando menu lateral
+- [ ] Ajustar página Roleta para usar DashboardLayout corretamente
+- [ ] Garantir que o menu lateral permaneça aberto ao acessar a página
+
+## Nova Feature: Notificações Push com Som em Tempo Real
+- [ ] Implementar sistema de polling ou WebSocket para notificações em tempo real
+- [ ] Adicionar som de notificação quando corretor receber novo lead
+- [ ] Mostrar toast/alerta visual com informações do lead recebido
+- [ ] Criar configuração para ativar/desativar som
+
+## Nova Feature: Histórico de Distribuição
+- [ ] Criar tabela de log de distribuições no schema (se não existir)
+- [ ] Implementar procedure para listar histórico de distribuições
+- [ ] Criar página /historico-distribuicao com filtros por data e corretor
+- [ ] Mostrar data/hora, lead, corretor, origem (manual/automático/webhook)
+- [ ] Adicionar paginação para grandes volumes de dados
