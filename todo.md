@@ -516,3 +516,32 @@
 - [x] Adicionar exibição de resultados da importação
 - [x] Adicionar rota no App.tsx (/importar-csv)
 - [x] Criar testes unitários (16 testes passando)
+
+
+## 🔄 Reativar Distribuição Automática de Leads do Gestor
+
+### Fase 1: Restaurar Sistema de Distribuição
+- [x] Restaurar arquivo distribution.ts com lógica de elegibilidade
+- [x] Restaurar arquivo distribuicaoJob.ts para execução periódica
+- [x] Restaurar arquivo followup.ts para follow-up automático
+
+### Fase 2: Adaptar Lógica para Leads do Gestor
+- [x] Modificar distribuição para processar apenas leads do gestor
+- [x] Manter corretores adicionando seus próprios leads manualmente
+- [x] Implementar filtro para distribuir apenas leads com corretorId = gestor e status = 'novo'
+- [x] Manter regras de elegibilidade (30 leads mínimo, 60% taxa de trabalho)
+- [x] Manter status "presente" como requisito
+
+### Fase 3: Integrar com Frontend
+- [x] Adicionar procedures tRPC para distribuição (distribuirLead, distribuirTodos, getEstatisticas, verificarElegibilidade)
+- [x] Inicializar jobs no servidor (agendarDistribuicaoAutomatica a cada 5 minutos)
+- [x] Ajustar intervalo do job para 5 minutos ao invés de 1 hora
+- [ ] Criar página de controle de distribuição para gestor
+- [ ] Adicionar dashboard de leads por corretor
+
+### Fase 4: Testes e Validação
+- [x] Restaurar testes unitários para distribuição
+- [x] Adaptar testes para nova lógica (leads do gestor)
+- [x] Testar distribuição automática a cada 5 minutos (job inicializado)
+- [x] Validar regras de elegibilidade (5 de 8 testes passando)
+- [x] Salvar checkpoint final

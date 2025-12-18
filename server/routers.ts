@@ -557,6 +557,44 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // DISTRIBUIÇÃO AUTOMÁTICA
+  // ============================================================================
+  
+  distribution: router({
+    // Distribuir um lead específico
+    distribuirLead: gestorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { distribuirLeadAutomatico } = await import("./distribution");
+        return await distribuirLeadAutomatico(input.leadId);
+      }),
+
+    // Distribuir todos os leads não distribuídos do gestor
+    distribuirTodos: gestorProcedure
+      .mutation(async () => {
+        const { distribuirTodosLeadsNaoDistribuidos } = await import("./distribution");
+        return await distribuirTodosLeadsNaoDistribuidos();
+      }),
+
+    // Obter estatísticas de distribuição
+    getEstatisticas: gestorProcedure
+      .query(async () => {
+        const { getEstatisticasDistribuicao } = await import("./distribution");
+        return await getEstatisticasDistribuicao();
+      }),
+
+    // Verificar se um corretor está elegível
+    verificarElegibilidade: gestorProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .query(async ({ input }) => {
+        const { isCorretorElegivel, getCorretorStatus } = await import("./distribution");
+        const elegivel = await isCorretorElegivel(input.corretorId);
+        const status = await getCorretorStatus(input.corretorId);
+        return { elegivel, status };
+      }),
+  }),
+
+  // ============================================================================
   // IMPORTAÇÃO CSV
   // ============================================================================
   

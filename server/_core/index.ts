@@ -60,6 +60,21 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    
+    // Inicializar jobs de distribuição automática
+    import("../distribuicaoJob").then(({ agendarDistribuicaoAutomatica }) => {
+      agendarDistribuicaoAutomatica();
+      console.log("[Job] Distribuição automática inicializada (a cada 5 minutos)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de distribuição:", err);
+    });
+    
+    // Inicializar job de follow-up
+    import("../followup").then(() => {
+      console.log("[Job] Módulo de follow-up carregado");
+    }).catch(err => {
+      console.error("[Job] Erro ao carregar módulo de follow-up:", err);
+    });
   });
 }
 
