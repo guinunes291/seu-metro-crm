@@ -693,3 +693,238 @@ export async function notifyLeadDistribuido(corretorId: number, leadId: number, 
     leadId: leadId,
   });
 }
+
+
+// ============================================================================
+// MÉTRICAS DO DASHBOARD DO GESTOR
+// ============================================================================
+
+export interface DashboardFilters {
+  dataInicio?: Date;
+  dataFim?: Date;
+}
+
+export async function getDashboardMetrics(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const conditions: any[] = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(leads.createdAt, filtros.dataInicio));
+  }
+  
+  if (filtros?.dataFim) {
+    conditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  
+  // Total de leads
+  const totalResult = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(whereClause);
+  
+  // Leads por status
+  const statusCounts = await Promise.all([
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'aguardando_atendimento')) : eq(leads.status, 'aguardando_atendimento')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'em_atendimento')) : eq(leads.status, 'em_atendimento')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'agendado')) : eq(leads.status, 'agendado')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'visita_realizada')) : eq(leads.status, 'visita_realizada')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'analise_credito')) : eq(leads.status, 'analise_credito')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'contrato_fechado')) : eq(leads.status, 'contrato_fechado')),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
+  ]);
+  
+  // VGV - soma dos valores dos projetos dos leads com contrato fechado
+  // Por enquanto, vamos calcular baseado no valorMinimo dos projetos
+  const vgvResult = await db.select({ 
+    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
+  })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(conditions.length > 0 
+      ? and(...conditions, eq(leads.status, 'contrato_fechado')) 
+      : eq(leads.status, 'contrato_fechado'));
+  
+  return {
+    total: Number(totalResult[0]?.count || 0),
+    aguardando: Number(statusCounts[0][0]?.count || 0),
+    emAtendimento: Number(statusCounts[1][0]?.count || 0),
+    agendado: Number(statusCounts[2][0]?.count || 0),
+    visitaRealizada: Number(statusCounts[3][0]?.count || 0),
+    analiseCredito: Number(statusCounts[4][0]?.count || 0),
+    contratoFechado: Number(statusCounts[5][0]?.count || 0),
+    perdido: Number(statusCounts[6][0]?.count || 0),
+    vgv: Number(vgvResult[0]?.total || 0),
+  };
+}
+
+export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const result = await Promise.all(corretores.map(async (corretor) => {
+    const conditions: any[] = [eq(leads.corretorId, corretor.id)];
+    
+    if (filtros?.dataInicio) {
+      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+    }
+    
+    if (filtros?.dataFim) {
+      conditions.push(lte(leads.createdAt, filtros.dataFim));
+    }
+    
+    const totalLeads = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions));
+    
+    return {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      status: corretor.status,
+      totalLeads: Number(totalLeads[0]?.count || 0),
+    };
+  }));
+  
+  return result.filter(c => c.status === 'presente').sort((a, b) => b.totalLeads - a.totalLeads);
+}
+
+export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const result = await Promise.all(corretores.map(async (corretor) => {
+    const conditions: any[] = [
+      eq(leads.corretorId, corretor.id),
+      eq(leads.status, 'agendado')
+    ];
+    
+    if (filtros?.dataInicio) {
+      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+    }
+    
+    if (filtros?.dataFim) {
+      conditions.push(lte(leads.createdAt, filtros.dataFim));
+    }
+    
+    const agendados = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions));
+    
+    return {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      status: corretor.status,
+      agendados: Number(agendados[0]?.count || 0),
+    };
+  }));
+  
+  return result.filter(c => c.status === 'presente').sort((a, b) => b.agendados - a.agendados);
+}
+
+export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const result = await Promise.all(corretores.map(async (corretor) => {
+    const conditions: any[] = [
+      eq(leads.corretorId, corretor.id),
+      eq(leads.status, 'visita_realizada')
+    ];
+    
+    if (filtros?.dataInicio) {
+      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+    }
+    
+    if (filtros?.dataFim) {
+      conditions.push(lte(leads.createdAt, filtros.dataFim));
+    }
+    
+    const visitas = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions));
+    
+    return {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      status: corretor.status,
+      visitas: Number(visitas[0]?.count || 0),
+    };
+  }));
+  
+  return result.filter(c => c.status === 'presente').sort((a, b) => b.visitas - a.visitas);
+}
+
+export async function getVendasPorCorretor(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const result = await Promise.all(corretores.map(async (corretor) => {
+    const conditions: any[] = [
+      eq(leads.corretorId, corretor.id),
+      eq(leads.status, 'contrato_fechado')
+    ];
+    
+    if (filtros?.dataInicio) {
+      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+    }
+    
+    if (filtros?.dataFim) {
+      conditions.push(lte(leads.createdAt, filtros.dataFim));
+    }
+    
+    // Quantidade de contratos fechados
+    const vendas = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions));
+    
+    // VGV do corretor (soma dos valores dos projetos)
+    const vgvResult = await db.select({ 
+      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
+    })
+      .from(leads)
+      .leftJoin(projects, eq(leads.projectId, projects.id))
+      .where(and(...conditions));
+    
+    return {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      status: corretor.status,
+      vendas: Number(vendas[0]?.count || 0),
+      vgv: Number(vgvResult[0]?.total || 0),
+    };
+  }));
+  
+  return result.filter(c => c.status === 'presente').sort((a, b) => b.vgv - a.vgv);
+}

@@ -769,6 +769,81 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // DASHBOARD DO GESTOR
+  // ============================================================================
+  dashboard: router({
+    // Métricas gerais do dashboard
+    metrics: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getDashboardMetrics(filtros);
+      }),
+    
+    // Leads por corretor
+    leadsPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getLeadsPorCorretorDashboard(filtros);
+      }),
+    
+    // Agendamentos por corretor
+    agendamentosPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getAgendamentosPorCorretor(filtros);
+      }),
+    
+    // Visitas por corretor
+    visitasPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getVisitasPorCorretor(filtros);
+      }),
+    
+    // Vendas por corretor
+    vendasPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getVendasPorCorretor(filtros);
+      }),
+  }),
+
+  // ============================================================================
   // NOTIFICAÇÕES
   // ============================================================================
   notifications: router({

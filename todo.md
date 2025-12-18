@@ -644,3 +644,15 @@
 - [x] Adicionar item no menu lateral para ambos os perfis (gestor e corretor)
 - [x] Garantir sincronização com outras páginas (Meus Leads, Dashboard, Relatórios)
 - [x] Criar testes unitários para a funcionalidade Kanban (6 testes passando)
+
+## Nova Feature: Dashboard Completo do Gestor
+- [x] Criar cards de métricas por status (Total, Aguardando, Em Atendimento, Agendado, Visita Realizada, Análise de Crédito, Contrato Fechado, Perdidos)
+- [x] Criar card de VGV (Valor Geral de Venda - R$)
+- [x] Criar tabela "Leads por Corretor" (corretor | quantidade de leads)
+- [x] Criar tabela "Agendamentos por Corretor" (corretor | quantidade em status Agendado)
+- [x] Criar tabela "Visitas por Corretor" (corretor | quantidade em status Visita Realizada)
+- [x] Criar tabela "Vendas por Corretor" (corretor | VGV | quantidade de Contratos Fechados)
+- [x] Implementar filtro de data personalizado com seleção de período
+- [x] Implementar filtros predefinidos (Hoje, Ontem, Esta Semana, Este Mês, Mês Passado, Este Ano)
+- [x] Criar procedures backend para métricas filtradas por data
+- [x] Criar testes unitários para as novas procedures (10 testes passando)
