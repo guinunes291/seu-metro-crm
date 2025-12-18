@@ -1,4 +1,4 @@
-import { getDb } from "./db";
+import { getDb, notifyLeadDistribuido } from "./db";
 import { users, leads, conversionStats, distributionLog } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
@@ -280,6 +280,13 @@ export async function distribuirLeadAutomatico(
     corretorId: melhorCorretor,
     tipo: "automatica",
   });
+
+  // Enviar notificação para o corretor
+  try {
+    await notifyLeadDistribuido(melhorCorretor, leadId, leadData.nome);
+  } catch (error) {
+    console.error("Erro ao enviar notificação:", error);
+  }
 
   return { success: true, corretorId: melhorCorretor };
 }

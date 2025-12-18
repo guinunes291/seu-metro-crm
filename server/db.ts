@@ -8,7 +8,8 @@ import {
   leadHistory, InsertLeadHistory,
   distributionLog, InsertDistributionLog,
   conversionStats, InsertConversionStats,
-  quickMessages, InsertQuickMessage
+  quickMessages, InsertQuickMessage,
+  notifications, InsertNotification
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -448,4 +449,247 @@ export async function createQuickMessage(message: InsertQuickMessage) {
   
   const result = await db.insert(quickMessages).values(message);
   return result;
+}
+
+
+// ============================================================================
+// HISTÓRICO DE DISTRIBUIÇÕES (PARA GESTOR)
+// ============================================================================
+
+export async function getHistoricoDistribuicoes(limit: number = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({
+    id: distributionLog.id,
+    leadId: distributionLog.leadId,
+    corretorId: distributionLog.corretorId,
+    tipo: distributionLog.tipo,
+    motivo: distributionLog.motivo,
+    createdAt: distributionLog.createdAt,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    corretorNome: users.name,
+    corretorEmail: users.email,
+  })
+    .from(distributionLog)
+    .leftJoin(leads, eq(distributionLog.leadId, leads.id))
+    .leftJoin(users, eq(distributionLog.corretorId, users.id))
+    .orderBy(desc(distributionLog.createdAt))
+    .limit(limit);
+  
+  return result;
+}
+
+// ============================================================================
+// LEADS POR CORRETOR COM FILTROS (PARA GESTOR)
+// ============================================================================
+
+interface FiltrosLeadsPorCorretor {
+  corretorId?: number;
+  status?: string;
+  projectId?: number;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCorretor) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (filtros?.corretorId) {
+    conditions.push(eq(leads.corretorId, filtros.corretorId));
+  }
+  
+  if (filtros?.status) {
+    conditions.push(eq(leads.status, filtros.status as any));
+  }
+  
+  if (filtros?.projectId) {
+    conditions.push(eq(leads.projectId, filtros.projectId));
+  }
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(leads.createdAt, new Date(filtros.dataInicio)));
+  }
+  
+  if (filtros?.dataFim) {
+    conditions.push(lte(leads.createdAt, new Date(filtros.dataFim)));
+  }
+  
+  const result = await db.select({
+    id: leads.id,
+    nome: leads.nome,
+    telefone: leads.telefone,
+    email: leads.email,
+    status: leads.status,
+    origem: leads.origem,
+    createdAt: leads.createdAt,
+    updatedAt: leads.updatedAt,
+    projectId: leads.projectId,
+    corretorId: leads.corretorId,
+    corretorNome: users.name,
+    corretorEmail: users.email,
+    projectNome: projects.nome,
+  })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(leads.createdAt))
+    .limit(100);
+  
+  return result;
+}
+
+// ============================================================================
+// ESTATÍSTICAS POR CORRETOR (PARA GESTOR)
+// ============================================================================
+
+export async function getEstatisticasPorCorretor() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar todos os corretores
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const estatisticas = await Promise.all(corretores.map(async (corretor) => {
+    // Total de leads
+    const totalLeads = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(eq(leads.corretorId, corretor.id));
+    
+    // Leads por status
+    const leadsNovos = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'novo')));
+    
+    const leadsAguardando = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'aguardando_atendimento')));
+    
+    const leadsEmAtendimento = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'em_atendimento')));
+    
+    const leadsAgendados = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'agendado')));
+    
+    const leadsVisitou = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'visita_realizada')));
+    
+    const leadsAnalise = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'analise_credito')));
+    
+    const leadsContrato = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'contrato_fechado')));
+    
+    const leadsPerdidos = await db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(eq(leads.corretorId, corretor.id), eq(leads.status, 'perdido')));
+    
+    const total = Number(totalLeads[0]?.count || 0);
+    const contratos = Number(leadsContrato[0]?.count || 0);
+    const taxaConversao = total > 0 ? (contratos / total) * 100 : 0;
+    
+    return {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      email: corretor.email || '',
+      status: corretor.status || 'ausente',
+      totalLeads: total,
+      novos: Number(leadsNovos[0]?.count || 0),
+      aguardando: Number(leadsAguardando[0]?.count || 0),
+      emAtendimento: Number(leadsEmAtendimento[0]?.count || 0),
+      agendados: Number(leadsAgendados[0]?.count || 0),
+      visitou: Number(leadsVisitou[0]?.count || 0),
+      analise: Number(leadsAnalise[0]?.count || 0),
+      contratos,
+      perdidos: Number(leadsPerdidos[0]?.count || 0),
+      taxaConversao: taxaConversao.toFixed(1),
+    };
+  }));
+  
+  return estatisticas;
+}
+
+
+// ============================================================================
+// NOTIFICAÇÕES
+// ============================================================================
+
+export async function createNotification(notification: InsertNotification) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(notifications).values(notification);
+  return result;
+}
+
+export async function getNotificationsForUser(userId: number, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(notifications)
+    .where(eq(notifications.userId, userId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+export async function getUnreadNotificationsCount(userId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(notifications)
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.lida, false)
+    ));
+  
+  return Number(result[0]?.count || 0);
+}
+
+export async function markNotificationAsRead(notificationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ lida: true, lidaEm: new Date() })
+    .where(and(
+      eq(notifications.id, notificationId),
+      eq(notifications.userId, userId)
+    ));
+}
+
+export async function markAllNotificationsAsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(notifications)
+    .set({ lida: true, lidaEm: new Date() })
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.lida, false)
+    ));
+}
+
+// Função para criar notificação quando lead é distribuído
+export async function notifyLeadDistribuido(corretorId: number, leadId: number, leadNome: string) {
+  return await createNotification({
+    userId: corretorId,
+    titulo: "Novo lead recebido!",
+    mensagem: `Você recebeu um novo lead: ${leadNome}. Entre em contato o mais rápido possível.`,
+    tipo: "lead_recebido",
+    leadId: leadId,
+  });
 }

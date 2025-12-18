@@ -592,6 +592,33 @@ export const appRouter = router({
         const status = await getCorretorStatus(input.corretorId);
         return { elegivel, status };
       }),
+
+    // Obter histórico de distribuições
+    getHistorico: gestorProcedure
+      .input(z.object({ limit: z.number().default(20) }).optional())
+      .query(async ({ input }) => {
+        const limit = input?.limit || 20;
+        return await db.getHistoricoDistribuicoes(limit);
+      }),
+
+    // Obter leads por corretor com filtros
+    getLeadsPorCorretor: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        status: z.enum(['novo', 'aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido']).optional(),
+        projectId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getLeadsPorCorretorComFiltros(input);
+      }),
+
+    // Obter estatísticas por corretor
+    getEstatisticasPorCorretor: gestorProcedure
+      .query(async () => {
+        return await db.getEstatisticasPorCorretor();
+      }),
   }),
 
   // ============================================================================
@@ -738,6 +765,39 @@ export const appRouter = router({
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
         return await calcularConversaoPorCorretor(periodo);
+      }),
+  }),
+
+  // ============================================================================
+  // NOTIFICAÇÕES
+  // ============================================================================
+  notifications: router({
+    // Listar notificações do usuário
+    list: protectedProcedure
+      .input(z.object({ limit: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getNotificationsForUser(ctx.user.id, input?.limit || 50);
+      }),
+
+    // Contar notificações não lidas
+    unreadCount: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getUnreadNotificationsCount(ctx.user.id);
+      }),
+
+    // Marcar notificação como lida
+    markAsRead: protectedProcedure
+      .input(z.object({ notificationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.markNotificationAsRead(input.notificationId, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Marcar todas como lidas
+    markAllAsRead: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        await db.markAllNotificationsAsRead(ctx.user.id);
+        return { success: true };
       }),
   }),
 });

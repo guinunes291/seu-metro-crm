@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -32,8 +32,10 @@ const menuItems = [
   { icon: Building2, label: "Projetos", path: "/projetos" },
   { icon: Users, label: "Meus Leads", path: "/leads" },
   { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance" },
+  { icon: Bell, label: "Notificações", path: "/notificacoes" },
   { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin"] },
   { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
+  { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor", roles: ["gestor", "admin"] },
   { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
   { icon: Building2, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin"] },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios" },

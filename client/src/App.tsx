@@ -19,6 +19,8 @@ import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
 import ImportarCSV from "@/pages/ImportarCSV";
 import ControleDistribuicao from "@/pages/ControleDistribuicao";
+import Notificacoes from "@/pages/Notificacoes";
+import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
 
 
 
@@ -38,6 +40,8 @@ function Router() {
       <Route path="/minha-performance" component={MinhaPerformance} />
       <Route path="/importar-csv" component={ImportarCSV} />
       <Route path="/controle-distribuicao" component={ControleDistribuicao} />
+      <Route path="/notificacoes" component={Notificacoes} />
+      <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
 
 
       <Route path={"/404"} component={NotFound} />

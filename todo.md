@@ -562,3 +562,49 @@
 - [x] Seção de regras de elegibilidade
 - [x] Adicionar rota no App.tsx (/controle-distribuicao)
 - [x] Atualizar link no menu lateral DashboardLayout
+
+
+## Nova Feature: Histórico de Distribuições, Notificações e Dashboard por Corretor
+
+### Fase 1: Histórico de Distribuições
+- [ ] Criar procedure para buscar últimas 20 distribuições
+- [ ] Adicionar tabela de histórico na página de controle
+- [ ] Exibir data/hora, corretor, lead e status
+
+### Fase 2: Notificações para Corretores
+- [ ] Criar sistema de notificações in-app
+- [ ] Enviar notificação quando corretor recebe novo lead
+- [ ] Criar página de notificações do corretor
+- [ ] Adicionar badge de notificações não lidas no menu
+
+### Fase 3: Dashboard de Leads por Corretor
+- [ ] Criar página LeadsPorCorretor.tsx
+- [ ] Implementar filtros (status, projeto, período)
+- [ ] Exibir estatísticas por corretor
+- [ ] Adicionar tabela detalhada de leads
+- [ ] Adicionar rota e link no menu
+
+
+## ✅ CONCLUÍDO: Histórico, Notificações e Dashboard de Leads por Corretor
+
+### Histórico de Distribuições
+- [x] Criar procedure getHistoricoDistribuicoes no backend
+- [x] Adicionar tabela de histórico na página de Controle de Distribuição
+- [x] Exibir últimas 20 distribuições com data/hora, corretor, lead e status
+
+### Sistema de Notificações para Corretores
+- [x] Criar tabela de notificações no banco de dados
+- [x] Criar funções de CRUD de notificações no db.ts
+- [x] Adicionar criação de notificação após distribuição de lead
+- [x] Criar procedures tRPC para notificações (list, marcarComoLida, marcarTodasComoLidas, countNaoLidas)
+- [x] Criar página de Notificações para corretores
+- [x] Adicionar link de notificações no menu lateral
+
+### Dashboard de Leads por Corretor
+- [x] Criar procedure getLeadsPorCorretorComFiltros no backend
+- [x] Criar procedure getEstatisticasPorCorretor no backend
+- [x] Criar página LeadsPorCorretor.tsx com cards de resumo
+- [x] Adicionar filtros por corretor, status e período
+- [x] Adicionar tabela de leads com detalhes
+- [x] Adicionar rota no App.tsx (/leads-por-corretor)
+- [x] Adicionar link no menu lateral (apenas para gestores)

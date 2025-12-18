@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play } from "lucide-react";
+import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play, History, Clock } from "lucide-react";
 
 export default function ControleDistribuicao() {
   const [resultado, setResultado] = useState<{
@@ -16,6 +16,9 @@ export default function ControleDistribuicao() {
   // Buscar estatísticas de distribuição
   const { data: estatisticas, isLoading, refetch } = trpc.distribution.getEstatisticas.useQuery();
 
+  // Buscar histórico de distribuições
+  const { data: historico, refetch: refetchHistorico } = trpc.distribution.getHistorico.useQuery({ limit: 20 });
+
   // Mutation para distribuir todos os leads
   const distribuirTodos = trpc.distribution.distribuirTodos.useMutation({
     onSuccess: (data) => {
@@ -24,6 +27,7 @@ export default function ControleDistribuicao() {
         mensagem: `✅ Distribuição concluída! ${data.success} leads distribuídos com sucesso${data.failed > 0 ? `, ${data.failed} falharam` : ""}.`,
       });
       refetch();
+      refetchHistorico();
     },
     onError: (error) => {
       setResultado({
@@ -251,6 +255,70 @@ export default function ControleDistribuicao() {
           </CardContent>
         </Card>
       )}
+
+      {/* Histórico de Distribuições */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico de Distribuições
+          </CardTitle>
+          <CardDescription>
+            Últimas 20 distribuições realizadas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {historico && historico.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data/Hora</TableHead>
+                  <TableHead>Lead</TableHead>
+                  <TableHead>Corretor</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Motivo</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historico.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString('pt-BR') : '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{item.leadNome || 'Lead removido'}</div>
+                        <div className="text-xs text-muted-foreground">{item.leadTelefone || '-'}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <div>{item.corretorNome || 'Corretor removido'}</div>
+                        <div className="text-xs text-muted-foreground">{item.corretorEmail || '-'}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={item.tipo === 'automatica' ? 'default' : 'secondary'}>
+                        {item.tipo === 'automatica' ? 'Automática' : item.tipo === 'manual' ? 'Manual' : 'Inicial'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                      {item.motivo || '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              Nenhuma distribuição realizada ainda
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Informações sobre as regras */}
       <Card>

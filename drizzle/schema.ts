@@ -283,3 +283,30 @@ export const quickMessages = mysqlTable("quick_messages", {
 
 export type QuickMessage = typeof quickMessages.$inferSelect;
 export type InsertQuickMessage = typeof quickMessages.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE NOTIFICAÇÕES
+// ============================================================================
+
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // Usuário que recebe a notificação
+  
+  // Conteúdo
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  mensagem: text("mensagem").notNull(),
+  tipo: mysqlEnum("tipo", ["lead_recebido", "follow_up", "sistema", "alerta"]).default("sistema").notNull(),
+  
+  // Referência opcional
+  leadId: int("leadId"), // Lead relacionado (se aplicável)
+  
+  // Status
+  lida: boolean("lida").default(false).notNull(),
+  lidaEm: timestamp("lidaEm"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
