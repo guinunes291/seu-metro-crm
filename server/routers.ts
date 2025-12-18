@@ -964,6 +964,70 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // RANKING E PERFORMANCE AVANÇADA
+  // ============================================================================
+  ranking: router({
+    // Ranking completo de corretores com fotos
+    getCompleto: corretorProcedure
+      .input(z.object({
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getRankingCorretores(input?.mes, input?.ano);
+      }),
+    
+    // Performance individual do corretor
+    getPerformance: corretorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getPerformanceCorretor(input.corretorId, input.mes, input.ano);
+      }),
+    
+    // Performance do corretor logado
+    minhaPerformance: corretorProcedure
+      .input(z.object({
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getPerformanceCorretor(ctx.user.id, input?.mes, input?.ano);
+      }),
+  }),
+
+  // ============================================================================
+  // UPLOAD DE FOTO DE PERFIL
+  // ============================================================================
+  foto: router({
+    // Atualizar foto do corretor
+    update: corretorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        fotoUrl: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Apenas gestor pode atualizar foto de outros
+        if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin' && ctx.user.id !== input.corretorId) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão para atualizar foto de outro corretor' });
+        }
+        await db.updateCorretorFoto(input.corretorId, input.fotoUrl);
+        return { success: true };
+      }),
+    
+    // Atualizar minha foto
+    updateMinha: corretorProcedure
+      .input(z.object({ fotoUrl: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateCorretorFoto(ctx.user.id, input.fotoUrl);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
   // NOTIFICAÇÕES
   // ============================================================================
   notifications: router({

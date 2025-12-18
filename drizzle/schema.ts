@@ -26,6 +26,7 @@ export const users = mysqlTable("users", {
   // Campos específicos para corretores
   status: mysqlEnum("status", ["presente", "ausente"]).default("ausente").notNull(),
   telefone: varchar("telefone", { length: 20 }),
+  fotoUrl: text("fotoUrl"), // URL da foto de perfil do corretor
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -146,6 +146,7 @@ export async function createCorretor(data: {
   email?: string;
   telefone?: string;
   status?: "presente" | "ausente";
+  fotoUrl?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -160,6 +161,7 @@ export async function createCorretor(data: {
     telefone: data.telefone || null,
     role: "corretor",
     status: data.status || "ausente",
+    fotoUrl: data.fotoUrl || null,
   });
   
   return result;
@@ -170,12 +172,22 @@ export async function updateCorretor(id: number, data: {
   email?: string;
   telefone?: string;
   status?: "presente" | "ausente";
+  fotoUrl?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   await db.update(users)
     .set({ ...data, updatedAt: new Date() })
+    .where(eq(users.id, id));
+}
+
+export async function updateCorretorFoto(id: number, fotoUrl: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(users)
+    .set({ fotoUrl, updatedAt: new Date() })
     .where(eq(users.id, id));
 }
 
@@ -1258,4 +1270,223 @@ export async function getProgressoMetasTodosCorretores(mes: number, ano: number)
   }
   
   return resultados;
+}
+
+
+// ============================================================================
+// RANKING DE CORRETORES
+// ============================================================================
+
+export async function getRankingCorretores(mes?: number, ano?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Se não especificado, usa o mês/ano atual
+  const dataAtual = new Date();
+  const mesAtual = mes || dataAtual.getMonth() + 1;
+  const anoAtual = ano || dataAtual.getFullYear();
+  
+  // Período do mês
+  const dataInicio = new Date(anoAtual, mesAtual - 1, 1);
+  const dataFim = new Date(anoAtual, mesAtual, 0, 23, 59, 59, 999);
+  
+  // Buscar todos os corretores
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const ranking = [];
+  
+  for (const corretor of corretores) {
+    // Buscar métricas do corretor no período
+    const leadsDoMes = await db.select({
+      status: leads.status,
+      count: sql<number>`count(*)`
+    })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretor.id),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim)
+      ))
+      .groupBy(leads.status);
+    
+    let totalLeads = 0;
+    let agendamentos = 0;
+    let visitas = 0;
+    let contratos = 0;
+    
+    for (const row of leadsDoMes) {
+      const count = Number(row.count);
+      totalLeads += count;
+      
+      if (row.status === 'agendado') agendamentos = count;
+      if (row.status === 'visita_realizada') visitas = count;
+      if (row.status === 'contrato_fechado') contratos = count;
+    }
+    
+    // Calcular VGV
+    const vgvResult = await db.select({
+      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
+    })
+      .from(leads)
+      .leftJoin(projects, eq(leads.projectId, projects.id))
+      .where(and(
+        eq(leads.corretorId, corretor.id),
+        eq(leads.status, 'contrato_fechado'),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim)
+      ));
+    
+    const vgv = Number(vgvResult[0]?.total || 0);
+    
+    // Calcular pontuação (peso maior para contratos e VGV)
+    const pontuacao = (totalLeads * 1) + (agendamentos * 5) + (visitas * 10) + (contratos * 50) + (vgv / 10000);
+    
+    ranking.push({
+      corretor: {
+        id: corretor.id,
+        nome: corretor.name || 'Sem nome',
+        email: corretor.email,
+        fotoUrl: corretor.fotoUrl,
+        status: corretor.status,
+      },
+      metricas: {
+        totalLeads,
+        agendamentos,
+        visitas,
+        contratos,
+        vgv,
+      },
+      pontuacao: Math.round(pontuacao),
+    });
+  }
+  
+  // Ordenar por pontuação (maior primeiro)
+  ranking.sort((a, b) => b.pontuacao - a.pontuacao);
+  
+  // Adicionar posição
+  return ranking.map((item, index) => ({
+    ...item,
+    posicao: index + 1,
+  }));
+}
+
+export async function getPerformanceCorretor(corretorId: number, mes?: number, ano?: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Se não especificado, usa o mês/ano atual
+  const dataAtual = new Date();
+  const mesAtual = mes || dataAtual.getMonth() + 1;
+  const anoAtual = ano || dataAtual.getFullYear();
+  
+  // Período do mês
+  const dataInicio = new Date(anoAtual, mesAtual - 1, 1);
+  const dataFim = new Date(anoAtual, mesAtual, 0, 23, 59, 59, 999);
+  
+  // Buscar corretor
+  const corretor = await getUserById(corretorId);
+  if (!corretor) return null;
+  
+  // Buscar métricas do corretor no período
+  const leadsDoMes = await db.select({
+    status: leads.status,
+    count: sql<number>`count(*)`
+  })
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ))
+    .groupBy(leads.status);
+  
+  let totalLeads = 0;
+  let novos = 0;
+  let aguardando = 0;
+  let emAtendimento = 0;
+  let agendamentos = 0;
+  let visitas = 0;
+  let analiseCredito = 0;
+  let contratos = 0;
+  let perdidos = 0;
+  
+  for (const row of leadsDoMes) {
+    const count = Number(row.count);
+    totalLeads += count;
+    
+    switch (row.status) {
+      case 'novo': novos = count; break;
+      case 'aguardando_atendimento': aguardando = count; break;
+      case 'em_atendimento': emAtendimento = count; break;
+      case 'agendado': agendamentos = count; break;
+      case 'visita_realizada': visitas = count; break;
+      case 'analise_credito': analiseCredito = count; break;
+      case 'contrato_fechado': contratos = count; break;
+      case 'perdido': perdidos = count; break;
+    }
+  }
+  
+  // Calcular VGV
+  const vgvResult = await db.select({
+    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
+  })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      eq(leads.status, 'contrato_fechado'),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ));
+  
+  const vgv = Number(vgvResult[0]?.total || 0);
+  
+  // Buscar meta do corretor
+  const meta = await getMetaByCorretorMesAno(corretorId, mesAtual, anoAtual);
+  
+  // Calcular taxa de conversão
+  const taxaConversao = totalLeads > 0 ? Math.round((contratos / totalLeads) * 100) : 0;
+  
+  return {
+    corretor: {
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      email: corretor.email,
+      fotoUrl: corretor.fotoUrl,
+      status: corretor.status,
+    },
+    periodo: {
+      mes: mesAtual,
+      ano: anoAtual,
+    },
+    metricas: {
+      totalLeads,
+      novos,
+      aguardando,
+      emAtendimento,
+      agendamentos,
+      visitas,
+      analiseCredito,
+      contratos,
+      perdidos,
+      vgv,
+      taxaConversao,
+    },
+    meta: meta ? {
+      leads: meta.metaLeads,
+      agendamentos: meta.metaAgendamentos,
+      visitas: meta.metaVisitas,
+      contratos: meta.metaContratos,
+      vgv: meta.metaVGV,
+    } : null,
+    progresso: meta ? {
+      leads: meta.metaLeads > 0 ? Math.round((totalLeads / meta.metaLeads) * 100) : 0,
+      agendamentos: meta.metaAgendamentos > 0 ? Math.round((agendamentos / meta.metaAgendamentos) * 100) : 0,
+      visitas: meta.metaVisitas > 0 ? Math.round((visitas / meta.metaVisitas) * 100) : 0,
+      contratos: meta.metaContratos > 0 ? Math.round((contratos / meta.metaContratos) * 100) : 0,
+      vgv: meta.metaVGV > 0 ? Math.round((vgv / meta.metaVGV) * 100) : 0,
+    } : null,
+  };
 }
