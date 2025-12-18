@@ -1003,7 +1003,56 @@ export const appRouter = router({
   // UPLOAD DE FOTO DE PERFIL
   // ============================================================================
   foto: router({
-    // Atualizar foto do corretor
+    // Upload de foto de perfil (recebe base64)
+    upload: corretorProcedure
+      .input(z.object({
+        fileData: z.string(), // base64 data
+        fileName: z.string(),
+        contentType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        
+        // Validar tipo de arquivo
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(input.contentType)) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Tipo de arquivo não permitido. Use JPEG, PNG, GIF ou WebP.' 
+          });
+        }
+        
+        // Extrair dados base64 (remover prefixo data:image/...;base64,)
+        const base64Data = input.fileData.includes('base64,')
+          ? input.fileData.split('base64,')[1]
+          : input.fileData;
+        
+        // Converter base64 para buffer
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Validar tamanho (máx 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (buffer.length > maxSize) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Arquivo muito grande. Máximo permitido: 5MB.' 
+          });
+        }
+        
+        // Gerar nome único para o arquivo
+        const ext = input.fileName.split('.').pop() || 'jpg';
+        const uniqueFileName = `corretores/${ctx.user.id}/foto-${Date.now()}.${ext}`;
+        
+        // Fazer upload para S3
+        const { url } = await storagePut(uniqueFileName, buffer, input.contentType);
+        
+        // Atualizar URL da foto no banco
+        await db.updateCorretorFoto(ctx.user.id, url);
+        
+        return { success: true, url };
+      }),
+    
+    // Atualizar foto do corretor (apenas URL)
     update: corretorProcedure
       .input(z.object({
         corretorId: z.number(),
@@ -1018,7 +1067,7 @@ export const appRouter = router({
         return { success: true };
       }),
     
-    // Atualizar minha foto
+    // Atualizar minha foto (apenas URL)
     updateMinha: corretorProcedure
       .input(z.object({ fotoUrl: z.string() }))
       .mutation(async ({ ctx, input }) => {

@@ -688,3 +688,12 @@
 - [x] Implementar atualização em tempo real do ranking
 - [x] Adicionar animações e efeitos visuais no pódio (coroa animada, shimmer, pulse)
 - [x] Criar testes unitários para as novas funcionalidades (10 testes passando)
+
+
+## Nova Feature: Upload de Foto de Perfil para Corretores
+- [x] Criar endpoint de upload de foto no backend usando S3
+- [x] Validar tipo e tamanho do arquivo (apenas imagens, máx 5MB)
+- [x] Implementar botão de upload na página Minha Performance
+- [x] Mostrar preview da foto antes de salvar (via FileReader)
+- [x] Atualizar avatar em tempo real após upload
+- [x] Criar testes unitários para o endpoint de upload (10 testes passando)

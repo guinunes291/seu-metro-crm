@@ -339,9 +339,11 @@ function FotoUpload({ corretorId, fotoAtual, onSuccess }: { corretorId: number; 
 }
 
 function MinhaPerformance() {
-  const { user } = useAuth();
+  const { user, refresh: refetchUser } = useAuth();
   const [mes, setMes] = useState<number>(new Date().getMonth() + 1);
   const [ano, setAno] = useState<number>(new Date().getFullYear());
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const utils = trpc.useUtils();
   
@@ -350,6 +352,70 @@ function MinhaPerformance() {
   
   // Buscar minha performance
   const { data: minhaPerformance, isLoading: loadingPerformance } = trpc.ranking.minhaPerformance.useQuery({ mes, ano });
+  
+  // Mutation para upload de foto
+  const uploadFoto = trpc.foto.upload.useMutation({
+    onSuccess: () => {
+      toast.success('Foto atualizada com sucesso!');
+      refetchRanking();
+      refetchUser?.();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao fazer upload da foto');
+    },
+  });
+  
+  // Handler de upload de arquivo
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validar tipo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Tipo de arquivo não permitido. Use JPEG, PNG, GIF ou WebP.');
+      return;
+    }
+    
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo permitido: 5MB.');
+      return;
+    }
+    
+    setUploading(true);
+    
+    try {
+      // Converter para base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          await uploadFoto.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type,
+          });
+        } catch (error) {
+          console.error('Erro no upload:', error);
+        } finally {
+          setUploading(false);
+          // Limpar input
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao ler o arquivo');
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Erro ao processar o arquivo');
+      setUploading(false);
+    }
+  };
 
   const meses = [
     { value: 1, label: 'Janeiro' },
@@ -399,8 +465,8 @@ function MinhaPerformance() {
           
           <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
-              {/* Avatar do usuário */}
-              <div className="relative">
+              {/* Avatar do usuário com botão de upload */}
+              <div className="relative group">
                 <Avatar className="w-24 h-24 ring-4 ring-white/30 ring-offset-2 ring-offset-transparent shadow-2xl">
                   <AvatarImage 
                     src={meusDados?.corretor.fotoUrl || user?.fotoUrl || undefined} 
@@ -416,6 +482,26 @@ function MinhaPerformance() {
                     {minhaPosicao === 1 ? '🥇' : minhaPosicao === 2 ? '🥈' : '🥉'}
                   </div>
                 )}
+                {/* Botão de upload de foto */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                  title="Alterar foto de perfil"
+                >
+                  {uploading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-primary" />
+                  ) : (
+                    <Camera className="h-4 w-4 text-gray-700" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </div>
               
               <div>
