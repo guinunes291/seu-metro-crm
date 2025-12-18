@@ -615,3 +615,32 @@
 - [x] Adicionar DashboardLayout na página Notificacoes.tsx
 - [x] Adicionar DashboardLayout na página ControleDistribuicao.tsx
 - [x] Testar navegação entre todas as abas
+
+
+## Nova Feature: Badge de Notificações e Página Kanban
+
+### Badge de Notificações (apenas corretores)
+- [ ] Adicionar query de contagem de notificações não lidas no DashboardLayout
+- [ ] Mostrar badge vermelho com contador no ícone de Notificações
+- [ ] Restringir aba de Notificações apenas para corretores (role !== 'admin')
+- [ ] Ocultar menu de Notificações para gestores/admins
+
+### Página Kanban
+- [ ] Criar página Kanban.tsx com colunas por status
+- [ ] Implementar drag-and-drop entre colunas
+- [ ] Atualizar status do lead ao arrastar para outra coluna
+- [ ] Mostrar cards de leads com informações resumidas
+- [ ] Adicionar rota no App.tsx (/kanban)
+- [ ] Adicionar link no menu lateral para ambos os acessos
+- [ ] Corretor vê apenas seus leads, gestor vê todos
+
+## Nova Feature: Página Kanban de Leads
+- [x] Criar página Kanban com drag-and-drop (/kanban)
+- [x] Implementar colunas para cada status de lead
+- [x] Criar cards de leads com informações principais (nome, telefone, projeto)
+- [x] Implementar drag-and-drop nativo com HTML5 API
+- [x] Atualizar status do lead no banco de dados ao arrastar
+- [x] Adicionar rota no App.tsx para /kanban
+- [x] Adicionar item no menu lateral para ambos os perfis (gestor e corretor)
+- [x] Garantir sincronização com outras páginas (Meus Leads, Dashboard, Relatórios)
+- [x] Criar testes unitários para a funcionalidade Kanban (6 testes passando)

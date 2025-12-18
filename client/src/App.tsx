@@ -21,6 +21,7 @@ import ImportarCSV from "@/pages/ImportarCSV";
 import ControleDistribuicao from "@/pages/ControleDistribuicao";
 import Notificacoes from "@/pages/Notificacoes";
 import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
+import Kanban from "@/pages/Kanban";
 
 
 
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/controle-distribuicao" component={ControleDistribuicao} />
       <Route path="/notificacoes" component={Notificacoes} />
       <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
+      <Route path="/kanban" component={Kanban} />
 
 
       <Route path={"/404"} component={NotFound} />

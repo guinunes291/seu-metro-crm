@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -32,7 +33,8 @@ const menuItems = [
   { icon: Building2, label: "Projetos", path: "/projetos" },
   { icon: Users, label: "Meus Leads", path: "/leads" },
   { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance" },
-  { icon: Bell, label: "Notificações", path: "/notificacoes" },
+  { icon: Kanban, label: "Kanban", path: "/kanban" },
+  { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
   { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin"] },
   { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
   { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor", roles: ["gestor", "admin"] },
@@ -200,9 +202,12 @@ function DashboardLayoutContent({
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
+                      <div className="relative">
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        {item.showBadge && <NotificationBadge />}
+                      </div>
                       <span>{item.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -270,5 +275,21 @@ function DashboardLayoutContent({
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </>
+  );
+}
+
+
+// Componente de badge de notificações não lidas
+function NotificationBadge() {
+  const { data: unreadCount } = trpc.notifications.unreadCount.useQuery(undefined, {
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
+  });
+
+  if (!unreadCount || unreadCount === 0) return null;
+
+  return (
+    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+      {unreadCount > 9 ? "9+" : unreadCount}
+    </span>
   );
 }
