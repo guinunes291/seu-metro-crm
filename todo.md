@@ -545,3 +545,20 @@
 - [x] Testar distribuição automática a cada 5 minutos (job inicializado)
 - [x] Validar regras de elegibilidade (5 de 8 testes passando)
 - [x] Salvar checkpoint final
+
+
+## Nova Feature: Página de Controle de Distribuição para Gestor
+
+### Funcionalidades
+- [x] Criar página ControleDistribuicao.tsx
+- [x] Exibir estatísticas de todos os corretores (total leads, taxa de trabalho, elegibilidade)
+- [x] Adicionar indicadores visuais de status (presente/ausente)
+- [x] Adicionar badges de elegibilidade (elegível/não elegível)
+- [x] Implementar botão "Distribuir Agora" para distribuição manual
+- [x] Exibir feedback de sucesso/erro após distribuição
+- [x] Cards de resumo (Total, Elegíveis, Não Elegíveis)
+- [x] Tabela de corretores elegíveis com detalhes
+- [x] Tabela de corretores não elegíveis com motivos
+- [x] Seção de regras de elegibilidade
+- [x] Adicionar rota no App.tsx (/controle-distribuicao)
+- [x] Atualizar link no menu lateral DashboardLayout

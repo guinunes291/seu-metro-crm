@@ -33,7 +33,7 @@ const menuItems = [
   { icon: Users, label: "Meus Leads", path: "/leads" },
   { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance" },
   { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin"] },
-  { icon: UserCircle, label: "Distribuição", path: "/distribuicao", roles: ["gestor", "admin"] },
+  { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
   { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
   { icon: Building2, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin"] },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
