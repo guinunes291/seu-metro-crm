@@ -57,7 +57,7 @@ export default function Home() {
         </div>
         
         <p className="mt-6 text-sm text-muted-foreground">
-          Sistema completo de CRM para imobiliárias
+          SEU METRO QUADRADO
         </p>
       </div>
     </div>
