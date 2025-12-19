@@ -4,27 +4,88 @@ import * as db from './db';
 const router = Router();
 
 /**
+ * Busca os dados completos do lead via Graph API do Facebook
+ */
+async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
+  nome: string;
+  email: string;
+  telefone: string;
+} | null> {
+  const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
+  
+  if (!accessToken) {
+    console.error('[Webhook Facebook] FACEBOOK_ACCESS_TOKEN não configurado');
+    return null;
+  }
+  
+  try {
+    const url = `https://graph.facebook.com/v18.0/${leadgenId}?access_token=${accessToken}`;
+    console.log('[Webhook Facebook] Buscando lead:', leadgenId);
+    
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error('[Webhook Facebook] Erro ao buscar lead:', data.error);
+      return null;
+    }
+    
+    console.log('[Webhook Facebook] Dados do lead recebidos:', JSON.stringify(data, null, 2));
+    
+    // Extrair dados do field_data
+    let nome = '';
+    let email = '';
+    let telefone = '';
+    
+    if (data.field_data) {
+      for (const field of data.field_data) {
+        const fieldName = field.name?.toLowerCase();
+        const value = field.values?.[0] || '';
+        
+        // Mapear diferentes nomes de campos possíveis
+        if (fieldName === 'full_name' || fieldName === 'nome' || fieldName === 'name' || 
+            fieldName === 'nome_completo' || fieldName === 'primeiro_nome') {
+          nome = value;
+        } else if (fieldName === 'email' || fieldName === 'e-mail') {
+          email = value;
+        } else if (fieldName === 'phone_number' || fieldName === 'telefone' || 
+                   fieldName === 'phone' || fieldName === 'celular' || fieldName === 'whatsapp') {
+          telefone = value;
+        }
+      }
+    }
+    
+    return { nome, email, telefone };
+    
+  } catch (error) {
+    console.error('[Webhook Facebook] Erro na requisição:', error);
+    return null;
+  }
+}
+
+/**
  * Webhook para receber leads do Facebook Ads
  * 
  * Endpoint: POST /api/webhook/facebook/:token
  * 
- * O Facebook envia os dados no formato:
+ * O Facebook envia uma notificação com o leadgen_id:
  * {
+ *   "object": "page",
  *   "entry": [{
+ *     "id": "PAGE_ID",
+ *     "time": 1234567890,
  *     "changes": [{
+ *       "field": "leadgen",
  *       "value": {
- *         "leadgen_id": "123456789",
- *         "page_id": "987654321",
- *         "form_id": "111222333",
- *         "field_data": [
- *           { "name": "full_name", "values": ["João Silva"] },
- *           { "name": "email", "values": ["joao@email.com"] },
- *           { "name": "phone_number", "values": ["+5511999999999"] }
- *         ]
+ *         "leadgen_id": "LEAD_ID",
+ *         "page_id": "PAGE_ID",
+ *         "form_id": "FORM_ID"
  *       }
  *     }]
  *   }]
  * }
+ * 
+ * Após receber, buscamos os dados completos via Graph API
  */
 router.post('/facebook/:token', async (req: Request, res: Response) => {
   try {
@@ -33,43 +94,79 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     
     console.log('[Webhook Facebook] Recebido:', JSON.stringify(body, null, 2));
     
-    // Extrair dados do lead do formato do Facebook
     let nome = '';
     let email = '';
     let telefone = '';
     
-    // Verificar se é o formato do Facebook Lead Ads
+    // Verificar se é o formato de notificação do Facebook (com leadgen_id)
     if (body.entry && body.entry[0]?.changes) {
-      const fieldData = body.entry[0].changes[0]?.value?.field_data || [];
+      const change = body.entry[0].changes[0];
       
-      for (const field of fieldData) {
-        const fieldName = field.name?.toLowerCase();
-        const value = field.values?.[0] || '';
+      // Formato de notificação do Facebook Lead Ads
+      if (change?.field === 'leadgen' && change?.value?.leadgen_id) {
+        const leadgenId = change.value.leadgen_id;
+        console.log('[Webhook Facebook] Leadgen ID recebido:', leadgenId);
         
-        if (fieldName === 'full_name' || fieldName === 'nome' || fieldName === 'name') {
-          nome = value;
-        } else if (fieldName === 'email') {
-          email = value;
-        } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
-          telefone = value;
+        // Buscar dados completos do lead via Graph API
+        const leadData = await fetchLeadDataFromFacebook(leadgenId);
+        
+        if (leadData) {
+          nome = leadData.nome;
+          email = leadData.email;
+          telefone = leadData.telefone;
+        } else {
+          console.log('[Webhook Facebook] Não foi possível buscar dados do lead');
+          return res.status(200).json({
+            success: false,
+            message: 'Não foi possível buscar dados do lead via Graph API',
+          });
+        }
+      }
+      // Formato antigo com field_data direto (alguns formulários ainda enviam assim)
+      else if (change?.value?.field_data) {
+        const fieldData = change.value.field_data;
+        
+        for (const field of fieldData) {
+          const fieldName = field.name?.toLowerCase();
+          const value = field.values?.[0] || '';
+          
+          if (fieldName === 'full_name' || fieldName === 'nome' || fieldName === 'name') {
+            nome = value;
+          } else if (fieldName === 'email') {
+            email = value;
+          } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
+            telefone = value;
+          }
         }
       }
     } 
-    // Formato simplificado (para testes e outras integrações)
-    else if (body.nome || body.name) {
-      nome = body.nome || body.name || '';
+    // Formato simplificado (para testes e outras integrações como Zapier)
+    else if (body.nome || body.name || body.full_name) {
+      nome = body.nome || body.name || body.full_name || '';
       email = body.email || '';
       telefone = body.telefone || body.phone || body.phone_number || '';
     }
     
     // Validar dados mínimos
-    if (!nome || !telefone) {
-      console.log('[Webhook Facebook] Dados insuficientes:', { nome, telefone });
-      return res.status(400).json({ 
+    if (!nome && !telefone) {
+      console.log('[Webhook Facebook] Dados insuficientes:', { nome, telefone, body });
+      // Retornar 200 para o Facebook não reenviar
+      return res.status(200).json({ 
+        success: false,
         error: 'Dados insuficientes',
-        message: 'Nome e telefone são obrigatórios',
+        message: 'Nome ou telefone são obrigatórios',
         received: { nome, telefone }
       });
+    }
+    
+    // Se não tiver nome, usar telefone como nome temporário
+    if (!nome && telefone) {
+      nome = `Lead ${telefone}`;
+    }
+    
+    // Se não tiver telefone, usar placeholder
+    if (!telefone && nome) {
+      telefone = 'Não informado';
     }
     
     // Processar lead via roleta
@@ -95,7 +192,9 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[Webhook Facebook] Erro:', error);
     
-    return res.status(400).json({
+    // Retornar 200 para o Facebook não reenviar em caso de erro
+    return res.status(200).json({
+      success: false,
       error: 'Erro ao processar webhook',
       message: error.message,
     });
@@ -147,7 +246,7 @@ router.get('/facebook/:token', async (req: Request, res: Response) => {
 });
 
 /**
- * Webhook genérico para outras integrações
+ * Webhook genérico para outras integrações (Zapier, Make, etc)
  * 
  * Endpoint: POST /api/webhook/lead/:token
  * 
@@ -161,10 +260,10 @@ router.get('/facebook/:token', async (req: Request, res: Response) => {
 router.post('/lead/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
-    const { nome, email, telefone, name, phone } = req.body;
+    const { nome, email, telefone, name, phone, full_name, phone_number } = req.body;
     
-    const leadNome = nome || name || '';
-    const leadTelefone = telefone || phone || '';
+    const leadNome = nome || name || full_name || '';
+    const leadTelefone = telefone || phone || phone_number || '';
     
     if (!leadNome || !leadTelefone) {
       return res.status(400).json({ 

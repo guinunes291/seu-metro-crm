@@ -836,3 +836,14 @@
 - [ ] Criar página /historico-distribuicao com filtros por data e corretor
 - [ ] Mostrar data/hora, lead, corretor, origem (manual/automático/webhook)
 - [ ] Adicionar paginação para grandes volumes de dados
+
+## ✅ Integração Facebook Lead Ads - Graph API
+- [x] Configurar FACEBOOK_ACCESS_TOKEN como variável de ambiente
+- [x] Atualizar webhook para receber notificações do Facebook (leadgen_id)
+- [x] Implementar função fetchLeadDataFromFacebook para buscar dados via Graph API
+- [x] Mapear campos do Facebook (full_name, email, phone_number) para campos do CRM
+- [x] Suportar campos em português (nome, telefone, e-mail)
+- [x] Integrar com sistema de roleta para distribuição automática
+- [x] Criar testes unitários (5 testes passando)
+- [ ] Testar com lead real do Facebook Ads Manager
+- [ ] Converter token para longa duração (60 dias ou permanente)
