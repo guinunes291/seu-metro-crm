@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
-  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2
+  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -487,6 +487,21 @@ export default function Leads() {
                           </Select>
                           
                           <div className="flex gap-2">
+                            {lead.telefone && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                                onClick={() => {
+                                  const phone = lead.telefone.replace(/\D/g, '');
+                                  const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                                  window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                }}
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            
                             <Button
                               variant="outline"
                               size="sm"
@@ -618,6 +633,21 @@ export default function Leads() {
                       <a href={`tel:${selectedLead.telefone}`} className="hover:underline">
                         {selectedLead.telefone}
                       </a>
+                      {selectedLead.telefone && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="ml-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                          onClick={() => {
+                            const phone = selectedLead.telefone.replace(/\D/g, '');
+                            const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                            window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                          }}
+                        >
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          WhatsApp
+                        </Button>
+                      )}
                     </div>
                     {selectedLead.email && (
                       <div className="flex items-center gap-2 text-sm">

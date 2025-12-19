@@ -4,7 +4,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Mail, GripVertical } from "lucide-react";
+import { Loader2, Phone, Mail, GripVertical, MessageCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Definição das colunas do Kanban baseadas nos status do lead
 const KANBAN_COLUMNS = [
@@ -156,6 +157,19 @@ export default function Kanban() {
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                               <Phone className="h-3 w-3" />
                               <span className="truncate">{lead.telefone}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 ml-1 bg-green-50 hover:bg-green-100 text-green-700"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const phone = lead.telefone.replace(/\D/g, '');
+                                  const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                                  window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                }}
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                              </Button>
                             </div>
                           )}
                           

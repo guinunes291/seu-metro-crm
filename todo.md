@@ -912,3 +912,9 @@
 - [x] Agendamentos do dia como lembrete
 - [x] Tarefas personalizadas criadas pelo corretor
 - [x] Criação automática de follow-up quando lead é distribuído
+
+## Botão WhatsApp para Corretores
+- [x] Adicionar botão de WhatsApp na página Meus Leads (cards e detalhes)
+- [x] Adicionar botão de WhatsApp na página Kanban
+- [x] Adicionar botão de WhatsApp na página Leads por Corretor (gestor)
+- [x] Formatar número de telefone corretamente para link wa.me

@@ -15,7 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2 } from "lucide-react";
+import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
@@ -340,6 +340,18 @@ export default function LeadsPorCorretor() {
                               <div className="flex items-center gap-1 text-sm">
                                 <Phone className="h-3 w-3" />
                                 {lead.telefone}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 w-5 p-0 ml-1 bg-green-50 hover:bg-green-100 text-green-700"
+                                  onClick={() => {
+                                    const phone = lead.telefone?.replace(/\D/g, '') || '';
+                                    const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                                    window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                  }}
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
                               </div>
                             )}
                             {lead.email && (
