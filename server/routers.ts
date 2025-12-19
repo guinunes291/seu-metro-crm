@@ -474,8 +474,10 @@ export const appRouter = router({
     meuStatus: protectedProcedure
       .query(async ({ ctx }) => {
         const user = await db.getUserById(ctx.user.id);
+        // Normalizar status: presente -> ativo, ausente -> inativo (para o frontend)
+        const statusFrontend = user?.status === 'presente' ? 'ativo' : 'inativo';
         return {
-          status: user?.status || 'inativo',
+          status: statusFrontend,
           name: user?.name,
         };
       }),
@@ -486,11 +488,11 @@ export const appRouter = router({
         status: z.enum(['ativo', 'inativo', 'presente', 'ausente'])
       }))
       .mutation(async ({ input, ctx }) => {
-        // Normalizar status: presente -> ativo, ausente -> inativo
-        const statusNormalizado = input.status === 'presente' ? 'ativo' : 
-                                   input.status === 'ausente' ? 'inativo' : input.status;
+        // Normalizar status: ativo -> presente, inativo -> ausente
+        const statusNormalizado = input.status === 'ativo' ? 'presente' : 
+                                   input.status === 'inativo' ? 'ausente' : input.status;
         
-        await db.updateUserStatus(ctx.user.id, statusNormalizado as 'ativo' | 'inativo');
+        await db.updateUserStatus(ctx.user.id, statusNormalizado as 'presente' | 'ausente');
         return { 
           success: true, 
           status: statusNormalizado 

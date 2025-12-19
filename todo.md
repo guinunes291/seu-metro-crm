@@ -1037,3 +1037,10 @@
 - [x] Criar guia completo de uso do sistema
 - [x] Adicionar botão de Presença/Ausência no DashboardLayout
 - [x] Criar procedures meuStatus e alterarMeuStatus no router
+
+
+## Bug: Erro ao alterar status de presença/ausência
+- [x] Investigar erro na mutation alterarMeuStatus (valores ativo/inativo vs presente/ausente)
+- [x] Verificar se a função updateUserStatus existe no db.ts (usa presente/ausente)
+- [x] Corrigir o problema (normalizar valores entre frontend e backend)
+- [ ] Testar alteração de status com conta de corretor
