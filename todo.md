@@ -868,3 +868,7 @@
 - [x] Atualizar endpoint de exclusão para permitir excluir com leads ativos
 - [x] Atualizar interface para mostrar confirmação com quantidade de leads
 - [x] Testar exclusão e redistribuição
+
+## Personalização do Logo
+- [x] Adicionar logo na página inicial (substituir ícone de prédio)
+- [x] Adicionar logo no menu lateral (substituir "Navigation")

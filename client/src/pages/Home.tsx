@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Loader2, Building2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
@@ -37,8 +37,11 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10">
       <div className="max-w-md w-full mx-auto px-6 text-center">
         <div className="mb-8">
-          <Building2 className="h-20 w-20 mx-auto text-primary mb-4" />
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Seu Metro Quadrado</h1>
+          <img 
+            src="/logo-seu-metro-quadrado.png" 
+            alt="Seu Metro Quadrado" 
+            className="h-32 mx-auto mb-4"
+          />
           <p className="text-xl text-muted-foreground">CRM Imobiliário</p>
         </div>
         
