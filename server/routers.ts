@@ -248,6 +248,16 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
         }
         
+        // Registrar atividade automaticamente se o status mudou
+        if (input.data.status && input.data.status !== lead.status && lead.corretorId) {
+          await db.registrarAtividadePorStatus(
+            lead.corretorId,
+            lead.status,
+            input.data.status,
+            lead.valorVenda || undefined
+          );
+        }
+        
         await db.updateLead(input.id, input.data);
         return { success: true };
       }),
@@ -1446,13 +1456,60 @@ export const appRouter = router({
         return await db.getHistoricoDistribuicao(input);
       }),
     
-    // Estatísticas de distribuição por período
+    /// Estatísticas de distribuição por período
     estatisticas: gestorProcedure
       .input(z.object({ dias: z.number().min(1).max(365).default(30) }).optional())
       .query(async ({ input }) => {
         return await db.getDistribuicoesPorPeriodo(input?.dias || 30);
       }),
   }),
-});
 
+  // ============================================================================
+  // RANKING TV DASHBOARD
+  // ============================================================================
+  ranking: router({
+    // Ranking do dia atual
+    dia: protectedProcedure
+      .input(z.object({ data: z.date().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getRankingDia(input?.data);
+      }),
+    
+    // Ranking semanal
+    semanal: protectedProcedure
+      .query(async () => {
+        return await db.getRankingSemanal();
+      }),
+    
+    // Ranking mensal
+    mensal: protectedProcedure
+      .query(async () => {
+        return await db.getRankingMensal();
+      }),
+    
+    // Registrar atividade manualmente
+    registrarAtividade: corretorProcedure
+      .input(z.object({
+        tipo: z.enum([
+          'ligacoesRealizadas', 'ligacoesAtendidas', 
+          'whatsappEnviados', 'whatsappRespondidos',
+          'agendamentosConfirmados', 'visitasRealizadas',
+          'propostasEnviadas', 'documentacoesRecolhidas',
+          'analiseCreditoEnviadas', 'contratosFechados'
+        ]),
+        quantidade: z.number().min(1).default(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.incrementarAtividade(ctx.user.id, input.tipo, input.quantidade);
+        await db.calcularPontuacaoDiaria(ctx.user.id);
+        return { success: true };
+      }),
+    
+    // Obter atividades do corretor logado hoje
+    minhasAtividades: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getOrCreateAtividadeDiaria(ctx.user.id);
+      }),
+  }),
+});
 export type AppRouter = typeof appRouter;

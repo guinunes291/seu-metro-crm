@@ -522,3 +522,50 @@ export const followUps = mysqlTable("follow_ups", {
 
 export type FollowUp = typeof followUps.$inferSelect;
 export type InsertFollowUp = typeof followUps.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE ATIVIDADES DIÁRIAS (PARA RANKING TV)
+// ============================================================================
+
+/**
+ * Registro de atividades diárias dos corretores para o ranking de produtividade
+ * Cada registro representa as atividades de um corretor em um dia específico
+ */
+export const atividadesDiarias = mysqlTable("atividades_diarias", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamentos
+  corretorId: int("corretorId").notNull(),
+  
+  // Data do registro (apenas a data, sem hora)
+  data: timestamp("data").notNull(),
+  
+  // Contadores de atividades
+  ligacoesRealizadas: int("ligacoesRealizadas").default(0).notNull(),
+  ligacoesAtendidas: int("ligacoesAtendidas").default(0).notNull(),
+  whatsappEnviados: int("whatsappEnviados").default(0).notNull(),
+  whatsappRespondidos: int("whatsappRespondidos").default(0).notNull(),
+  agendamentosConfirmados: int("agendamentosConfirmados").default(0).notNull(),
+  visitasRealizadas: int("visitasRealizadas").default(0).notNull(),
+  propostasEnviadas: int("propostasEnviadas").default(0).notNull(),
+  documentacoesRecolhidas: int("documentacoesRecolhidas").default(0).notNull(),
+  analiseCreditoEnviadas: int("analiseCreditoEnviadas").default(0).notNull(),
+  contratosFechados: int("contratosFechados").default(0).notNull(),
+  
+  // Valor total de vendas do dia (em centavos)
+  vgvDia: int("vgvDia").default(0).notNull(),
+  
+  // Pontuação calculada (baseada nas metas)
+  pontuacaoTotal: int("pontuacaoTotal").default(0).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("atividades_corretor_idx").on(table.corretorId),
+  dataIdx: index("atividades_data_idx").on(table.data),
+  corretorDataIdx: index("atividades_corretor_data_idx").on(table.corretorId, table.data),
+}));
+
+export type AtividadeDiaria = typeof atividadesDiarias.$inferSelect;
+export type InsertAtividadeDiaria = typeof atividadesDiarias.$inferInsert;

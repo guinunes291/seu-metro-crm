@@ -918,3 +918,14 @@
 - [x] Adicionar botão de WhatsApp na página Kanban
 - [x] Adicionar botão de WhatsApp na página Leads por Corretor (gestor)
 - [x] Formatar número de telefone corretamente para link wa.me
+
+## Ranking TV Dashboard
+- [x] Criar tabela de atividades diárias dos corretores
+- [x] Registrar automaticamente: ligações, agendamentos, visitas, documentações
+- [x] Criar página de Ranking TV em tela cheia para transmissão
+- [x] Mostrar ranking por: ligações, agendamentos, visitas, documentações, vendas
+- [x] Comparar com metas estabelecidas (barras de progresso)
+- [x] Atualização automática a cada 30 segundos
+- [x] Sistema de pontuação com bônus por atingir metas
+- [x] Botão de tela cheia para transmissão em TV
+- [x] Exibir pódio dos top 3 corretores

@@ -85,6 +85,13 @@
       "when": 1766166526741,
       "tag": "0011_confused_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1766170140137,
+      "tag": "0012_melodic_giant_man",
+      "breakpoints": true
     }
   ]
 }

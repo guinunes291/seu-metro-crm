@@ -14,7 +14,8 @@ import {
   filaDistribuicao, InsertFilaDistribuicao, FilaDistribuicao,
   webhookConfig, InsertWebhookConfig, WebhookConfig,
   tarefas, InsertTarefa, Tarefa,
-  followUps, InsertFollowUp, FollowUp
+  followUps, InsertFollowUp, FollowUp,
+  atividadesDiarias, InsertAtividadeDiaria, AtividadeDiaria
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -2657,4 +2658,313 @@ export async function getLeadsAgendadosHoje(corretorId: number) {
       lte(leads.proximoFollowup, amanha)
     ))
     .orderBy(leads.proximoFollowup);
+}
+
+
+// ============================================================================
+// ATIVIDADES DIÁRIAS E RANKING TV
+// ============================================================================
+
+// Obter ou criar registro de atividade diária do corretor
+export async function getOrCreateAtividadeDiaria(corretorId: number, data?: Date): Promise<AtividadeDiaria | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const dataRef = data || new Date();
+  dataRef.setHours(0, 0, 0, 0);
+  
+  // Buscar registro existente
+  const existing = await db.select()
+    .from(atividadesDiarias)
+    .where(and(
+      eq(atividadesDiarias.corretorId, corretorId),
+      eq(atividadesDiarias.data, dataRef)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    return existing[0];
+  }
+  
+  // Criar novo registro
+  const result = await db.insert(atividadesDiarias).values({
+    corretorId,
+    data: dataRef,
+  });
+  
+  const newRecord = await db.select()
+    .from(atividadesDiarias)
+    .where(eq(atividadesDiarias.id, result[0].insertId))
+    .limit(1);
+  
+  return newRecord[0] || null;
+}
+
+// Incrementar atividade específica
+export async function incrementarAtividade(
+  corretorId: number, 
+  tipo: 'ligacoesRealizadas' | 'ligacoesAtendidas' | 'whatsappEnviados' | 'whatsappRespondidos' | 
+        'agendamentosConfirmados' | 'visitasRealizadas' | 'propostasEnviadas' | 
+        'documentacoesRecolhidas' | 'analiseCreditoEnviadas' | 'contratosFechados',
+  quantidade: number = 1
+) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Garantir que existe o registro
+  await getOrCreateAtividadeDiaria(corretorId, hoje);
+  
+  // Incrementar o campo específico
+  await db.update(atividadesDiarias)
+    .set({
+      [tipo]: sql`${atividadesDiarias[tipo]} + ${quantidade}`,
+      updatedAt: new Date()
+    })
+    .where(and(
+      eq(atividadesDiarias.corretorId, corretorId),
+      eq(atividadesDiarias.data, hoje)
+    ));
+}
+
+// Adicionar VGV do dia
+export async function adicionarVgvDia(corretorId: number, valor: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  await getOrCreateAtividadeDiaria(corretorId, hoje);
+  
+  await db.update(atividadesDiarias)
+    .set({
+      vgvDia: sql`${atividadesDiarias.vgvDia} + ${valor}`,
+      contratosFechados: sql`${atividadesDiarias.contratosFechados} + 1`,
+      updatedAt: new Date()
+    })
+    .where(and(
+      eq(atividadesDiarias.corretorId, corretorId),
+      eq(atividadesDiarias.data, hoje)
+    ));
+}
+
+// Obter ranking do dia para TV Dashboard
+export async function getRankingDia(data?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const dataRef = data || new Date();
+  dataRef.setHours(0, 0, 0, 0);
+  
+  // Buscar atividades do dia com dados do corretor
+  const atividades = await db.select({
+    id: atividadesDiarias.id,
+    corretorId: atividadesDiarias.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    ligacoesRealizadas: atividadesDiarias.ligacoesRealizadas,
+    ligacoesAtendidas: atividadesDiarias.ligacoesAtendidas,
+    whatsappEnviados: atividadesDiarias.whatsappEnviados,
+    whatsappRespondidos: atividadesDiarias.whatsappRespondidos,
+    agendamentosConfirmados: atividadesDiarias.agendamentosConfirmados,
+    visitasRealizadas: atividadesDiarias.visitasRealizadas,
+    propostasEnviadas: atividadesDiarias.propostasEnviadas,
+    documentacoesRecolhidas: atividadesDiarias.documentacoesRecolhidas,
+    analiseCreditoEnviadas: atividadesDiarias.analiseCreditoEnviadas,
+    contratosFechados: atividadesDiarias.contratosFechados,
+    vgvDia: atividadesDiarias.vgvDia,
+    pontuacaoTotal: atividadesDiarias.pontuacaoTotal,
+  })
+    .from(atividadesDiarias)
+    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
+    .where(eq(atividadesDiarias.data, dataRef))
+    .orderBy(desc(atividadesDiarias.pontuacaoTotal));
+  
+  // Buscar metas de cada corretor para calcular percentuais
+  const resultado = await Promise.all(atividades.map(async (atividade) => {
+    const metasCorretor = await db.select()
+      .from(metas)
+      .where(eq(metas.corretorId, atividade.corretorId))
+      .limit(1);
+    
+    const meta = metasCorretor[0];
+    
+    return {
+      ...atividade,
+      metas: meta ? {
+        ligacoesMeta: meta.ligacoesDiarias || 0,
+        agendamentosMeta: meta.agendamentosDiarios || 0,
+        visitasMeta: meta.visitasDiarias || 0,
+        contratosMeta: meta.contratosMensais ? Math.ceil(meta.contratosMensais / 22) : 0, // Meta diária = mensal / 22 dias úteis
+      } : null
+    };
+  }));
+  
+  return resultado;
+}
+
+// Obter ranking semanal
+export async function getRankingSemanal() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Início da semana (segunda-feira)
+  const inicioSemana = new Date(hoje);
+  inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
+  
+  const ranking = await db.select({
+    corretorId: atividadesDiarias.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    totalLigacoes: sql<number>`SUM(${atividadesDiarias.ligacoesRealizadas})`,
+    totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
+    totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
+    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
+    totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
+    totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
+    totalPontos: sql<number>`SUM(${atividadesDiarias.pontuacaoTotal})`,
+  })
+    .from(atividadesDiarias)
+    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
+    .where(gte(atividadesDiarias.data, inicioSemana))
+    .groupBy(atividadesDiarias.corretorId, users.name, users.fotoUrl)
+    .orderBy(desc(sql`SUM(${atividadesDiarias.pontuacaoTotal})`));
+  
+  return ranking;
+}
+
+// Obter ranking mensal
+export async function getRankingMensal() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  
+  const ranking = await db.select({
+    corretorId: atividadesDiarias.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    totalLigacoes: sql<number>`SUM(${atividadesDiarias.ligacoesRealizadas})`,
+    totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
+    totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
+    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
+    totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
+    totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
+    totalPontos: sql<number>`SUM(${atividadesDiarias.pontuacaoTotal})`,
+  })
+    .from(atividadesDiarias)
+    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
+    .where(gte(atividadesDiarias.data, inicioMes))
+    .groupBy(atividadesDiarias.corretorId, users.name, users.fotoUrl)
+    .orderBy(desc(sql`SUM(${atividadesDiarias.pontuacaoTotal})`));
+  
+  return ranking;
+}
+
+// Calcular e atualizar pontuação do corretor baseado nas metas
+export async function calcularPontuacaoDiaria(corretorId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Buscar atividade do dia
+  const atividade = await getOrCreateAtividadeDiaria(corretorId, hoje);
+  if (!atividade) return;
+  
+  // Buscar metas do corretor
+  const metasCorretor = await db.select()
+    .from(metas)
+    .where(eq(metas.corretorId, corretorId))
+    .limit(1);
+  
+  const meta = metasCorretor[0];
+  
+  // Sistema de pontuação:
+  // - Ligação realizada: 1 ponto
+  // - Ligação atendida: 2 pontos
+  // - WhatsApp enviado: 1 ponto
+  // - WhatsApp respondido: 2 pontos
+  // - Agendamento confirmado: 10 pontos
+  // - Visita realizada: 15 pontos
+  // - Proposta enviada: 20 pontos
+  // - Documentação recolhida: 25 pontos
+  // - Análise de crédito enviada: 30 pontos
+  // - Contrato fechado: 100 pontos
+  // - Bônus por atingir meta: +50% dos pontos
+  
+  let pontuacao = 0;
+  pontuacao += atividade.ligacoesRealizadas * 1;
+  pontuacao += atividade.ligacoesAtendidas * 2;
+  pontuacao += atividade.whatsappEnviados * 1;
+  pontuacao += atividade.whatsappRespondidos * 2;
+  pontuacao += atividade.agendamentosConfirmados * 10;
+  pontuacao += atividade.visitasRealizadas * 15;
+  pontuacao += atividade.propostasEnviadas * 20;
+  pontuacao += atividade.documentacoesRecolhidas * 25;
+  pontuacao += atividade.analiseCreditoEnviadas * 30;
+  pontuacao += atividade.contratosFechados * 100;
+  
+  // Bônus por atingir metas diárias
+  if (meta) {
+    if (meta.ligacoesDiarias && atividade.ligacoesRealizadas >= meta.ligacoesDiarias) {
+      pontuacao += Math.floor(atividade.ligacoesRealizadas * 1 * 0.5);
+    }
+    if (meta.agendamentosDiarios && atividade.agendamentosConfirmados >= meta.agendamentosDiarios) {
+      pontuacao += Math.floor(atividade.agendamentosConfirmados * 10 * 0.5);
+    }
+    if (meta.visitasDiarias && atividade.visitasRealizadas >= meta.visitasDiarias) {
+      pontuacao += Math.floor(atividade.visitasRealizadas * 15 * 0.5);
+    }
+  }
+  
+  // Atualizar pontuação
+  await db.update(atividadesDiarias)
+    .set({ pontuacaoTotal: pontuacao })
+    .where(eq(atividadesDiarias.id, atividade.id));
+}
+
+// Registrar atividade automaticamente baseado em mudança de status do lead
+export async function registrarAtividadePorStatus(
+  corretorId: number, 
+  statusAnterior: string | null, 
+  statusNovo: string,
+  valorVenda?: number
+) {
+  // Mapear mudanças de status para atividades
+  if (statusNovo === 'em_atendimento' && statusAnterior === 'aguardando_atendimento') {
+    await incrementarAtividade(corretorId, 'ligacoesRealizadas');
+    await incrementarAtividade(corretorId, 'ligacoesAtendidas');
+  }
+  
+  if (statusNovo === 'agendado') {
+    await incrementarAtividade(corretorId, 'agendamentosConfirmados');
+  }
+  
+  if (statusNovo === 'visita_realizada') {
+    await incrementarAtividade(corretorId, 'visitasRealizadas');
+  }
+  
+  if (statusNovo === 'analise_credito') {
+    await incrementarAtividade(corretorId, 'documentacoesRecolhidas');
+    await incrementarAtividade(corretorId, 'analiseCreditoEnviadas');
+  }
+  
+  if (statusNovo === 'contrato_fechado') {
+    await incrementarAtividade(corretorId, 'contratosFechados');
+    if (valorVenda) {
+      await adicionarVgvDia(corretorId, valorVenda);
+    }
+  }
+  
+  // Recalcular pontuação
+  await calcularPontuacaoDiaria(corretorId);
 }
