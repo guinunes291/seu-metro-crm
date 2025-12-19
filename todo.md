@@ -878,3 +878,8 @@
 - [x] Criar favicon a partir do ícone do logo
 - [x] Aumentar tamanho do logo no menu lateral
 - [x] Customizar cores para azul marinho (#1e3a5f) e dourado (#c9a227)
+
+## Página de Boas-Vindas para Corretores
+- [x] Criar página de tutorial com guia de uso do sistema
+- [x] Adicionar rota e link no menu lateral
+- [x] Incluir seções: Meus Leads, Kanban, Minha Performance, Notificações

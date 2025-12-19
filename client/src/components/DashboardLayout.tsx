@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History, BookOpen } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,6 +30,7 @@ import { Button } from "./ui/button";
 import NotificationListener from "./NotificationListener";
 
 const menuItems = [
+  { icon: BookOpen, label: "Boas-Vindas", path: "/boas-vindas" },
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Building2, label: "Projetos", path: "/projetos" },
   { icon: Users, label: "Meus Leads", path: "/leads" },
