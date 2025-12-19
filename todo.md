@@ -883,3 +883,10 @@
 - [x] Criar página de tutorial com guia de uso do sistema
 - [x] Adicionar rota e link no menu lateral
 - [x] Incluir seções: Meus Leads, Kanban, Minha Performance, Notificações
+
+## Dashboard Personalizado para Corretores
+- [x] Criar dashboard com visual similar ao do gestor
+- [x] Adicionar métricas individuais (Total de Leads, Aguardando, Em Atendimento, etc.)
+- [x] Adicionar gráfico de evolução de leads do corretor
+- [x] Adicionar funil de vendas individual
+- [x] Adicionar VGV individual do corretor

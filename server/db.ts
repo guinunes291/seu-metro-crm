@@ -2118,3 +2118,198 @@ export async function getDistribuicoesPorPeriodo(dias: number = 30) {
     total: Number(r.total || 0),
   }));
 }
+
+
+// ============================================================================
+// DASHBOARD DO CORRETOR - MÉTRICAS INDIVIDUAIS
+// ============================================================================
+
+export async function getCorretorDashboardMetrics(corretorId: number, filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const conditions: any[] = [eq(leads.corretorId, corretorId)];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(leads.createdAt, filtros.dataInicio));
+  }
+  
+  if (filtros?.dataFim) {
+    conditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  
+  const whereClause = and(...conditions);
+  
+  // Total de leads
+  const totalResult = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(whereClause);
+  
+  // Leads por status
+  const statusCounts = await Promise.all([
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'aguardando_atendimento'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'em_atendimento'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'agendado'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'visita_realizada'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'analise_credito'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'contrato_fechado'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'perdido'))),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(and(...conditions, eq(leads.status, 'novo'))),
+  ]);
+  
+  // VGV do corretor
+  const vgvResult = await db.select({ 
+    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
+  })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(and(...conditions, eq(leads.status, 'contrato_fechado')));
+  
+  const total = Number(totalResult[0]?.count || 0);
+  const contratosFechados = Number(statusCounts[5][0]?.count || 0);
+  const taxaConversao = total > 0 ? Math.round((contratosFechados / total) * 100) : 0;
+  
+  return {
+    total,
+    novos: Number(statusCounts[7][0]?.count || 0),
+    aguardando: Number(statusCounts[0][0]?.count || 0),
+    emAtendimento: Number(statusCounts[1][0]?.count || 0),
+    agendado: Number(statusCounts[2][0]?.count || 0),
+    visitaRealizada: Number(statusCounts[3][0]?.count || 0),
+    analiseCredito: Number(statusCounts[4][0]?.count || 0),
+    contratoFechado: contratosFechados,
+    perdido: Number(statusCounts[6][0]?.count || 0),
+    vgv: Number(vgvResult[0]?.total || 0),
+    taxaConversao,
+  };
+}
+
+export async function getCorretorMetricasHistoricas(corretorId: number, dias: number = 30): Promise<MetricasDiarias[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const resultado: MetricasDiarias[] = [];
+  const hoje = new Date();
+  
+  for (let i = dias - 1; i >= 0; i--) {
+    const data = new Date(hoje);
+    data.setDate(data.getDate() - i);
+    data.setHours(0, 0, 0, 0);
+    
+    const dataFim = new Date(data);
+    dataFim.setHours(23, 59, 59, 999);
+    
+    const dataStr = data.toISOString().split('T')[0];
+    
+    // Buscar leads do corretor criados nesse dia
+    const leadsNoDia = await db.select({
+      status: leads.status,
+      count: sql<number>`count(*)`
+    })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        gte(leads.createdAt, data),
+        lte(leads.createdAt, dataFim)
+      ))
+      .groupBy(leads.status);
+    
+    const metricas: MetricasDiarias = {
+      data: dataStr,
+      novos: 0,
+      aguardando: 0,
+      emAtendimento: 0,
+      agendados: 0,
+      visitasRealizadas: 0,
+      analiseCredito: 0,
+      contratosFechados: 0,
+      perdidos: 0,
+      total: 0,
+    };
+    
+    for (const row of leadsNoDia) {
+      const count = Number(row.count);
+      metricas.total += count;
+      
+      switch (row.status) {
+        case 'novo': metricas.novos = count; break;
+        case 'aguardando_atendimento': metricas.aguardando = count; break;
+        case 'em_atendimento': metricas.emAtendimento = count; break;
+        case 'agendado': metricas.agendados = count; break;
+        case 'visita_realizada': metricas.visitasRealizadas = count; break;
+        case 'analise_credito': metricas.analiseCredito = count; break;
+        case 'contrato_fechado': metricas.contratosFechados = count; break;
+        case 'perdido': metricas.perdidos = count; break;
+      }
+    }
+    
+    resultado.push(metricas);
+  }
+  
+  return resultado;
+}
+
+export async function getCorretorEvolucaoFunil(corretorId: number, dias: number = 30) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  const dataInicio = new Date(hoje);
+  dataInicio.setDate(dataInicio.getDate() - dias);
+  dataInicio.setHours(0, 0, 0, 0);
+  
+  // Buscar totais acumulados por status do corretor
+  const totais = await db.select({
+    status: leads.status,
+    count: sql<number>`count(*)`
+  })
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      gte(leads.createdAt, dataInicio)
+    ))
+    .groupBy(leads.status);
+  
+  const funil = [
+    { etapa: 'Novos', valor: 0, cor: '#6366f1' },
+    { etapa: 'Aguardando', valor: 0, cor: '#f59e0b' },
+    { etapa: 'Em Atendimento', valor: 0, cor: '#3b82f6' },
+    { etapa: 'Agendados', valor: 0, cor: '#8b5cf6' },
+    { etapa: 'Visitas', valor: 0, cor: '#06b6d4' },
+    { etapa: 'Análise de Crédito', valor: 0, cor: '#f97316' },
+    { etapa: 'Contratos Fechados', valor: 0, cor: '#22c55e' },
+    { etapa: 'Perdidos', valor: 0, cor: '#ef4444' },
+  ];
+  
+  for (const row of totais) {
+    const count = Number(row.count);
+    switch (row.status) {
+      case 'novo': funil[0].valor = count; break;
+      case 'aguardando_atendimento': funil[1].valor = count; break;
+      case 'em_atendimento': funil[2].valor = count; break;
+      case 'agendado': funil[3].valor = count; break;
+      case 'visita_realizada': funil[4].valor = count; break;
+      case 'analise_credito': funil[5].valor = count; break;
+      case 'contrato_fechado': funil[6].valor = count; break;
+      case 'perdido': funil[7].valor = count; break;
+    }
+  }
+  
+  return funil;
+}

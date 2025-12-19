@@ -895,6 +895,39 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // DASHBOARD DO CORRETOR - MÉTRICAS INDIVIDUAIS
+  // ============================================================================
+  dashboardCorretor: router({
+    // Métricas individuais do corretor
+    metrics: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const filtros = input ? {
+          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+        } : undefined;
+        return await db.getCorretorDashboardMetrics(ctx.user.id, filtros);
+      }),
+    
+    // Histórico de métricas do corretor para gráficos
+    historico: corretorProcedure
+      .input(z.object({ dias: z.number().default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getCorretorMetricasHistoricas(ctx.user.id, input?.dias || 30);
+      }),
+    
+    // Funil de vendas individual do corretor
+    funil: corretorProcedure
+      .input(z.object({ dias: z.number().default(30) }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getCorretorEvolucaoFunil(ctx.user.id, input?.dias || 30);
+      }),
+  }),
+
+  // ============================================================================
   // METAS POR CORRETOR
   // ============================================================================
   metas: router({

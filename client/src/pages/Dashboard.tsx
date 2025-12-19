@@ -163,7 +163,7 @@ export default function Dashboard() {
     { enabled: isGestor }
   );
   
-  // Queries para gráficos
+  // Queries para gráficos do gestor
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
     { dias: 30 },
     { enabled: isGestor }
@@ -173,173 +173,378 @@ export default function Dashboard() {
     { enabled: isGestor }
   );
   
-  // Queries para corretor (mantém o comportamento original)
+  // ============================================================================
+  // QUERIES PARA O DASHBOARD DO CORRETOR
+  // ============================================================================
+  const { data: corretorMetrics, isLoading: corretorMetricsLoading } = trpc.dashboardCorretor.metrics.useQuery(
+    dateFilter,
+    { enabled: !isGestor }
+  );
+  const { data: corretorHistorico } = trpc.dashboardCorretor.historico.useQuery(
+    { dias: 30 },
+    { enabled: !isGestor }
+  );
+  const { data: corretorFunil } = trpc.dashboardCorretor.funil.useQuery(
+    { dias: 30 },
+    { enabled: !isGestor }
+  );
+  
+  // Queries adicionais para corretor
   const { data: leads, isLoading: leadsLoading } = trpc.leads.list.useQuery(undefined, {
     enabled: !isGestor
   });
   const { data: projects } = trpc.projects.list.useQuery();
 
-  // Dashboard do Corretor (mantém o original)
+  // ============================================================================
+  // DASHBOARD DO CORRETOR (NOVO - ESTILO DO GESTOR)
+  // ============================================================================
   if (!isGestor) {
-    const totalLeads = leads?.length || 0;
-    const leadsNovos = leads?.filter(l => l.status === "novo").length || 0;
-    const leadsEmAtendimento = leads?.filter(l => l.status === "em_atendimento" || l.status === "aguardando_atendimento").length || 0;
-    const leadsAgendados = leads?.filter(l => l.status === "agendado").length || 0;
-    const leadsFechados = leads?.filter(l => l.status === "contrato_fechado").length || 0;
-    const taxaConversao = totalLeads > 0 ? ((leadsFechados / totalLeads) * 100).toFixed(1) : "0";
-
     return (
       <DashboardLayout>
         <div className="container py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground mt-2">
-              Bem-vindo de volta, {user?.name || "Corretor"}!
-            </p>
+          {/* Header com filtro */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Meu Dashboard</h1>
+              <p className="text-muted-foreground mt-2">
+                Bem-vindo de volta, {user?.name || "Corretor"}! Acompanhe seu desempenho.
+              </p>
+            </div>
+            
+            {/* Filtro de data */}
+            <div className="flex items-center gap-2">
+              <Select value={filterPreset} onValueChange={setFilterPreset}>
+                <SelectTrigger className="w-[180px]">
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Selecione o período" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FILTER_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {filterPreset === "custom" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
+                      <CalendarRange className="mr-2 h-4 w-4" />
+                      {customDateRange.from ? (
+                        customDateRange.to ? (
+                          <>
+                            {format(customDateRange.from, "dd/MM/yy", { locale: ptBR })} -{" "}
+                            {format(customDateRange.to, "dd/MM/yy", { locale: ptBR })}
+                          </>
+                        ) : (
+                          format(customDateRange.from, "dd/MM/yyyy", { locale: ptBR })
+                        )
+                      ) : (
+                        <span>Selecione as datas</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarComponent
+                      initialFocus
+                      mode="range"
+                      defaultMonth={customDateRange.from}
+                      selected={customDateRange}
+                      onSelect={(range) => setCustomDateRange({ from: range?.from, to: range?.to })}
+                      numberOfMonths={2}
+                      locale={ptBR}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalLeads}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {leadsNovos} novos leads
-                </p>
-              </CardContent>
-            </Card>
+          {corretorMetricsLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Carregando métricas...
+            </div>
+          ) : (
+            <>
+              {/* Cards de métricas por status - Primeira linha */}
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 mb-8">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
+                    <Users className="h-4 w-4 text-blue-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.total || 0}</div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Em Atendimento</CardTitle>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leadsEmAtendimento}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {leadsAgendados} agendados
-                </p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Aguardando</CardTitle>
+                    <Hourglass className="h-4 w-4 text-slate-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.aguardando || 0}</div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Contratos Fechados</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{leadsFechados}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Taxa de conversão: {taxaConversao}%
-                </p>
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Em Atendimento</CardTitle>
+                    <Clock className="h-4 w-4 text-yellow-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.emAtendimento || 0}</div>
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Projetos Ativos</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{projects?.length || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Empreendimentos disponíveis
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Agendado</CardTitle>
+                    <Calendar className="h-4 w-4 text-cyan-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.agendado || 0}</div>
+                  </CardContent>
+                </Card>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Leads Recentes</CardTitle>
-                <CardDescription>Últimos leads atribuídos a você</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {leadsLoading ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Carregando...
-                  </div>
-                ) : leads && leads.length > 0 ? (
-                  <div className="space-y-4">
-                    {leads.slice(0, 5).map((lead) => (
-                      <div key={lead.id} className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{lead.nome}</p>
-                          <p className="text-sm text-muted-foreground">{lead.telefone}</p>
-                        </div>
-                        <Badge variant={
-                          lead.status === "contrato_fechado" ? "default" :
-                          lead.status === "perdido" ? "destructive" :
-                          lead.status === "novo" ? "secondary" : "outline"
-                        }>
-                          {lead.status.replace(/_/g, " ")}
-                        </Badge>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Visita Realizada</CardTitle>
+                    <Eye className="h-4 w-4 text-orange-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.visitaRealizada || 0}</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Cards de métricas - Segunda linha */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Análise de Crédito</CardTitle>
+                    <FileCheck className="h-4 w-4 text-purple-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.analiseCredito || 0}</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Contrato Fechado</CardTitle>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.contratoFechado || 0}</div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Perdidos</CardTitle>
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{corretorMetrics?.perdido || 0}</div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 dark:border-green-800">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">Meu VGV</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                      {formatCurrency(corretorMetrics?.vgv || 0)}
+                    </div>
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      Taxa de conversão: {corretorMetrics?.taxaConversao || 0}%
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Gráficos */}
+              <div className="grid gap-4 md:grid-cols-2 mb-8">
+                {/* Gráfico de Evolução de Leads */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Evolução de Leads (30 dias)
+                    </CardTitle>
+                    <CardDescription>Quantidade de leads recebidos por dia</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {corretorHistorico && corretorHistorico.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={corretorHistorico}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="data" 
+                            tickFormatter={formatDateShort}
+                            fontSize={12}
+                          />
+                          <YAxis fontSize={12} />
+                          <Tooltip 
+                            labelFormatter={(label) => format(new Date(label), "dd/MM/yyyy", { locale: ptBR })}
+                          />
+                          <Legend />
+                          <Line 
+                            type="monotone" 
+                            dataKey="total" 
+                            stroke="#3b82f6" 
+                            name="Total"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Sem dados para exibir</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum lead encontrado</p>
-                  </div>
-                )}
-                <Link href="/leads">
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver todos os leads
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+                    )}
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Projetos Disponíveis</CardTitle>
-                <CardDescription>Empreendimentos para oferecer aos clientes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {projects && projects.length > 0 ? (
-                  <div className="space-y-4">
-                    {projects.slice(0, 5).map((project) => (
-                      <div key={project.id} className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{project.nome}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {project.bairro}, {project.cidade}
-                          </p>
-                        </div>
-                        <Badge variant={
-                          project.status === "ativo" ? "default" :
-                          project.status === "esgotado" ? "destructive" : "secondary"
-                        }>
-                          {project.status}
-                        </Badge>
+                {/* Gráfico de Funil de Vendas */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingDown className="h-5 w-5" />
+                      Funil de Vendas (30 dias)
+                    </CardTitle>
+                    <CardDescription>Distribuição de leads por etapa do funil</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {corretorFunil && corretorFunil.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={corretorFunil} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" fontSize={12} />
+                          <YAxis 
+                            dataKey="etapa" 
+                            type="category" 
+                            width={120}
+                            fontSize={11}
+                          />
+                          <Tooltip />
+                          <Bar dataKey="valor" name="Quantidade">
+                            {corretorFunil.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.cor} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Sem dados para exibir</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhum projeto cadastrado</p>
-                  </div>
-                )}
-                <Link href="/projetos">
-                  <Button variant="outline" className="w-full mt-4">
-                    Ver todos os projetos
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Leads Recentes e Projetos */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Leads Recentes</CardTitle>
+                    <CardDescription>Últimos leads atribuídos a você</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {leadsLoading ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Carregando...
+                      </div>
+                    ) : leads && leads.length > 0 ? (
+                      <div className="space-y-4">
+                        {leads.slice(0, 5).map((lead) => (
+                          <div key={lead.id} className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium">{lead.nome}</p>
+                              <p className="text-sm text-muted-foreground">{lead.telefone}</p>
+                            </div>
+                            <Badge variant={
+                              lead.status === "contrato_fechado" ? "default" :
+                              lead.status === "perdido" ? "destructive" :
+                              lead.status === "novo" ? "secondary" : "outline"
+                            }>
+                              {lead.status.replace(/_/g, " ")}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Nenhum lead encontrado</p>
+                      </div>
+                    )}
+                    <Link href="/leads">
+                      <Button variant="outline" className="w-full mt-4">
+                        Ver todos os leads
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Projetos Disponíveis</CardTitle>
+                    <CardDescription>Empreendimentos para oferecer aos clientes</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {projects && projects.length > 0 ? (
+                      <div className="space-y-4">
+                        {projects.slice(0, 5).map((project) => (
+                          <div key={project.id} className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium">{project.nome}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {project.bairro}, {project.cidade}
+                              </p>
+                            </div>
+                            <Badge variant={
+                              project.status === "ativo" ? "default" :
+                              project.status === "esgotado" ? "destructive" : "secondary"
+                            }>
+                              {project.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Nenhum projeto cadastrado</p>
+                      </div>
+                    )}
+                    <Link href="/projetos">
+                      <Button variant="outline" className="w-full mt-4">
+                        Ver todos os projetos
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
         </div>
       </DashboardLayout>
     );
   }
 
-  // Dashboard do Gestor (novo)
+  // ============================================================================
+  // DASHBOARD DO GESTOR (ORIGINAL)
+  // ============================================================================
   return (
     <DashboardLayout>
       <div className="container py-8">
@@ -507,7 +712,7 @@ export default function Dashboard() {
             </div>
 
             {/* Gráficos */}
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
+            <div className="grid gap-4 md:grid-cols-2 mb-8">
               {/* Gráfico de Evolução de Leads */}
               <Card>
                 <CardHeader>
@@ -519,60 +724,32 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {metricasHistoricas && metricasHistoricas.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={metricasHistoricas}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <CartesianGrid strokeDasharray="3 3" />
                         <XAxis 
                           dataKey="data" 
                           tickFormatter={formatDateShort}
-                          className="text-xs"
+                          fontSize={12}
                         />
-                        <YAxis className="text-xs" />
+                        <YAxis fontSize={12} />
                         <Tooltip 
-                          labelFormatter={(value) => format(new Date(value), "dd/MM/yyyy", { locale: ptBR })}
-                          formatter={(value: number, name: string) => {
-                            const labels: Record<string, string> = {
-                              total: "Total",
-                              novos: "Novos",
-                              contratosFechados: "Contratos",
-                              perdidos: "Perdidos",
-                            };
-                            return [value, labels[name] || name];
-                          }}
+                          labelFormatter={(label) => format(new Date(label), "dd/MM/yyyy", { locale: ptBR })}
                         />
                         <Legend />
                         <Line 
                           type="monotone" 
                           dataKey="total" 
                           stroke="#3b82f6" 
-                          strokeWidth={2}
                           name="Total"
-                          dot={false}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="contratosFechados" 
-                          stroke="#22c55e" 
                           strokeWidth={2}
-                          name="Contratos"
-                          dot={false}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="perdidos" 
-                          stroke="#ef4444" 
-                          strokeWidth={2}
-                          name="Perdidos"
-                          dot={false}
                         />
                       </LineChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      <div className="text-center">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Nenhum dado disponível</p>
-                      </div>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Sem dados para exibir</p>
                     </div>
                   )}
                 </CardContent>
@@ -589,15 +766,15 @@ export default function Dashboard() {
                 </CardHeader>
                 <CardContent>
                   {dadosFunil && dadosFunil.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={dadosFunil} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis type="number" className="text-xs" />
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis type="number" fontSize={12} />
                         <YAxis 
                           dataKey="etapa" 
                           type="category" 
                           width={120}
-                          className="text-xs"
+                          fontSize={11}
                         />
                         <Tooltip />
                         <Bar dataKey="valor" name="Quantidade">
@@ -608,168 +785,135 @@ export default function Dashboard() {
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                      <div className="text-center">
-                        <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Nenhum dado disponível</p>
-                      </div>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Sem dados para exibir</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
             </div>
 
-            {/* Tabelas por corretor */}
-            <div className="grid gap-6 md:grid-cols-2 mb-8">
+            {/* Tabelas de ranking */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {/* Leads por Corretor */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    Leads por Corretor
-                  </CardTitle>
-                  <CardDescription>Quantidade de leads atribuídos a cada corretor ativo</CardDescription>
+                  <CardTitle className="text-base">Leads por Corretor</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Corretor</TableHead>
-                        <TableHead className="text-right">Qtd. Leads</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {leadsPorCorretor && leadsPorCorretor.length > 0 ? (
-                        leadsPorCorretor.map((corretor) => (
-                          <TableRow key={corretor.id}>
-                            <TableCell className="font-medium">{corretor.nome}</TableCell>
-                            <TableCell className="text-right">{corretor.totalLeads}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                  {leadsPorCorretor && leadsPorCorretor.length > 0 ? (
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center text-muted-foreground">
-                            Nenhum corretor ativo
-                          </TableCell>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="text-right">Leads</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {leadsPorCorretor.slice(0, 5).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="text-right">{item.totalLeads}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
                 </CardContent>
               </Card>
 
               {/* Agendamentos por Corretor */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Agendamentos por Corretor
-                  </CardTitle>
-                  <CardDescription>Leads em status "Agendado" por corretor</CardDescription>
+                  <CardTitle className="text-base">Agendamentos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Corretor</TableHead>
-                        <TableHead className="text-right">Agendados</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {agendamentosPorCorretor && agendamentosPorCorretor.length > 0 ? (
-                        agendamentosPorCorretor.map((corretor) => (
-                          <TableRow key={corretor.id}>
-                            <TableCell className="font-medium">{corretor.nome}</TableCell>
-                            <TableCell className="text-right">{corretor.agendados}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                  {agendamentosPorCorretor && agendamentosPorCorretor.length > 0 ? (
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center text-muted-foreground">
-                            Nenhum corretor ativo
-                          </TableCell>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="text-right">Agend.</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {agendamentosPorCorretor.slice(0, 5).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="text-right">{item.agendados}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
                 </CardContent>
               </Card>
-            </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
               {/* Visitas por Corretor */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    Visitas por Corretor
-                  </CardTitle>
-                  <CardDescription>Leads em status "Visita Realizada" por corretor</CardDescription>
+                  <CardTitle className="text-base">Visitas Realizadas</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Corretor</TableHead>
-                        <TableHead className="text-right">Visitas</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {visitasPorCorretor && visitasPorCorretor.length > 0 ? (
-                        visitasPorCorretor.map((corretor) => (
-                          <TableRow key={corretor.id}>
-                            <TableCell className="font-medium">{corretor.nome}</TableCell>
-                            <TableCell className="text-right">{corretor.visitas}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                  {visitasPorCorretor && visitasPorCorretor.length > 0 ? (
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={2} className="text-center text-muted-foreground">
-                            Nenhum corretor ativo
-                          </TableCell>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="text-right">Visitas</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {visitasPorCorretor.slice(0, 5).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="text-right">{item.visitas}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
                 </CardContent>
               </Card>
 
               {/* Vendas por Corretor */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Vendas por Corretor
-                  </CardTitle>
-                  <CardDescription>VGV e quantidade de contratos fechados por corretor</CardDescription>
+                  <CardTitle className="text-base">Vendas / VGV</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Corretor</TableHead>
-                        <TableHead className="text-right">VGV</TableHead>
-                        <TableHead className="text-right">Vendas</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {vendasPorCorretor && vendasPorCorretor.length > 0 ? (
-                        vendasPorCorretor.map((corretor) => (
-                          <TableRow key={corretor.id}>
-                            <TableCell className="font-medium">{corretor.nome}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(corretor.vgv)}</TableCell>
-                            <TableCell className="text-right">{corretor.vendas}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
+                  {vendasPorCorretor && vendasPorCorretor.length > 0 ? (
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={3} className="text-center text-muted-foreground">
-                            Nenhum corretor ativo
-                          </TableCell>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="text-right">Vendas</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {vendasPorCorretor.slice(0, 5).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="text-right">
+                              {item.vendas}
+                              <span className="text-xs text-muted-foreground ml-1">
+                                ({formatCurrency(item.vgv)})
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
