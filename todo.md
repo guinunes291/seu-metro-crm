@@ -979,3 +979,15 @@
 - [x] Notificar todos por email quando alguém atingir primeiro lugar
 - [x] Botão para ativar/desativar sons
 - [x] Detectar mudança de líder automaticamente
+
+## Bug Fix: Restaurar Pódio na Minha Performance
+- [ ] Restaurar visual do pódio com fotos dos corretores
+- [ ] Manter cards de métricas coloridos na parte inferior
+- [ ] Testar visualização
+
+
+## Bug Fix: Pódio da Minha Performance não exibia corretores
+- [x] Identificar problema: duas definições duplicadas de `ranking:` no routers.ts
+- [x] Mesclar as procedures getCompleto, getPerformance e minhaPerformance com o router ranking existente
+- [x] Testar que o pódio exibe corretamente os corretores com fotos
+- [x] Verificar que o ranking completo mostra todos os 5 corretores

@@ -1068,41 +1068,7 @@ export const appRouter = router({
       }),
   }),
 
-  // ============================================================================
-  // RANKING E PERFORMANCE AVANÇADA
-  // ============================================================================
-  ranking: router({
-    // Ranking completo de corretores com fotos
-    getCompleto: corretorProcedure
-      .input(z.object({
-        mes: z.number().optional(),
-        ano: z.number().optional(),
-      }).optional())
-      .query(async ({ input }) => {
-        return await db.getRankingCorretores(input?.mes, input?.ano);
-      }),
-    
-    // Performance individual do corretor
-    getPerformance: corretorProcedure
-      .input(z.object({
-        corretorId: z.number(),
-        mes: z.number().optional(),
-        ano: z.number().optional(),
-      }))
-      .query(async ({ input }) => {
-        return await db.getPerformanceCorretor(input.corretorId, input.mes, input.ano);
-      }),
-    
-    // Performance do corretor logado
-    minhaPerformance: corretorProcedure
-      .input(z.object({
-        mes: z.number().optional(),
-        ano: z.number().optional(),
-      }).optional())
-      .query(async ({ ctx, input }) => {
-        return await db.getPerformanceCorretor(ctx.user.id, input?.mes, input?.ano);
-      }),
-  }),
+
 
   // ============================================================================
   // UPLOAD DE FOTO DE PERFIL
@@ -1465,9 +1431,40 @@ export const appRouter = router({
   }),
 
   // ============================================================================
-  // RANKING TV DASHBOARD
+  // RANKING TV DASHBOARD E PERFORMANCE
   // ============================================================================
   ranking: router({
+    // Ranking completo de corretores com fotos (para Minha Performance)
+    getCompleto: corretorProcedure
+      .input(z.object({
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getRankingCorretores(input?.mes, input?.ano);
+      }),
+    
+    // Performance individual do corretor
+    getPerformance: corretorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getPerformanceCorretor(input.corretorId, input.mes, input.ano);
+      }),
+    
+    // Performance do corretor logado
+    minhaPerformance: corretorProcedure
+      .input(z.object({
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getPerformanceCorretor(ctx.user.id, input?.mes, input?.ano);
+      }),
+    
     // Ranking do dia atual
     dia: protectedProcedure
       .input(z.object({ data: z.date().optional() }).optional())
