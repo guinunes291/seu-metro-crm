@@ -862,3 +862,9 @@
 - [x] Atualizar webhook para receber os novos campos
 - [x] Atualizar interface do corretor para exibir os novos campos
 - [x] Testar integração com Zapier
+
+## Exclusão de Corretores com Redistribuição de Leads
+- [x] Criar função para redistribuir leads de um corretor para outros
+- [x] Atualizar endpoint de exclusão para permitir excluir com leads ativos
+- [x] Atualizar interface para mostrar confirmação com quantidade de leads
+- [x] Testar exclusão e redistribuição

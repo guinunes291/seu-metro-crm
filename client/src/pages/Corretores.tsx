@@ -69,16 +69,25 @@ export default function Corretores() {
   });
 
   const deleteMutation = trpc.corretores.delete.useMutation({
-    onSuccess: () => {
-      toast.success("Corretor excluído com sucesso!");
+    onSuccess: (data) => {
+      if (data.leadsRedistribuidos > 0) {
+        toast.success(`Corretor excluído! ${data.leadsRedistribuidos} lead(s) redistribuído(s) para outros corretores.`);
+      } else {
+        toast.success("Corretor excluído com sucesso!");
+      }
       utils.corretores.list.invalidate();
+      utils.leads.list.invalidate();
       setIsDeleteDialogOpen(false);
       setSelectedCorretor(null);
+      setLeadsCount(0);
     },
     onError: (error) => {
       toast.error(`Erro ao excluir corretor: ${error.message}`);
     },
   });
+
+  // Estado para armazenar a contagem de leads do corretor selecionado
+  const [leadsCount, setLeadsCount] = useState(0);
 
   const updateStatusMutation = trpc.corretores.updateStatusGestor.useMutation({
     onSuccess: () => {
@@ -128,14 +137,21 @@ export default function Corretores() {
     });
   };
 
-  const handleDelete = (corretor: any) => {
+  const handleDelete = async (corretor: any) => {
     setSelectedCorretor(corretor);
+    // Buscar quantidade de leads do corretor
+    try {
+      const result = await utils.corretores.countLeads.fetch({ corretorId: corretor.id });
+      setLeadsCount(result.count);
+    } catch (error) {
+      setLeadsCount(0);
+    }
     setIsDeleteDialogOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = (redistribuirLeads: boolean = false) => {
     if (!selectedCorretor) return;
-    deleteMutation.mutate({ id: selectedCorretor.id });
+    deleteMutation.mutate({ id: selectedCorretor.id, redistribuirLeads });
   };
 
   const toggleStatus = (corretor: any) => {
@@ -464,27 +480,38 @@ export default function Corretores() {
       </Dialog>
 
       {/* Dialog de Confirmação de Exclusão */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={(open) => {
+        setIsDeleteDialogOpen(open);
+        if (!open) setLeadsCount(0);
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o corretor <strong>{selectedCorretor?.name}</strong>?
-              Esta ação não pode ser desfeita.
-              {selectedCorretor && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Nota: Não é possível excluir corretores que possuem leads atribuídos.
-                </div>
-              )}
+            <AlertDialogDescription asChild>
+              <div>
+                <p>Tem certeza que deseja excluir o corretor <strong>{selectedCorretor?.name}</strong>?</p>
+                <p className="mt-2">Esta ação não pode ser desfeita.</p>
+                {leadsCount > 0 && (
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                    <p className="text-amber-800 font-medium">
+                      ⚠️ Este corretor possui {leadsCount} lead(s) atribuído(s).
+                    </p>
+                    <p className="text-amber-700 text-sm mt-1">
+                      Ao excluir, os leads serão redistribuídos automaticamente para outros corretores disponíveis.
+                    </p>
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              onClick={() => confirmDelete(leadsCount > 0)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMutation.isPending}
             >
-              Excluir
+              {deleteMutation.isPending ? "Excluindo..." : leadsCount > 0 ? "Excluir e Redistribuir Leads" : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

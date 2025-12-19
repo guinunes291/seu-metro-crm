@@ -368,17 +368,31 @@ export const appRouter = router({
       }),
     
     delete: gestorProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ 
+        id: z.number(),
+        redistribuirLeads: z.boolean().optional().default(false)
+      }))
       .mutation(async ({ input }) => {
         try {
-          await db.deleteCorretor(input.id);
-          return { success: true };
+          const result = await db.deleteCorretor(input.id, input.redistribuirLeads);
+          return { 
+            success: true,
+            leadsRedistribuidos: result.leadsRedistribuidos
+          };
         } catch (error: any) {
           throw new TRPCError({ 
             code: 'BAD_REQUEST', 
             message: error.message 
           });
         }
+      }),
+    
+    // Endpoint para contar leads de um corretor (usado antes de excluir)
+    countLeads: gestorProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .query(async ({ input }) => {
+        const count = await db.countLeadsByCorretor(input.corretorId);
+        return { count };
       }),
     
     updateStatus: corretorProcedure

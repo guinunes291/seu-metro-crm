@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, gte, lte, inArray, gt } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, inArray, notInArray, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -193,20 +193,136 @@ export async function updateCorretorFoto(id: number, fotoUrl: string) {
     .where(eq(users.id, id));
 }
 
-export async function deleteCorretor(id: number) {
+export async function deleteCorretor(id: number, redistribuirLeads: boolean = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
   // Verifica se o corretor tem leads atribuídos
-  const leadsCount = await db.select({ count: sql<number>`count(*)` })
+  const leadsDoCorretor = await db.select()
     .from(leads)
     .where(eq(leads.corretorId, id));
   
-  if (Number(leadsCount[0]?.count) > 0) {
-    throw new Error("Não é possível excluir corretor que possui leads atribuídos");
+  const leadsCount = leadsDoCorretor.length;
+  
+  if (leadsCount > 0) {
+    if (!redistribuirLeads) {
+      throw new Error(`Corretor possui ${leadsCount} lead(s) atribuído(s). Use a opção de redistribuir leads para excluir.`);
+    }
+    
+    // Redistribuir leads para outros corretores
+    const leadsRedistribuidos = await redistribuirLeadsDoCorretor(id);
+    console.log(`[DeleteCorretor] ${leadsRedistribuidos} leads redistribuídos do corretor ${id}`);
   }
   
+  // Remover corretor da fila de distribuição
+  await db.delete(filaDistribuicao).where(eq(filaDistribuicao.corretorId, id));
+  
+  // Excluir o corretor
   await db.delete(users).where(eq(users.id, id));
+  
+  return { leadsRedistribuidos: leadsCount };
+}
+
+/**
+ * Redistribui todos os leads de um corretor para outros corretores disponíveis
+ * Usa a roleta para distribuição justa
+ */
+export async function redistribuirLeadsDoCorretor(corretorId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar todos os leads do corretor (exceto perdidos e contratos fechados)
+  const leadsDoCorretor = await db.select()
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      notInArray(leads.status, ['perdido', 'contrato_fechado'])
+    ));
+  
+  if (leadsDoCorretor.length === 0) {
+    // Se só tem leads perdidos/fechados, apenas desvincula
+    await db.update(leads)
+      .set({ corretorId: null })
+      .where(eq(leads.corretorId, corretorId));
+    return 0;
+  }
+  
+  // Buscar outros corretores disponíveis (presentes)
+  const outrosCorretores = await db.select()
+    .from(users)
+    .where(and(
+      inArray(users.role, ['corretor', 'gestor']),
+      eq(users.status, 'presente'),
+      sql`${users.id} != ${corretorId}`
+    ));
+  
+  if (outrosCorretores.length === 0) {
+    // Se não há outros corretores, buscar qualquer corretor (mesmo ausente)
+    const todosCorretores = await db.select()
+      .from(users)
+      .where(and(
+        inArray(users.role, ['corretor', 'gestor']),
+        sql`${users.id} != ${corretorId}`
+      ));
+    
+    if (todosCorretores.length === 0) {
+      // Se realmente não há outros corretores, desvincular leads
+      await db.update(leads)
+        .set({ corretorId: null })
+        .where(eq(leads.corretorId, corretorId));
+      return leadsDoCorretor.length;
+    }
+    
+    outrosCorretores.push(...todosCorretores);
+  }
+  
+  // Distribuir leads de forma rotativa entre os corretores disponíveis
+  let corretorIndex = 0;
+  for (const lead of leadsDoCorretor) {
+    const novoCorretor = outrosCorretores[corretorIndex % outrosCorretores.length];
+    
+    // Atualizar o lead com o novo corretor
+    await db.update(leads)
+      .set({ 
+        corretorId: novoCorretor.id,
+        dataDistribuicao: new Date()
+      })
+      .where(eq(leads.id, lead.id));
+    
+    // Registrar no log de distribuição
+    await db.insert(distributionLog).values({
+      leadId: lead.id,
+      corretorId: novoCorretor.id,
+      tipo: 'manual',
+      motivo: `Redistribuição automática - corretor anterior excluído`,
+    });
+    
+    corretorIndex++;
+  }
+  
+  // Desvincular leads perdidos/fechados (manter histórico mas sem corretor)
+  await db.update(leads)
+    .set({ corretorId: null })
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      inArray(leads.status, ['perdido', 'contrato_fechado'])
+    ));
+  
+  return leadsDoCorretor.length;
+}
+
+/**
+ * Conta quantos leads um corretor possui
+ */
+export async function countLeadsByCorretor(corretorId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(eq(leads.corretorId, corretorId));
+  
+  return Number(result[0]?.count) || 0;
 }
 
 export async function getAllUsers() {
