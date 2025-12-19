@@ -1044,3 +1044,9 @@
 - [x] Verificar se a função updateUserStatus existe no db.ts (usa presente/ausente)
 - [x] Corrigir o problema (normalizar valores entre frontend e backend)
 - [ ] Testar alteração de status com conta de corretor
+
+
+## Bug: Mensagem do toast sempre mostra "AUSENTE"
+- [x] Corrigir lógica da mensagem no DashboardLayout
+- [x] Mensagem deve refletir o novo status após alteração (verifica 'presente' ou 'ativo')
+- [ ] Testar alteração de status com conta de corretor

@@ -146,7 +146,9 @@ function DashboardLayoutContent({
   // Mutation para alterar status
   const alterarStatusMutation = trpc.corretores.alterarMeuStatus.useMutation({
     onSuccess: (data) => {
-      toast.success(data.status === 'ativo' ? '✅ Você está PRESENTE e receberá leads!' : '⏸️ Você está AUSENTE e não receberá leads.');
+      // Backend retorna 'presente' ou 'ausente'
+      const isPresente = data.status === 'presente' || data.status === 'ativo';
+      toast.success(isPresente ? '✅ Você está PRESENTE e receberá leads!' : '⏸️ Você está AUSENTE e não receberá leads.');
     },
     onError: () => {
       toast.error('Erro ao alterar status. Tente novamente.');
