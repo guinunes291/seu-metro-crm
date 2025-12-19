@@ -250,42 +250,95 @@ router.get('/facebook/:token', async (req: Request, res: Response) => {
  * 
  * Endpoint: POST /api/webhook/lead/:token
  * 
- * Aceita formato simplificado:
+ * Aceita múltiplos formatos de campos:
+ * - nome, name, full_name
+ * - telefone, phone, phone_number, celular, whatsapp
+ * - email, e-mail
+ * 
+ * Exemplo:
  * {
- *   "nome": "João Silva",
+ *   "full_name": "João Silva",
  *   "email": "joao@email.com",
- *   "telefone": "11999999999"
+ *   "phone_number": "+5511999999999"
  * }
  */
 router.post('/lead/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
-    const { nome, email, telefone, name, phone, full_name, phone_number } = req.body;
+    const body = req.body;
     
-    const leadNome = nome || name || full_name || '';
-    const leadTelefone = telefone || phone || phone_number || '';
+    console.log('[Webhook Lead] Recebido:', JSON.stringify(body, null, 2));
     
-    if (!leadNome || !leadTelefone) {
+    // Extrair nome de várias possíveis chaves
+    const leadNome = body.nome || body.name || body.full_name || 
+                     body.Nome || body.Name || body.Full_Name || 
+                     body['full name'] || body['Full Name'] || '';
+    
+    // Extrair telefone de várias possíveis chaves
+    const leadTelefone = body.telefone || body.phone || body.phone_number || 
+                         body.celular || body.whatsapp || body.Telefone || 
+                         body.Phone || body.Phone_Number || body.Celular ||
+                         body['phone number'] || body['Phone Number'] || '';
+    
+    // Extrair email
+    const leadEmail = body.email || body['e-mail'] || body.Email || 
+                      body['E-mail'] || body.EMAIL || '';
+    
+    // Extrair campos do Facebook Lead Ads
+    const campanha = body.campaign_name || body.campanha || body.Campanha || '';
+    const faixaRenda = body.faixa_de_renda || body.faixaRenda || body.faixa_renda || 
+                       body['Faixa de Renda'] || body.renda || '';
+    const prefereContatoPor = body.prefere_falar_por || body.prefereContatoPor || 
+                              body.preferencia_contato || body['Prefere contato por'] || '';
+    const dataHoraCriacao = body.created_time || body.dataHoraCriacao || 
+                            body.data_criacao || body.createdAt || '';
+    
+    console.log('[Webhook Lead] Dados extraídos:', { 
+      leadNome, leadTelefone, leadEmail, 
+      campanha, faixaRenda, prefereContatoPor, dataHoraCriacao 
+    });
+    
+    // Validar - precisa ter pelo menos nome OU telefone
+    if (!leadNome && !leadTelefone) {
+      console.log('[Webhook Lead] Dados insuficientes');
       return res.status(400).json({ 
         error: 'Dados insuficientes',
         message: 'Nome e telefone são obrigatórios',
+        received: body,
       });
     }
     
+    // Se não tiver nome, usar telefone como nome temporário
+    const nomeParaSalvar = leadNome || `Lead ${leadTelefone}`;
+    
+    // Se não tiver telefone, usar placeholder
+    const telefoneParaSalvar = leadTelefone || 'Não informado';
+    
     const resultado = await db.processarLeadWebhook(token, {
-      nome: leadNome,
-      email: email || '',
-      telefone: leadTelefone,
+      nome: nomeParaSalvar,
+      email: leadEmail,
+      telefone: telefoneParaSalvar,
+      // Campos do Facebook Lead Ads
+      campanha: campanha || undefined,
+      faixaRenda: faixaRenda || undefined,
+      prefereContatoPor: prefereContatoPor || undefined,
+      dataHoraCriacao: dataHoraCriacao || undefined,
     });
+    
+    console.log('[Webhook Lead] Lead processado:', resultado);
     
     return res.status(200).json({
       success: true,
       leadId: resultado.lead.id,
       corretorId: resultado.corretorId,
       distribuido: resultado.distribuido,
+      message: resultado.distribuido 
+        ? 'Lead criado e distribuído com sucesso' 
+        : 'Lead criado, mas não havia corretor disponível para distribuição',
     });
     
   } catch (error: any) {
+    console.error('[Webhook Lead] Erro:', error);
     return res.status(400).json({
       error: 'Erro ao processar webhook',
       message: error.message,

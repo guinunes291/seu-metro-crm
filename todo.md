@@ -847,3 +847,18 @@
 - [x] Criar testes unitários (5 testes passando)
 - [ ] Testar com lead real do Facebook Ads Manager
 - [ ] Converter token para longa duração (60 dias ou permanente)
+
+## Integração Facebook Lead Ads via Zapier
+- [ ] Criar/verificar endpoint simplificado para receber leads do Zapier
+- [ ] Documentar configuração do Zap (trigger Facebook Lead Ads → action Webhook)
+- [ ] Testar integração com lead real
+- [ ] Confirmar que leads aparecem no CRM e são distribuídos via roleta
+
+## Campos Personalizados do Facebook Lead Ads
+- [x] Adicionar campo created_time (data/hora de criação) ao schema de leads
+- [x] Adicionar campo campaign_name (Campanha) ao schema de leads
+- [x] Adicionar campo faixa_de_renda (Faixa de Renda) ao schema de leads
+- [x] Adicionar campo prefere_falar_por (Preferência de contato) ao schema de leads
+- [x] Atualizar webhook para receber os novos campos
+- [x] Atualizar interface do corretor para exibir os novos campos
+- [x] Testar integração com Zapier

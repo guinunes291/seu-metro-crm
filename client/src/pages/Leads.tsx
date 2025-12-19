@@ -448,6 +448,25 @@ export default function Leads() {
                               </span>
                             </div>
                           )}
+                          {/* Campos do Facebook Lead Ads */}
+                          {lead.campanha && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <span><strong>Campanha:</strong> {lead.campanha}</span>
+                            </div>
+                          )}
+                          {lead.faixaRenda && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <span className="h-4 w-4 text-muted-foreground font-bold">R$</span>
+                              <span><strong>Faixa de Renda:</strong> {lead.faixaRenda.replace(/_/g, ' ')}</span>
+                            </div>
+                          )}
+                          {lead.prefereContatoPor && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                              <span><strong>Prefere contato por:</strong> {lead.prefereContatoPor}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex flex-col gap-2">
@@ -620,6 +639,51 @@ export default function Leads() {
                     </div>
                   </div>
                 </div>
+
+                {/* Campos do Facebook Lead Ads */}
+                {(selectedLead.campanha || selectedLead.faixaRenda || selectedLead.prefereContatoPor || selectedLead.dataHoraCriacao) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="font-semibold mb-3">Informações do Facebook Lead Ads</h3>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {selectedLead.dataHoraCriacao && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              <strong>Data/Hora de Criação:</strong>{" "}
+                              {format(new Date(selectedLead.dataHoraCriacao), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                          </div>
+                        )}
+                        {selectedLead.campanha && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              <strong>Campanha:</strong> {selectedLead.campanha}
+                            </span>
+                          </div>
+                        )}
+                        {selectedLead.faixaRenda && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="h-4 w-4 text-muted-foreground">R$</span>
+                            <span>
+                              <strong>Faixa de Renda:</strong> {selectedLead.faixaRenda.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        )}
+                        {selectedLead.prefereContatoPor && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              <strong>Prefere contato por:</strong> {selectedLead.prefereContatoPor}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <Separator />
 

@@ -1807,6 +1807,11 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   email?: string;
   telefone: string;
   origem?: string;
+  // Campos do Facebook Lead Ads
+  campanha?: string;
+  faixaRenda?: string;
+  prefereContatoPor?: string;
+  dataHoraCriacao?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1818,7 +1823,17 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     throw new Error("Webhook inválido ou inativo");
   }
   
-  // Criar o lead
+  // Processar data/hora de criação do Facebook
+  let dataHoraCriacao: Date | undefined;
+  if (dadosLead.dataHoraCriacao) {
+    try {
+      dataHoraCriacao = new Date(dadosLead.dataHoraCriacao);
+    } catch (e) {
+      console.log('[Webhook] Erro ao parsear data:', dadosLead.dataHoraCriacao);
+    }
+  }
+  
+  // Criar o lead com os novos campos
   const lead = await createLead({
     nome: dadosLead.nome,
     email: dadosLead.email,
@@ -1826,6 +1841,11 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     origem: dadosLead.origem || webhook.fonte,
     projectId: webhook.projectIdPadrao || undefined,
     status: 'novo',
+    // Campos do Facebook Lead Ads
+    campanha: dadosLead.campanha,
+    faixaRenda: dadosLead.faixaRenda,
+    prefereContatoPor: dadosLead.prefereContatoPor,
+    dataHoraCriacao: dataHoraCriacao,
   });
   
   // Incrementar contador do webhook

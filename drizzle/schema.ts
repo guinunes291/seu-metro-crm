@@ -155,6 +155,12 @@ export const leads = mysqlTable("leads", {
   observacoes: text("observacoes"),
   motivoPerdido: text("motivoPerdido"),
   
+  // Campos do Facebook Lead Ads
+  campanha: varchar("campanha", { length: 255 }), // Nome da campanha (campaign_name)
+  faixaRenda: varchar("faixaRenda", { length: 100 }), // Faixa de renda (faixa_de_renda)
+  prefereContatoPor: varchar("prefereContatoPor", { length: 50 }), // Preferência de contato (prefere_falar_por)
+  dataHoraCriacao: timestamp("dataHoraCriacao"), // Data/hora de criação no Facebook (created_time)
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
