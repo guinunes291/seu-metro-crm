@@ -327,8 +327,12 @@ export async function distribuirLeadsEmLote(
 }
 
 /**
- * Distribui todos os leads não distribuídos em lotes
- * Baseado no AppScript: processa 20 leads por rodada
+ * Distribui todos os leads não atribuídos em lotes
+ * Regras:
+ * - Distribui leads com corretorId = null (não atribuídos a nenhum corretor)
+ * - Apenas para corretores presentes
+ * - Apenas para corretores com taxa de trabalho > 60%
+ * - Limite de 20 leads por ação
  */
 export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
   success: number;
@@ -340,35 +344,182 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
     return { success: 0, failed: 0, details: [] };
   }
 
-  // Buscar ID do gestor (admin)
-  const gestores = await db
+  // Buscar leads não atribuídos (corretorId = null)
+  const leadsNaoAtribuidos = await db
     .select()
-    .from(users)
-    .where(eq(users.role, "admin"))
-    .limit(1);
+    .from(leads)
+    .where(isNull(leads.corretorId))
+    .limit(LOTE_SIZE);
 
-  if (!gestores.length) {
+  if (leadsNaoAtribuidos.length === 0) {
     return { success: 0, failed: 0, details: [] };
   }
 
-  const gestorId = gestores[0].id;
+  const leadIds = leadsNaoAtribuidos.map((lead) => lead.id);
 
-  // Buscar leads não distribuídos do gestor (limitar a um lote)
-  // Leads do gestor são aqueles com corretorId = gestorId e status = 'novo'
-  const leadsNaoDistribuidos = await db
+  return await distribuirLeadsEmLoteParaElegiveis(leadIds);
+}
+
+/**
+ * Distribui leads em lote apenas para corretores elegíveis
+ * (presentes e com taxa de trabalho > 60%)
+ */
+async function distribuirLeadsEmLoteParaElegiveis(
+  leadIds: number[]
+): Promise<{
+  success: number;
+  failed: number;
+  details: Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>;
+}> {
+  const db = await getDb();
+  if (!db) {
+    return { success: 0, failed: 0, details: [] };
+  }
+
+  const results = {
+    success: 0,
+    failed: 0,
+    details: [] as Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>,
+  };
+
+  // Buscar corretores elegíveis (presentes e com taxa de trabalho > 60%)
+  const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
+
+  if (corretoresElegiveis.length === 0) {
+    // Nenhum corretor elegível, retornar falha para todos
+    for (const leadId of leadIds) {
+      results.details.push({
+        leadId,
+        success: false,
+        message: "Nenhum corretor elegível disponível (presente e com taxa de trabalho > 60%)",
+      });
+      results.failed++;
+    }
+    return results;
+  }
+
+  // Distribuir leads em round-robin entre corretores elegíveis
+  let corretorIndex = 0;
+
+  for (const leadId of leadIds) {
+    const corretorId = corretoresElegiveis[corretorIndex];
+
+    try {
+      // Buscar dados do lead
+      const lead = await db
+        .select()
+        .from(leads)
+        .where(eq(leads.id, leadId))
+        .limit(1);
+
+      if (!lead.length) {
+        results.details.push({
+          leadId,
+          success: false,
+          message: "Lead não encontrado",
+        });
+        results.failed++;
+        continue;
+      }
+
+      // Atualizar lead
+      await db
+        .update(leads)
+        .set({
+          corretorId,
+          dataDistribuicao: new Date(),
+          status: "aguardando_atendimento",
+        })
+        .where(eq(leads.id, leadId));
+
+      // Registrar no log de distribuição
+      await db.insert(distributionLog).values({
+        leadId,
+        corretorId,
+        tipo: "automatica",
+        motivo: "Distribuição manual via botão Distribuir Agora",
+      });
+
+      // Enviar notificação para o corretor
+      try {
+        await notifyLeadDistribuido(corretorId, leadId, lead[0].nome);
+      } catch (error) {
+        console.error("Erro ao enviar notificação:", error);
+      }
+
+      results.details.push({
+        leadId,
+        success: true,
+        corretorId,
+      });
+      results.success++;
+
+      // Avançar para o próximo corretor (round-robin)
+      corretorIndex = (corretorIndex + 1) % corretoresElegiveis.length;
+    } catch (error) {
+      results.details.push({
+        leadId,
+        success: false,
+        message: `Erro ao distribuir: ${error}`,
+      });
+      results.failed++;
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Retorna lista de IDs de corretores elegíveis para distribuição
+ * Critérios:
+ * - Status = "presente"
+ * - Taxa de trabalho > 60% (ou menos de 30 leads)
+ */
+async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Buscar todos os corretores presentes
+  const corretoresPresentes = await db
     .select()
-    .from(leads)
+    .from(users)
     .where(
       and(
-        eq(leads.corretorId, gestorId),
-        eq(leads.status, "novo")
+        eq(users.role, "corretor"),
+        eq(users.status, "presente")
       )
-    )
-    .limit(LOTE_SIZE);
+    );
 
-  const leadIds = leadsNaoDistribuidos.map((lead) => lead.id);
+  const corretoresElegiveis: number[] = [];
 
-  return await distribuirLeadsEmLote(leadIds);
+  for (const corretor of corretoresPresentes) {
+    // Buscar leads do corretor
+    const leadsDoCorretor = await db
+      .select()
+      .from(leads)
+      .where(eq(leads.corretorId, corretor.id));
+
+    const totalLeads = leadsDoCorretor.length;
+
+    // Se tem menos que 30 leads, é elegível
+    if (totalLeads < MINIMO_LEADS_GARANTIDO) {
+      corretoresElegiveis.push(corretor.id);
+      continue;
+    }
+
+    // Verificar taxa de trabalho (60% rule)
+    const leadsTrabalhados = leadsDoCorretor.filter(
+      (lead) => lead.status !== "aguardando_atendimento"
+    ).length;
+
+    const taxaTrabalho = leadsTrabalhados / totalLeads;
+
+    if (taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO) {
+      corretoresElegiveis.push(corretor.id);
+    }
+  }
+
+  return corretoresElegiveis;
 }
 
 /**

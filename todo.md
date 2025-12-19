@@ -929,3 +929,9 @@
 - [x] Sistema de pontuação com bônus por atingir metas
 - [x] Botão de tela cheia para transmissão em TV
 - [x] Exibir pódio dos top 3 corretores
+
+## Ajuste na Distribuição de Leads
+- [x] Distribuir apenas leads não atribuídos (corretorId = null)
+- [x] Distribuir apenas para corretores presentes
+- [x] Distribuir apenas para corretores com taxa de trabalho > 60%
+- [x] Respeitar limite de 20 leads por ação de distribuição
