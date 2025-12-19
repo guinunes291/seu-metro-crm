@@ -422,9 +422,17 @@ export default function Leads() {
                         <div className="space-y-2">
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="h-4 w-4 text-muted-foreground" />
-                            <a href={`tel:${lead.telefone}`} className="hover:underline">
+                            <button
+                              onClick={() => {
+                                const phone = lead.telefone.replace(/\D/g, '');
+                                const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
+                                window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                              }}
+                              className="hover:underline text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                            >
                               {lead.telefone}
-                            </a>
+                              <MessageCircle className="h-3 w-3" />
+                            </button>
                           </div>
                           {lead.email && (
                             <div className="flex items-center gap-2 text-sm">
@@ -491,14 +499,15 @@ export default function Leads() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                                className="bg-green-500 hover:bg-green-600 border-green-500 text-white"
                                 onClick={() => {
                                   const phone = lead.telefone.replace(/\D/g, '');
                                   const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
                                   window.open(`https://wa.me/${formattedPhone}`, '_blank');
                                 }}
                               >
-                                <MessageCircle className="h-4 w-4" />
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                WhatsApp
                               </Button>
                             )}
                             

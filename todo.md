@@ -991,3 +991,28 @@
 - [x] Mesclar as procedures getCompleto, getPerformance e minhaPerformance com o router ranking existente
 - [x] Testar que o pódio exibe corretamente os corretores com fotos
 - [x] Verificar que o ranking completo mostra todos os 5 corretores
+
+
+## Bug CRÍTICO: Leads sendo apagados durante atualizações
+- [x] Investigar causa da perda de leads (testes apagavam dados de produção)
+- [x] Verificar se há algum job ou processo apagando dados
+- [x] Verificar migrations do banco de dados
+- [x] Implementar proteção contra exclusão acidental (prefixo __TEST__ nos dados de teste)
+- [x] Testar que leads não são mais perdidos
+
+## Bug: Botão WhatsApp não aparece para corretores
+- [x] Verificar página MyLeads.tsx (botão já existia, mas pouco visível)
+- [x] Verificar se o botão está condicionado a alguma permissão
+- [x] Corrigir exibição do botão para corretores (botão verde destacado)
+- [x] Testar botão WhatsApp funcionando
+
+
+## Bug: Projetos também foram apagados
+- [x] Verificar se os testes apagaram projetos de produção (confirmado)
+- [x] Corrigir testes para não apagar projetos de produção (prefixo __TEST__)
+- [ ] Restaurar projetos via reimportação
+
+## Bug: Botão WhatsApp deve estar no card do lead (não só nos detalhes)
+- [x] Adicionar botão/link WhatsApp diretamente no card do lead
+- [x] Clicar no telefone deve abrir WhatsApp diretamente
+- [x] Testar funcionamento do botão WhatsApp no card

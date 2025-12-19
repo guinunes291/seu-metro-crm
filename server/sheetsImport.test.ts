@@ -1,10 +1,11 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterAll } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { extractSpreadsheetId } from "./googleSheets";
 import { getDb } from "./db";
 import { leads, projects } from "../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { sql, like, or } from "drizzle-orm";
+import { TEST_PREFIX, testName, testPhone, cleanupTestData } from "./test-utils";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -35,6 +36,11 @@ function createGestorContext(): TrpcContext {
 
   return ctx;
 }
+
+// Limpar dados de teste após todos os testes
+afterAll(async () => {
+  await cleanupTestData();
+});
 
 describe("Importação do Google Sheets", () => {
   it("deve extrair o ID da planilha de uma URL válida", () => {
@@ -93,48 +99,45 @@ describe("Importação do Google Sheets", () => {
 });
 
 describe("Validação de Não Criação Automática de Projetos", () => {
+  beforeEach(async () => {
+    await cleanupTestData();
+  });
+
   it("função findExistingProject deve retornar null para projeto inexistente", async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 
-    // Limpar projetos
-    await db.delete(projects);
-
-    // Criar um projeto
+    // Criar um projeto de teste (com prefixo)
     await db.insert(projects).values({
-      nome: "Projeto Real",
+      nome: testName("Projeto Real"),
       cidade: "São Paulo",
       estado: "SP",
       tipo: "mcmv",
       status: "ativo",
     });
 
-    // Importar a função (simulação - a função é privada)
-    // Como a função é privada, vamos testar o comportamento através da importação de leads
-    
-    // Limpar leads
-    await db.delete(leads);
-
-    // Contar projetos antes
+    // Contar projetos de teste antes
     const [countBefore] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(projects);
+      .from(projects)
+      .where(like(projects.nome, `${TEST_PREFIX}%`));
 
     expect(countBefore.count).toBe(1);
 
-    // Inserir lead com origem que não existe
+    // Inserir lead de teste com origem que não existe
     await db.insert(leads).values({
-      nome: "Lead Teste",
-      telefone: "(11) 99999-9999",
+      nome: testName("Lead Teste"),
+      telefone: testPhone("(11) 99999-9999"),
       origem: "Projeto Que Não Existe",
       projectId: null, // Deve ficar null
       status: "novo",
     });
 
-    // Contar projetos depois
+    // Contar projetos de teste depois
     const [countAfter] = await db
       .select({ count: sql<number>`count(*)` })
-      .from(projects);
+      .from(projects)
+      .where(like(projects.nome, `${TEST_PREFIX}%`));
 
     // Não deve ter criado novo projeto
     expect(countAfter.count).toBe(1);

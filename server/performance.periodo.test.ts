@@ -1,48 +1,52 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
 import { calcularPerformanceCorretor, calcularRankingCorretores } from "./performance";
 import { getDb } from "./db";
 import { users, leads, projects } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
+import { TEST_PREFIX, testName, testEmail, testPhone, cleanupTestData } from "./test-utils";
 
 describe("Performance - Filtro por Período", () => {
   let testCorretorId: number;
   let testProjetoId: number;
 
+  // Limpar dados de teste após todos os testes
+  afterAll(async () => {
+    await cleanupTestData();
+  });
+
   beforeEach(async () => {
     const db = await getDb();
     if (!db) throw new Error("Database not available");
 
-    // Limpar dados de teste
-    await db.delete(leads);
-    await db.delete(users).where(eq(users.email, "teste-periodo@example.com"));
-    await db.delete(projects).where(eq(projects.nome, "Projeto Teste Período"));
+    // Limpar apenas dados de teste (com prefixo)
+    await cleanupTestData();
 
-    // Criar corretor de teste
+    // Criar corretor de teste (com prefixo)
     const [corretor] = await db.insert(users).values({
-      openId: "test-periodo-123",
-      name: "Corretor Teste Período",
-      email: "teste-periodo@example.com",
+      openId: `test-periodo-${Date.now()}`,
+      name: testName("Corretor Teste Período"),
+      email: testEmail("teste-periodo@example.com"),
       role: "corretor",
       status: "presente",
     });
 
     // Buscar ID do corretor criado
-    const corretorCriado = await db.select().from(users).where(eq(users.email, "teste-periodo@example.com")).limit(1);
+    const corretorCriado = await db.select().from(users).where(like(users.email, `${TEST_PREFIX}teste-periodo@example.com`)).limit(1);
     testCorretorId = corretorCriado[0].id;
 
-    // Criar projeto de teste
+    // Criar projeto de teste (com prefixo)
     const [projeto] = await db.insert(projects).values({
-      nome: "Projeto Teste Período",
+      nome: testName("Projeto Teste Período"),
       construtora: "Construtora Teste",
       zona: "sul",
       status: "ativo",
     });
 
     // Buscar ID do projeto criado
-    const projetoCriado = await db.select().from(projects).where(eq(projects.nome, "Projeto Teste Período")).limit(1);
+    const projetoCriado = await db.select().from(projects).where(like(projects.nome, `${TEST_PREFIX}Projeto Teste Período`)).limit(1);
     testProjetoId = projetoCriado[0].id;
 
-    // Criar leads em diferentes períodos
+    // Criar leads em diferentes períodos (com prefixo)
     const hoje = new Date();
     const doisDiasAtras = new Date(hoje);
     doisDiasAtras.setDate(hoje.getDate() - 2);
@@ -53,9 +57,9 @@ describe("Performance - Filtro por Período", () => {
 
     // Lead recente (2 dias atrás - dentro da semana)
     await db.insert(leads).values({
-      nome: "Lead Semana",
-      telefone: "11999999991",
-      projetoId: testProjetoId,
+      nome: testName("Lead Semana"),
+      telefone: testPhone("11999999991"),
+      projectId: testProjetoId,
       corretorId: testCorretorId,
       status: "contrato_fechado",
       createdAt: doisDiasAtras,
@@ -63,9 +67,9 @@ describe("Performance - Filtro por Período", () => {
 
     // Lead de 15 dias atrás (dentro do mês, fora da semana)
     await db.insert(leads).values({
-      nome: "Lead Mês",
-      telefone: "11999999992",
-      projetoId: testProjetoId,
+      nome: testName("Lead Mês"),
+      telefone: testPhone("11999999992"),
+      projectId: testProjetoId,
       corretorId: testCorretorId,
       status: "contrato_fechado",
       createdAt: quinzeDiasAtras,
@@ -73,9 +77,9 @@ describe("Performance - Filtro por Período", () => {
 
     // Lead de 2 meses atrás (fora do mês)
     await db.insert(leads).values({
-      nome: "Lead Antigo",
-      telefone: "11999999993",
-      projetoId: testProjetoId,
+      nome: testName("Lead Antigo"),
+      telefone: testPhone("11999999993"),
+      projectId: testProjetoId,
       corretorId: testCorretorId,
       status: "novo",
       createdAt: doisMesesAtras,
@@ -115,7 +119,7 @@ describe("Performance - Filtro por Período", () => {
   it("deve retornar todos os leads quando não há filtro de período", async () => {
     const metricas = await calcularPerformanceCorretor(testCorretorId);
 
-    // Deve contar todos os 3 leads
+    // Deve contar todos os 3 leads de teste
     expect(metricas.totalLeads).toBe(3);
     expect(metricas.taxaConversao).toBeCloseTo(66.67, 1); // 2 convertidos de 3 total
   });
