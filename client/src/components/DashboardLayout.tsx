@@ -189,7 +189,7 @@ function DashboardLayoutContent({
                   <img 
                     src="/logo-seu-metro-quadrado.png" 
                     alt="Seu Metro Quadrado" 
-                    className="h-8 object-contain"
+                    className="h-10 object-contain"
                   />
                 </div>
               ) : null}

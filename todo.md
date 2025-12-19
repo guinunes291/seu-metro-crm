@@ -872,3 +872,9 @@
 ## Personalização do Logo
 - [x] Adicionar logo na página inicial (substituir ícone de prédio)
 - [x] Adicionar logo no menu lateral (substituir "Navigation")
+
+## Melhorias de Identidade Visual
+- [x] Remover fundo branco do logo
+- [x] Criar favicon a partir do ícone do logo
+- [x] Aumentar tamanho do logo no menu lateral
+- [x] Customizar cores para azul marinho (#1e3a5f) e dourado (#c9a227)
