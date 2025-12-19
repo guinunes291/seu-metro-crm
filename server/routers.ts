@@ -311,6 +311,36 @@ export const appRouter = router({
         
         return { success: true };
       }),
+    
+    // Excluir lead (apenas gestores)
+    delete: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const lead = await db.getLeadById(input.id);
+        
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        await db.deleteLead(input.id);
+        return { success: true };
+      }),
+    
+    // Excluir múltiplos leads (apenas gestores)
+    deleteMany: gestorProcedure
+      .input(z.object({ ids: z.array(z.number()) }))
+      .mutation(async ({ input }) => {
+        let deleted = 0;
+        for (const id of input.ids) {
+          try {
+            await db.deleteLead(id);
+            deleted++;
+          } catch (e) {
+            // Ignorar erros individuais
+          }
+        }
+        return { success: true, deleted };
+      }),
   }),
 
   // ============================================================================
@@ -1282,6 +1312,122 @@ export const appRouter = router({
       }),
   }),
   
+  // ============================================================================
+  // TAREFAS DO CORRETOR
+  // ============================================================================
+  tarefas: router({
+    // Listar tarefas do corretor
+    list: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getTarefasByCorretor(ctx.user.id);
+      }),
+    
+    // Buscar tarefas do dia
+    doDia: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getTarefasDoDia(ctx.user.id);
+      }),
+    
+    // Criar tarefa
+    create: corretorProcedure
+      .input(z.object({
+        titulo: z.string().min(1),
+        descricao: z.string().optional(),
+        tipo: z.enum(["follow_up", "agendamento", "ligacao", "whatsapp", "email", "visita", "documentacao", "outro"]).default("outro"),
+        dataAgendada: z.date(),
+        prioridade: z.enum(["baixa", "media", "alta"]).default("media"),
+        leadId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.createTarefa({
+          ...input,
+          corretorId: ctx.user.id,
+        });
+        return { success: true, id };
+      }),
+    
+    // Concluir tarefa
+    concluir: corretorProcedure
+      .input(z.object({
+        id: z.number(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.concluirTarefa(input.id, input.observacoes);
+        return { success: true };
+      }),
+    
+    // Excluir tarefa
+    delete: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteTarefa(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // FOLLOW-UPS AUTOMÁTICOS
+  // ============================================================================
+  followUps: router({
+    // Buscar follow-ups pendentes do corretor
+    pendentes: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getFollowUpsPendentes(ctx.user.id);
+      }),
+    
+    // Buscar follow-ups do dia
+    doDia: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getFollowUpsDoDia(ctx.user.id);
+      }),
+    
+    // Registrar tentativa de contato
+    registrarTentativa: corretorProcedure
+      .input(z.object({
+        followUpId: z.number(),
+        resultado: z.enum(["nao_atendeu", "respondeu", "outro"]),
+        observacao: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.registrarTentativaFollowUp(
+          input.followUpId,
+          input.resultado,
+          input.observacao
+        );
+      }),
+    
+    // Criar follow-up para um lead
+    criarParaLead: corretorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const id = await db.criarFollowUpParaLead(input.leadId, ctx.user.id);
+        return { success: true, id };
+      }),
+  }),
+
+  // ============================================================================
+  // TAREFAS DO DIA (AGREGADO)
+  // ============================================================================
+  tarefasDoDia: router({
+    // Buscar todas as tarefas do dia (follow-ups + agendamentos + tarefas)
+    getAll: corretorProcedure
+      .query(async ({ ctx }) => {
+        const [followUps, tarefas, agendados] = await Promise.all([
+          db.getFollowUpsDoDia(ctx.user.id),
+          db.getTarefasDoDia(ctx.user.id),
+          db.getLeadsAgendadosHoje(ctx.user.id),
+        ]);
+        
+        return {
+          followUps,
+          tarefas,
+          agendados,
+          total: followUps.length + tarefas.length + agendados.length,
+        };
+      }),
+  }),
+
   // ============================================================================
   // HISTÓRICO DE DISTRIBUIÇÃO
   // ============================================================================

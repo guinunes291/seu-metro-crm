@@ -890,3 +890,25 @@
 - [x] Adicionar gráfico de evolução de leads do corretor
 - [x] Adicionar funil de vendas individual
 - [x] Adicionar VGV individual do corretor
+
+## Exclusão de Leads e Tarefas do Dia
+- [ ] Adicionar botão de exclusão de leads para gestores
+- [ ] Criar tabela de tarefas no banco de dados
+- [ ] Criar tabela de follow-ups com contador de tentativas
+- [ ] Implementar lógica de follow-up automático (5 tentativas)
+- [ ] Criar página Tarefas do Dia para corretores
+- [ ] Exibir follow-ups pendentes na aba
+- [ ] Exibir clientes agendados para o dia
+- [ ] Permitir criação de tarefas personalizadas com data futura
+- [ ] Encerrar lead automaticamente após 5 tentativas sem resposta
+- [ ] Resetar contador quando cliente responder
+
+## Exclusão de Leads e Tarefas do Dia (Concluído)
+- [x] Botão de exclusão de leads para gestores na página Leads por Corretor
+- [x] Criar tabela de tarefas no banco de dados
+- [x] Criar tabela de follow-ups automáticos
+- [x] Página "Tarefas do Dia" para corretores
+- [x] Follow-ups automáticos com 5 tentativas (encerra lead se não responder)
+- [x] Agendamentos do dia como lembrete
+- [x] Tarefas personalizadas criadas pelo corretor
+- [x] Criação automática de follow-up quando lead é distribuído

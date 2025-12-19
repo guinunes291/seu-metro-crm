@@ -26,6 +26,7 @@ import Metas from "@/pages/Metas";
 import Roleta from "@/pages/Roleta";
 import HistoricoDistribuicao from "@/pages/HistoricoDistribuicao";
 import BoasVindas from "@/pages/BoasVindas";
+import TarefasDoDia from "@/pages/TarefasDoDia";
 
 
 
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/roleta" component={Roleta} />
       <Route path="/historico-distribuicao" component={HistoricoDistribuicao} />
       <Route path="/boas-vindas" component={BoasVindas} />
+      <Route path="/tarefas-do-dia" component={TarefasDoDia} />
 
 
       <Route path={"/404"} component={NotFound} />

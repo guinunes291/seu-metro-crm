@@ -4,9 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
 
 type LeadStatus = 'novo' | 'aguardando_atendimento' | 'em_atendimento' | 'agendado' | 'visita_realizada' | 'analise_credito' | 'contrato_fechado' | 'perdido';
 
@@ -37,6 +49,8 @@ export default function LeadsPorCorretor() {
   const [status, setStatus] = useState<LeadStatus | undefined>(undefined);
   const [dataInicio, setDataInicio] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
+  const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Buscar corretores
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
@@ -54,6 +68,19 @@ export default function LeadsPorCorretor() {
       dataFim: dataFim || undefined,
     });
 
+  // Mutation para excluir múltiplos leads
+  const deleteManyMutation = trpc.leads.deleteMany.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${data.deleted} lead(s) excluído(s) com sucesso`);
+      setSelectedLeads([]);
+      refetchLeads();
+      refetchEstatisticas();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao excluir leads: ${error.message}`);
+    },
+  });
+
   const handleRefresh = () => {
     refetchEstatisticas();
     refetchLeads();
@@ -64,6 +91,32 @@ export default function LeadsPorCorretor() {
     setStatus(undefined);
     setDataInicio("");
     setDataFim("");
+  };
+
+  const toggleSelectLead = (leadId: number) => {
+    setSelectedLeads(prev => 
+      prev.includes(leadId) 
+        ? prev.filter(id => id !== leadId)
+        : [...prev, leadId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (leads && selectedLeads.length === leads.length) {
+      setSelectedLeads([]);
+    } else if (leads) {
+      setSelectedLeads(leads.map(l => l.id));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedLeads.length === 0) return;
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    deleteManyMutation.mutate({ ids: selectedLeads });
+    setShowDeleteDialog(false);
   };
 
   if (loadingCorretores || loadingEstatisticas) {
@@ -87,10 +140,26 @@ export default function LeadsPorCorretor() {
               Acompanhe os leads de cada corretor com filtros detalhados
             </p>
           </div>
-          <Button variant="outline" onClick={handleRefresh}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            {selectedLeads.length > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteSelected}
+                disabled={deleteManyMutation.isPending}
+              >
+                {deleteManyMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Excluir ({selectedLeads.length})
+              </Button>
+            )}
+            <Button variant="outline" onClick={handleRefresh}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Atualizar
+            </Button>
+          </div>
         </div>
 
         {/* Cards de Resumo por Corretor */}
@@ -227,6 +296,7 @@ export default function LeadsPorCorretor() {
             <CardTitle>Leads</CardTitle>
             <CardDescription>
               {leads?.length || 0} lead(s) encontrado(s)
+              {selectedLeads.length > 0 && ` • ${selectedLeads.length} selecionado(s)`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -239,6 +309,12 @@ export default function LeadsPorCorretor() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={leads.length > 0 && selectedLeads.length === leads.length}
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>Corretor</TableHead>
                       <TableHead>Contato</TableHead>
@@ -249,7 +325,13 @@ export default function LeadsPorCorretor() {
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
-                      <TableRow key={lead.id}>
+                      <TableRow key={lead.id} className={selectedLeads.includes(lead.id) ? "bg-muted/50" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedLeads.includes(lead.id)}
+                            onCheckedChange={() => toggleSelectLead(lead.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{lead.nome}</TableCell>
                         <TableCell>{lead.corretorNome || "-"}</TableCell>
                         <TableCell>
@@ -300,6 +382,29 @@ export default function LeadsPorCorretor() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir {selectedLeads.length} lead(s)?
+              Esta ação não pode ser desfeita. Todo o histórico de interações
+              também será excluído.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

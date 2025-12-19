@@ -12,7 +12,9 @@ import {
   notifications, InsertNotification,
   metas, InsertMeta, Meta,
   filaDistribuicao, InsertFilaDistribuicao, FilaDistribuicao,
-  webhookConfig, InsertWebhookConfig, WebhookConfig
+  webhookConfig, InsertWebhookConfig, WebhookConfig,
+  tarefas, InsertTarefa, Tarefa,
+  followUps, InsertFollowUp, FollowUp
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -443,6 +445,20 @@ export async function updateLead(id: number, data: Partial<InsertLead>) {
   await db.update(leads)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(leads.id, id));
+}
+
+export async function deleteLead(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Primeiro excluir histórico do lead
+  await db.delete(leadHistory).where(eq(leadHistory.leadId, id));
+  
+  // Excluir registros de distribuição
+  await db.delete(distributionLog).where(eq(distributionLog.leadId, id));
+  
+  // Excluir o lead
+  await db.delete(leads).where(eq(leads.id, id));
 }
 
 export async function getLeadsNaoDistribuidos() {
@@ -1826,6 +1842,13 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     motivo: 'Distribuição automática via roleta',
   });
   
+  // Criar follow-up automático para o lead
+  try {
+    await criarFollowUpParaLead(leadId, corretorId);
+  } catch (e) {
+    console.log('[Roleta] Erro ao criar follow-up:', e);
+  }
+  
   // Buscar dados do lead para notificação
   const lead = await getLeadById(leadId);
   if (lead) {
@@ -2312,4 +2335,326 @@ export async function getCorretorEvolucaoFunil(corretorId: number, dias: number 
   }
   
   return funil;
+}
+
+
+// ============================================================================
+// TAREFAS DO CORRETOR
+// ============================================================================
+
+export async function createTarefa(tarefa: InsertTarefa) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(tarefas).values(tarefa);
+  return result[0].insertId;
+}
+
+export async function getTarefasByCorretor(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(tarefas)
+    .where(eq(tarefas.corretorId, corretorId))
+    .orderBy(desc(tarefas.dataAgendada));
+}
+
+export async function getTarefasDoDia(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+  
+  return await db.select({
+    id: tarefas.id,
+    titulo: tarefas.titulo,
+    descricao: tarefas.descricao,
+    tipo: tarefas.tipo,
+    dataAgendada: tarefas.dataAgendada,
+    status: tarefas.status,
+    prioridade: tarefas.prioridade,
+    leadId: tarefas.leadId,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    leadEmail: leads.email,
+  })
+    .from(tarefas)
+    .leftJoin(leads, eq(tarefas.leadId, leads.id))
+    .where(and(
+      eq(tarefas.corretorId, corretorId),
+      eq(tarefas.status, "pendente"),
+      gte(tarefas.dataAgendada, hoje),
+      lte(tarefas.dataAgendada, amanha)
+    ))
+    .orderBy(tarefas.prioridade, tarefas.dataAgendada);
+}
+
+export async function updateTarefa(id: number, data: Partial<InsertTarefa>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(tarefas)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(tarefas.id, id));
+}
+
+export async function concluirTarefa(id: number, observacoes?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(tarefas)
+    .set({ 
+      status: "concluida", 
+      concluidaEm: new Date(),
+      observacoesConclusao: observacoes,
+      updatedAt: new Date() 
+    })
+    .where(eq(tarefas.id, id));
+}
+
+export async function deleteTarefa(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(tarefas).where(eq(tarefas.id, id));
+}
+
+// ============================================================================
+// FOLLOW-UPS AUTOMÁTICOS
+// ============================================================================
+
+export async function createFollowUp(followUp: InsertFollowUp) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(followUps).values(followUp);
+  return result[0].insertId;
+}
+
+export async function getFollowUpByLead(leadId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(followUps)
+    .where(eq(followUps.leadId, leadId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function getFollowUpsPendentes(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const agora = new Date();
+  
+  return await db.select({
+    id: followUps.id,
+    leadId: followUps.leadId,
+    tentativaAtual: followUps.tentativaAtual,
+    maxTentativas: followUps.maxTentativas,
+    proximaTentativa: followUps.proximaTentativa,
+    ultimaTentativa: followUps.ultimaTentativa,
+    status: followUps.status,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    leadEmail: leads.email,
+    leadStatus: leads.status,
+  })
+    .from(followUps)
+    .innerJoin(leads, eq(followUps.leadId, leads.id))
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      eq(followUps.status, "ativo"),
+      lte(followUps.proximaTentativa, agora)
+    ))
+    .orderBy(followUps.proximaTentativa);
+}
+
+export async function getFollowUpsDoDia(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+  
+  return await db.select({
+    id: followUps.id,
+    leadId: followUps.leadId,
+    tentativaAtual: followUps.tentativaAtual,
+    maxTentativas: followUps.maxTentativas,
+    proximaTentativa: followUps.proximaTentativa,
+    ultimaTentativa: followUps.ultimaTentativa,
+    status: followUps.status,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    leadEmail: leads.email,
+    leadStatus: leads.status,
+  })
+    .from(followUps)
+    .innerJoin(leads, eq(followUps.leadId, leads.id))
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      eq(followUps.status, "ativo"),
+      gte(followUps.proximaTentativa, hoje),
+      lte(followUps.proximaTentativa, amanha)
+    ))
+    .orderBy(followUps.proximaTentativa);
+}
+
+export async function registrarTentativaFollowUp(
+  followUpId: number, 
+  resultado: "nao_atendeu" | "respondeu" | "outro",
+  observacao?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar follow-up atual
+  const followUp = await db.select()
+    .from(followUps)
+    .where(eq(followUps.id, followUpId))
+    .limit(1);
+  
+  if (!followUp[0]) throw new Error("Follow-up não encontrado");
+  
+  const atual = followUp[0];
+  const agora = new Date();
+  
+  // Parsear histórico existente
+  let historico: any[] = [];
+  try {
+    historico = atual.historicoTentativas ? JSON.parse(atual.historicoTentativas) : [];
+  } catch (e) {
+    historico = [];
+  }
+  
+  // Adicionar nova tentativa ao histórico
+  historico.push({
+    data: agora.toISOString(),
+    tentativa: atual.tentativaAtual,
+    resultado,
+    observacao
+  });
+  
+  if (resultado === "respondeu") {
+    // Cliente respondeu - resetar contador e marcar como respondido
+    await db.update(followUps)
+      .set({
+        status: "respondido",
+        ultimaTentativa: agora,
+        historicoTentativas: JSON.stringify(historico),
+        updatedAt: agora
+      })
+      .where(eq(followUps.id, followUpId));
+    
+    return { status: "respondido", mensagem: "Follow-up concluído - cliente respondeu" };
+  }
+  
+  if (atual.tentativaAtual >= atual.maxTentativas) {
+    // Atingiu máximo de tentativas - encerrar lead
+    await db.update(followUps)
+      .set({
+        status: "encerrado",
+        ultimaTentativa: agora,
+        historicoTentativas: JSON.stringify(historico),
+        updatedAt: agora
+      })
+      .where(eq(followUps.id, followUpId));
+    
+    // Marcar lead como perdido
+    await db.update(leads)
+      .set({
+        status: "perdido",
+        motivoPerdido: "Sem resposta após 5 tentativas de contato",
+        updatedAt: agora
+      })
+      .where(eq(leads.id, atual.leadId));
+    
+    return { status: "encerrado", mensagem: "Lead encerrado após 5 tentativas sem resposta" };
+  }
+  
+  // Agendar próxima tentativa para amanhã
+  const proximaTentativa = new Date(agora);
+  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+  proximaTentativa.setHours(9, 0, 0, 0); // Agendar para 9h do próximo dia
+  
+  await db.update(followUps)
+    .set({
+      tentativaAtual: atual.tentativaAtual + 1,
+      proximaTentativa,
+      ultimaTentativa: agora,
+      historicoTentativas: JSON.stringify(historico),
+      updatedAt: agora
+    })
+    .where(eq(followUps.id, followUpId));
+  
+  return { 
+    status: "agendado", 
+    mensagem: `Tentativa ${atual.tentativaAtual} registrada. Próxima tentativa: ${proximaTentativa.toLocaleDateString('pt-BR')}`,
+    proximaTentativa
+  };
+}
+
+export async function criarFollowUpParaLead(leadId: number, corretorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe follow-up ativo para este lead
+  const existente = await db.select()
+    .from(followUps)
+    .where(and(
+      eq(followUps.leadId, leadId),
+      eq(followUps.status, "ativo")
+    ))
+    .limit(1);
+  
+  if (existente[0]) {
+    return existente[0].id; // Já existe, retorna o ID
+  }
+  
+  // Criar novo follow-up
+  const proximaTentativa = new Date();
+  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+  proximaTentativa.setHours(9, 0, 0, 0);
+  
+  const result = await db.insert(followUps).values({
+    leadId,
+    corretorId,
+    tentativaAtual: 1,
+    maxTentativas: 5,
+    proximaTentativa,
+    status: "ativo",
+    historicoTentativas: "[]"
+  });
+  
+  return result[0].insertId;
+}
+
+// Buscar leads agendados para hoje (para a aba Tarefas do Dia)
+export async function getLeadsAgendadosHoje(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+  
+  return await db.select()
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      eq(leads.status, "agendado"),
+      gte(leads.proximoFollowup, hoje),
+      lte(leads.proximoFollowup, amanha)
+    ))
+    .orderBy(leads.proximoFollowup);
 }

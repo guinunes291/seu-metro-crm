@@ -414,3 +414,111 @@ export const webhookConfig = mysqlTable("webhook_config", {
 
 export type WebhookConfig = typeof webhookConfig.$inferSelect;
 export type InsertWebhookConfig = typeof webhookConfig.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE TAREFAS DO CORRETOR
+// ============================================================================
+
+/**
+ * Sistema de tarefas personalizadas para corretores
+ * Permite criar lembretes e tarefas para datas específicas
+ */
+export const tarefas = mysqlTable("tarefas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamentos
+  corretorId: int("corretorId").notNull(),
+  leadId: int("leadId"), // Opcional - pode ser uma tarefa sem lead específico
+  
+  // Detalhes da tarefa
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  
+  // Tipo de tarefa
+  tipo: mysqlEnum("tipo", [
+    "follow_up",        // Follow-up automático
+    "agendamento",      // Visita/reunião agendada
+    "ligacao",          // Lembrete para ligar
+    "whatsapp",         // Lembrete para enviar WhatsApp
+    "email",            // Lembrete para enviar email
+    "visita",           // Lembrete de visita
+    "documentacao",     // Lembrete de documentação
+    "outro"             // Tarefa personalizada
+  ]).default("outro").notNull(),
+  
+  // Data e hora da tarefa
+  dataAgendada: timestamp("dataAgendada").notNull(),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "pendente",
+    "concluida",
+    "cancelada"
+  ]).default("pendente").notNull(),
+  
+  // Prioridade
+  prioridade: mysqlEnum("prioridade", ["baixa", "media", "alta"]).default("media").notNull(),
+  
+  // Conclusão
+  concluidaEm: timestamp("concluidaEm"),
+  observacoesConclusao: text("observacoesConclusao"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("tarefa_corretor_idx").on(table.corretorId),
+  leadIdx: index("tarefa_lead_idx").on(table.leadId),
+  dataIdx: index("tarefa_data_idx").on(table.dataAgendada),
+  statusIdx: index("tarefa_status_idx").on(table.status),
+}));
+
+export type Tarefa = typeof tarefas.$inferSelect;
+export type InsertTarefa = typeof tarefas.$inferInsert;
+
+// ============================================================================
+// TABELA DE FOLLOW-UPS AUTOMÁTICOS
+// ============================================================================
+
+/**
+ * Sistema de follow-up automático para leads novos
+ * Cria 5 tentativas de contato, se não houver resposta o lead é encerrado
+ */
+export const followUps = mysqlTable("follow_ups", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamentos
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  
+  // Controle de tentativas
+  tentativaAtual: int("tentativaAtual").default(1).notNull(), // 1 a 5
+  maxTentativas: int("maxTentativas").default(5).notNull(),
+  
+  // Datas
+  proximaTentativa: timestamp("proximaTentativa").notNull(),
+  ultimaTentativa: timestamp("ultimaTentativa"),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "ativo",            // Follow-up em andamento
+    "respondido",       // Cliente respondeu (contador resetado)
+    "encerrado",        // 5 tentativas sem resposta
+    "convertido",       // Lead avançou no funil
+    "cancelado"         // Cancelado manualmente
+  ]).default("ativo").notNull(),
+  
+  // Histórico de tentativas (JSON array)
+  historicoTentativas: text("historicoTentativas"), // [{ data, resultado, observacao }]
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  leadIdx: index("followup_lead_idx").on(table.leadId),
+  corretorIdx: index("followup_corretor_idx").on(table.corretorId),
+  proximaIdx: index("followup_proxima_idx").on(table.proximaTentativa),
+  statusIdx: index("followup_status_idx").on(table.status),
+}));
+
+export type FollowUp = typeof followUps.$inferSelect;
+export type InsertFollowUp = typeof followUps.$inferInsert;
