@@ -1510,6 +1510,26 @@ export const appRouter = router({
       .query(async ({ ctx }) => {
         return await db.getOrCreateAtividadeDiaria(ctx.user.id);
       }),
+    
+    // Notificar todos sobre novo líder
+    notifyNewLeader: protectedProcedure
+      .input(z.object({ leaderName: z.string() }))
+      .mutation(async ({ input }) => {
+        // Buscar todos os corretores para notificar
+        const corretores = await db.getAllCorretores();
+        
+        // Criar notificação para cada corretor
+        for (const corretor of corretores) {
+          await db.createNotification({
+            userId: corretor.id,
+            title: '🏆 Novo Líder no Ranking!',
+            message: `${input.leaderName} assumiu a liderança do ranking de produtividade! Continue trabalhando para alcançar o topo!`,
+            type: 'info',
+          });
+        }
+        
+        return { success: true, notified: corretores.length };
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

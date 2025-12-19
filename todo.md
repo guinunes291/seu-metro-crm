@@ -961,3 +961,21 @@
 - [x] Criar pista de corrida visual com progresso dos corretores
 - [x] Adicionar animações de movimento
 - [x] Mostrar legenda de pontuação na tela
+
+## Ranking TV - Efeitos Sonoros, Notificações e Fotos
+- [ ] Adicionar campo de foto de perfil (avatarUrl) ao schema de corretores
+- [ ] Criar interface de upload de foto no perfil do corretor
+- [ ] Usar foto do corretor no pódio do Ranking TV
+- [ ] Implementar efeitos sonoros de celebração (primeiro lugar, venda fechada)
+- [ ] Implementar notificação por email para todos quando alguém atingir primeiro lugar
+- [ ] Testar todas as funcionalidades
+
+
+## Ranking TV - Efeitos Sonoros, Fotos e Notificações
+- [x] Usar foto de perfil do corretor no pódio (já existe campo fotoUrl)
+- [x] Interface de upload de foto no perfil (já existia em Configurações)
+- [x] Adicionar efeitos sonoros de celebração ao atingir primeiro lugar (fanfarra)
+- [x] Adicionar som de sino ao fechar venda
+- [x] Notificar todos por email quando alguém atingir primeiro lugar
+- [x] Botão para ativar/desativar sons
+- [x] Detectar mudança de líder automaticamente

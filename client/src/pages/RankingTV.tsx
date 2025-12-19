@@ -2,12 +2,14 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Trophy, Medal, Maximize, RefreshCw, Users,
-  Award, Star, Zap, Flag, Timer, TrendingUp
+  Award, Star, Zap, Flag, Timer, TrendingUp, Volume2, VolumeX
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
 
 // Sistema de pontuação
 const PONTUACAO = {
@@ -41,12 +43,110 @@ const CORES_CORREDORES = [
   'from-yellow-500 to-yellow-600',
 ];
 
-// Componente do pódio estilo corrida
-function RacePodium({ ranking }: { ranking: any[] }) {
+// Hook para efeitos sonoros
+function useSoundEffects() {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  const getAudioContext = useCallback(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return audioContextRef.current;
+  }, []);
+
+  // Som de celebração (fanfarra)
+  const playCelebration = useCallback(() => {
+    if (!soundEnabled) return;
+    
+    try {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      
+      // Criar uma sequência de notas de fanfarra
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.frequency.value = freq;
+        osc.type = 'triangle';
+        
+        gain.gain.setValueAtTime(0, now + i * 0.15);
+        gain.gain.linearRampToValueAtTime(0.3, now + i * 0.15 + 0.05);
+        gain.gain.linearRampToValueAtTime(0, now + i * 0.15 + 0.3);
+        
+        osc.start(now + i * 0.15);
+        osc.stop(now + i * 0.15 + 0.4);
+      });
+      
+      // Adicionar um som de "ding" final
+      setTimeout(() => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 1318.51; // E6
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.4, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.8);
+      }, 600);
+    } catch (e) {
+      console.log('Audio not supported');
+    }
+  }, [soundEnabled, getAudioContext]);
+
+  // Som de venda (sino)
+  const playSale = useCallback(() => {
+    if (!soundEnabled) return;
+    
+    try {
+      const ctx = getAudioContext();
+      const now = ctx.currentTime;
+      
+      // Som de sino
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.frequency.value = 880 * (1 + i * 0.5); // A5, D6, F#6
+        osc.type = 'sine';
+        
+        gain.gain.setValueAtTime(0, now + i * 0.2);
+        gain.gain.linearRampToValueAtTime(0.3, now + i * 0.2 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.2 + 0.5);
+        
+        osc.start(now + i * 0.2);
+        osc.stop(now + i * 0.2 + 0.6);
+      }
+    } catch (e) {
+      console.log('Audio not supported');
+    }
+  }, [soundEnabled, getAudioContext]);
+
+  return { playCelebration, playSale, soundEnabled, setSoundEnabled };
+}
+
+// Componente do pódio estilo corrida com fotos
+function RacePodium({ ranking, onNewLeader }: { ranking: any[], onNewLeader?: (name: string) => void }) {
   if (ranking.length === 0) return null;
   
   const top3 = ranking.slice(0, 3);
   const [segundo, primeiro, terceiro] = [top3[1], top3[0], top3[2]];
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
   
   return (
     <div className="relative mb-8">
@@ -64,9 +164,12 @@ function RacePodium({ ranking }: { ranking: any[] }) {
         {segundo && (
           <div className="flex flex-col items-center animate-bounce-slow">
             <div className="relative mb-2">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center text-3xl font-bold text-white shadow-xl border-4 border-gray-200">
-                {segundo.corretorNome?.charAt(0) || "?"}
-              </div>
+              <Avatar className="w-24 h-24 border-4 border-gray-300 shadow-xl">
+                <AvatarImage src={segundo.corretorFoto} alt={segundo.corretorNome} />
+                <AvatarFallback className="bg-gradient-to-br from-gray-300 to-gray-500 text-white text-3xl font-bold">
+                  {getInitials(segundo.corretorNome)}
+                </AvatarFallback>
+              </Avatar>
               <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-gray-400 flex items-center justify-center shadow-lg">
                 <Medal className="w-6 h-6 text-white" />
               </div>
@@ -96,9 +199,12 @@ function RacePodium({ ranking }: { ranking: any[] }) {
                   <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5z"/>
                 </svg>
               </div>
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-4xl font-bold text-white shadow-2xl border-4 border-yellow-300 ring-4 ring-yellow-200/50">
-                {primeiro.corretorNome?.charAt(0) || "?"}
-              </div>
+              <Avatar className="w-32 h-32 border-4 border-yellow-300 shadow-2xl ring-4 ring-yellow-200/50">
+                <AvatarImage src={primeiro.corretorFoto} alt={primeiro.corretorNome} />
+                <AvatarFallback className="bg-gradient-to-br from-yellow-400 to-yellow-600 text-white text-4xl font-bold">
+                  {getInitials(primeiro.corretorNome)}
+                </AvatarFallback>
+              </Avatar>
               <div className="absolute -top-2 -right-2 w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center shadow-lg animate-spin-slow">
                 <Trophy className="w-7 h-7 text-white" />
               </div>
@@ -123,9 +229,12 @@ function RacePodium({ ranking }: { ranking: any[] }) {
         {terceiro && (
           <div className="flex flex-col items-center animate-bounce-slow">
             <div className="relative mb-2">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-2xl font-bold text-white shadow-xl border-4 border-amber-400">
-                {terceiro.corretorNome?.charAt(0) || "?"}
-              </div>
+              <Avatar className="w-20 h-20 border-4 border-amber-400 shadow-xl">
+                <AvatarImage src={terceiro.corretorFoto} alt={terceiro.corretorNome} />
+                <AvatarFallback className="bg-gradient-to-br from-amber-600 to-amber-800 text-white text-2xl font-bold">
+                  {getInitials(terceiro.corretorNome)}
+                </AvatarFallback>
+              </Avatar>
               <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center shadow-lg">
                 <Award className="w-5 h-5 text-white" />
               </div>
@@ -149,11 +258,16 @@ function RacePodium({ ranking }: { ranking: any[] }) {
   );
 }
 
-// Componente da pista de corrida
+// Componente da pista de corrida com fotos
 function RaceTrack({ ranking }: { ranking: any[] }) {
   if (ranking.length === 0) return null;
   
   const maxPontos = Math.max(...ranking.map(r => r.pontuacaoTotal || r.totalPontos || 1));
+  
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
   
   return (
     <div className="bg-gradient-to-b from-green-900 to-green-800 rounded-2xl p-6 shadow-xl">
@@ -192,11 +306,14 @@ function RaceTrack({ ranking }: { ranking: any[] }) {
                   className={`absolute left-0 top-0 h-full bg-gradient-to-r ${cor} transition-all duration-1000 ease-out rounded-r-lg`}
                   style={{ width: `${Math.max(progresso, 5)}%` }}
                 >
-                  {/* Carro/Avatar do corredor */}
+                  {/* Avatar do corredor */}
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex items-center">
-                    <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${cor} flex items-center justify-center text-white font-bold text-lg shadow-lg border-2 border-white`}>
-                      {corretor.corretorNome?.charAt(0) || "?"}
-                    </div>
+                    <Avatar className="w-12 h-12 border-2 border-white shadow-lg">
+                      <AvatarImage src={corretor.corretorFoto} alt={corretor.corretorNome} />
+                      <AvatarFallback className={`bg-gradient-to-br ${cor} text-white font-bold text-lg`}>
+                        {getInitials(corretor.corretorNome)}
+                      </AvatarFallback>
+                    </Avatar>
                   </div>
                 </div>
                 
@@ -334,6 +451,13 @@ function EstatisticasDia({ ranking }: { ranking: any[] }) {
 export default function RankingTV() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState("dia");
+  const [previousLeader, setPreviousLeader] = useState<string | null>(null);
+  const [previousSales, setPreviousSales] = useState<number>(0);
+  
+  const { playCelebration, playSale, soundEnabled, setSoundEnabled } = useSoundEffects();
+  
+  // Mutation para notificar sobre novo líder
+  const notifyNewLeaderMutation = trpc.ranking.notifyNewLeader.useMutation();
   
   // Queries
   const { data: rankingDia, refetch: refetchDia } = trpc.ranking.dia.useQuery(undefined, {
@@ -347,6 +471,36 @@ export default function RankingTV() {
   const { data: rankingMensal, refetch: refetchMensal } = trpc.ranking.mensal.useQuery(undefined, {
     refetchInterval: 60000,
   });
+  
+  // Detectar mudança de líder e vendas
+  useEffect(() => {
+    if (rankingDia && rankingDia.length > 0) {
+      const currentLeader = rankingDia[0].corretorNome;
+      const totalSales = rankingDia.reduce((acc, curr) => acc + (curr.contratosFechados || 0), 0);
+      
+      // Se mudou o líder
+      if (previousLeader !== null && currentLeader !== previousLeader) {
+        playCelebration();
+        toast.success(`🏆 ${currentLeader} assumiu a liderança!`, {
+          duration: 5000,
+        });
+        
+        // Notificar todos por email
+        notifyNewLeaderMutation.mutate({ leaderName: currentLeader || 'Corretor' });
+      }
+      
+      // Se houve nova venda
+      if (previousSales > 0 && totalSales > previousSales) {
+        playSale();
+        toast.success(`🎉 Nova venda fechada!`, {
+          duration: 3000,
+        });
+      }
+      
+      setPreviousLeader(currentLeader || null);
+      setPreviousSales(totalSales);
+    }
+  }, [rankingDia, previousLeader, previousSales, playCelebration, playSale, notifyNewLeaderMutation]);
   
   // Função para entrar em tela cheia
   const toggleFullscreen = () => {
@@ -396,6 +550,14 @@ export default function RankingTV() {
         </div>
         
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={soundEnabled ? '' : 'opacity-50'}
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </Button>
           <Button variant="outline" size="sm" onClick={refetchAll}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
