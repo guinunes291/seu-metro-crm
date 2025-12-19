@@ -935,3 +935,29 @@
 - [x] Distribuir apenas para corretores presentes
 - [x] Distribuir apenas para corretores com taxa de trabalho > 60%
 - [x] Respeitar limite de 20 leads por ação de distribuição
+
+## Ranking TV - Visual de Corrida e Sistema de Pontuação
+- [ ] Implementar sistema de pontuação por ações:
+  - Novo cliente cadastrado = 5 pontos
+  - Registro/alteração de status = 2 pontos
+  - Agendamento criado = 15 pontos
+  - Visita realizada = 25 pontos
+  - Documentação/Análise de Crédito = 35 pontos
+  - Venda = 80 pontos
+- [ ] Redesenhar visual com tema de corrida/competição
+- [ ] Criar pódio animado com posições dos corretores
+- [ ] Registrar pontos automaticamente nas ações do sistema
+
+
+## Ranking TV - Visual de Corrida e Pontuação (CONCLUÍDO)
+- [x] Redesenhar visual com pódio estilo corrida
+- [x] Implementar sistema de pontuação:
+  - Cliente cadastrado = 5 pontos
+  - Alteração de status = 2 pontos
+  - Agendamento = 15 pontos
+  - Visita = 25 pontos
+  - Documentação = 35 pontos
+  - Venda = 80 pontos
+- [x] Criar pista de corrida visual com progresso dos corretores
+- [x] Adicionar animações de movimento
+- [x] Mostrar legenda de pontuação na tela

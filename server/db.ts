@@ -2888,30 +2888,44 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   
   const meta = metasCorretor[0];
   
-  // Sistema de pontuação:
-  // - Ligação realizada: 1 ponto
-  // - Ligação atendida: 2 pontos
-  // - WhatsApp enviado: 1 ponto
-  // - WhatsApp respondido: 2 pontos
-  // - Agendamento confirmado: 10 pontos
-  // - Visita realizada: 15 pontos
-  // - Proposta enviada: 20 pontos
-  // - Documentação recolhida: 25 pontos
-  // - Análise de crédito enviada: 30 pontos
-  // - Contrato fechado: 100 pontos
+  // Sistema de pontuação (definido pelo gestor):
+  // - Novo cliente cadastrado = 5 pontos
+  // - Registro/alteração de status = 2 pontos
+  // - Agendamento criado = 15 pontos
+  // - Visita realizada = 25 pontos
+  // - Documentação/Análise de Crédito = 35 pontos
+  // - Venda = 80 pontos
   // - Bônus por atingir meta: +50% dos pontos
   
+  const PONTOS = {
+    CLIENTE_CADASTRADO: 5,
+    ALTERACAO_STATUS: 2,
+    AGENDAMENTO: 15,
+    VISITA: 25,
+    DOCUMENTACAO: 35,
+    VENDA: 80,
+  };
+  
   let pontuacao = 0;
-  pontuacao += atividade.ligacoesRealizadas * 1;
-  pontuacao += atividade.ligacoesAtendidas * 2;
-  pontuacao += atividade.whatsappEnviados * 1;
-  pontuacao += atividade.whatsappRespondidos * 2;
-  pontuacao += atividade.agendamentosConfirmados * 10;
-  pontuacao += atividade.visitasRealizadas * 15;
-  pontuacao += atividade.propostasEnviadas * 20;
-  pontuacao += atividade.documentacoesRecolhidas * 25;
-  pontuacao += atividade.analiseCreditoEnviadas * 30;
-  pontuacao += atividade.contratosFechados * 100;
+  
+  // Pontos por clientes cadastrados
+  pontuacao += (atividade.clientesCadastrados || 0) * PONTOS.CLIENTE_CADASTRADO;
+  
+  // Pontos por alterações de status
+  pontuacao += (atividade.alteracoesStatus || 0) * PONTOS.ALTERACAO_STATUS;
+  
+  // Pontos por agendamentos
+  pontuacao += atividade.agendamentosConfirmados * PONTOS.AGENDAMENTO;
+  
+  // Pontos por visitas realizadas
+  pontuacao += atividade.visitasRealizadas * PONTOS.VISITA;
+  
+  // Pontos por documentação/análise de crédito
+  pontuacao += atividade.documentacoesRecolhidas * PONTOS.DOCUMENTACAO;
+  pontuacao += atividade.analiseCreditoEnviadas * PONTOS.DOCUMENTACAO;
+  
+  // Pontos por vendas
+  pontuacao += atividade.contratosFechados * PONTOS.VENDA;
   
   // Bônus por atingir metas diárias
   if (meta) {
@@ -2939,7 +2953,12 @@ export async function registrarAtividadePorStatus(
   statusNovo: string,
   valorVenda?: number
 ) {
-  // Mapear mudanças de status para atividades
+  // Sempre registrar alteração de status (2 pontos)
+  if (statusAnterior !== statusNovo) {
+    await incrementarAtividade(corretorId, 'alteracoesStatus');
+  }
+  
+  // Mapear mudanças de status para atividades específicas
   if (statusNovo === 'em_atendimento' && statusAnterior === 'aguardando_atendimento') {
     await incrementarAtividade(corretorId, 'ligacoesRealizadas');
     await incrementarAtividade(corretorId, 'ligacoesAtendidas');
@@ -2966,5 +2985,11 @@ export async function registrarAtividadePorStatus(
   }
   
   // Recalcular pontuação
+  await calcularPontuacaoDiaria(corretorId);
+}
+
+// Registrar cliente cadastrado pelo corretor (5 pontos)
+export async function registrarClienteCadastrado(corretorId: number) {
+  await incrementarAtividade(corretorId, 'clientesCadastrados');
   await calcularPontuacaoDiaria(corretorId);
 }

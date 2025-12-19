@@ -532,6 +532,22 @@ export type InsertFollowUp = typeof followUps.$inferInsert;
  * Registro de atividades diárias dos corretores para o ranking de produtividade
  * Cada registro representa as atividades de um corretor em um dia específico
  */
+// Sistema de pontuação por ação:
+// - Novo cliente cadastrado = 5 pontos
+// - Registro/alteração de status = 2 pontos
+// - Agendamento criado = 15 pontos
+// - Visita realizada = 25 pontos
+// - Documentação/Análise de Crédito = 35 pontos
+// - Venda = 80 pontos
+export const PONTUACAO = {
+  CLIENTE_CADASTRADO: 5,
+  ALTERACAO_STATUS: 2,
+  AGENDAMENTO: 15,
+  VISITA: 25,
+  DOCUMENTACAO: 35,
+  VENDA: 80,
+} as const;
+
 export const atividadesDiarias = mysqlTable("atividades_diarias", {
   id: int("id").autoincrement().primaryKey(),
   
@@ -542,6 +558,8 @@ export const atividadesDiarias = mysqlTable("atividades_diarias", {
   data: timestamp("data").notNull(),
   
   // Contadores de atividades
+  clientesCadastrados: int("clientesCadastrados").default(0).notNull(),
+  alteracoesStatus: int("alteracoesStatus").default(0).notNull(),
   ligacoesRealizadas: int("ligacoesRealizadas").default(0).notNull(),
   ligacoesAtendidas: int("ligacoesAtendidas").default(0).notNull(),
   whatsappEnviados: int("whatsappEnviados").default(0).notNull(),
@@ -556,7 +574,7 @@ export const atividadesDiarias = mysqlTable("atividades_diarias", {
   // Valor total de vendas do dia (em centavos)
   vgvDia: int("vgvDia").default(0).notNull(),
   
-  // Pontuação calculada (baseada nas metas)
+  // Pontuação calculada automaticamente
   pontuacaoTotal: int("pontuacaoTotal").default(0).notNull(),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
