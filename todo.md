@@ -1023,3 +1023,17 @@
 - [x] Identificar URL incorreta no redirecionamento (/leads/:id não existia)
 - [x] Corrigir para abrir página Meus Leads com o lead (/leads?leadId=X)
 - [x] Testar clique nas notificações - modal abre automaticamente
+
+
+## Atualização: Página de Boas-Vindas
+- [x] Usar DashboardLayout na página
+- [x] Atualizar conteúdo com informações relevantes
+- [x] Incluir guia de primeiros passos
+- [x] Testar visualização
+
+- [x] Atualizar conteúdo específico para corretores na página Boas-Vindas
+- [x] Incluir instruções de como marcar presença/ausência
+- [x] Explicar todas as funcionalidades disponíveis
+- [x] Criar guia completo de uso do sistema
+- [x] Adicionar botão de Presença/Ausência no DashboardLayout
+- [x] Criar procedures meuStatus e alterarMeuStatus no router

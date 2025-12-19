@@ -469,6 +469,33 @@ export const appRouter = router({
         
         return await db.getConversionStats(corretorId, input.projectId);
       }),
+    
+    // Corretor consulta seu próprio status de presença
+    meuStatus: protectedProcedure
+      .query(async ({ ctx }) => {
+        const user = await db.getUserById(ctx.user.id);
+        return {
+          status: user?.status || 'inativo',
+          name: user?.name,
+        };
+      }),
+    
+    // Corretor altera seu próprio status de presença
+    alterarMeuStatus: protectedProcedure
+      .input(z.object({
+        status: z.enum(['ativo', 'inativo', 'presente', 'ausente'])
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Normalizar status: presente -> ativo, ausente -> inativo
+        const statusNormalizado = input.status === 'presente' ? 'ativo' : 
+                                   input.status === 'ausente' ? 'inativo' : input.status;
+        
+        await db.updateUserStatus(ctx.user.id, statusNormalizado as 'ativo' | 'inativo');
+        return { 
+          success: true, 
+          status: statusNormalizado 
+        };
+      }),
   }),
 
 

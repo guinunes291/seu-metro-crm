@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -22,12 +23,14 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, UserCheck, UserX, Circle } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import NotificationListener from "./NotificationListener";
+import { Badge } from "./ui/badge";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: BookOpen, label: "Boas-Vindas", path: "/boas-vindas" },
@@ -134,6 +137,25 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
 
+  // Query para verificar status do corretor
+  const { data: corretorStatus } = trpc.corretores.meuStatus.useQuery(undefined, {
+    enabled: user?.role === 'corretor',
+    refetchInterval: 60000, // Atualiza a cada 1 minuto
+  });
+
+  // Mutation para alterar status
+  const alterarStatusMutation = trpc.corretores.alterarMeuStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.status === 'ativo' ? '✅ Você está PRESENTE e receberá leads!' : '⏸️ Você está AUSENTE e não receberá leads.');
+    },
+    onError: () => {
+      toast.error('Erro ao alterar status. Tente novamente.');
+    },
+  });
+
+  const isCorretor = user?.role === 'corretor';
+  const isAtivo = corretorStatus?.status === 'ativo';
+
   useEffect(() => {
     if (isCollapsed) {
       setIsResizing(false);
@@ -170,6 +192,11 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
+  const handleToggleStatus = () => {
+    const novoStatus = isAtivo ? 'inativo' : 'ativo';
+    alterarStatusMutation.mutate({ status: novoStatus });
+  };
+
   return (
     <>
       <div className="relative" ref={sidebarRef}>
@@ -200,6 +227,63 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0">
+            {/* Botão de Presença/Ausência para Corretores */}
+            {isCorretor && !isCollapsed && (
+              <div className="px-3 py-2">
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={alterarStatusMutation.isPending}
+                  className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg transition-all ${
+                    isAtivo 
+                      ? 'bg-green-500/10 hover:bg-green-500/20 border border-green-500/30' 
+                      : 'bg-red-500/10 hover:bg-red-500/20 border border-red-500/30'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {isAtivo ? (
+                      <UserCheck className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <UserX className="h-4 w-4 text-red-600" />
+                    )}
+                    <span className={`text-sm font-medium ${isAtivo ? 'text-green-700' : 'text-red-700'}`}>
+                      {isAtivo ? 'PRESENTE' : 'AUSENTE'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Circle className={`h-2 w-2 ${isAtivo ? 'fill-green-500 text-green-500' : 'fill-red-500 text-red-500'} animate-pulse`} />
+                    <span className="text-xs text-muted-foreground">
+                      {isAtivo ? 'Recebendo leads' : 'Sem leads'}
+                    </span>
+                  </div>
+                </button>
+                <p className="text-[10px] text-muted-foreground text-center mt-1">
+                  Clique para {isAtivo ? 'pausar' : 'ativar'} recebimento
+                </p>
+              </div>
+            )}
+
+            {/* Botão compacto quando sidebar está colapsada */}
+            {isCorretor && isCollapsed && (
+              <div className="px-2 py-2">
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={alterarStatusMutation.isPending}
+                  className={`w-full flex items-center justify-center p-2 rounded-lg transition-all ${
+                    isAtivo 
+                      ? 'bg-green-500/10 hover:bg-green-500/20' 
+                      : 'bg-red-500/10 hover:bg-red-500/20'
+                  }`}
+                  title={isAtivo ? 'PRESENTE - Clique para ficar ausente' : 'AUSENTE - Clique para ficar presente'}
+                >
+                  {isAtivo ? (
+                    <UserCheck className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <UserX className="h-5 w-5 text-red-600" />
+                  )}
+                </button>
+              </div>
+            )}
+
             <SidebarMenu className="px-2 py-1">
               {menuItems.filter(item => !item.roles || item.roles.includes(user?.role || "")).map(item => {
                 const isActive = location === item.path;
@@ -229,28 +313,61 @@ function DashboardLayoutContent({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <Avatar className="h-9 w-9 border shrink-0">
+                      <AvatarFallback className="text-xs font-medium">
+                        {user?.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isCorretor && (
+                      <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-background ${isAtivo ? 'bg-green-500' : 'bg-red-500'}`} />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium truncate leading-none">
+                        {user?.name || "-"}
+                      </p>
+                      {isCorretor && (
+                        <Badge variant={isAtivo ? "default" : "destructive"} className="text-[9px] px-1 py-0 h-4">
+                          {isAtivo ? 'ON' : 'OFF'}
+                        </Badge>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
                       {user?.email || "-"}
                     </p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                {isCorretor && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={handleToggleStatus}
+                      className="cursor-pointer"
+                    >
+                      {isAtivo ? (
+                        <>
+                          <UserX className="mr-2 h-4 w-4 text-red-500" />
+                          <span>Ficar Ausente</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserCheck className="mr-2 h-4 w-4 text-green-500" />
+                          <span>Ficar Presente</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem
                   onClick={logout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -279,6 +396,21 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
+            {/* Botão de status no mobile */}
+            {isCorretor && (
+              <button
+                onClick={handleToggleStatus}
+                disabled={alterarStatusMutation.isPending}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${
+                  isAtivo 
+                    ? 'bg-green-500/10 text-green-700' 
+                    : 'bg-red-500/10 text-red-700'
+                }`}
+              >
+                <Circle className={`h-2 w-2 ${isAtivo ? 'fill-green-500 text-green-500' : 'fill-red-500 text-red-500'}`} />
+                {isAtivo ? 'Presente' : 'Ausente'}
+              </button>
+            )}
           </div>
         )}
         <main className="flex-1 p-4">
