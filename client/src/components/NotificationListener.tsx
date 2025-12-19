@@ -91,7 +91,7 @@ export default function NotificationListener() {
           action: notification.leadId ? {
             label: "Ver Lead",
             onClick: () => {
-              window.location.href = `/leads/${notification.leadId}`;
+              window.location.href = `/leads?leadId=${notification.leadId}`;
             },
           } : undefined,
         });

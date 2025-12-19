@@ -1,0 +1,34 @@
+{
+  "query": "SELECT id, nome, telefone, origem FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '_T_%' OR origem LIKE '%Teste%' LIMIT 30",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, telefone, origem FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '_T_%' OR origem LIKE '%Teste%' LIMIT 30",
+  "rows": [
+    {
+      "id": "2291",
+      "nome": "Lead Teste",
+      "telefone": "(11) 99999-9999",
+      "origem": "Projeto Que Não Existe"
+    },
+    {
+      "id": "2374",
+      "nome": "Lead Teste Sheets",
+      "telefone": "(11) 99999-8888",
+      "origem": "NULL"
+    },
+    {
+      "id": "2466",
+      "nome": "Lead Teste Sheets",
+      "telefone": "(11) 99999-8888",
+      "origem": "NULL"
+    },
+    {
+      "id": "2674",
+      "nome": "Lead Teste Sheets",
+      "telefone": "(11) 99999-8888",
+      "origem": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\torigem\n2291\tLead Teste\t(11) 99999-9999\tProjeto Que Não Existe\n2374\tLead Teste Sheets\t(11) 99999-8888\tNULL\n2466\tLead Teste Sheets\t(11) 99999-8888\tNULL\n2674\tLead Teste Sheets\t(11) 99999-8888\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

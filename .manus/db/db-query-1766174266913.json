@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, nome, telefone, status FROM leads LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, telefone, status FROM leads LIMIT 20",
+  "rows": [
+    {
+      "id": "2291",
+      "nome": "Lead Teste",
+      "telefone": "(11) 99999-9999",
+      "status": "aguardando_atendimento"
+    },
+    {
+      "id": "2292",
+      "nome": "Lead Convertido 0",
+      "telefone": "11999000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2293",
+      "nome": "Lead Convertido 1",
+      "telefone": "11999111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2294",
+      "nome": "Lead Convertido 2",
+      "telefone": "11999222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2295",
+      "nome": "Lead Perdido 0",
+      "telefone": "11998000000",
+      "status": "perdido"
+    },
+    {
+      "id": "2296",
+      "nome": "Lead Perdido 1",
+      "telefone": "11998111111",
+      "status": "perdido"
+    },
+    {
+      "id": "2297",
+      "nome": "Lead Atendimento 0",
+      "telefone": "11997000000",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2298",
+      "nome": "Lead Atendimento 1",
+      "telefone": "11997111111",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2299",
+      "nome": "Lead Atendimento 2",
+      "telefone": "11997222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2300",
+      "nome": "Lead Atendimento 3",
+      "telefone": "11997333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2301",
+      "nome": "Lead Atendimento 4",
+      "telefone": "11997444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2302",
+      "nome": "Lead Novo",
+      "telefone": "11999111111",
+      "status": "novo"
+    },
+    {
+      "id": "2303",
+      "nome": "Lead Atendimento",
+      "telefone": "11999222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2304",
+      "nome": "Lead Convertido",
+      "telefone": "11999333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2305",
+      "nome": "Lead Projeto 0",
+      "telefone": "11996000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2306",
+      "nome": "Lead Projeto 1",
+      "telefone": "11996111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "2307",
+      "nome": "Lead Projeto 2",
+      "telefone": "11996222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2308",
+      "nome": "Lead Projeto 3",
+      "telefone": "11996333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2309",
+      "nome": "Lead Projeto 4",
+      "telefone": "11996444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "2310",
+      "nome": "Lead C1 0",
+      "telefone": "11995000000",
+      "status": "contrato_fechado"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\tstatus\n2291\tLead Teste\t(11) 99999-9999\taguardando_atendimento\n2292\tLead Convertido 0\t11999000000\tcontrato_fechado\n2293\tLead Convertido 1\t11999111111\tcontrato_fechado\n2294\tLead Convertido 2\t11999222222\tcontrato_fechado\n2295\tLead Perdido 0\t11998000000\tperdido\n2296\tLead Perdido 1\t11998111111\tperdido\n2297\tLead Atendimento 0\t11997000000\tem_atendimento\n2298\tLead Atendimento 1\t11997111111\tem_atendimento\n2299\tLead Atendimento 2\t11997222222\tem_atendimento\n2300\tLead Atendimento 3\t11997333333\tem_atendimento\n2301\tLead Atendimento 4\t11997444444\tem_atendimento\n2302\tLead Novo\t11999111111\tnovo\n2303\tLead Atendimento\t11999222222\tem_atendimento\n2304\tLead Convertido\t11999333333\tcontrato_fechado\n2305\tLead Projeto 0\t11996000000\tcontrato_fechado\n2306\tLead Projeto 1\t11996111111\tcontrato_fechado\n2307\tLead Projeto 2\t11996222222\tem_atendimento\n2308\tLead Projeto 3\t11996333333\tem_atendimento\n2309\tLead Projeto 4\t11996444444\tem_atendimento\n2310\tLead C1 0\t11995000000\tcontrato_fechado\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

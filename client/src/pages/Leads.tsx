@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearch, useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,24 @@ export default function Leads() {
   const { data: projects } = trpc.projects.list.useQuery();
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [detailsDialog, setDetailsDialog] = useState(false);
+  const [, setLocation] = useLocation();
+  
+  // Ler leadId da URL para abrir modal automaticamente
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const leadIdParam = urlParams.get('leadId');
+    
+    if (leadIdParam && leads) {
+      const leadId = parseInt(leadIdParam);
+      const lead = leads.find(l => l.id === leadId);
+      if (lead) {
+        setSelectedLead(lead);
+        setDetailsDialog(true);
+        // Limpar o parâmetro da URL após abrir o modal
+        window.history.replaceState({}, '', '/leads');
+      }
+    }
+  }, [leads]);
   const [interactionDialog, setInteractionDialog] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [searchTerm, setSearchTerm] = useState("");

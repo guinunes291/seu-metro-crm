@@ -50,9 +50,10 @@ export default function Notificacoes() {
       markAsRead.mutate({ notificationId: notification.id });
     }
     
-    // Se tiver leadId, navegar para o lead
+    // Se tiver leadId, navegar para a página de leads com o lead selecionado
     if (notification.leadId) {
-      setLocation(`/leads/${notification.leadId}`);
+      // Redireciona para /leads com o leadId como parâmetro para abrir o modal
+      setLocation(`/leads?leadId=${notification.leadId}`);
     }
   };
 

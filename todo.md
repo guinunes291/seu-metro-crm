@@ -1016,3 +1016,10 @@
 - [x] Adicionar botão/link WhatsApp diretamente no card do lead
 - [x] Clicar no telefone deve abrir WhatsApp diretamente
 - [x] Testar funcionamento do botão WhatsApp no card
+
+
+## Bug: Notificações de leads retornam erro 404
+- [x] Investigar código das notificações
+- [x] Identificar URL incorreta no redirecionamento (/leads/:id não existia)
+- [x] Corrigir para abrir página Meus Leads com o lead (/leads?leadId=X)
+- [x] Testar clique nas notificações - modal abre automaticamente
