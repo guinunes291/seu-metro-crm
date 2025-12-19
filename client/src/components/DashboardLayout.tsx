@@ -138,19 +138,74 @@ function DashboardLayoutContent({
   const isMobile = useIsMobile();
 
   // Query para verificar status do corretor
+  const utils = trpc.useUtils();
   const { data: corretorStatus } = trpc.corretores.meuStatus.useQuery(undefined, {
     enabled: user?.role === 'corretor',
     refetchInterval: 60000, // Atualiza a cada 1 minuto
   });
 
-  // Mutation para alterar status
+  // Função para tocar som de notificação
+  const playStatusSound = (isPresente: boolean) => {
+    try {
+      // Criar contexto de áudio
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Som diferente para presente (agudo) e ausente (grave)
+      oscillator.frequency.value = isPresente ? 880 : 440; // Lá agudo ou Lá grave
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+      console.log('Som não suportado');
+    }
+  };
+
+  // Mutation para alterar status com optimistic update
   const alterarStatusMutation = trpc.corretores.alterarMeuStatus.useMutation({
+    onMutate: async (newStatus) => {
+      // Cancelar queries em andamento
+      await utils.corretores.meuStatus.cancel();
+      
+      // Salvar estado anterior
+      const previousStatus = utils.corretores.meuStatus.getData();
+      
+      // Atualizar otimisticamente
+      const novoStatusVisual = newStatus.status === 'ativo' ? 'ativo' : 'inativo';
+      utils.corretores.meuStatus.setData(undefined, (old) => ({
+        ...old,
+        status: novoStatusVisual,
+        name: old?.name || '',
+      }));
+      
+      return { previousStatus };
+    },
     onSuccess: (data) => {
       // Backend retorna 'presente' ou 'ausente'
       const isPresente = data.status === 'presente' || data.status === 'ativo';
+      
+      // Tocar som
+      playStatusSound(isPresente);
+      
+      // Mostrar toast
       toast.success(isPresente ? '✅ Você está PRESENTE e receberá leads!' : '⏸️ Você está AUSENTE e não receberá leads.');
+      
+      // Invalidar para sincronizar com o servidor
+      utils.corretores.meuStatus.invalidate();
     },
-    onError: () => {
+    onError: (err, newStatus, context) => {
+      // Reverter para o estado anterior em caso de erro
+      if (context?.previousStatus) {
+        utils.corretores.meuStatus.setData(undefined, context.previousStatus);
+      }
       toast.error('Erro ao alterar status. Tente novamente.');
     },
   });

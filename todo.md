@@ -1050,3 +1050,9 @@
 - [x] Corrigir lógica da mensagem no DashboardLayout
 - [x] Mensagem deve refletir o novo status após alteração (verifica 'presente' ou 'ativo')
 - [ ] Testar alteração de status com conta de corretor
+
+
+## Melhoria: Som e atualização instantânea no status
+- [x] Adicionar som ao alterar status (som agudo para presente, grave para ausente)
+- [x] Fazer atualização visual instantânea (optimistic update)
+- [ ] Testar funcionamento com conta de corretor
