@@ -1161,3 +1161,30 @@
 - [x] Mostrar indicador visual quando o Copilot está contextualizado com um lead
 - [x] Testar integração com lead real
 - [x] Validar respostas personalizadas do assistente
+
+
+## Nova Feature: Dashboard Performance em Vendas - Estilo Midrah (20/12/2025)
+- [ ] Criar página RankingTV com tema dark/azul
+- [ ] Implementar header com logo e título "Performance em Vendas"
+- [ ] Criar KPIs principais: Meta, Faturamento, Realizado, Gap da Meta, Tendência, Contratos
+- [ ] Implementar pódio visual com fotos dos top 5 corretores em círculos brilhantes
+- [ ] Criar ranking lateral com lista completa de corretores e VGV
+- [ ] Adicionar gráfico de barras para ranking de equipes
+- [ ] Adicionar linha de tendência sobre o gráfico
+- [ ] Implementar filtros: Mês, Trimestre, Ano, Ativo
+- [ ] Aplicar efeitos visuais: gradientes azuis, bordas brilhantes, sombras
+- [ ] Testar responsividade e visual final
+
+
+## Nova Feature: Dashboard Performance em Vendas - Estilo Midrah (20/12/2025)
+- [x] Analisar design de referência da Midrah
+- [x] Criar página PerformanceTV com tema dark/azul
+- [x] Implementar KPIs principais no topo (Meta, Faturamento, Realizado, Gap, Tendência, Contratos, Corretores)
+- [x] Criar pódio visual com fotos dos top 6 corretores (dourado, prata, bronze)
+- [x] Implementar ranking lateral com lista de executivos e VGV
+- [x] Adicionar gráfico de barras com linha de tendência
+- [x] Implementar filtros por período (Mês, Trimestre, Ano)
+- [x] Adicionar efeitos visuais (brilho, gradientes, sombras)
+- [x] Adicionar link no menu lateral (Performance TV)
+- [x] Auto-refresh a cada 30 segundos
+- [x] Botão de fullscreen para exibição em TV

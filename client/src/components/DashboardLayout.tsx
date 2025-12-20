@@ -48,6 +48,7 @@ const menuItems = [
   { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["gestor", "admin"] },
   { icon: History, label: "Histórico Distribuição", path: "/historico-distribuicao", roles: ["gestor", "admin"] },
   { icon: Trophy, label: "Ranking TV", path: "/ranking-tv", roles: ["gestor", "admin"] },
+  { icon: BarChart3, label: "Performance TV", path: "/performance-tv", roles: ["gestor", "admin"] },
   { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["gestor", "admin"] },
   { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
   { icon: Building2, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin"] },
