@@ -1188,3 +1188,25 @@
 - [x] Adicionar link no menu lateral (Performance TV)
 - [x] Auto-refresh a cada 30 segundos
 - [x] Botão de fullscreen para exibição em TV
+
+
+## Nova Feature: Metas Personalizadas e Dashboard Produtividade Diária (20/12/2025)
+- [x] Criar tabela de metas no schema (meta mensal, trimestral, anual por equipe) - já existia
+- [x] Implementar CRUD de metas no backend - já existia
+- [x] Criar interface para gestor definir metas - já existia, corrigido para usar R$ ao invés de centavos
+- [x] Integrar metas no dashboard Performance TV
+- [x] Criar dashboard de produtividade diária (ligações, contatos, agendamentos, visitas, documentações)
+- [x] Adicionar abas/tabs no Performance TV para alternar entre VGV e Produtividade
+- [x] Implementar ranking diário de atividades
+- [x] Adicionar indicadores visuais de progresso das metas
+
+## Nova Feature: Reorganização do Menu Lateral em Grupos (20/12/2025)
+- [x] Criar grupos colapsáveis no menu lateral
+- [x] Grupo "Início" - Boas-Vindas, Dashboard, Tarefas do Dia
+- [x] Grupo "Leads" - Meus Leads, Kanban, Leads por Corretor, Notificações
+- [x] Grupo "Projetos" - Catálogo, Importar Projetos
+- [x] Grupo "Performance" - Minha Performance, Ranking TV, Performance TV, Metas
+- [x] Grupo "Gestão" - Corretores, Distribuição, Roleta, Histórico, Importar Leads, Lixeira
+- [x] Grupo "Sistema" - Relatórios, Configurações
+- [x] Manter navegação intuitiva e responsiva
+- [x] Salvar estado de grupos abertos/fechados no localStorage

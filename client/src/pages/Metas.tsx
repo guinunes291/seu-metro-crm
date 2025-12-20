@@ -546,16 +546,21 @@ export default function Metas() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="metaVGV">Meta de VGV (em centavos)</Label>
-                <Input
-                  id="metaVGV"
-                  type="number"
-                  min="0"
-                  value={formData.metaVGV}
-                  onChange={(e) => setFormData({ ...formData, metaVGV: parseInt(e.target.value) || 0 })}
-                />
+                <Label htmlFor="metaVGV">Meta de VGV (R$)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                  <Input
+                    id="metaVGV"
+                    type="number"
+                    min="0"
+                    step="1000"
+                    className="pl-10"
+                    value={formData.metaVGV / 100}
+                    onChange={(e) => setFormData({ ...formData, metaVGV: Math.round(parseFloat(e.target.value) * 100) || 0 })}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Valor em centavos. Ex: R$ 500.000 = 50000000
+                  Ex: R$ 500.000 para meta de quinhentos mil reais
                 </p>
               </div>
               
