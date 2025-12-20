@@ -139,18 +139,18 @@ export default function HistoricoPresenca() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Clock className="h-6 w-6 text-amber-400" />
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Clock className="h-6 w-6 text-amber-500" />
               Histórico de Presença
             </h1>
-            <p className="text-slate-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               Acompanhe a presença e ausência da equipe
             </p>
           </div>
           
           <div className="flex items-center gap-3">
             <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
-              <SelectTrigger className="w-[140px] bg-slate-800 border-slate-700">
+              <SelectTrigger className="w-[140px] bg-background border-border">
                 <Calendar className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -163,7 +163,7 @@ export default function HistoricoPresenca() {
             </Select>
             
             <Select value={corretorSelecionado} onValueChange={setCorretorSelecionado}>
-              <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700">
+              <SelectTrigger className="w-[180px] bg-background border-border">
                 <User className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Todos os corretores" />
               </SelectTrigger>
@@ -202,79 +202,79 @@ export default function HistoricoPresenca() {
         
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-slate-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">
                 <Calendar className="h-4 w-4" />
                 Total de Dias
               </div>
-              <p className="text-2xl font-bold text-white">{estatisticasGerais.totalDias}</p>
+              <p className="text-2xl font-bold text-foreground">{estatisticasGerais.totalDias}</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-green-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm mb-1">
                 <CheckCircle className="h-4 w-4" />
                 Dias Presente
               </div>
-              <p className="text-2xl font-bold text-green-400">{estatisticasGerais.diasPresente}</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{estatisticasGerais.diasPresente}</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-red-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm mb-1">
                 <XCircle className="h-4 w-4" />
                 Dias Ausente
               </div>
-              <p className="text-2xl font-bold text-red-400">{estatisticasGerais.diasAusente}</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{estatisticasGerais.diasAusente}</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-amber-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mb-1">
                 <Timer className="h-4 w-4" />
                 Dias Parcial
               </div>
-              <p className="text-2xl font-bold text-amber-400">{estatisticasGerais.diasParcial}</p>
+              <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{estatisticasGerais.diasParcial}</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-cyan-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 text-sm mb-1">
                 <Clock className="h-4 w-4" />
                 Média Horas/Dia
               </div>
-              <p className="text-2xl font-bold text-cyan-400">{estatisticasGerais.mediaHoras}h</p>
+              <p className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{estatisticasGerais.mediaHoras}h</p>
             </CardContent>
           </Card>
           
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardContent className="pt-4">
-              <div className="flex items-center gap-2 text-purple-400 text-sm mb-1">
+              <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400 text-sm mb-1">
                 <TrendingUp className="h-4 w-4" />
                 % Presença
               </div>
-              <p className="text-2xl font-bold text-purple-400">{estatisticasGerais.percentualPresenca}%</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{estatisticasGerais.percentualPresenca}%</p>
             </CardContent>
           </Card>
         </div>
         
         {/* Tabs com gráficos */}
         <Tabs defaultValue="barras" className="space-y-4">
-          <TabsList className="bg-slate-800 border border-slate-700">
-            <TabsTrigger value="barras" className="data-[state=active]:bg-amber-500">
+          <TabsList className="bg-muted border border-border">
+            <TabsTrigger value="barras" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
               <BarChart3 className="h-4 w-4 mr-2" />
               Barras Empilhadas
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="data-[state=active]:bg-amber-500">
+            <TabsTrigger value="timeline" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
               <Activity className="h-4 w-4 mr-2" />
               Timeline
             </TabsTrigger>
-            <TabsTrigger value="area" className="data-[state=active]:bg-amber-500">
+            <TabsTrigger value="area" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
               Área
             </TabsTrigger>
@@ -282,9 +282,9 @@ export default function HistoricoPresenca() {
           
           {/* Gráfico de Barras Empilhadas */}
           <TabsContent value="barras">
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-white">Presença do Time por Dia</CardTitle>
+                <CardTitle className="text-foreground">Presença do Time por Dia</CardTitle>
                 <CardDescription>Distribuição de presença, ausência e parcial</CardDescription>
               </CardHeader>
               <CardContent>
@@ -313,7 +313,7 @@ export default function HistoricoPresenca() {
                     </BarChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[400px] flex items-center justify-center text-slate-400">
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
                     Nenhum dado disponível para o período selecionado
                   </div>
                 )}
@@ -323,9 +323,9 @@ export default function HistoricoPresenca() {
           
           {/* Timeline */}
           <TabsContent value="timeline">
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-white">Horas Trabalhadas por Dia</CardTitle>
+                <CardTitle className="text-foreground">Horas Trabalhadas por Dia</CardTitle>
                 <CardDescription>Evolução das horas trabalhadas ao longo do período</CardDescription>
               </CardHeader>
               <CardContent>
@@ -361,7 +361,7 @@ export default function HistoricoPresenca() {
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[400px] flex items-center justify-center text-slate-400">
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
                     Nenhum dado disponível para o período selecionado
                   </div>
                 )}
@@ -371,9 +371,9 @@ export default function HistoricoPresenca() {
           
           {/* Gráfico de Área */}
           <TabsContent value="area">
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="text-white">Evolução da Presença</CardTitle>
+                <CardTitle className="text-foreground">Evolução da Presença</CardTitle>
                 <CardDescription>Visualização em área das horas trabalhadas</CardDescription>
               </CardHeader>
               <CardContent>
@@ -413,7 +413,7 @@ export default function HistoricoPresenca() {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[400px] flex items-center justify-center text-slate-400">
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
                     Nenhum dado disponível para o período selecionado
                   </div>
                 )}
@@ -423,10 +423,10 @@ export default function HistoricoPresenca() {
         </Tabs>
         
         {/* Tabela de histórico detalhado */}
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-amber-400" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-amber-500" />
               Histórico Detalhado
             </CardTitle>
             <CardDescription>Registro diário de presença e ausência</CardDescription>
@@ -434,27 +434,27 @@ export default function HistoricoPresenca() {
           <CardContent>
             {loadingResumo ? (
               <div className="flex items-center justify-center py-8">
-                <RefreshCw className="h-8 w-8 animate-spin text-slate-400" />
+                <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : dadosTimeline.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Data</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Entrada</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Saída</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Horas</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Data</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Entrada</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saída</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Horas</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {dadosTimeline.slice().reverse().map((item: any, index: number) => (
-                      <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                        <td className="py-3 px-4 text-white">{item.data}</td>
-                        <td className="py-3 px-4 text-slate-300">{item.entrada}</td>
-                        <td className="py-3 px-4 text-slate-300">{item.saida}</td>
-                        <td className="py-3 px-4 text-amber-400 font-medium">{item.horasTrabalhadas}h</td>
+                      <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="py-3 px-4 text-foreground">{item.data}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{item.entrada}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{item.saida}</td>
+                        <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-medium">{item.horasTrabalhadas}h</td>
                         <td className="py-3 px-4">{getStatusBadge(item.status)}</td>
                       </tr>
                     ))}
@@ -462,7 +462,7 @@ export default function HistoricoPresenca() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-400">
+              <div className="text-center py-8 text-muted-foreground">
                 Nenhum registro de presença encontrado para o período selecionado
               </div>
             )}
@@ -471,10 +471,10 @@ export default function HistoricoPresenca() {
         
         {/* Relatório Semanal */}
         {relatorioSemanal && (
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-card border-border">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Users className="h-5 w-5 text-amber-400" />
+              <CardTitle className="text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5 text-amber-500" />
                 Relatório Semanal
               </CardTitle>
               <CardDescription>
@@ -483,42 +483,42 @@ export default function HistoricoPresenca() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-slate-400 text-sm">Total de Corretores</p>
-                  <p className="text-2xl font-bold text-white">{relatorioSemanal.resumo.totalCorretores}</p>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">Total de Corretores</p>
+                  <p className="text-2xl font-bold text-foreground">{relatorioSemanal.resumo.totalCorretores}</p>
                 </div>
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-slate-400 text-sm">Média de Presença</p>
-                  <p className="text-2xl font-bold text-amber-400">{relatorioSemanal.resumo.mediaPresenca}%</p>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">Média de Presença</p>
+                  <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{relatorioSemanal.resumo.mediaPresenca}%</p>
                 </div>
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-slate-400 text-sm">Mais Presente</p>
-                  <p className="text-lg font-bold text-green-400 truncate">{relatorioSemanal.resumo.corretorMaisPresente}</p>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">Mais Presente</p>
+                  <p className="text-lg font-bold text-green-600 dark:text-green-400 truncate">{relatorioSemanal.resumo.corretorMaisPresente}</p>
                 </div>
-                <div className="bg-slate-700/50 rounded-lg p-4">
-                  <p className="text-slate-400 text-sm">Menos Presente</p>
-                  <p className="text-lg font-bold text-red-400 truncate">{relatorioSemanal.resumo.corretorMenosPresente}</p>
+                <div className="bg-muted rounded-lg p-4">
+                  <p className="text-muted-foreground text-sm">Menos Presente</p>
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400 truncate">{relatorioSemanal.resumo.corretorMenosPresente}</p>
                 </div>
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Corretor</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Horas</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Presença</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Dias Ausente</th>
-                      <th className="text-left py-3 px-4 text-slate-400 font-medium">Status</th>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Corretor</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Horas</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Presença</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Dias Ausente</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {relatorioSemanal.corretores.map((c: any, index: number) => (
-                      <tr key={index} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                        <td className="py-3 px-4 text-white">{c.nome}</td>
-                        <td className="py-3 px-4 text-slate-300">{c.totalHoras}h</td>
-                        <td className="py-3 px-4 text-amber-400">{c.percentualPresenca}%</td>
-                        <td className="py-3 px-4 text-slate-300">{c.diasAusente}</td>
+                      <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="py-3 px-4 text-foreground">{c.nome}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{c.totalHoras}h</td>
+                        <td className="py-3 px-4 text-amber-600 dark:text-amber-400">{c.percentualPresenca}%</td>
+                        <td className="py-3 px-4 text-muted-foreground">{c.diasAusente}</td>
                         <td className="py-3 px-4">
                           {c.status === "bom" && (
                             <Badge className="bg-green-500/20 text-green-400 border-green-500/50">Bom</Badge>
