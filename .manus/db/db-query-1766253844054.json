@@ -1,0 +1,70 @@
+{
+  "query": "SELECT corretorId, data, statusDia, totalMinutosPresente FROM resumo_presenca_diaria ORDER BY data DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT corretorId, data, statusDia, totalMinutosPresente FROM resumo_presenca_diaria ORDER BY data DESC LIMIT 10;",
+  "rows": [
+    {
+      "corretorId": "4237174",
+      "data": "2025-12-19 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "538"
+    },
+    {
+      "corretorId": "4236208",
+      "data": "2025-12-19 00:00:00",
+      "statusDia": "ausente",
+      "totalMinutosPresente": "0"
+    },
+    {
+      "corretorId": "4891632",
+      "data": "2025-12-19 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "556"
+    },
+    {
+      "corretorId": "4891633",
+      "data": "2025-12-19 00:00:00",
+      "statusDia": "ausente",
+      "totalMinutosPresente": "0"
+    },
+    {
+      "corretorId": "4236243",
+      "data": "2025-12-19 00:00:00",
+      "statusDia": "ausente",
+      "totalMinutosPresente": "0"
+    },
+    {
+      "corretorId": "4236208",
+      "data": "2025-12-18 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "491"
+    },
+    {
+      "corretorId": "4237174",
+      "data": "2025-12-18 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "508"
+    },
+    {
+      "corretorId": "4236243",
+      "data": "2025-12-18 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "559"
+    },
+    {
+      "corretorId": "4891633",
+      "data": "2025-12-18 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "488"
+    },
+    {
+      "corretorId": "4891632",
+      "data": "2025-12-18 00:00:00",
+      "statusDia": "presente",
+      "totalMinutosPresente": "589"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\tdata\tstatusDia\ttotalMinutosPresente\n4237174\t2025-12-19 00:00:00\tpresente\t538\n4236208\t2025-12-19 00:00:00\tausente\t0\n4891632\t2025-12-19 00:00:00\tpresente\t556\n4891633\t2025-12-19 00:00:00\tausente\t0\n4236243\t2025-12-19 00:00:00\tausente\t0\n4236208\t2025-12-18 00:00:00\tpresente\t491\n4237174\t2025-12-18 00:00:00\tpresente\t508\n4236243\t2025-12-18 00:00:00\tpresente\t559\n4891633\t2025-12-18 00:00:00\tpresente\t488\n4891632\t2025-12-18 00:00:00\tpresente\t589\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

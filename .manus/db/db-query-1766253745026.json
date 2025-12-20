@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, name, email, role, status FROM users WHERE role IN ('corretor', 'gestor', 'admin') LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, status FROM users WHERE role IN ('corretor', 'gestor', 'admin') LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "gestor",
+      "status": "ausente"
+    },
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4237174",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891632",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617108@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891633",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617469@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891634",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617567@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891635",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617723@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891636",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617936@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891637",
+      "name": "Corretor 2",
+      "email": "corretor2-1766245618990@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tstatus\n1\tGuilherme Nunes\tguilherme_97fm@outlook.com\tgestor\tausente\n4236208\tAndrew\tandrewformigoni.corretor@gmail.com\tcorretor\tausente\n4236243\tkauanthyago34\tkauanthyago34@gmail.com\tcorretor\tausente\n4237174\tGuilherme Nunes\tguilherme.97fn@gmail.com\tcorretor\tausente\n4891632\tCorretor Teste Performance\tcorretor-perf-1766245617108@test.com\tcorretor\tausente\n4891633\tCorretor Teste Performance\tcorretor-perf-1766245617469@test.com\tcorretor\tausente\n4891634\tCorretor Teste Performance\tcorretor-perf-1766245617567@test.com\tcorretor\tausente\n4891635\tCorretor Teste Performance\tcorretor-perf-1766245617723@test.com\tcorretor\tausente\n4891636\tCorretor Teste Performance\tcorretor-perf-1766245617936@test.com\tcorretor\tausente\n4891637\tCorretor 2\tcorretor2-1766245618990@test.com\tcorretor\tausente\n",
+  "stderr": "",
+  "execution_time_ms": 104
+}

@@ -1,0 +1,110 @@
+{
+  "query": "SELECT COUNT(*) as total, statusDia, DATE(data) as dia FROM resumo_presenca_diaria GROUP BY statusDia, DATE(data) ORDER BY dia DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total, statusDia, DATE(data) as dia FROM resumo_presenca_diaria GROUP BY statusDia, DATE(data) ORDER BY dia DESC LIMIT 20;",
+  "rows": [
+    {
+      "total": "3",
+      "statusDia": "ausente",
+      "dia": "2025-12-19"
+    },
+    {
+      "total": "2",
+      "statusDia": "presente",
+      "dia": "2025-12-19"
+    },
+    {
+      "total": "5",
+      "statusDia": "presente",
+      "dia": "2025-12-18"
+    },
+    {
+      "total": "1",
+      "statusDia": "ausente",
+      "dia": "2025-12-17"
+    },
+    {
+      "total": "1",
+      "statusDia": "parcial",
+      "dia": "2025-12-17"
+    },
+    {
+      "total": "3",
+      "statusDia": "presente",
+      "dia": "2025-12-17"
+    },
+    {
+      "total": "5",
+      "statusDia": "presente",
+      "dia": "2025-12-16"
+    },
+    {
+      "total": "5",
+      "statusDia": "presente",
+      "dia": "2025-12-15"
+    },
+    {
+      "total": "1",
+      "statusDia": "ausente",
+      "dia": "2025-12-12"
+    },
+    {
+      "total": "3",
+      "statusDia": "presente",
+      "dia": "2025-12-12"
+    },
+    {
+      "total": "1",
+      "statusDia": "parcial",
+      "dia": "2025-12-12"
+    },
+    {
+      "total": "1",
+      "statusDia": "ausente",
+      "dia": "2025-12-11"
+    },
+    {
+      "total": "1",
+      "statusDia": "parcial",
+      "dia": "2025-12-11"
+    },
+    {
+      "total": "3",
+      "statusDia": "presente",
+      "dia": "2025-12-11"
+    },
+    {
+      "total": "5",
+      "statusDia": "presente",
+      "dia": "2025-12-10"
+    },
+    {
+      "total": "2",
+      "statusDia": "ausente",
+      "dia": "2025-12-09"
+    },
+    {
+      "total": "3",
+      "statusDia": "presente",
+      "dia": "2025-12-09"
+    },
+    {
+      "total": "2",
+      "statusDia": "ausente",
+      "dia": "2025-12-08"
+    },
+    {
+      "total": "2",
+      "statusDia": "presente",
+      "dia": "2025-12-08"
+    },
+    {
+      "total": "1",
+      "statusDia": "parcial",
+      "dia": "2025-12-08"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tstatusDia\tdia\n3\tausente\t2025-12-19\n2\tpresente\t2025-12-19\n5\tpresente\t2025-12-18\n1\tausente\t2025-12-17\n1\tparcial\t2025-12-17\n3\tpresente\t2025-12-17\n5\tpresente\t2025-12-16\n5\tpresente\t2025-12-15\n1\tausente\t2025-12-12\n3\tpresente\t2025-12-12\n1\tparcial\t2025-12-12\n1\tausente\t2025-12-11\n1\tparcial\t2025-12-11\n3\tpresente\t2025-12-11\n5\tpresente\t2025-12-10\n2\tausente\t2025-12-09\n3\tpresente\t2025-12-09\n2\tausente\t2025-12-08\n2\tpresente\t2025-12-08\n1\tparcial\t2025-12-08\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

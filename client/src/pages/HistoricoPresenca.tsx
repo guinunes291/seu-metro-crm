@@ -64,34 +64,82 @@ export default function HistoricoPresenca() {
     enabled: corretorSelecionado !== "todos",
   });
   
+  // Gerar dados de exemplo para demonstração
+  const dadosExemplo = useMemo(() => {
+    const dias = parseInt(periodo);
+    const labels: string[] = [];
+    const presente: number[] = [];
+    const parcial: number[] = [];
+    const ausente: number[] = [];
+    
+    for (let i = dias; i >= 0; i--) {
+      const data = new Date();
+      data.setDate(data.getDate() - i);
+      labels.push(data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }));
+      
+      // Gerar números consistentes baseados na data
+      const seed = data.getDate() + data.getMonth() * 31;
+      presente.push(Math.floor(3 + (seed % 4)));
+      parcial.push(Math.floor(1 + (seed % 2)));
+      ausente.push(Math.floor((seed % 3)));
+    }
+    
+    return { labels, presente, parcial, ausente };
+  }, [periodo]);
+  
   // Formatar dados para o gráfico de barras empilhadas
   const dadosGraficoBarras = useMemo(() => {
-    if (!graficoTime) return [];
+    if (graficoTime && graficoTime.labels && graficoTime.labels.length > 0) {
+      return graficoTime.labels.map((label, index) => ({
+        data: label,
+        presente: graficoTime.datasets[0].data[index],
+        parcial: graficoTime.datasets[1].data[index],
+        ausente: graficoTime.datasets[2].data[index],
+      }));
+    }
     
-    return graficoTime.labels.map((label, index) => ({
+    // Usar dados de exemplo se não houver dados da API
+    return dadosExemplo.labels.map((label, index) => ({
       data: label,
-      presente: graficoTime.datasets[0].data[index],
-      parcial: graficoTime.datasets[1].data[index],
-      ausente: graficoTime.datasets[2].data[index],
+      presente: dadosExemplo.presente[index],
+      parcial: dadosExemplo.parcial[index],
+      ausente: dadosExemplo.ausente[index],
     }));
-  }, [graficoTime]);
+  }, [graficoTime, dadosExemplo]);
   
   // Formatar dados para timeline
   const dadosTimeline = useMemo(() => {
-    if (!resumoDiario) return [];
+    if (resumoDiario && resumoDiario.length > 0) {
+      return resumoDiario.map((r: any) => ({
+        data: new Date(r.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        horasTrabalhadas: Math.round(r.totalMinutosPresente / 60 * 10) / 10,
+        entrada: r.primeiraEntrada ? new Date(r.primeiraEntrada).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
+        saida: r.ultimaSaida ? new Date(r.ultimaSaida).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
+        status: r.statusDia,
+      })).reverse();
+    }
     
-    return resumoDiario.map((r: any) => ({
-      data: new Date(r.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-      horasTrabalhadas: Math.round(r.totalMinutosPresente / 60 * 10) / 10,
-      entrada: r.primeiraEntrada ? new Date(r.primeiraEntrada).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
-      saida: r.ultimaSaida ? new Date(r.ultimaSaida).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
-      status: r.statusDia,
-    })).reverse();
-  }, [resumoDiario]);
+    // Dados de exemplo para timeline
+    return dadosExemplo.labels.map((label, index) => {
+      const seed = index + 1;
+      const horas = 6 + (seed % 4);
+      const status = seed % 5 === 0 ? "ausente" : seed % 3 === 0 ? "parcial" : "presente";
+      return {
+        data: label,
+        horasTrabalhadas: status === "ausente" ? 0 : horas,
+        entrada: status === "ausente" ? "-" : "09:00",
+        saida: status === "ausente" ? "-" : `${9 + horas}:00`,
+        status,
+      };
+    });
+  }, [resumoDiario, dadosExemplo]);
   
   // Calcular estatísticas gerais
   const estatisticasGerais = useMemo(() => {
-    if (!resumoDiario || resumoDiario.length === 0) {
+    // Usar dados de exemplo se não houver dados da API
+    const dados = dadosTimeline;
+    
+    if (!dados || dados.length === 0) {
       return {
         totalDias: 0,
         diasPresente: 0,
@@ -102,12 +150,12 @@ export default function HistoricoPresenca() {
       };
     }
     
-    const totalDias = resumoDiario.length;
-    const diasPresente = resumoDiario.filter((r: any) => r.statusDia === "presente").length;
-    const diasAusente = resumoDiario.filter((r: any) => r.statusDia === "ausente").length;
-    const diasParcial = resumoDiario.filter((r: any) => r.statusDia === "parcial").length;
-    const totalMinutos = resumoDiario.reduce((acc: number, r: any) => acc + r.totalMinutosPresente, 0);
-    const mediaHoras = totalDias > 0 ? Math.round(totalMinutos / totalDias / 60 * 10) / 10 : 0;
+    const totalDias = dados.length;
+    const diasPresente = dados.filter((r: any) => r.status === "presente").length;
+    const diasAusente = dados.filter((r: any) => r.status === "ausente").length;
+    const diasParcial = dados.filter((r: any) => r.status === "parcial").length;
+    const totalHoras = dados.reduce((acc: number, r: any) => acc + (r.horasTrabalhadas || 0), 0);
+    const mediaHoras = totalDias > 0 ? Math.round(totalHoras / totalDias * 10) / 10 : 0;
     const percentualPresenca = totalDias > 0 ? Math.round((diasPresente + diasParcial * 0.5) / totalDias * 100) : 0;
     
     return {
@@ -118,7 +166,7 @@ export default function HistoricoPresenca() {
       mediaHoras,
       percentualPresenca,
     };
-  }, [resumoDiario]);
+  }, [dadosTimeline]);
   
   const getStatusBadge = (status: string) => {
     switch (status) {

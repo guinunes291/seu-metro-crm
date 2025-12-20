@@ -355,15 +355,16 @@ function DashboardContent({
       >
         <SidebarHeader className="p-3 border-b">
           <div className="flex items-center gap-2">
-            {!isCollapsed ? (
-              <div className="flex items-center gap-2">
-                <img
-                  src={import.meta.env.VITE_APP_LOGO || "/logo.svg"}
-                  alt="Logo"
-                  className="h-10 object-contain"
-                />
-              </div>
-            ) : null}
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="Seu Metro Quadrado"
+                className="h-8 w-8 object-contain"
+              />
+              {!isCollapsed && (
+                <span className="font-semibold text-foreground text-sm">Seu m²</span>
+              )}
+            </div>
           </div>
         </SidebarHeader>
 

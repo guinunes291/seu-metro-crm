@@ -1339,3 +1339,17 @@
 - [x] Implementar compartilhamento no Facebook
 - [x] Implementar compartilhamento no Twitter
 - [x] Adicionar botão de compartilhamento nos cards de conquistas desbloqueadas
+
+
+## Nova Feature: Logo e Favicon Personalizados
+- [x] Copiar logo para pasta public
+- [x] Criar favicon a partir da logo
+- [x] Adicionar logo no canto superior esquerdo do sidebar
+- [x] Configurar favicon na aba do navegador
+
+## Nova Feature: Dados de Exemplo para Gráficos de Presença
+- [x] Criar dados de exemplo para gráfico de barras empilhadas
+- [x] Criar dados de exemplo para timeline de horas trabalhadas
+- [x] Criar dados de exemplo para gráfico de área
+- [x] Criar dados de exemplo para estatísticas gerais
+- [x] Criar dados de exemplo para tabela de histórico detalhado

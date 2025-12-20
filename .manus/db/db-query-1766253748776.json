@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, name FROM users WHERE role = 'corretor' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name FROM users WHERE role = 'corretor' LIMIT 5;",
+  "rows": [
+    {
+      "id": "4236208",
+      "name": "Andrew"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34"
+    },
+    {
+      "id": "4237174",
+      "name": "Guilherme Nunes"
+    },
+    {
+      "id": "4891632",
+      "name": "Corretor Teste Performance"
+    },
+    {
+      "id": "4891633",
+      "name": "Corretor Teste Performance"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\n4236208\tAndrew\n4236243\tkauanthyago34\n4237174\tGuilherme Nunes\n4891632\tCorretor Teste Performance\n4891633\tCorretor Teste Performance\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}
