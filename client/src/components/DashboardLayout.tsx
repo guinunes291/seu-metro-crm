@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, UserCheck, UserX, Circle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, UserCheck, UserX, Circle, Trash2 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -48,6 +48,7 @@ const menuItems = [
   { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["gestor", "admin"] },
   { icon: History, label: "Histórico Distribuição", path: "/historico-distribuicao", roles: ["gestor", "admin"] },
   { icon: Trophy, label: "Ranking TV", path: "/ranking-tv", roles: ["gestor", "admin"] },
+  { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["gestor", "admin"] },
   { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
   { icon: Building2, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin"] },
   { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
@@ -190,7 +191,7 @@ function DashboardLayoutContent({
     },
     onSuccess: (data) => {
       // Backend retorna 'presente' ou 'ausente'
-      const isPresente = data.status === 'presente' || data.status === 'ativo';
+      const isPresente = data.status === 'presente';
       
       // Tocar som
       playStatusSound(isPresente);

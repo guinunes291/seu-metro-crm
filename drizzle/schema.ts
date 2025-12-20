@@ -155,6 +155,11 @@ export const leads = mysqlTable("leads", {
   observacoes: text("observacoes"),
   motivoPerdido: text("motivoPerdido"),
   
+  // Lixeira - leads perdidos ficam aqui
+  naLixeira: boolean("naLixeira").default(false).notNull(),
+  dataMovidoLixeira: timestamp("dataMovidoLixeira"),
+  corretorAnteriorId: int("corretorAnteriorId"), // Guarda o corretor que perdeu o lead
+  
   // Campos do Facebook Lead Ads
   campanha: varchar("campanha", { length: 255 }), // Nome da campanha (campaign_name)
   faixaRenda: varchar("faixaRenda", { length: 100 }), // Faixa de renda (faixa_de_renda)

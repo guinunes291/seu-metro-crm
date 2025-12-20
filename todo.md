@@ -1056,3 +1056,41 @@
 - [x] Adicionar som ao alterar status (som agudo para presente, grave para ausente)
 - [x] Fazer atualização visual instantânea (optimistic update)
 - [ ] Testar funcionamento com conta de corretor
+
+
+## Lixeira de Leads Perdidos
+- [ ] Excluir todos os leads atuais do sistema
+- [ ] Criar lógica para mover leads perdidos para lixeira
+- [ ] Remover corretor do lead quando marcado como perdido
+- [ ] Criar página de Lixeira para gestor visualizar leads perdidos
+- [ ] Leads na lixeira não são redistribuídos nem apagados
+
+## Exportar Leads em CSV
+- [ ] Adicionar botão de exportar em cards de quantidade de leads
+- [ ] Implementar endpoint de exportação CSV
+- [ ] Testar download de arquivo CSV
+
+## Integração GPT Copilot
+- [ ] Aguardar detalhes do usuário sobre uso desejado
+
+
+## Lixeira de Leads Perdidos (CONCLUÍDO)
+- [x] Adicionar campo naLixeira na tabela leads
+- [x] Adicionar campo dataMovidoLixeira na tabela leads
+- [x] Adicionar campo corretorAnteriorId na tabela leads
+- [x] Modificar lógica de status "perdido" para mover para lixeira
+- [x] Remover corretor quando lead for perdido
+- [x] Criar página de Lixeira para gestor
+- [x] Adicionar rota e menu para Lixeira
+- [x] Implementar botão de exportar CSV na Lixeira
+- [x] Testar funcionamento da lixeira
+
+## Botões de Exportar CSV (CONCLUÍDO)
+- [x] Criar componente ExportCSVButton reutilizável
+- [x] Adicionar botões de exportar nos cards do Dashboard
+- [x] Implementar exportação de leads por status
+- [x] Testar exportação CSV
+
+## Limpeza de Dados de Teste (CONCLUÍDO)
+- [x] Excluir todos os leads do sistema
+- [x] Sistema limpo e pronto para produção

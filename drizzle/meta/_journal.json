@@ -99,6 +99,13 @@
       "when": 1766171246453,
       "tag": "0013_unique_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1766241174678,
+      "tag": "0014_loud_firelord",
+      "breakpoints": true
     }
   ]
 }

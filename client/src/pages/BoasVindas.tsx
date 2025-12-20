@@ -411,7 +411,7 @@ export default function BoasVindas() {
                       </li>
                     ))}
                   </ul>
-                  {section.important && (
+                  {'important' in section && section.important && (
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
                       {section.important}
                     </div>

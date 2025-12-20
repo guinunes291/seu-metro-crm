@@ -6,8 +6,9 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange, BarChart3, TrendingDown
+  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download
 } from "lucide-react";
+import { ExportCSVButton } from "@/components/ExportCSVButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
@@ -622,7 +623,12 @@ export default function Dashboard() {
                   <Users className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.total || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.total || 0}</div>
+                    {(metrics?.total || 0) > 0 && (
+                      <ExportCSVButton size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -632,7 +638,12 @@ export default function Dashboard() {
                   <Hourglass className="h-4 w-4 text-slate-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.aguardando || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.aguardando || 0}</div>
+                    {(metrics?.aguardando || 0) > 0 && (
+                      <ExportCSVButton status="aguardando_atendimento" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -642,7 +653,12 @@ export default function Dashboard() {
                   <Clock className="h-4 w-4 text-yellow-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.emAtendimento || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.emAtendimento || 0}</div>
+                    {(metrics?.emAtendimento || 0) > 0 && (
+                      <ExportCSVButton status="em_atendimento" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -652,7 +668,12 @@ export default function Dashboard() {
                   <Calendar className="h-4 w-4 text-cyan-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.agendado || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.agendado || 0}</div>
+                    {(metrics?.agendado || 0) > 0 && (
+                      <ExportCSVButton status="agendado" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -662,7 +683,12 @@ export default function Dashboard() {
                   <Eye className="h-4 w-4 text-orange-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.visitaRealizada || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.visitaRealizada || 0}</div>
+                    {(metrics?.visitaRealizada || 0) > 0 && (
+                      <ExportCSVButton status="visita_realizada" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -674,7 +700,12 @@ export default function Dashboard() {
                   <FileCheck className="h-4 w-4 text-purple-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.analiseCredito || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.analiseCredito || 0}</div>
+                    {(metrics?.analiseCredito || 0) > 0 && (
+                      <ExportCSVButton status="analise_credito" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -684,7 +715,12 @@ export default function Dashboard() {
                   <CheckCircle className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.contratoFechado || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.contratoFechado || 0}</div>
+                    {(metrics?.contratoFechado || 0) > 0 && (
+                      <ExportCSVButton status="contrato_fechado" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -694,7 +730,12 @@ export default function Dashboard() {
                   <XCircle className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{metrics?.perdido || 0}</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold">{metrics?.perdido || 0}</div>
+                    {(metrics?.perdido || 0) > 0 && (
+                      <ExportCSVButton status="perdido" size="icon" variant="ghost" label="" />
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 

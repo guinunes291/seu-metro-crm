@@ -254,8 +254,20 @@ export const appRouter = router({
             lead.corretorId,
             lead.status,
             input.data.status,
-            lead.valorVenda || undefined
+            undefined // valorVenda não existe no schema
           );
+        }
+        
+        // Se o status for "perdido", mover para lixeira e remover do corretor
+        if (input.data.status === 'perdido') {
+          await db.updateLead(input.id, {
+            ...input.data,
+            naLixeira: true,
+            dataMovidoLixeira: new Date(),
+            corretorAnteriorId: lead.corretorId, // Guardar quem era o corretor
+            corretorId: null, // Remover do corretor
+          });
+          return { success: true, movedToTrash: true };
         }
         
         await db.updateLead(input.id, input.data);
@@ -350,6 +362,34 @@ export const appRouter = router({
           }
         }
         return { success: true, deleted };
+      }),
+    
+    // Listar leads na lixeira (apenas gestores)
+    getLixeira: gestorProcedure
+      .input(z.object({
+        page: z.number().default(1),
+        limit: z.number().default(50),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getLeadsNaLixeira(input?.page || 1, input?.limit || 50);
+      }),
+    
+    // Contar leads na lixeira
+    countLixeira: gestorProcedure
+      .query(async () => {
+        return await db.countLeadsNaLixeira();
+      }),
+    
+    // Exportar leads em CSV
+    exportCSV: gestorProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        corretorId: z.number().optional(),
+        projectId: z.number().optional(),
+        naLixeira: z.boolean().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getLeadsParaExportar(input);
       }),
   }),
 
@@ -474,10 +514,9 @@ export const appRouter = router({
     meuStatus: protectedProcedure
       .query(async ({ ctx }) => {
         const user = await db.getUserById(ctx.user.id);
-        // Normalizar status: presente -> ativo, ausente -> inativo (para o frontend)
-        const statusFrontend = user?.status === 'presente' ? 'ativo' : 'inativo';
+        // Retornar status como está no banco (presente/ausente)
         return {
-          status: statusFrontend,
+          status: user?.status || 'ausente',
           name: user?.name,
         };
       }),
@@ -1548,9 +1587,9 @@ export const appRouter = router({
         for (const corretor of corretores) {
           await db.createNotification({
             userId: corretor.id,
-            title: '🏆 Novo Líder no Ranking!',
-            message: `${input.leaderName} assumiu a liderança do ranking de produtividade! Continue trabalhando para alcançar o topo!`,
-            type: 'info',
+            titulo: '🏆 Novo Líder no Ranking!',
+            mensagem: `${input.leaderName} assumiu a liderança do ranking de produtividade! Continue trabalhando para alcançar o topo!`,
+            tipo: 'sistema',
           });
         }
         

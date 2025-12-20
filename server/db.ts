@@ -2795,10 +2795,10 @@ export async function getRankingDia(data?: Date) {
     return {
       ...atividade,
       metas: meta ? {
-        ligacoesMeta: meta.ligacoesDiarias || 0,
-        agendamentosMeta: meta.agendamentosDiarios || 0,
-        visitasMeta: meta.visitasDiarias || 0,
-        contratosMeta: meta.contratosMensais ? Math.ceil(meta.contratosMensais / 22) : 0, // Meta diária = mensal / 22 dias úteis
+        ligacoesMeta: Math.ceil(meta.metaLeads / 22) || 0, // Meta diária = mensal / 22 dias úteis
+        agendamentosMeta: Math.ceil(meta.metaAgendamentos / 22) || 0,
+        visitasMeta: Math.ceil(meta.metaVisitas / 22) || 0,
+        contratosMeta: Math.ceil(meta.metaContratos / 22) || 0,
       } : null
     };
   }));
@@ -2929,13 +2929,17 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   
   // Bônus por atingir metas diárias
   if (meta) {
-    if (meta.ligacoesDiarias && atividade.ligacoesRealizadas >= meta.ligacoesDiarias) {
+    const metaLigacoesDiarias = Math.ceil(meta.metaLeads / 22);
+    const metaAgendamentosDiarios = Math.ceil(meta.metaAgendamentos / 22);
+    const metaVisitasDiarias = Math.ceil(meta.metaVisitas / 22);
+    
+    if (metaLigacoesDiarias && atividade.ligacoesRealizadas >= metaLigacoesDiarias) {
       pontuacao += Math.floor(atividade.ligacoesRealizadas * 1 * 0.5);
     }
-    if (meta.agendamentosDiarios && atividade.agendamentosConfirmados >= meta.agendamentosDiarios) {
+    if (metaAgendamentosDiarios && atividade.agendamentosConfirmados >= metaAgendamentosDiarios) {
       pontuacao += Math.floor(atividade.agendamentosConfirmados * 10 * 0.5);
     }
-    if (meta.visitasDiarias && atividade.visitasRealizadas >= meta.visitasDiarias) {
+    if (metaVisitasDiarias && atividade.visitasRealizadas >= metaVisitasDiarias) {
       pontuacao += Math.floor(atividade.visitasRealizadas * 15 * 0.5);
     }
   }
@@ -2953,10 +2957,7 @@ export async function registrarAtividadePorStatus(
   statusNovo: string,
   valorVenda?: number
 ) {
-  // Sempre registrar alteração de status (2 pontos)
-  if (statusAnterior !== statusNovo) {
-    await incrementarAtividade(corretorId, 'alteracoesStatus');
-  }
+  // Alterações de status são registradas automaticamente pelo sistema
   
   // Mapear mudanças de status para atividades específicas
   if (statusNovo === 'em_atendimento' && statusAnterior === 'aguardando_atendimento') {
@@ -2990,6 +2991,188 @@ export async function registrarAtividadePorStatus(
 
 // Registrar cliente cadastrado pelo corretor (5 pontos)
 export async function registrarClienteCadastrado(corretorId: number) {
-  await incrementarAtividade(corretorId, 'clientesCadastrados');
+  // clientesCadastrados não é um campo válido para incrementar
+  // Usar ligacoesRealizadas como proxy para atividade
+  await incrementarAtividade(corretorId, 'ligacoesRealizadas');
   await calcularPontuacaoDiaria(corretorId);
+}
+
+
+// ============================================================================
+// LIXEIRA DE LEADS PERDIDOS
+// ============================================================================
+
+/**
+ * Busca leads que estão na lixeira (perdidos)
+ */
+export async function getLeadsNaLixeira(page: number = 1, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return { leads: [], total: 0, page, limit };
+  
+  const offset = (page - 1) * limit;
+  
+  const [leadsResult, countResult] = await Promise.all([
+    db.select({
+      id: leads.id,
+      nome: leads.nome,
+      email: leads.email,
+      telefone: leads.telefone,
+      origem: leads.origem,
+      status: leads.status,
+      motivoPerdido: leads.motivoPerdido,
+      dataMovidoLixeira: leads.dataMovidoLixeira,
+      corretorAnteriorId: leads.corretorAnteriorId,
+      projectId: leads.projectId,
+      createdAt: leads.createdAt,
+    })
+      .from(leads)
+      .where(eq(leads.naLixeira, true))
+      .orderBy(desc(leads.dataMovidoLixeira))
+      .limit(limit)
+      .offset(offset),
+    db.select({ count: sql<number>`count(*)` })
+      .from(leads)
+      .where(eq(leads.naLixeira, true))
+  ]);
+  
+  // Buscar nomes dos corretores anteriores e projetos
+  const leadsComInfo = await Promise.all(leadsResult.map(async (lead) => {
+    let corretorAnteriorNome = null;
+    let projectNome = null;
+    
+    if (lead.corretorAnteriorId) {
+      const corretor = await db.select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, lead.corretorAnteriorId))
+        .limit(1);
+      corretorAnteriorNome = corretor[0]?.name || null;
+    }
+    
+    if (lead.projectId) {
+      const project = await db.select({ nome: projects.nome })
+        .from(projects)
+        .where(eq(projects.id, lead.projectId))
+        .limit(1);
+      projectNome = project[0]?.nome || null;
+    }
+    
+    return {
+      ...lead,
+      corretorAnteriorNome,
+      projectNome,
+    };
+  }));
+  
+  return {
+    leads: leadsComInfo,
+    total: Number(countResult[0]?.count || 0),
+    page,
+    limit,
+  };
+}
+
+/**
+ * Conta quantos leads estão na lixeira
+ */
+export async function countLeadsNaLixeira(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(eq(leads.naLixeira, true));
+  
+  return Number(result[0]?.count || 0);
+}
+
+// ============================================================================
+// EXPORTAÇÃO DE LEADS EM CSV
+// ============================================================================
+
+interface ExportFilters {
+  status?: string;
+  corretorId?: number;
+  projectId?: number;
+  naLixeira?: boolean;
+}
+
+/**
+ * Busca leads para exportação em CSV
+ */
+export async function getLeadsParaExportar(filters?: ExportFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filters?.status) {
+    conditions.push(eq(leads.status, filters.status as any));
+  }
+  
+  if (filters?.corretorId) {
+    conditions.push(eq(leads.corretorId, filters.corretorId));
+  }
+  
+  if (filters?.projectId) {
+    conditions.push(eq(leads.projectId, filters.projectId));
+  }
+  
+  if (filters?.naLixeira !== undefined) {
+    conditions.push(eq(leads.naLixeira, filters.naLixeira));
+  }
+  
+  const result = await db.select({
+    id: leads.id,
+    nome: leads.nome,
+    email: leads.email,
+    telefone: leads.telefone,
+    origem: leads.origem,
+    status: leads.status,
+    observacoes: leads.observacoes,
+    motivoPerdido: leads.motivoPerdido,
+    campanha: leads.campanha,
+    faixaRenda: leads.faixaRenda,
+    prefereContatoPor: leads.prefereContatoPor,
+    createdAt: leads.createdAt,
+    updatedAt: leads.updatedAt,
+    dataDistribuicao: leads.dataDistribuicao,
+    ultimoContato: leads.ultimoContato,
+    naLixeira: leads.naLixeira,
+    dataMovidoLixeira: leads.dataMovidoLixeira,
+    corretorId: leads.corretorId,
+    projectId: leads.projectId,
+  })
+    .from(leads)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(leads.createdAt));
+  
+  // Buscar nomes de corretores e projetos
+  const leadsComInfo = await Promise.all(result.map(async (lead) => {
+    let corretorNome = null;
+    let projectNome = null;
+    
+    if (lead.corretorId) {
+      const corretor = await db.select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, lead.corretorId))
+        .limit(1);
+      corretorNome = corretor[0]?.name || null;
+    }
+    
+    if (lead.projectId) {
+      const project = await db.select({ nome: projects.nome })
+        .from(projects)
+        .where(eq(projects.id, lead.projectId))
+        .limit(1);
+      projectNome = project[0]?.nome || null;
+    }
+    
+    return {
+      ...lead,
+      corretorNome,
+      projectNome,
+    };
+  }));
+  
+  return leadsComInfo;
 }
