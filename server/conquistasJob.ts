@@ -35,11 +35,11 @@ async function calcularEstatisticasCorretor(corretorId: number): Promise<Estatis
   // Contar atividades totais
   const atividadesResult = await db
     .select({
-      ligacoes: sql<number>`COALESCE(SUM(ligacoesRealizadas), 0)`,
-      whatsapp: sql<number>`COALESCE(SUM(whatsappEnviados), 0)`,
-      agendamentos: sql<number>`COALESCE(SUM(agendamentosConfirmados), 0)`,
-      visitas: sql<number>`COALESCE(SUM(visitasRealizadas), 0)`,
-      documentacoes: sql<number>`COALESCE(SUM(documentacoesRecolhidas), 0)`,
+      ligacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.ligacoesRealizadas}), 0)`,
+      whatsapp: sql<number>`COALESCE(SUM(${atividadesDiarias.whatsappEnviados}), 0)`,
+      agendamentos: sql<number>`COALESCE(SUM(${atividadesDiarias.agendamentosConfirmados}), 0)`,
+      visitas: sql<number>`COALESCE(SUM(${atividadesDiarias.visitasRealizadas}), 0)`,
+      documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.documentacoesRecolhidas}), 0)`,
     })
     .from(atividadesDiarias)
     .where(eq(atividadesDiarias.corretorId, corretorId));

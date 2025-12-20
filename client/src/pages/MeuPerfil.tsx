@@ -341,10 +341,10 @@ export default function MeuPerfil() {
                               {conquista.icone}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className={`font-semibold truncate ${isUnlocked ? "text-white" : "text-slate-400"}`}>
+                              <h4 className={`font-semibold text-sm leading-tight ${isUnlocked ? "text-white" : "text-slate-400"}`}>
                                 {conquista.nome}
                               </h4>
-                              <p className="text-xs text-slate-500 line-clamp-2">
+                              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                 {conquista.descricao}
                               </p>
                             </div>

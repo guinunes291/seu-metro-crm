@@ -1291,3 +1291,9 @@
 - [ ] Criar sistema de notificação em tempo real para celebrações
 - [ ] Integrar com sistema de notificações existente
 - [ ] Testar disparo automático de celebrações
+
+
+## Bug Fix: Aba de Conquistas Não Visível (20/12/2025)
+- [ ] Verificar onde a aba de Conquistas deveria aparecer
+- [ ] Adicionar link de Conquistas no menu lateral para gestores e corretores
+- [ ] Testar acesso de ambos os perfis
