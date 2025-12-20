@@ -282,23 +282,23 @@ export default function HistoricoPresenca() {
                 {estatisticasGestao.corretoresEngajados}/{estatisticasGestao.totalCorretores}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                {estatisticasGestao.taxaEngajamento}% com 24h+ semanais
+                {estatisticasGestao.taxaEngajamento}% com 24h+ nos últimos {periodo} dias
               </p>
             </CardContent>
           </Card>
           
-          {/* Card 2: Corretor Destaque da Semana */}
+          {/* Card 2: Corretor Destaque do Período */}
           <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/30">
             <CardContent className="pt-4">
               <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mb-1">
                 <Trophy className="h-4 w-4" />
-                Destaque da Semana
+                Destaque do Período
               </div>
               <p className="text-lg font-bold text-foreground truncate">
                 {estatisticasGestao.corretorDestaque?.nome || "Nenhum"}
               </p>
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                {estatisticasGestao.corretorDestaque?.horasSemanais || 0}h esta semana
+                {estatisticasGestao.corretorDestaque?.horasSemanais || 0}h nos últimos {periodo} dias
               </p>
             </CardContent>
           </Card>
@@ -314,7 +314,7 @@ export default function HistoricoPresenca() {
                 {estatisticasGestao.mediaHorasDia}h
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Média do time no período
+                Média do time nos últimos {periodo} dias
               </p>
             </CardContent>
           </Card>
@@ -346,7 +346,7 @@ export default function HistoricoPresenca() {
                 {estatisticasGestao.corretoresAbaixoMeta.length}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                corretores com &lt;24h/semana
+                corretores com &lt;24h nos últimos {periodo} dias
               </p>
             </CardContent>
           </Card>
