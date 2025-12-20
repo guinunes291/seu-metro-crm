@@ -1150,3 +1150,14 @@
 - [x] Integrar com API da OpenAI (GPT-4o-mini) via chave própria
 - [x] Testar chat com pergunta sobre MCMV - funcionando corretamente
 - [x] Corrigir extração da resposta na mutation (data.response)
+
+
+## Nova Feature: Integração SMQ Copilot com Perfis de Leads (20/12/2025)
+- [x] Analisar estrutura atual do Copilot e página de leads
+- [x] Criar contexto global para compartilhar lead selecionado com o Copilot
+- [x] Implementar botão "Abrir Copilot" na página de detalhes do lead
+- [x] Passar contexto completo do lead (nome, status, histórico, projeto) para o chat
+- [x] Atualizar prompts do Copilot para usar informações do lead
+- [x] Mostrar indicador visual quando o Copilot está contextualizado com um lead
+- [x] Testar integração com lead real
+- [x] Validar respostas personalizadas do assistente

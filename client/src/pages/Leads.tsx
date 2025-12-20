@@ -36,6 +36,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CopilotQuickActions } from "@/components/CopilotQuickActions";
 import { SMQCopilotButton } from "@/components/SMQCopilotChat";
+import { useCopilot } from "@/contexts/CopilotContext";
+import { Bot } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -71,6 +73,9 @@ export default function Leads() {
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
   const { data: projects } = trpc.projects.list.useQuery();
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  
+  // Hook para integrar com o Copilot flutuante
+  const { openWithLead } = useCopilot();
   const [detailsDialog, setDetailsDialog] = useState(false);
   const [, setLocation] = useLocation();
   
@@ -807,8 +812,34 @@ export default function Leads() {
                     <h3 className="font-semibold flex items-center gap-2">
                       <span className="text-purple-600">🤖</span> SMQ Copilot
                     </h3>
-                    <SMQCopilotButton leadId={selectedLead.id} leadNome={selectedLead.nome} />
+                    <Button
+                      onClick={() => {
+                        const projetoNome = projects?.find(p => p.id === selectedLead.projectId)?.nome;
+                        openWithLead({
+                          id: selectedLead.id,
+                          nome: selectedLead.nome,
+                          telefone: selectedLead.telefone,
+                          email: selectedLead.email,
+                          status: statusLabels[selectedLead.status] || selectedLead.status,
+                          projeto: projetoNome,
+                          projetoId: selectedLead.projectId,
+                          origem: selectedLead.origem,
+                          observacoes: selectedLead.observacoes,
+                          faixaRenda: selectedLead.faixaRenda,
+                          campanha: selectedLead.campanha,
+                          diasFollowupConsecutivos: selectedLead.diasFollowupConsecutivos,
+                          ultimoContato: selectedLead.ultimoContato,
+                        });
+                      }}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                      <Bot className="h-4 w-4 mr-2" />
+                      Abrir no Copilot
+                    </Button>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Abra o SMQ Copilot com o contexto completo deste lead para receber scripts e sugestões personalizadas.
+                  </p>
                   <CopilotQuickActions leadId={selectedLead.id} leadNome={selectedLead.nome} compact />
                 </div>
 

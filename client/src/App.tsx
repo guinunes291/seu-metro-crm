@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CompareProvider } from "./contexts/CompareContext";
+import { CopilotProvider } from "./contexts/CopilotContext";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Projetos from "./pages/Projetos";
@@ -71,11 +72,13 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <CompareProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-            <SMQCopilotFloating />
-          </TooltipProvider>
+          <CopilotProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Router />
+              <SMQCopilotFloating />
+            </TooltipProvider>
+          </CopilotProvider>
         </CompareProvider>
       </ThemeProvider>
     </ErrorBoundary>
