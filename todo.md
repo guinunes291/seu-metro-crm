@@ -1387,3 +1387,9 @@
 - [x] Remover coluna de Status
 - [x] Formatar horas no formato HH:MM
 - [x] Adicionar paginação com 20 registros por página
+
+
+## Ajuste: Gráfico de Horas por Corretor
+- [x] Remover barra de meta 24h do gráfico
+- [x] Trocar texto "Meta Semanal" para "Horas Trabalhadas"
+- [x] Exibir nome real do corretor na coluna Corretor da tabela de histórico

@@ -247,9 +247,43 @@ export async function buscarResumoPresenca(
     conditions.push(lte(resumoPresencaDiaria.data, dataFim));
   }
   
+  // Fazer JOIN com a tabela de usuários para obter o nome do corretor
   const query = conditions.length > 0
-    ? db.select().from(resumoPresencaDiaria).where(and(...conditions)).orderBy(desc(resumoPresencaDiaria.data))
-    : db.select().from(resumoPresencaDiaria).orderBy(desc(resumoPresencaDiaria.data));
+    ? db.select({
+        id: resumoPresencaDiaria.id,
+        corretorId: resumoPresencaDiaria.corretorId,
+        corretorNome: users.name,
+        data: resumoPresencaDiaria.data,
+        primeiraEntrada: resumoPresencaDiaria.primeiraEntrada,
+        ultimaSaida: resumoPresencaDiaria.ultimaSaida,
+        totalMinutosPresente: resumoPresencaDiaria.totalMinutosPresente,
+        totalMinutosAusente: resumoPresencaDiaria.totalMinutosAusente,
+        quantidadeEntradas: resumoPresencaDiaria.quantidadeEntradas,
+        quantidadeSaidas: resumoPresencaDiaria.quantidadeSaidas,
+        statusDia: resumoPresencaDiaria.statusDia,
+        trabalhouForaExpediente: resumoPresencaDiaria.trabalhouForaExpediente,
+      })
+      .from(resumoPresencaDiaria)
+      .leftJoin(users, eq(resumoPresencaDiaria.corretorId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(resumoPresencaDiaria.data))
+    : db.select({
+        id: resumoPresencaDiaria.id,
+        corretorId: resumoPresencaDiaria.corretorId,
+        corretorNome: users.name,
+        data: resumoPresencaDiaria.data,
+        primeiraEntrada: resumoPresencaDiaria.primeiraEntrada,
+        ultimaSaida: resumoPresencaDiaria.ultimaSaida,
+        totalMinutosPresente: resumoPresencaDiaria.totalMinutosPresente,
+        totalMinutosAusente: resumoPresencaDiaria.totalMinutosAusente,
+        quantidadeEntradas: resumoPresencaDiaria.quantidadeEntradas,
+        quantidadeSaidas: resumoPresencaDiaria.quantidadeSaidas,
+        statusDia: resumoPresencaDiaria.statusDia,
+        trabalhouForaExpediente: resumoPresencaDiaria.trabalhouForaExpediente,
+      })
+      .from(resumoPresencaDiaria)
+      .leftJoin(users, eq(resumoPresencaDiaria.corretorId, users.id))
+      .orderBy(desc(resumoPresencaDiaria.data));
   
   return await query;
 }

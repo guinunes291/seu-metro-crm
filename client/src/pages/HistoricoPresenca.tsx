@@ -125,11 +125,13 @@ export default function HistoricoPresenca() {
         horasTrabalhadas: Math.round(r.totalMinutosPresente / 60 * 10) / 10,
         entrada: r.primeiraEntrada ? new Date(r.primeiraEntrada).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
         saida: r.ultimaSaida ? new Date(r.ultimaSaida).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
+        corretor: r.corretorNome || "Corretor",
         status: r.statusDia,
       })).reverse();
     }
     
     // Dados de exemplo para timeline
+    const nomesExemplo = ["Andrew", "Guilherme", "João", "Maria", "Carlos", "Ana", "Pedro", "Juliana"];
     return dadosExemplo.labels.map((label, index) => {
       const seed = index + 1;
       const horas = 6 + (seed % 4);
@@ -137,8 +139,9 @@ export default function HistoricoPresenca() {
       return {
         data: label,
         horasTrabalhadas: status === "ausente" ? 0 : horas,
-        entrada: status === "ausente" ? "-" : "09:00",
-        saida: status === "ausente" ? "-" : `${9 + horas}:00`,
+        entrada: status === "ausente" ? "-" : `0${8 + (seed % 2)}:${(seed * 7) % 60 < 10 ? "0" : ""}${(seed * 7) % 60}`,
+        saida: status === "ausente" ? "-" : `${14 + (seed % 4)}:${(seed * 11) % 60 < 10 ? "0" : ""}${(seed * 11) % 60}`,
+        corretor: nomesExemplo[index % nomesExemplo.length],
         status,
       };
     });
@@ -541,7 +544,6 @@ export default function HistoricoPresenca() {
                             return {
                               nome: c.name?.split(' ')[0] || c.email?.split('@')[0] || `Corretor ${i+1}`,
                               horas: horasData?.horasTotais || Math.floor(20 + Math.random() * 30),
-                              meta: 24,
                             };
                           })
                         : []
@@ -559,14 +561,10 @@ export default function HistoricoPresenca() {
                           borderRadius: "8px",
                         }}
                         labelStyle={{ color: "#f8fafc" }}
-                        formatter={(value: any, name: string) => [
-                          `${value}h`,
-                          name === "horas" ? "Horas Trabalhadas" : "Meta Semanal"
-                        ]}
+                        formatter={(value: any) => [`${value}h`, "Horas Trabalhadas"]}
                       />
                       <Legend />
                       <Bar dataKey="horas" name="Horas Trabalhadas" fill="#f59e0b" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="meta" name="Meta (24h)" fill="#334155" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
