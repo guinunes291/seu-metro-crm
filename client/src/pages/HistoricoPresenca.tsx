@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,12 @@ import {
 export default function HistoricoPresenca() {
   const [periodo, setPeriodo] = useState<"7" | "15" | "30" | "90">("30");
   const [corretorSelecionado, setCorretorSelecionado] = useState<string>("todos");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  
+  // Resetar paginação quando mudar período ou corretor
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [periodo, corretorSelecionado]);
   
   // Calcular datas baseado no período
   const { dataInicio, dataFim } = useMemo(() => {
@@ -576,7 +582,7 @@ export default function HistoricoPresenca() {
               <Calendar className="h-5 w-5 text-amber-500" />
               Histórico Detalhado
             </CardTitle>
-            <CardDescription>Registro diário de presença e ausência</CardDescription>
+            <CardDescription>Registro de entrada e saída dos corretores</CardDescription>
           </CardHeader>
           <CardContent>
             {loadingResumo ? (
@@ -584,30 +590,76 @@ export default function HistoricoPresenca() {
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : dadosTimeline.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Data</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Entrada</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saída</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Horas</th>
-                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dadosTimeline.slice().reverse().map((item: any, index: number) => (
-                      <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
-                        <td className="py-3 px-4 text-foreground">{item.data}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{item.entrada}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{item.saida}</td>
-                        <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-medium">{item.horasTrabalhadas}h</td>
-                        <td className="py-3 px-4">{getStatusBadge(item.status)}</td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Data</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Entrada</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saída</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Corretor</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Horas</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {dadosTimeline
+                        .slice()
+                        .reverse()
+                        .filter((item: any) => item.entrada !== "-" || item.saida !== "-")
+                        .slice((paginaAtual - 1) * 20, paginaAtual * 20)
+                        .map((item: any, index: number) => {
+                          // Formatar horas no formato HH:MM
+                          const horasDecimal = parseFloat(item.horasTrabalhadas) || 0;
+                          const horas = Math.floor(horasDecimal);
+                          const minutos = Math.round((horasDecimal - horas) * 60);
+                          const horasFormatadas = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+                          
+                          return (
+                            <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
+                              <td className="py-3 px-4 text-foreground">{item.data}</td>
+                              <td className="py-3 px-4 text-green-600 dark:text-green-400 font-medium">{item.entrada}</td>
+                              <td className="py-3 px-4 text-red-600 dark:text-red-400 font-medium">{item.saida}</td>
+                              <td className="py-3 px-4 text-foreground">{item.corretor || "Corretor"}</td>
+                              <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-medium">{horasFormatadas}</td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Paginação */}
+                {(() => {
+                  const registrosFiltrados = dadosTimeline.filter((item: any) => item.entrada !== "-" || item.saida !== "-");
+                  const totalPaginas = Math.ceil(registrosFiltrados.length / 20);
+                  if (totalPaginas <= 1) return null;
+                  return (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                      <p className="text-sm text-muted-foreground">
+                        Página {paginaAtual} de {totalPaginas} ({registrosFiltrados.length} registros)
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                          disabled={paginaAtual === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                          disabled={paginaAtual === totalPaginas}
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 Nenhum registro de presença encontrado para o período selecionado

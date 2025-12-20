@@ -1380,3 +1380,10 @@
 - [x] Card 4: Corretores Online Agora
 - [x] Card 5: Alerta de Baixa Presença (corretores abaixo da meta)
 - [x] Gráfico de horas por corretor com filtro de datas
+
+
+## Ajuste: Tabela de Histórico Detalhado
+- [x] Adicionar coluna de Corretor na tabela
+- [x] Remover coluna de Status
+- [x] Formatar horas no formato HH:MM
+- [x] Adicionar paginação com 20 registros por página
