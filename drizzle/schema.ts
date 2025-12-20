@@ -125,6 +125,7 @@ export const leads = mysqlTable("leads", {
   nome: varchar("nome", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }),
   telefone: varchar("telefone", { length: 20 }).notNull(),
+  cpf: varchar("cpf", { length: 14 }), // CPF do lead (formato: 000.000.000-00)
   
   // Origem e interesse
   origem: varchar("origem", { length: 255 }), // Canal de captação
@@ -270,6 +271,108 @@ export const leadStatusTransitions = mysqlTable("lead_status_transitions", {
 
 export type LeadStatusTransition = typeof leadStatusTransitions.$inferSelect;
 export type InsertLeadStatusTransition = typeof leadStatusTransitions.$inferInsert;
+
+// ============================================================================
+// TABELA DE AGENDAMENTOS
+// ============================================================================
+
+/**
+ * Registra todos os agendamentos de visitas.
+ * Um lead pode ter múltiplos agendamentos (reagendamentos, diferentes projetos).
+ * Para métricas do funil, conta-se leads únicos que tiveram agendamento.
+ */
+export const agendamentos = mysqlTable("agendamentos", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  
+  // Projeto (pode ser da base ou customizado)
+  projectId: int("projectId"), // Projeto da base de dados
+  projetoCustom: varchar("projetoCustom", { length: 255 }), // Projeto digitado manualmente
+  construtora: varchar("construtora", { length: 255 }),
+  
+  // Data e hora do agendamento
+  dataAgendamento: timestamp("dataAgendamento").notNull(),
+  horaAgendamento: varchar("horaAgendamento", { length: 5 }).notNull(), // HH:MM
+  
+  // Status do agendamento
+  status: mysqlEnum("status", [
+    "pendente",
+    "confirmado", 
+    "realizado",
+    "cancelado",
+    "reagendado"
+  ]).default("pendente").notNull(),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Quem criou o agendamento
+  criadoPorId: int("criadoPorId"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  leadIdx: index("agendamento_lead_idx").on(table.leadId),
+  corretorIdx: index("agendamento_corretor_idx").on(table.corretorId),
+  dataIdx: index("agendamento_data_idx").on(table.dataAgendamento),
+  statusIdx: index("agendamento_status_idx").on(table.status),
+}));
+
+export type Agendamento = typeof agendamentos.$inferSelect;
+export type InsertAgendamento = typeof agendamentos.$inferInsert;
+
+// ============================================================================
+// TABELA DE VISITAS REALIZADAS
+// ============================================================================
+
+/**
+ * Registra todas as visitas realizadas.
+ * Um lead pode ter múltiplas visitas (diferentes projetos, segunda visita).
+ * Para métricas do funil, conta-se leads únicos que tiveram visita.
+ */
+export const visitas = mysqlTable("visitas", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  agendamentoId: int("agendamentoId"), // Vinculado ao agendamento original (se houver)
+  
+  // Projeto visitado
+  projectId: int("projectId"),
+  projetoCustom: varchar("projetoCustom", { length: 255 }),
+  construtora: varchar("construtora", { length: 255 }),
+  
+  // Data e hora da visita
+  dataVisita: timestamp("dataVisita").notNull(),
+  horaVisita: varchar("horaVisita", { length: 5 }), // HH:MM
+  
+  // Resultado da visita
+  resultado: mysqlEnum("resultado", [
+    "interesse_alto",
+    "interesse_medio",
+    "interesse_baixo",
+    "sem_interesse",
+    "pendente_documentacao",
+    "encaminhado_analise"
+  ]).default("interesse_medio").notNull(),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  // Quem registrou a visita
+  registradoPorId: int("registradoPorId"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  leadIdx: index("visita_lead_idx").on(table.leadId),
+  corretorIdx: index("visita_corretor_idx").on(table.corretorId),
+  dataIdx: index("visita_data_idx").on(table.dataVisita),
+  agendamentoIdx: index("visita_agendamento_idx").on(table.agendamentoId),
+}));
+
+export type Visita = typeof visitas.$inferSelect;
+export type InsertVisita = typeof visitas.$inferInsert;
 
 // ============================================================================
 // TABELA DE LOG DE DISTRIBUIÇÃO

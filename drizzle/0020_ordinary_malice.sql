@@ -1,0 +1,1 @@
+ALTER TABLE `leads` ADD `cpf` varchar(14);

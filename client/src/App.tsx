@@ -34,6 +34,7 @@ import Lixeira from "@/pages/Lixeira";
 import MetasDiarias from "@/pages/MetasDiarias";
 import MeuPerfil from "@/pages/MeuPerfil";
 import HistoricoPresenca from "@/pages/HistoricoPresenca";
+import Agendamentos from "@/pages/Agendamentos";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
       <Route path="/kanban" component={Kanban} />
       <Route path="/metas" component={Metas} />
+      <Route path="/agendamentos" component={Agendamentos} />
       <Route path="/roleta" component={Roleta} />
       <Route path="/historico-distribuicao" component={HistoricoDistribuicao} />
       <Route path="/boas-vindas" component={BoasVindas} />

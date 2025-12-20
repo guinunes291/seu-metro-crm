@@ -7,6 +7,8 @@ import {
   leads, InsertLead, Lead,
   leadHistory, InsertLeadHistory,
   leadStatusTransitions, InsertLeadStatusTransition, LeadStatusTransition,
+  agendamentos, InsertAgendamento, Agendamento,
+  visitas, InsertVisita, Visita,
   distributionLog, InsertDistributionLog,
   conversionStats, InsertConversionStats,
   quickMessages, InsertQuickMessage,
@@ -4092,4 +4094,625 @@ export async function getHistoricoTransicoesLead(leadId: number): Promise<LeadSt
     .from(leadStatusTransitions)
     .where(eq(leadStatusTransitions.leadId, leadId))
     .orderBy(leadStatusTransitions.createdAt);
+}
+
+
+// ============================================================================
+// AGENDAMENTOS
+// ============================================================================
+
+/**
+ * Criar um novo agendamento
+ * Automaticamente atualiza o status do lead para "agendado" se necessário
+ */
+export async function createAgendamento(data: {
+  leadId: number;
+  corretorId: number;
+  projectId?: number;
+  projetoCustom?: string;
+  construtora?: string;
+  dataAgendamento: Date;
+  horaAgendamento: string;
+  observacoes?: string;
+  criadoPorId?: number;
+}): Promise<Agendamento | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Inserir o agendamento
+  const result = await db.insert(agendamentos).values({
+    leadId: data.leadId,
+    corretorId: data.corretorId,
+    projectId: data.projectId,
+    projetoCustom: data.projetoCustom,
+    construtora: data.construtora,
+    dataAgendamento: data.dataAgendamento,
+    horaAgendamento: data.horaAgendamento,
+    observacoes: data.observacoes,
+    criadoPorId: data.criadoPorId,
+    status: 'pendente'
+  });
+  
+  const insertId = result[0].insertId;
+  
+  // Buscar o lead atual
+  const lead = await getLeadById(data.leadId);
+  
+  // Se o lead não está em status posterior a "agendado", atualizar para "agendado"
+  const statusOrdem = ['novo', 'aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido'];
+  const statusAtualIdx = statusOrdem.indexOf(lead?.status || 'novo');
+  const agendadoIdx = statusOrdem.indexOf('agendado');
+  
+  if (statusAtualIdx < agendadoIdx) {
+    await updateLead(data.leadId, { status: 'agendado' });
+  }
+  
+  // Retornar o agendamento criado
+  const agendamento = await db.select().from(agendamentos).where(eq(agendamentos.id, insertId)).limit(1);
+  return agendamento[0] || null;
+}
+
+/**
+ * Buscar agendamento por ID
+ */
+export async function getAgendamentoById(id: number): Promise<Agendamento | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(agendamentos).where(eq(agendamentos.id, id)).limit(1);
+  return result[0] || null;
+}
+
+/**
+ * Buscar agendamentos de um corretor
+ */
+export async function getAgendamentosCorretor(
+  corretorId: number,
+  filtros?: {
+    dataInicio?: Date;
+    dataFim?: Date;
+    status?: string;
+  }
+): Promise<Agendamento[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(agendamentos.corretorId, corretorId)];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(agendamentos.dataAgendamento, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(agendamentos.dataAgendamento, filtros.dataFim));
+  }
+  if (filtros?.status) {
+    conditions.push(eq(agendamentos.status, filtros.status as any));
+  }
+  
+  return await db.select()
+    .from(agendamentos)
+    .where(and(...conditions))
+    .orderBy(desc(agendamentos.dataAgendamento));
+}
+
+/**
+ * Buscar agendamentos de um lead
+ */
+export async function getAgendamentosLead(leadId: number): Promise<Agendamento[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(agendamentos)
+    .where(eq(agendamentos.leadId, leadId))
+    .orderBy(desc(agendamentos.dataAgendamento));
+}
+
+/**
+ * Buscar todos os agendamentos (para gestor)
+ */
+export async function getAllAgendamentos(filtros?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+  corretorId?: number;
+  status?: string;
+}): Promise<Agendamento[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(agendamentos.dataAgendamento, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(agendamentos.dataAgendamento, filtros.dataFim));
+  }
+  if (filtros?.corretorId) {
+    conditions.push(eq(agendamentos.corretorId, filtros.corretorId));
+  }
+  if (filtros?.status) {
+    conditions.push(eq(agendamentos.status, filtros.status as any));
+  }
+  
+  return await db.select()
+    .from(agendamentos)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(agendamentos.dataAgendamento));
+}
+
+/**
+ * Atualizar status de um agendamento
+ */
+export async function updateAgendamentoStatus(
+  id: number,
+  status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado'
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(agendamentos)
+    .set({ status, updatedAt: new Date() })
+    .where(eq(agendamentos.id, id));
+  
+  return true;
+}
+
+/**
+ * Atualizar agendamento
+ */
+export async function updateAgendamento(id: number, data: Partial<InsertAgendamento>): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(agendamentos)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(agendamentos.id, id));
+  
+  return true;
+}
+
+/**
+ * Excluir agendamento
+ */
+export async function deleteAgendamento(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.delete(agendamentos).where(eq(agendamentos.id, id));
+  return true;
+}
+
+/**
+ * Buscar agendamentos do dia
+ */
+export async function getAgendamentosDoDia(corretorId?: number): Promise<Agendamento[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+  
+  const conditions = [
+    gte(agendamentos.dataAgendamento, hoje),
+    lte(agendamentos.dataAgendamento, amanha)
+  ];
+  
+  if (corretorId) {
+    conditions.push(eq(agendamentos.corretorId, corretorId));
+  }
+  
+  return await db.select()
+    .from(agendamentos)
+    .where(and(...conditions))
+    .orderBy(agendamentos.horaAgendamento);
+}
+
+// ============================================================================
+// VISITAS
+// ============================================================================
+
+/**
+ * Criar uma nova visita
+ * Automaticamente atualiza o status do lead para "visita_realizada" se necessário
+ */
+export async function createVisita(data: {
+  leadId: number;
+  corretorId: number;
+  agendamentoId?: number;
+  projectId?: number;
+  projetoCustom?: string;
+  construtora?: string;
+  dataVisita: Date;
+  horaVisita?: string;
+  resultado?: 'interesse_alto' | 'interesse_medio' | 'interesse_baixo' | 'sem_interesse' | 'pendente_documentacao' | 'encaminhado_analise';
+  observacoes?: string;
+  registradoPorId?: number;
+}): Promise<Visita | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Inserir a visita
+  const result = await db.insert(visitas).values({
+    leadId: data.leadId,
+    corretorId: data.corretorId,
+    agendamentoId: data.agendamentoId,
+    projectId: data.projectId,
+    projetoCustom: data.projetoCustom,
+    construtora: data.construtora,
+    dataVisita: data.dataVisita,
+    horaVisita: data.horaVisita,
+    resultado: data.resultado || 'interesse_medio',
+    observacoes: data.observacoes,
+    registradoPorId: data.registradoPorId
+  });
+  
+  const insertId = result[0].insertId;
+  
+  // Se veio de um agendamento, marcar como realizado
+  if (data.agendamentoId) {
+    await updateAgendamentoStatus(data.agendamentoId, 'realizado');
+  }
+  
+  // Buscar o lead atual
+  const lead = await getLeadById(data.leadId);
+  
+  // Se o lead não está em status posterior a "visita_realizada", atualizar
+  const statusOrdem = ['novo', 'aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido'];
+  const statusAtualIdx = statusOrdem.indexOf(lead?.status || 'novo');
+  const visitaIdx = statusOrdem.indexOf('visita_realizada');
+  
+  if (statusAtualIdx < visitaIdx) {
+    await updateLead(data.leadId, { status: 'visita_realizada' });
+  }
+  
+  // Retornar a visita criada
+  const visita = await db.select().from(visitas).where(eq(visitas.id, insertId)).limit(1);
+  return visita[0] || null;
+}
+
+/**
+ * Buscar visita por ID
+ */
+export async function getVisitaById(id: number): Promise<Visita | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(visitas).where(eq(visitas.id, id)).limit(1);
+  return result[0] || null;
+}
+
+/**
+ * Buscar visitas de um corretor
+ */
+export async function getVisitasCorretor(
+  corretorId: number,
+  filtros?: {
+    dataInicio?: Date;
+    dataFim?: Date;
+  }
+): Promise<Visita[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(visitas.corretorId, corretorId)];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(visitas.dataVisita, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(visitas.dataVisita, filtros.dataFim));
+  }
+  
+  return await db.select()
+    .from(visitas)
+    .where(and(...conditions))
+    .orderBy(desc(visitas.dataVisita));
+}
+
+/**
+ * Buscar visitas de um lead
+ */
+export async function getVisitasLead(leadId: number): Promise<Visita[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(visitas)
+    .where(eq(visitas.leadId, leadId))
+    .orderBy(desc(visitas.dataVisita));
+}
+
+/**
+ * Buscar todas as visitas (para gestor)
+ */
+export async function getAllVisitas(filtros?: {
+  dataInicio?: Date;
+  dataFim?: Date;
+  corretorId?: number;
+}): Promise<Visita[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(visitas.dataVisita, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(visitas.dataVisita, filtros.dataFim));
+  }
+  if (filtros?.corretorId) {
+    conditions.push(eq(visitas.corretorId, filtros.corretorId));
+  }
+  
+  return await db.select()
+    .from(visitas)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(visitas.dataVisita));
+}
+
+/**
+ * Atualizar visita
+ */
+export async function updateVisita(id: number, data: Partial<InsertVisita>): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(visitas)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(visitas.id, id));
+  
+  return true;
+}
+
+/**
+ * Excluir visita
+ */
+export async function deleteVisita(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.delete(visitas).where(eq(visitas.id, id));
+  return true;
+}
+
+// ============================================================================
+// BUSCA DE LEAD POR TELEFONE/EMAIL/CPF
+// ============================================================================
+
+/**
+ * Buscar lead por telefone (para autocomplete)
+ */
+export async function searchLeadByTelefone(telefone: string, corretorId?: number): Promise<Lead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Limpar telefone (remover caracteres não numéricos)
+  const telefoneLimpo = telefone.replace(/\D/g, '');
+  
+  const conditions = [
+    sql`REPLACE(REPLACE(REPLACE(${leads.telefone}, '-', ''), ' ', ''), '(', '') LIKE ${`%${telefoneLimpo}%`}`
+  ];
+  
+  if (corretorId) {
+    conditions.push(eq(leads.corretorId, corretorId));
+  }
+  
+  return await db.select()
+    .from(leads)
+    .where(and(...conditions))
+    .limit(10);
+}
+
+/**
+ * Buscar lead por email
+ */
+export async function searchLeadByEmail(email: string, corretorId?: number): Promise<Lead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [
+    sql`${leads.email} LIKE ${`%${email}%`}`
+  ];
+  
+  if (corretorId) {
+    conditions.push(eq(leads.corretorId, corretorId));
+  }
+  
+  return await db.select()
+    .from(leads)
+    .where(and(...conditions))
+    .limit(10);
+}
+
+/**
+ * Buscar lead por CPF
+ */
+export async function searchLeadByCpf(cpf: string, corretorId?: number): Promise<Lead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Limpar CPF (remover caracteres não numéricos)
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  
+  const conditions = [
+    sql`REPLACE(REPLACE(${leads.cpf}, '.', ''), '-', '') LIKE ${`%${cpfLimpo}%`}`
+  ];
+  
+  if (corretorId) {
+    conditions.push(eq(leads.corretorId, corretorId));
+  }
+  
+  return await db.select()
+    .from(leads)
+    .where(and(...conditions))
+    .limit(10);
+}
+
+/**
+ * Buscar lead por qualquer identificador (telefone, email ou CPF)
+ */
+export async function searchLeadByIdentifier(query: string, corretorId?: number): Promise<Lead[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Limpar query
+  const queryLimpa = query.trim();
+  const querySemCaracteres = queryLimpa.replace(/\D/g, '');
+  
+  const conditions = [];
+  
+  // Se parece com telefone ou CPF (só números)
+  if (querySemCaracteres.length >= 3) {
+    conditions.push(
+      sql`REPLACE(REPLACE(REPLACE(${leads.telefone}, '-', ''), ' ', ''), '(', '') LIKE ${`%${querySemCaracteres}%`}`
+    );
+    conditions.push(
+      sql`REPLACE(REPLACE(${leads.cpf}, '.', ''), '-', '') LIKE ${`%${querySemCaracteres}%`}`
+    );
+  }
+  
+  // Se parece com email
+  if (queryLimpa.includes('@') || queryLimpa.length >= 3) {
+    conditions.push(
+      sql`${leads.email} LIKE ${`%${queryLimpa}%`}`
+    );
+  }
+  
+  // Buscar também por nome
+  conditions.push(
+    sql`${leads.nome} LIKE ${`%${queryLimpa}%`}`
+  );
+  
+  let baseQuery = db.select()
+    .from(leads)
+    .where(sql`(${sql.join(conditions, sql` OR `)})`);
+  
+  if (corretorId) {
+    baseQuery = db.select()
+      .from(leads)
+      .where(and(
+        sql`(${sql.join(conditions, sql` OR `)})`,
+        eq(leads.corretorId, corretorId)
+      ));
+  }
+  
+  return await baseQuery.limit(10);
+}
+
+// ============================================================================
+// MÉTRICAS DO FUNIL COM LEADS ÚNICOS
+// ============================================================================
+
+/**
+ * Conta leads únicos que atingiram cada etapa do funil
+ * Usa as tabelas de agendamentos e visitas para contagem precisa
+ */
+export async function getMetricasFunilLeadsUnicos(
+  corretorId?: number,
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<{
+  leadsRecebidos: number;
+  emAtendimento: number;
+  agendados: number;
+  visitasRealizadas: number;
+  analisesCredito: number;
+  contratosFechados: number;
+  perdidos: number;
+}> {
+  const db = await getDb();
+  if (!db) return {
+    leadsRecebidos: 0,
+    emAtendimento: 0,
+    agendados: 0,
+    visitasRealizadas: 0,
+    analisesCredito: 0,
+    contratosFechados: 0,
+    perdidos: 0
+  };
+  
+  // Condições base
+  const leadConditions = [];
+  const agendamentoConditions = [];
+  const visitaConditions = [];
+  const transicaoConditions = [];
+  
+  if (corretorId) {
+    leadConditions.push(eq(leads.corretorId, corretorId));
+    agendamentoConditions.push(eq(agendamentos.corretorId, corretorId));
+    visitaConditions.push(eq(visitas.corretorId, corretorId));
+    transicaoConditions.push(eq(leadStatusTransitions.corretorId, corretorId));
+  }
+  
+  if (dataInicio) {
+    leadConditions.push(gte(leads.createdAt, dataInicio));
+    agendamentoConditions.push(gte(agendamentos.createdAt, dataInicio));
+    visitaConditions.push(gte(visitas.createdAt, dataInicio));
+    transicaoConditions.push(gte(leadStatusTransitions.createdAt, dataInicio));
+  }
+  
+  if (dataFim) {
+    leadConditions.push(lte(leads.createdAt, dataFim));
+    agendamentoConditions.push(lte(agendamentos.createdAt, dataFim));
+    visitaConditions.push(lte(visitas.createdAt, dataFim));
+    transicaoConditions.push(lte(leadStatusTransitions.createdAt, dataFim));
+  }
+  
+  // Leads recebidos (total de leads)
+  const leadsRecebidosResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${leads.id})` })
+    .from(leads)
+    .where(leadConditions.length > 0 ? and(...leadConditions) : undefined);
+  
+  // Leads únicos com agendamento
+  const agendadosResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${agendamentos.leadId})` })
+    .from(agendamentos)
+    .where(agendamentoConditions.length > 0 ? and(...agendamentoConditions) : undefined);
+  
+  // Leads únicos com visita
+  const visitasResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${visitas.leadId})` })
+    .from(visitas)
+    .where(visitaConditions.length > 0 ? and(...visitaConditions) : undefined);
+  
+  // Leads únicos que passaram por cada status (via transições)
+  const emAtendimentoResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})` })
+    .from(leadStatusTransitions)
+    .where(and(
+      eq(leadStatusTransitions.statusNovo, 'em_atendimento'),
+      ...(transicaoConditions.length > 0 ? transicaoConditions : [])
+    ));
+  
+  const analiseCreditoResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})` })
+    .from(leadStatusTransitions)
+    .where(and(
+      eq(leadStatusTransitions.statusNovo, 'analise_credito'),
+      ...(transicaoConditions.length > 0 ? transicaoConditions : [])
+    ));
+  
+  const contratosFechadosResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})` })
+    .from(leadStatusTransitions)
+    .where(and(
+      eq(leadStatusTransitions.statusNovo, 'contrato_fechado'),
+      ...(transicaoConditions.length > 0 ? transicaoConditions : [])
+    ));
+  
+  const perdidosResult = await db.select({ count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})` })
+    .from(leadStatusTransitions)
+    .where(and(
+      eq(leadStatusTransitions.statusNovo, 'perdido'),
+      ...(transicaoConditions.length > 0 ? transicaoConditions : [])
+    ));
+  
+  return {
+    leadsRecebidos: Number(leadsRecebidosResult[0]?.count || 0),
+    emAtendimento: Number(emAtendimentoResult[0]?.count || 0),
+    agendados: Number(agendadosResult[0]?.count || 0),
+    visitasRealizadas: Number(visitasResult[0]?.count || 0),
+    analisesCredito: Number(analiseCreditoResult[0]?.count || 0),
+    contratosFechados: Number(contratosFechadosResult[0]?.count || 0),
+    perdidos: Number(perdidosResult[0]?.count || 0)
+  };
 }

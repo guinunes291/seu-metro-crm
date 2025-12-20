@@ -2198,5 +2198,304 @@ export const appRouter = router({
         return await db.getFotoPerfil(userId);
       }),
   }),
+
+  // ============================================================================
+  // AGENDAMENTOS
+  // ============================================================================
+  agendamentos: router({
+    // Criar novo agendamento
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        projectId: z.number().optional(),
+        projetoCustom: z.string().optional(),
+        construtora: z.string().optional(),
+        dataAgendamento: z.string(), // ISO date string
+        horaAgendamento: z.string(), // HH:MM
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se o lead pertence ao corretor (ou se é gestor)
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
+        }
+        
+        return await db.createAgendamento({
+          leadId: input.leadId,
+          corretorId: lead.corretorId || ctx.user.id,
+          projectId: input.projectId,
+          projetoCustom: input.projetoCustom,
+          construtora: input.construtora,
+          dataAgendamento: new Date(input.dataAgendamento),
+          horaAgendamento: input.horaAgendamento,
+          observacoes: input.observacoes,
+          criadoPorId: ctx.user.id,
+        });
+      }),
+    
+    // Listar agendamentos do corretor
+    list: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        status: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getAgendamentosCorretor(ctx.user.id, {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          status: input?.status,
+        });
+      }),
+    
+    // Listar todos os agendamentos (gestor)
+    listAll: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorId: z.number().optional(),
+        status: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAllAgendamentos({
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretorId: input?.corretorId,
+          status: input?.status,
+        });
+      }),
+    
+    // Agendamentos do dia
+    hoje: corretorProcedure.query(async ({ ctx }) => {
+      return await db.getAgendamentosDoDia(ctx.user.id);
+    }),
+    
+    // Agendamentos de um lead
+    byLead: corretorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getAgendamentosLead(input.leadId);
+      }),
+    
+    // Atualizar status do agendamento
+    updateStatus: corretorProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.updateAgendamentoStatus(input.id, input.status);
+      }),
+    
+    // Atualizar agendamento
+    update: corretorProcedure
+      .input(z.object({
+        id: z.number(),
+        dataAgendamento: z.string().optional(),
+        horaAgendamento: z.string().optional(),
+        observacoes: z.string().optional(),
+        status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateAgendamento(id, {
+          ...data,
+          dataAgendamento: data.dataAgendamento ? new Date(data.dataAgendamento) : undefined,
+        });
+      }),
+    
+    // Excluir agendamento
+    delete: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteAgendamento(input.id);
+      }),
+  }),
+
+  // ============================================================================
+  // VISITAS
+  // ============================================================================
+  visitas: router({
+    // Criar nova visita
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        agendamentoId: z.number().optional(),
+        projectId: z.number().optional(),
+        projetoCustom: z.string().optional(),
+        construtora: z.string().optional(),
+        dataVisita: z.string(), // ISO date string
+        horaVisita: z.string().optional(), // HH:MM
+        resultado: z.enum(['interesse_alto', 'interesse_medio', 'interesse_baixo', 'sem_interesse', 'pendente_documentacao', 'encaminhado_analise']).optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se o lead pertence ao corretor (ou se é gestor)
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
+        }
+        
+        return await db.createVisita({
+          leadId: input.leadId,
+          corretorId: lead.corretorId || ctx.user.id,
+          agendamentoId: input.agendamentoId,
+          projectId: input.projectId,
+          projetoCustom: input.projetoCustom,
+          construtora: input.construtora,
+          dataVisita: new Date(input.dataVisita),
+          horaVisita: input.horaVisita,
+          resultado: input.resultado,
+          observacoes: input.observacoes,
+          registradoPorId: ctx.user.id,
+        });
+      }),
+    
+    // Listar visitas do corretor
+    list: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getVisitasCorretor(ctx.user.id, {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+        });
+      }),
+    
+    // Listar todas as visitas (gestor)
+    listAll: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAllVisitas({
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretorId: input?.corretorId,
+        });
+      }),
+    
+    // Visitas de um lead
+    byLead: corretorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getVisitasLead(input.leadId);
+      }),
+    
+    // Atualizar visita
+    update: corretorProcedure
+      .input(z.object({
+        id: z.number(),
+        resultado: z.enum(['interesse_alto', 'interesse_medio', 'interesse_baixo', 'sem_interesse', 'pendente_documentacao', 'encaminhado_analise']).optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateVisita(id, data);
+      }),
+    
+    // Excluir visita
+    delete: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteVisita(input.id);
+      }),
+  }),
+
+  // ============================================================================
+  // BUSCA DE LEADS (para autocomplete)
+  // ============================================================================
+  searchLeads: router({
+    // Buscar por telefone
+    byTelefone: corretorProcedure
+      .input(z.object({ telefone: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        return await db.searchLeadByTelefone(input.telefone, isGestor ? undefined : ctx.user.id);
+      }),
+    
+    // Buscar por email
+    byEmail: corretorProcedure
+      .input(z.object({ email: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        return await db.searchLeadByEmail(input.email, isGestor ? undefined : ctx.user.id);
+      }),
+    
+    // Buscar por CPF
+    byCpf: corretorProcedure
+      .input(z.object({ cpf: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        return await db.searchLeadByCpf(input.cpf, isGestor ? undefined : ctx.user.id);
+      }),
+    
+    // Buscar por qualquer identificador (telefone, email, CPF ou nome)
+    byIdentifier: corretorProcedure
+      .input(z.object({ query: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        return await db.searchLeadByIdentifier(input.query, isGestor ? undefined : ctx.user.id);
+      }),
+  }),
+
+  // ============================================================================
+  // MÉTRICAS DO FUNIL (LEADS ÚNICOS)
+  // ============================================================================
+  metricasFunil: router({
+    // Métricas gerais (gestor)
+    geral: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getMetricasFunilLeadsUnicos(
+          undefined,
+          input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          input?.dataFim ? new Date(input.dataFim) : undefined
+        );
+      }),
+    
+    // Métricas por corretor (gestor)
+    porCorretor: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getMetricasFunilLeadsUnicos(
+          input.corretorId,
+          input.dataInicio ? new Date(input.dataInicio) : undefined,
+          input.dataFim ? new Date(input.dataFim) : undefined
+        );
+      }),
+    
+    // Métricas individuais (corretor)
+    minhas: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getMetricasFunilLeadsUnicos(
+          ctx.user.id,
+          input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          input?.dataFim ? new Date(input.dataFim) : undefined
+        );
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

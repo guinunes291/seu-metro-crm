@@ -134,6 +134,20 @@
       "when": 1766259519288,
       "tag": "0018_boring_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1766260214039,
+      "tag": "0019_perfect_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1766260244805,
+      "tag": "0020_ordinary_malice",
+      "breakpoints": true
     }
   ]
 }

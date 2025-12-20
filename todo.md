@@ -1447,3 +1447,19 @@
 - [x] Adicionar procedures dashboard.metricasFunil e dashboard.metricasFunilPorCorretor
 - [x] Adicionar procedure dashboardCorretor.metricasFunil
 - [x] Criar testes unitários para validar o sistema (5 testes passando)
+
+
+## Sistema de Agendamentos e Visitas (20/12/2025)
+- [x] Criar tabela agendamentos no schema
+- [x] Criar tabela visitas no schema
+- [x] Implementar funções CRUD para agendamentos
+- [x] Implementar funções CRUD para visitas
+- [x] Criar procedures tRPC para agendamentos
+- [x] Atualizar métricas do funil para contar leads únicos por etapa
+- [x] Criar interface de criação de agendamentos (modal/formulário)
+- [x] Busca de lead por telefone com autocomplete
+- [x] Dropdown de projetos + opção customizada
+- [x] Integração automática com status do lead
+- [x] Criar testes unitários (13 testes passando)
+- [x] Adicionar campo CPF na tabela de leads
+- [x] Usar telefone + email + CPF como identificadores únicos do lead
