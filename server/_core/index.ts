@@ -84,6 +84,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao carregar módulo de follow-up:", err);
     });
+    
+    // Inicializar job de verificação de conquistas
+    import("../conquistasJob").then(({ iniciarJobConquistas }) => {
+      iniciarJobConquistas();
+      console.log("[Job] Verificação automática de conquistas inicializada (a cada 5 minutos)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de conquistas:", err);
+    });
   });
 }
 

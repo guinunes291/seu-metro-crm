@@ -1283,3 +1283,11 @@
 - [x] Implementar animação de confete e som de celebração
 - [x] Integrar notificações ao completar conquistas
 - [x] Testar sistema completo
+
+
+## Nova Feature: Verificação Automática de Conquistas (20/12/2025)
+- [ ] Criar função de verificação de conquistas para todos os corretores
+- [ ] Implementar job de verificação automática periódica (a cada 5 minutos)
+- [ ] Criar sistema de notificação em tempo real para celebrações
+- [ ] Integrar com sistema de notificações existente
+- [ ] Testar disparo automático de celebrações

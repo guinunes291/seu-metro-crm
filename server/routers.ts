@@ -1986,7 +1986,17 @@ export const appRouter = router({
     // Verificar e conceder conquistas automáticas
     verificar: protectedProcedure
       .mutation(async ({ ctx }) => {
-        return await db.verificarConquistas(ctx.user.id);
+        // Importar função de verificação do job
+        const { verificarConquistasCorretor } = await import("./conquistasJob");
+        return await verificarConquistasCorretor(ctx.user.id);
+      }),
+    
+    // Buscar progresso de todas as conquistas
+    progresso: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { verificarConquistasCorretor } = await import("./conquistasJob");
+        const resultado = await verificarConquistasCorretor(ctx.user.id);
+        return resultado.progressos;
       }),
     
     // Inicializar tipos de conquistas padrão (admin)
