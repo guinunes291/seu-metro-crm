@@ -34,6 +34,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { CopilotQuickActions } from "@/components/CopilotQuickActions";
+import { SMQCopilotButton } from "@/components/SMQCopilotChat";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -795,6 +797,19 @@ export default function Leads() {
                     placeholder="Adicione observações sobre o lead..."
                     className="mt-1"
                   />
+                </div>
+
+                <Separator />
+
+                {/* SMQ Copilot - Assistente de IA */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <span className="text-purple-600">🤖</span> SMQ Copilot
+                    </h3>
+                    <SMQCopilotButton leadId={selectedLead.id} leadNome={selectedLead.nome} />
+                  </div>
+                  <CopilotQuickActions leadId={selectedLead.id} leadNome={selectedLead.nome} compact />
                 </div>
 
                 <Separator />

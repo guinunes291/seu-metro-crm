@@ -1596,5 +1596,121 @@ export const appRouter = router({
         return { success: true, notified: corretores.length };
       }),
   }),
+
+  // ============================================================================
+  // SMQ COPILOT - ASSISTENTE DE IA
+  // ============================================================================
+  copilot: router({
+    // Chat com o Copilot
+    chat: protectedProcedure
+      .input(z.object({
+        messages: z.array(z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string()
+        })),
+        leadId: z.number().optional(),
+        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento', 'chat']).default('chat')
+      }))
+      .mutation(async ({ input }) => {
+        const { chatWithCopilot, LeadContext } = await import('./smqCopilot');
+        
+        let leadContext: LeadContext | undefined;
+        
+        // Se tiver leadId, buscar contexto do lead
+        if (input.leadId) {
+          const lead = await db.getLeadById(input.leadId);
+          if (lead) {
+            // Buscar histórico de interações
+            const historico = await db.getLeadHistory(input.leadId);
+            
+            // Buscar projeto se existir
+            let projetoNome: string | undefined;
+            if (lead.projetoId) {
+              const projeto = await db.getProjectById(lead.projetoId);
+              projetoNome = projeto?.nome;
+            }
+            
+            leadContext = {
+              nome: lead.nome,
+              telefone: lead.telefone || undefined,
+              email: lead.email || undefined,
+              status: lead.status,
+              projeto: projetoNome,
+              origem: lead.origem || undefined,
+              observacoes: lead.observacoes || undefined,
+              historicoInteracoes: historico.slice(0, 5).map(h => ({
+                tipo: h.tipo,
+                descricao: h.descricao,
+                data: new Date(h.createdAt).toLocaleDateString('pt-BR')
+              })),
+              diasSemContato: lead.ultimoContato 
+                ? Math.floor((Date.now() - new Date(lead.ultimoContato).getTime()) / (1000 * 60 * 60 * 24))
+                : undefined
+            };
+          }
+        }
+        
+        const response = await chatWithCopilot(
+          input.messages,
+          leadContext,
+          input.mode
+        );
+        
+        return { response };
+      }),
+
+    // Ação rápida - gera resposta para um modo específico
+    quickAction: protectedProcedure
+      .input(z.object({
+        leadId: z.number(),
+        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento']),
+        additionalContext: z.string().optional()
+      }))
+      .mutation(async ({ input }) => {
+        const { quickAction, LeadContext } = await import('./smqCopilot');
+        
+        // Buscar lead
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new Error('Lead não encontrado');
+        }
+        
+        // Buscar histórico de interações
+        const historico = await db.getLeadHistory(input.leadId);
+        
+        // Buscar projeto se existir
+        let projetoNome: string | undefined;
+        if (lead.projetoId) {
+          const projeto = await db.getProjectById(lead.projetoId);
+          projetoNome = projeto?.nome;
+        }
+        
+        const leadContext: LeadContext = {
+          nome: lead.nome,
+          telefone: lead.telefone || undefined,
+          email: lead.email || undefined,
+          status: lead.status,
+          projeto: projetoNome,
+          origem: lead.origem || undefined,
+          observacoes: lead.observacoes || undefined,
+          historicoInteracoes: historico.slice(0, 5).map(h => ({
+            tipo: h.tipo,
+            descricao: h.descricao,
+            data: new Date(h.createdAt).toLocaleDateString('pt-BR')
+          })),
+          diasSemContato: lead.ultimoContato 
+            ? Math.floor((Date.now() - new Date(lead.ultimoContato).getTime()) / (1000 * 60 * 60 * 24))
+            : undefined
+        };
+        
+        const response = await quickAction(
+          input.mode,
+          leadContext,
+          input.additionalContext
+        );
+        
+        return { response };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

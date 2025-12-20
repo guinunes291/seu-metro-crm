@@ -1094,3 +1094,26 @@
 ## Limpeza de Dados de Teste (CONCLUÍDO)
 - [x] Excluir todos os leads do sistema
 - [x] Sistema limpo e pronto para produção
+
+
+## Nova Feature: Integração SMQ Copilot (Assistente IA)
+- [ ] Criar procedure tRPC para chat com SMQ Copilot
+- [ ] Implementar system prompt com regras do Copilot
+- [ ] Criar função para formatar contexto do lead
+- [ ] Criar componente de chat integrado (SMQCopilotChat)
+- [ ] Adicionar chat na página de detalhes do lead
+- [ ] Criar botões de ação rápida (Briefing, Primeiro Contato, Qualificação, Objeções, Crédito, Follow-up, Treinamento)
+- [ ] Integrar botões com contexto automático do lead
+- [ ] Testar todas as funcionalidades
+- [ ] Salvar checkpoint
+
+
+## Nova Feature: Integração SMQ Copilot (CONCLUÍDO)
+- [x] Criar backend para integração com LLM
+- [x] Criar system prompt do SMQ Copilot (7 modos de uso)
+- [x] Criar procedures no router para chat e ações rápidas
+- [x] Criar componente de chat integrado (SMQCopilotChat.tsx)
+- [x] Criar botões de ação rápida nos leads (CopilotQuickActions.tsx)
+- [x] Integrar no modal de detalhes do lead
+- [x] Testar integração com IA - funcionando perfeitamente!
+- [x] Modos disponíveis: Briefing, 1º Contato, Qualificação, Objeções, Crédito, Follow-up, Treinamento
