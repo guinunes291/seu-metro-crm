@@ -1393,3 +1393,21 @@
 - [x] Remover barra de meta 24h do gráfico
 - [x] Trocar texto "Meta Semanal" para "Horas Trabalhadas"
 - [x] Exibir nome real do corretor na coluna Corretor da tabela de histórico
+
+
+## Bug Fix: Registro de Presença Incorreto
+- [ ] Data mostrando dia anterior (19/12 em vez de 20/12)
+- [ ] Horário de entrada incorreto (15:02 em vez de 16:11)
+- [ ] Cálculo de horas incorreto (00:06 em vez de 00:03)
+
+
+## Bug Fix: Registro de Presença Incorreto (Corrigido)
+- [x] Data incorreta (mostrando dia anterior) - Corrigido com timezone GMT-3
+- [x] Horário de entrada incorreto - Corrigido com nova função buscarParesEntradaSaida
+- [x] Cálculo de horas incorreto - Corrigido para calcular diferença em minutos entre entrada e saída
+- [x] Cada par entrada/saída agora é um registro separado na tabela
+
+## Ajuste: Gráfico de Horas por Corretor (Corrigido)
+- [x] Remover barra de meta 24h do gráfico
+- [x] Trocar texto "Meta Semanal" para "Horas Trabalhadas"
+- [x] Exibir nome real do corretor na coluna Corretor da tabela de histórico

@@ -24,6 +24,29 @@ export const EXPEDIENTE = {
 /**
  * Registra uma mudança de status de presença
  */
+/**
+ * Obtém a data/hora atual no timezone de São Paulo
+ */
+function getDataHoraBrasil(): Date {
+  // Criar data atual e ajustar para GMT-3 (São Paulo)
+  const agora = new Date();
+  return agora;
+}
+
+/**
+ * Obtém a data atual no timezone de São Paulo (apenas a data, sem hora)
+ */
+function getDataBrasil(): Date {
+  const agora = new Date();
+  // Ajustar para GMT-3 para obter a data correta no Brasil
+  const offsetBrasil = -3 * 60; // GMT-3 em minutos
+  const offsetAtual = agora.getTimezoneOffset();
+  const diferencaMinutos = offsetBrasil - offsetAtual;
+  const dataBrasil = new Date(agora.getTime() - diferencaMinutos * 60000);
+  dataBrasil.setHours(0, 0, 0, 0);
+  return dataBrasil;
+}
+
 export async function registrarMudancaStatus(
   corretorId: number,
   statusAnterior: "presente" | "ausente",
@@ -38,6 +61,9 @@ export async function registrarMudancaStatus(
   }
   
   const tipo = statusNovo === "presente" ? "entrada" : "saida";
+  const dataHoraAtual = getDataHoraBrasil();
+  
+  console.log(`[Presenca] Registrando ${tipo} para corretor ${corretorId} em ${dataHoraAtual.toISOString()}`);
   
   await db.insert(historicoPresenca).values({
     corretorId,
@@ -45,12 +71,12 @@ export async function registrarMudancaStatus(
     statusAnterior,
     statusNovo,
     origem,
-    dataHora: new Date(),
+    dataHora: dataHoraAtual,
     observacao,
   });
   
-  // Atualizar resumo diário
-  await atualizarResumoDiario(corretorId, new Date());
+  // Atualizar resumo diário usando a data no timezone do Brasil
+  await atualizarResumoDiario(corretorId, getDataBrasil());
 }
 
 /**
@@ -63,11 +89,14 @@ export async function atualizarResumoDiario(corretorId: number, data: Date): Pro
     return;
   }
   
-  // Início e fim do dia
+  // Início e fim do dia no timezone do Brasil (GMT-3)
+  // A data já vem ajustada para o timezone do Brasil
   const inicioDia = new Date(data);
   inicioDia.setHours(0, 0, 0, 0);
   const fimDia = new Date(data);
   fimDia.setHours(23, 59, 59, 999);
+  
+  console.log(`[Presenca] Atualizando resumo diário para corretor ${corretorId} - Data: ${data.toISOString()}, Inicio: ${inicioDia.toISOString()}, Fim: ${fimDia.toISOString()}`);
   
   // Buscar todos os registros do dia
   const registros = await db
@@ -220,6 +249,100 @@ export async function buscarHistoricoPresenca(
   }
   
   return await query;
+}
+
+/**
+ * Busca pares de entrada/saída do histórico de presença
+ * Retorna cada período de presença como um registro separado
+ */
+export async function buscarParesEntradaSaida(
+  corretorId?: number,
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (corretorId) {
+    conditions.push(eq(historicoPresenca.corretorId, corretorId));
+  }
+  
+  if (dataInicio) {
+    conditions.push(gte(historicoPresenca.dataHora, dataInicio));
+  }
+  
+  if (dataFim) {
+    conditions.push(lte(historicoPresenca.dataHora, dataFim));
+  }
+  
+  // Buscar todos os registros de entrada/saída
+  const registros = conditions.length > 0
+    ? await db.select({
+        id: historicoPresenca.id,
+        corretorId: historicoPresenca.corretorId,
+        corretorNome: users.name,
+        tipo: historicoPresenca.tipo,
+        dataHora: historicoPresenca.dataHora,
+      })
+      .from(historicoPresenca)
+      .leftJoin(users, eq(historicoPresenca.corretorId, users.id))
+      .where(and(...conditions))
+      .orderBy(historicoPresenca.dataHora)
+    : await db.select({
+        id: historicoPresenca.id,
+        corretorId: historicoPresenca.corretorId,
+        corretorNome: users.name,
+        tipo: historicoPresenca.tipo,
+        dataHora: historicoPresenca.dataHora,
+      })
+      .from(historicoPresenca)
+      .leftJoin(users, eq(historicoPresenca.corretorId, users.id))
+      .orderBy(historicoPresenca.dataHora);
+  
+  // Agrupar por corretor e criar pares entrada/saída
+  const paresMap = new Map<number, { entrada: Date | null, corretorNome: string }>();
+  const pares: any[] = [];
+  
+  for (const registro of registros) {
+    const corretorId = registro.corretorId;
+    
+    if (registro.tipo === "entrada") {
+      // Registrar entrada pendente
+      paresMap.set(corretorId, {
+        entrada: registro.dataHora,
+        corretorNome: registro.corretorNome || "Corretor",
+      });
+    } else if (registro.tipo === "saida") {
+      // Buscar entrada correspondente
+      const entradaPendente = paresMap.get(corretorId);
+      
+      if (entradaPendente && entradaPendente.entrada) {
+        // Calcular minutos trabalhados
+        const minutosTrabalhados = Math.floor(
+          (registro.dataHora.getTime() - entradaPendente.entrada.getTime()) / 60000
+        );
+        
+        pares.push({
+          corretorId,
+          corretorNome: entradaPendente.corretorNome,
+          data: entradaPendente.entrada,
+          entrada: entradaPendente.entrada,
+          saida: registro.dataHora,
+          totalMinutosPresente: minutosTrabalhados,
+        });
+        
+        // Limpar entrada pendente
+        paresMap.delete(corretorId);
+      }
+    }
+  }
+  
+  // Ordenar por data decrescente
+  pares.sort((a, b) => b.data.getTime() - a.data.getTime());
+  
+  return pares;
 }
 
 /**

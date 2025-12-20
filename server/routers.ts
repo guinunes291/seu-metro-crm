@@ -592,6 +592,20 @@ export const appRouter = router({
         return await presenca.buscarResumoPresenca(input.corretorId, dataInicio, dataFim);
       }),
     
+    // Buscar pares de entrada/saída (cada período de presença separadamente)
+    paresEntradaSaida: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        
+        return await presenca.buscarParesEntradaSaida(input.corretorId, dataInicio, dataFim);
+      }),
+    
     // Calcular estatísticas de presença de um corretor
     estatisticas: gestorProcedure
       .input(z.object({

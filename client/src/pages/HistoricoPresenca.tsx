@@ -64,6 +64,11 @@ export default function HistoricoPresenca() {
     dataInicio,
     dataFim,
   });
+  const { data: paresEntradaSaida, isLoading: loadingPares } = trpc.presenca.paresEntradaSaida.useQuery({
+    corretorId: corretorSelecionado !== "todos" ? parseInt(corretorSelecionado) : undefined,
+    dataInicio,
+    dataFim,
+  });
   
   // Estatísticas do corretor selecionado
   const { data: estatisticasCorretor } = trpc.presenca.estatisticas.useQuery({
@@ -120,14 +125,28 @@ export default function HistoricoPresenca() {
   // Formatar dados para timeline
   const dadosTimeline = useMemo(() => {
     if (resumoDiario && resumoDiario.length > 0) {
-      return resumoDiario.map((r: any) => ({
-        data: new Date(r.data).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-        horasTrabalhadas: Math.round(r.totalMinutosPresente / 60 * 10) / 10,
-        entrada: r.primeiraEntrada ? new Date(r.primeiraEntrada).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
-        saida: r.ultimaSaida ? new Date(r.ultimaSaida).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "-",
-        corretor: r.corretorNome || "Corretor",
-        status: r.statusDia,
-      })).reverse();
+      return resumoDiario.map((r: any) => {
+        // Converter data para timezone local (GMT-3)
+        const dataObj = new Date(r.data);
+        // Ajustar para mostrar a data correta considerando o offset
+        const dataLocal = new Date(dataObj.getTime() + dataObj.getTimezoneOffset() * 60000);
+        
+        // Converter horários para timezone local
+        const entradaObj = r.primeiraEntrada ? new Date(r.primeiraEntrada) : null;
+        const saidaObj = r.ultimaSaida ? new Date(r.ultimaSaida) : null;
+        
+        // Calcular horas trabalhadas a partir dos minutos
+        const horasTrabalhadas = Math.round(r.totalMinutosPresente / 60 * 10) / 10;
+        
+        return {
+          data: dataLocal.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+          horasTrabalhadas,
+          entrada: entradaObj ? entradaObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }) : "-",
+          saida: saidaObj ? saidaObj.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }) : "-",
+          corretor: r.corretorNome || "Corretor",
+          status: r.statusDia,
+        };
+      }).reverse();
     }
     
     // Dados de exemplo para timeline
@@ -583,10 +602,88 @@ export default function HistoricoPresenca() {
             <CardDescription>Registro de entrada e saída dos corretores</CardDescription>
           </CardHeader>
           <CardContent>
-            {loadingResumo ? (
+            {loadingPares ? (
               <div className="flex items-center justify-center py-8">
                 <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
+            ) : (paresEntradaSaida && paresEntradaSaida.length > 0) ? (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Data</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Entrada</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Saída</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Corretor</th>
+                        <th className="text-left py-3 px-4 text-muted-foreground font-medium">Horas</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paresEntradaSaida
+                        .slice((paginaAtual - 1) * 20, paginaAtual * 20)
+                        .map((item: any, index: number) => {
+                          // Formatar data (ajustar para GMT-3)
+                          const dataEntrada = new Date(item.entrada);
+                          const dataSaida = new Date(item.saida);
+                          
+                          // Formatar data no formato DD/MM
+                          const dataFormatada = dataEntrada.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                          
+                          // Formatar horários no formato HH:MM (ajustar para GMT-3)
+                          const entradaFormatada = dataEntrada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+                          const saidaFormatada = dataSaida.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+                          
+                          // Formatar horas trabalhadas no formato HH:MM
+                          const totalMinutos = item.totalMinutosPresente || 0;
+                          const horas = Math.floor(totalMinutos / 60);
+                          const minutos = totalMinutos % 60;
+                          const horasFormatadas = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+                          
+                          return (
+                            <tr key={index} className="border-b border-border/50 hover:bg-muted/30">
+                              <td className="py-3 px-4 text-foreground">{dataFormatada}</td>
+                              <td className="py-3 px-4 text-green-600 dark:text-green-400 font-medium">{entradaFormatada}</td>
+                              <td className="py-3 px-4 text-red-600 dark:text-red-400 font-medium">{saidaFormatada}</td>
+                              <td className="py-3 px-4 text-foreground">{item.corretorNome || "Corretor"}</td>
+                              <td className="py-3 px-4 text-amber-600 dark:text-amber-400 font-medium">{horasFormatadas}</td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Paginação */}
+                {(() => {
+                  const totalPaginas = Math.ceil((paresEntradaSaida?.length || 0) / 20);
+                  if (totalPaginas <= 1) return null;
+                  return (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                      <p className="text-sm text-muted-foreground">
+                        Página {paginaAtual} de {totalPaginas} ({paresEntradaSaida?.length || 0} registros)
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+                          disabled={paginaAtual === 1}
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+                          disabled={paginaAtual === totalPaginas}
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             ) : dadosTimeline.length > 0 ? (
               <>
                 <div className="overflow-x-auto">
@@ -607,7 +704,6 @@ export default function HistoricoPresenca() {
                         .filter((item: any) => item.entrada !== "-" || item.saida !== "-")
                         .slice((paginaAtual - 1) * 20, paginaAtual * 20)
                         .map((item: any, index: number) => {
-                          // Formatar horas no formato HH:MM
                           const horasDecimal = parseFloat(item.horasTrabalhadas) || 0;
                           const horas = Math.floor(horasDecimal);
                           const minutos = Math.round((horasDecimal - horas) * 60);
@@ -626,7 +722,6 @@ export default function HistoricoPresenca() {
                     </tbody>
                   </table>
                 </div>
-                {/* Paginação */}
                 {(() => {
                   const registrosFiltrados = dadosTimeline.filter((item: any) => item.entrada !== "-" || item.saida !== "-");
                   const totalPaginas = Math.ceil(registrosFiltrados.length / 20);
