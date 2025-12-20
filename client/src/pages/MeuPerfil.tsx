@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -7,115 +7,107 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useCelebration } from "@/components/CelebrationEffect";
+import { CONQUISTAS, CATEGORIAS, getNivelAtual, type Conquista } from "../../../shared/conquistas";
 import { 
   Camera, Trophy, Target, Flame, Star, Crown, Medal, Award, 
-  Gem, Diamond, Rocket, Flag, Sparkles, Upload, User, Calendar,
-  TrendingUp, Phone, Mail
+  Gem, Rocket, Flag, Sparkles, Upload, User, Calendar,
+  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, Lock
 } from "lucide-react";
-
-// Mapeamento de ícones
-const iconeMap: Record<string, any> = {
-  trophy: Trophy,
-  crown: Crown,
-  medal: Medal,
-  award: Award,
-  target: Target,
-  flag: Flag,
-  rocket: Rocket,
-  flame: Flame,
-  star: Star,
-  sparkles: Sparkles,
-  gem: Gem,
-  diamond: Diamond,
-};
-
-// Mapeamento de cores
-const corMap: Record<string, string> = {
-  gold: "bg-yellow-500 text-yellow-950",
-  silver: "bg-gray-400 text-gray-950",
-  bronze: "bg-amber-700 text-amber-50",
-  blue: "bg-blue-500 text-blue-50",
-  green: "bg-green-500 text-green-50",
-  purple: "bg-purple-500 text-purple-50",
-  orange: "bg-orange-500 text-orange-50",
-  red: "bg-red-500 text-red-50",
-};
 
 export default function MeuPerfil() {
   const { user } = useAuth();
-  const [uploading, setUploading] = useState(false);
+  const { celebrate } = useCelebration();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const utils = trpc.useUtils();
-
-  // Buscar dados do perfil
-  const { data: fotoUrl, isLoading: loadingFoto } = trpc.perfil.foto.useQuery();
-  const { data: resumoConquistas, isLoading: loadingConquistas } = trpc.conquistas.resumo.useQuery();
-  const { data: todasConquistas } = trpc.conquistas.minhas.useQuery();
-
-  // Mutation para atualizar foto
-  const atualizarFotoMutation = trpc.perfil.atualizarFoto.useMutation({
+  const [uploading, setUploading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string>("todas");
+  const [showUnlocked, setShowUnlocked] = useState<boolean | null>(null);
+  
+  // Queries
+  const { data: conquistasUsuario, refetch: refetchConquistas } = trpc.conquistas.minhasConquistas.useQuery();
+  const { data: estatisticas } = trpc.ranking.minhaPerformance.useQuery();
+  
+  // Mutations
+  const uploadFoto = trpc.conquistas.uploadFoto.useMutation({
     onSuccess: () => {
-      toast.success("Foto de perfil atualizada!");
-      utils.perfil.foto.invalidate();
-      utils.auth.me.invalidate();
+      toast.success("Foto atualizada com sucesso!");
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar foto: " + error.message);
-    },
+    onError: () => {
+      toast.error("Erro ao atualizar foto");
+    }
   });
 
-  // Inicializar tipos de conquistas
-  const inicializarTiposMutation = trpc.conquistas.inicializarTipos.useMutation({
-    onSuccess: () => {
-      toast.success("Tipos de conquistas inicializados!");
-      utils.conquistas.tipos.invalidate();
-    },
+  const verificarConquistas = trpc.conquistas.verificarConquistas.useMutation({
+    onSuccess: (data) => {
+      if (data.novasConquistas && data.novasConquistas.length > 0) {
+        celebrate();
+        toast.success(`🎉 Parabéns! Você desbloqueou ${data.novasConquistas.length} nova(s) conquista(s)!`);
+        refetchConquistas();
+      } else {
+        toast.info("Nenhuma nova conquista desbloqueada no momento");
+      }
+    }
   });
 
-  // Handler de upload de foto
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  // Calcular progresso das conquistas
+  const conquistasDesbloqueadas = conquistasUsuario?.conquistas || [];
+  const idsDesbloqueadas = new Set(conquistasDesbloqueadas.map((c: any) => c.conquistaId));
+  
+  // Calcular pontos totais
+  const pontosTotal = conquistasDesbloqueadas.reduce((acc: number, c: any) => {
+    const conquista = CONQUISTAS.find(cq => cq.id === c.conquistaId);
+    return acc + (conquista?.pontos || 0);
+  }, 0);
+  
+  const nivelInfo = getNivelAtual(pontosTotal);
+
+  // Filtrar conquistas
+  const conquistasFiltradas = CONQUISTAS.filter(c => {
+    const matchSearch = c.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       c.descricao.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchCategoria = categoriaFiltro === "todas" || c.categoria === categoriaFiltro;
+    const isUnlocked = idsDesbloqueadas.has(c.id);
+    const matchStatus = showUnlocked === null || showUnlocked === isUnlocked;
+    return matchSearch && matchCategoria && matchStatus;
+  });
+
+  // Agrupar por categoria
+  const conquistasPorCategoria = CATEGORIAS.map(cat => ({
+    categoria: cat,
+    conquistas: conquistasFiltradas.filter(c => c.categoria === cat),
+    total: CONQUISTAS.filter(c => c.categoria === cat).length,
+    desbloqueadas: CONQUISTAS.filter(c => c.categoria === cat && idsDesbloqueadas.has(c.id)).length
+  })).filter(g => g.conquistas.length > 0);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tipo de arquivo
-    if (!file.type.startsWith("image/")) {
-      toast.error("Por favor, selecione uma imagem");
-      return;
-    }
-
-    // Validar tamanho (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("A imagem deve ter no máximo 5MB");
+      toast.error("Arquivo muito grande. Máximo 5MB.");
       return;
     }
 
     setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
     try {
-      // Converter para base64 e fazer upload via API
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = reader.result as string;
-        
-        // Fazer upload para o storage
-        const response = await fetch("/api/upload-foto", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            file: base64,
-            filename: file.name,
-            contentType: file.type,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Erro no upload");
-        }
-
-        const { url } = await response.json();
-        await atualizarFotoMutation.mutateAsync({ fotoUrl: url });
-      };
-      reader.readAsDataURL(file);
+      const response = await fetch("/api/upload/foto", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        await uploadFoto.mutateAsync({ fotoUrl: data.url });
+      } else {
+        toast.error("Erro ao fazer upload da foto");
+      }
     } catch (error) {
       toast.error("Erro ao fazer upload da foto");
     } finally {
@@ -123,238 +115,343 @@ export default function MeuPerfil() {
     }
   };
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return "U";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
-  const formatDate = (date: Date | string | null) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString("pt-BR");
+  // Calcular progresso de uma conquista específica
+  const getProgressoConquista = (conquista: Conquista): number => {
+    if (idsDesbloqueadas.has(conquista.id)) return 100;
+    
+    // Calcular progresso baseado nas estatísticas
+    if (!estatisticas) return 0;
+    
+    let atual = 0;
+    switch (conquista.metaTipo) {
+      case 'ligacoes':
+        atual = estatisticas.ligacoes || 0;
+        break;
+      case 'whatsapp':
+        atual = estatisticas.whatsapp || 0;
+        break;
+      case 'agendamentos':
+        atual = estatisticas.agendamentos || 0;
+        break;
+      case 'visitas':
+        atual = estatisticas.visitas || 0;
+        break;
+      case 'documentacoes':
+        atual = estatisticas.documentacoes || 0;
+        break;
+      case 'vendas':
+        atual = estatisticas.vendas || 0;
+        break;
+      case 'vgv':
+        atual = estatisticas.vgvTotal || 0;
+        break;
+      default:
+        return 0;
+    }
+    
+    return Math.min((atual / conquista.metaValor) * 100, 99);
   };
 
   return (
     <DashboardLayout>
-      <div className="container py-6 space-y-6">
+      <div className="space-y-6">
         {/* Header do Perfil */}
-        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-          {/* Avatar com upload */}
-          <div className="relative group">
-            <Avatar className="h-32 w-32 border-4 border-primary/20">
-              <AvatarImage src={fotoUrl || user?.fotoUrl || undefined} />
-              <AvatarFallback className="text-3xl bg-primary/10">
-                {getInitials(user?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              {uploading ? (
-                <div className="animate-spin h-8 w-8 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <Camera className="h-8 w-8 text-white" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+        <Card className="bg-gradient-to-r from-slate-900 to-slate-800 border-slate-700">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Avatar com Upload */}
+              <div className="relative group">
+                <Avatar className="h-32 w-32 border-4 border-amber-500 shadow-lg shadow-amber-500/20">
+                  <AvatarImage src={user?.fotoUrl || ""} />
+                  <AvatarFallback className="text-3xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                    {user?.name ? getInitials(user.name) : "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  disabled={uploading}
+                >
+                  <Camera className="h-8 w-8 text-white" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
 
-          {/* Informações básicas */}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{user?.name || "Usuário"}</h1>
-            <div className="flex flex-wrap gap-4 mt-2 text-muted-foreground">
-              {user?.email && (
-                <span className="flex items-center gap-1">
+              {/* Info do Usuário */}
+              <div className="flex-1 text-center md:text-left">
+                <h1 className="text-2xl font-bold text-white">{user?.name || "Corretor"}</h1>
+                <p className="text-slate-400 flex items-center justify-center md:justify-start gap-2 mt-1">
                   <Mail className="h-4 w-4" />
-                  {user.email}
-                </span>
-              )}
-              {user?.telefone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="h-4 w-4" />
-                  {user.telefone}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2 mt-3">
-              <Badge variant="outline" className="capitalize">
-                {user?.role || "corretor"}
-              </Badge>
-              {user?.status && (
-                <Badge variant={user.status === "presente" ? "default" : "secondary"}>
-                  {user.status === "presente" ? "🟢 Presente" : "⚪ Ausente"}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Resumo de conquistas */}
-          {resumoConquistas && (
-            <Card className="w-full md:w-auto">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-yellow-500/10">
-                    <Trophy className="h-8 w-8 text-yellow-500" />
-                  </div>
-                  <div>
-                    <p className="text-3xl font-bold">{resumoConquistas.total}</p>
-                    <p className="text-sm text-muted-foreground">Conquistas</p>
-                  </div>
+                  {user?.email}
+                </p>
+                <div className="flex items-center justify-center md:justify-start gap-2 mt-2">
+                  <Badge variant="outline" className="border-amber-500 text-amber-500">
+                    {user?.role === "admin" ? "Gestor" : "Corretor"}
+                  </Badge>
+                  <Badge variant="outline" className="border-cyan-500 text-cyan-500">
+                    Nível {nivelInfo.nivel} - {nivelInfo.titulo}
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              </div>
 
-        {/* Tabs de conteúdo */}
-        <Tabs defaultValue="conquistas" className="w-full">
-          <TabsList>
-            <TabsTrigger value="conquistas" className="gap-2">
-              <Trophy className="h-4 w-4" />
-              Conquistas
+              {/* Stats Rápidos */}
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-slate-800/50 rounded-lg p-4">
+                  <Trophy className="h-6 w-6 text-amber-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-white">{conquistasDesbloqueadas.length}</div>
+                  <div className="text-xs text-slate-400">Conquistas</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-4">
+                  <Star className="h-6 w-6 text-cyan-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-white">{pontosTotal.toLocaleString()}</div>
+                  <div className="text-xs text-slate-400">Pontos</div>
+                </div>
+                <div className="bg-slate-800/50 rounded-lg p-4">
+                  <Target className="h-6 w-6 text-green-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-white">{Math.round((conquistasDesbloqueadas.length / 250) * 100)}%</div>
+                  <div className="text-xs text-slate-400">Completo</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Barra de Progresso do Nível */}
+            <div className="mt-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-slate-400">Progresso para Nível {nivelInfo.nivel + 1}</span>
+                <span className="text-amber-500">{pontosTotal.toLocaleString()} / {nivelInfo.pontosProximo.toLocaleString()} pts</span>
+              </div>
+              <Progress value={nivelInfo.progresso} className="h-3 bg-slate-700" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs defaultValue="conquistas" className="space-y-4">
+          <TabsList className="bg-slate-800 border border-slate-700">
+            <TabsTrigger value="conquistas" className="data-[state=active]:bg-amber-500 data-[state=active]:text-white">
+              <Trophy className="h-4 w-4 mr-2" />
+              Conquistas ({conquistasDesbloqueadas.length}/250)
             </TabsTrigger>
-            <TabsTrigger value="estatisticas" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
+            <TabsTrigger value="estatisticas" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
+              <TrendingUp className="h-4 w-4 mr-2" />
               Estatísticas
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba de Conquistas */}
-          <TabsContent value="conquistas" className="space-y-6">
-            {/* Conquista em destaque */}
-            {resumoConquistas?.destaque && (
-              <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/5 to-transparent">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-yellow-500" />
-                    Conquista em Destaque
-                  </CardTitle>
+          {/* Tab Conquistas */}
+          <TabsContent value="conquistas" className="space-y-4">
+            {/* Filtros */}
+            <Card className="bg-slate-900 border-slate-700">
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      placeholder="Buscar conquistas..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-slate-800 border-slate-700 text-white"
+                    />
+                  </div>
+                  <select
+                    value={categoriaFiltro}
+                    onChange={(e) => setCategoriaFiltro(e.target.value)}
+                    className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
+                  >
+                    <option value="todas">Todas as Categorias</option>
+                    {CATEGORIAS.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={showUnlocked === null ? "todas" : showUnlocked ? "desbloqueadas" : "bloqueadas"}
+                    onChange={(e) => {
+                      if (e.target.value === "todas") setShowUnlocked(null);
+                      else if (e.target.value === "desbloqueadas") setShowUnlocked(true);
+                      else setShowUnlocked(false);
+                    }}
+                    className="bg-slate-800 border border-slate-700 rounded-md px-3 py-2 text-white"
+                  >
+                    <option value="todas">Todas</option>
+                    <option value="desbloqueadas">Desbloqueadas</option>
+                    <option value="bloqueadas">Bloqueadas</option>
+                  </select>
+                  <Button
+                    onClick={() => verificarConquistas.mutate()}
+                    disabled={verificarConquistas.isPending}
+                    className="bg-amber-500 hover:bg-amber-600 text-white"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Verificar Conquistas
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Lista de Conquistas por Categoria */}
+            {conquistasPorCategoria.map(grupo => (
+              <Card key={grupo.categoria} className="bg-slate-900 border-slate-700">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg text-white flex items-center gap-2">
+                      <span>{grupo.categoria}</span>
+                      <Badge variant="outline" className="border-slate-600 text-slate-400">
+                        {grupo.desbloqueadas}/{grupo.total}
+                      </Badge>
+                    </CardTitle>
+                    <Progress 
+                      value={(grupo.desbloqueadas / grupo.total) * 100} 
+                      className="w-32 h-2 bg-slate-700"
+                    />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-4">
-                    {(() => {
-                      const IconComponent = iconeMap[resumoConquistas.destaque.tipo.icone] || Trophy;
-                      const corClasses = corMap[resumoConquistas.destaque.tipo.cor] || "bg-gray-500";
-                      return (
-                        <div className={`p-4 rounded-full ${corClasses}`}>
-                          <IconComponent className="h-10 w-10" />
-                        </div>
-                      );
-                    })()}
-                    <div>
-                      <h3 className="text-xl font-bold">{resumoConquistas.destaque.tipo.nome}</h3>
-                      <p className="text-muted-foreground">{resumoConquistas.destaque.tipo.descricao}</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Conquistada em {formatDate(resumoConquistas.destaque.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Grid de conquistas por categoria */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(resumoConquistas?.porCategoria || {}).map(([categoria, quantidade]) => (
-                <Card key={categoria}>
-                  <CardContent className="p-4 flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      categoria === "vendas" ? "bg-yellow-500/10 text-yellow-500" :
-                      categoria === "produtividade" ? "bg-green-500/10 text-green-500" :
-                      categoria === "streak" ? "bg-orange-500/10 text-orange-500" :
-                      "bg-purple-500/10 text-purple-500"
-                    }`}>
-                      {categoria === "vendas" ? <Trophy className="h-5 w-5" /> :
-                       categoria === "produtividade" ? <Target className="h-5 w-5" /> :
-                       categoria === "streak" ? <Flame className="h-5 w-5" /> :
-                       <Star className="h-5 w-5" />}
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{quantidade}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{categoria}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Lista de todas as conquistas */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Todas as Conquistas</CardTitle>
-                <CardDescription>Histórico completo de medalhas e conquistas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {todasConquistas && todasConquistas.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {todasConquistas.map((conquista) => {
-                      const IconComponent = iconeMap[conquista.tipo.icone] || Trophy;
-                      const corClasses = corMap[conquista.tipo.cor] || "bg-gray-500";
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {grupo.conquistas.map(conquista => {
+                      const isUnlocked = idsDesbloqueadas.has(conquista.id);
+                      const progresso = getProgressoConquista(conquista);
+                      
                       return (
                         <div
                           key={conquista.id}
-                          className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                          className={`relative p-4 rounded-lg border transition-all ${
+                            isUnlocked
+                              ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/50 shadow-lg shadow-amber-500/10"
+                              : "bg-slate-800/50 border-slate-700 opacity-60 hover:opacity-80"
+                          }`}
                         >
-                          <div className={`p-2 rounded-full ${corClasses}`}>
-                            <IconComponent className="h-5 w-5" />
+                          {/* Ícone e Nome */}
+                          <div className="flex items-start gap-3">
+                            <div className={`text-3xl ${isUnlocked ? "" : "grayscale"}`}>
+                              {conquista.icone}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`font-semibold truncate ${isUnlocked ? "text-white" : "text-slate-400"}`}>
+                                {conquista.nome}
+                              </h4>
+                              <p className="text-xs text-slate-500 line-clamp-2">
+                                {conquista.descricao}
+                              </p>
+                            </div>
+                            {!isUnlocked && (
+                              <Lock className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                            )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{conquista.tipo.nome}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {formatDate(conquista.createdAt)}
-                            </p>
+
+                          {/* Barra de Progresso */}
+                          <div className="mt-3">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className={isUnlocked ? "text-amber-400" : "text-slate-500"}>
+                                {conquista.meta}
+                              </span>
+                              <span className={isUnlocked ? "text-green-400" : "text-slate-500"}>
+                                {isUnlocked ? "✓ Completo" : `${Math.round(progresso)}%`}
+                              </span>
+                            </div>
+                            <Progress 
+                              value={progresso} 
+                              className={`h-1.5 ${isUnlocked ? "bg-amber-900" : "bg-slate-700"}`}
+                            />
                           </div>
-                          {conquista.posicao && (
-                            <Badge variant="outline">{conquista.posicao}º</Badge>
-                          )}
+
+                          {/* Pontos */}
+                          <div className="mt-2 flex items-center justify-between">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${isUnlocked ? "border-amber-500 text-amber-400" : "border-slate-600 text-slate-500"}`}
+                            >
+                              +{conquista.pontos} pts
+                            </Badge>
+                            {isUnlocked && (
+                              <Sparkles className="h-4 w-4 text-amber-400" />
+                            )}
+                          </div>
                         </div>
                       );
                     })}
                   </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Trophy className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                    <p>Nenhuma conquista ainda</p>
-                    <p className="text-sm">Continue trabalhando para ganhar suas primeiras medalhas!</p>
-                    
-                    {/* Botão para inicializar tipos (apenas para gestores) */}
-                    {user?.role === "gestor" || user?.role === "admin" ? (
-                      <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => inicializarTiposMutation.mutate()}
-                        disabled={inicializarTiposMutation.isPending}
-                      >
-                        Inicializar Sistema de Conquistas
-                      </Button>
-                    ) : null}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            ))}
+
+            {conquistasFiltradas.length === 0 && (
+              <Card className="bg-slate-900 border-slate-700">
+                <CardContent className="p-8 text-center">
+                  <Trophy className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                  <p className="text-slate-400">Nenhuma conquista encontrada com os filtros selecionados.</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
-          {/* Aba de Estatísticas */}
+          {/* Tab Estatísticas */}
           <TabsContent value="estatisticas">
-            <Card>
+            <Card className="bg-slate-900 border-slate-700">
               <CardHeader>
-                <CardTitle>Estatísticas de Performance</CardTitle>
-                <CardDescription>Seus números e métricas de desempenho</CardDescription>
+                <CardTitle className="text-white">Suas Estatísticas</CardTitle>
+                <CardDescription>Resumo da sua performance no sistema</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Acesse a página "Minha Performance" para ver suas estatísticas detalhadas.
-                </p>
-                <Button variant="outline" className="mt-4" onClick={() => window.location.href = "/minha-performance"}>
-                  Ver Minha Performance
-                </Button>
+                {estatisticas ? (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Phone className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.ligacoes || 0}</div>
+                      <div className="text-sm text-slate-400">Ligações</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Mail className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.whatsapp || 0}</div>
+                      <div className="text-sm text-slate-400">WhatsApp</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Calendar className="h-8 w-8 text-purple-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.agendamentos || 0}</div>
+                      <div className="text-sm text-slate-400">Agendamentos</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Target className="h-8 w-8 text-orange-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.visitas || 0}</div>
+                      <div className="text-sm text-slate-400">Visitas</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Flag className="h-8 w-8 text-cyan-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.documentacoes || 0}</div>
+                      <div className="text-sm text-slate-400">Documentações</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center">
+                      <Trophy className="h-8 w-8 text-amber-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">{estatisticas.vendas || 0}</div>
+                      <div className="text-sm text-slate-400">Vendas</div>
+                    </div>
+                    <div className="bg-slate-800 rounded-lg p-4 text-center col-span-2">
+                      <Crown className="h-8 w-8 text-yellow-400 mx-auto mb-2" />
+                      <div className="text-2xl font-bold text-white">
+                        R$ {((estatisticas.vgvTotal || 0) / 100).toLocaleString('pt-BR')}
+                      </div>
+                      <div className="text-sm text-slate-400">VGV Total</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-slate-400">Carregando estatísticas...</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
