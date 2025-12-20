@@ -1785,5 +1785,155 @@ export const appRouter = router({
         return { response };
       }),
   }),
+
+  // ============================================================================
+  // METAS DIÁRIAS E PONTUAÇÃO
+  // ============================================================================
+  metasDiarias: router({
+    // Listar metas diárias de todos os corretores
+    list: gestorProcedure
+      .query(async () => {
+        return await db.getMetasDiarias();
+      }),
+    
+    // Obter meta diária de um corretor específico
+    getByCorretor: gestorProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getMetaDiariaCorretor(input.corretorId);
+      }),
+    
+    // Criar/atualizar meta diária para um corretor
+    upsert: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        metaLigacoes: z.number().min(0).default(20),
+        metaWhatsapp: z.number().min(0).default(30),
+        metaAgendamentos: z.number().min(0).default(3),
+        metaVisitas: z.number().min(0).default(2),
+        metaDocumentacoes: z.number().min(0).default(1),
+        metaVendas: z.number().min(0).default(1),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.createMetaDiaria(input);
+      }),
+    
+    // Atualizar meta diária existente
+    update: gestorProcedure
+      .input(z.object({
+        id: z.number(),
+        metaLigacoes: z.number().min(0).optional(),
+        metaWhatsapp: z.number().min(0).optional(),
+        metaAgendamentos: z.number().min(0).optional(),
+        metaVisitas: z.number().min(0).optional(),
+        metaDocumentacoes: z.number().min(0).optional(),
+        metaVendas: z.number().min(0).optional(),
+        ativo: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateMetaDiaria(id, data);
+      }),
+    
+    // Excluir meta diária
+    delete: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteMetaDiaria(input.id);
+      }),
+    
+    // Obter progresso de metas diárias de todos os corretores
+    getProgresso: corretorProcedure
+      .input(z.object({ corretorId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await db.getProgressoMetasDiarias(input?.corretorId);
+      }),
+  }),
+
+  // ============================================================================
+  // CONFIGURAÇÃO DE PONTUAÇÃO
+  // ============================================================================
+  pontuacao: router({
+    // Obter configuração atual de pontuação
+    get: protectedProcedure
+      .query(async () => {
+        const config = await db.getConfiguracaoPontuacao();
+        // Retornar valores padrão se não existir configuração
+        return config || {
+          pontosLigacao: 1,
+          pontosLigacaoAtendida: 2,
+          pontosWhatsapp: 1,
+          pontosWhatsappRespondido: 2,
+          pontosAgendamento: 15,
+          pontosVisita: 25,
+          pontosDocumentacao: 35,
+          pontosVenda: 80,
+          pontosClienteCadastrado: 5,
+          pontosAlteracaoStatus: 2,
+        };
+      }),
+    
+    // Atualizar configuração de pontuação
+    update: gestorProcedure
+      .input(z.object({
+        pontosLigacao: z.number().min(0).optional(),
+        pontosLigacaoAtendida: z.number().min(0).optional(),
+        pontosWhatsapp: z.number().min(0).optional(),
+        pontosWhatsappRespondido: z.number().min(0).optional(),
+        pontosAgendamento: z.number().min(0).optional(),
+        pontosVisita: z.number().min(0).optional(),
+        pontosDocumentacao: z.number().min(0).optional(),
+        pontosVenda: z.number().min(0).optional(),
+        pontosClienteCadastrado: z.number().min(0).optional(),
+        pontosAlteracaoStatus: z.number().min(0).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.upsertConfiguracaoPontuacao({
+          ...input,
+          atualizadoPor: ctx.user.id,
+        });
+      }),
+  }),
+
+  // ============================================================================
+  // ALERTAS DE PRODUTIVIDADE
+  // ============================================================================
+  alertas: router({
+    // Listar alertas (filtros opcionais)
+    list: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        lido: z.boolean().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAlertasProdutividade(input);
+      }),
+    
+    // Obter alertas não lidos
+    naoLidos: gestorProcedure
+      .query(async () => {
+        return await db.getAlertasNaoLidos();
+      }),
+    
+    // Marcar alerta como lido
+    marcarLido: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.marcarAlertaComoLido(input.id, ctx.user.id);
+      }),
+    
+    // Marcar todos como lidos
+    marcarTodosLidos: gestorProcedure
+      .mutation(async ({ ctx }) => {
+        return await db.marcarTodosAlertasComoLidos(ctx.user.id);
+      }),
+    
+    // Verificar produtividade e gerar alertas (pode ser chamado por job)
+    verificar: gestorProcedure
+      .mutation(async () => {
+        const alertasGerados = await db.verificarProdutividadeEGerarAlertas();
+        return { alertasGerados };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

@@ -3,18 +3,85 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Trophy, TrendingUp, Target, DollarSign, FileCheck, 
   Calendar, Maximize, RefreshCw, Users, Phone, MessageSquare,
-  CalendarCheck, Eye, FileText, Briefcase, Activity
+  CalendarCheck, Eye, FileText, Briefcase, Activity, ChevronDown
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subWeeks, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// Tipos de período
+type PeriodOption = 
+  | "all"
+  | "today"
+  | "yesterday"
+  | "this_week"
+  | "last_week"
+  | "this_month"
+  | "last_month"
+  | "this_year"
+  | "custom";
+
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+const periodLabels: Record<PeriodOption, string> = {
+  all: "Todo o período",
+  today: "Hoje",
+  yesterday: "Ontem",
+  this_week: "Esta semana",
+  last_week: "Semana passada",
+  this_month: "Este mês",
+  last_month: "Mês passado",
+  this_year: "Este ano",
+  custom: "Personalizado",
+};
+
+function getDateRangeForPeriod(period: PeriodOption, customRange?: DateRange): DateRange {
+  const now = new Date();
+  
+  switch (period) {
+    case "all":
+      return { from: undefined, to: undefined };
+    case "today":
+      return { from: startOfDay(now), to: endOfDay(now) };
+    case "yesterday":
+      const yesterday = subDays(now, 1);
+      return { from: startOfDay(yesterday), to: endOfDay(yesterday) };
+    case "this_week":
+      return { from: startOfWeek(now, { weekStartsOn: 0 }), to: endOfWeek(now, { weekStartsOn: 0 }) };
+    case "last_week":
+      const lastWeek = subWeeks(now, 1);
+      return { from: startOfWeek(lastWeek, { weekStartsOn: 0 }), to: endOfWeek(lastWeek, { weekStartsOn: 0 }) };
+    case "this_month":
+      return { from: startOfMonth(now), to: endOfMonth(now) };
+    case "last_month":
+      const lastMonth = subMonths(now, 1);
+      return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
+    case "this_year":
+      return { from: startOfYear(now), to: endOfYear(now) };
+    case "custom":
+      return customRange || { from: undefined, to: undefined };
+    default:
+      return { from: undefined, to: undefined };
+  }
+}
 
 // Formatar valor em reais
 function formatCurrency(value: number): string {
@@ -50,7 +117,7 @@ function getInitials(name: string | null | undefined): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-// Componente KPI Card no estilo Midrah
+// Componente KPI Card no estilo Midrah - COM CONTRASTE CORRIGIDO
 function KPICard({ 
   label, 
   value, 
@@ -70,20 +137,30 @@ function KPICard({
 }) {
   const variants = {
     default: "bg-slate-800/60 border-slate-700/50",
-    success: "bg-emerald-900/30 border-emerald-500/30",
-    warning: "bg-amber-900/30 border-amber-500/30",
-    danger: "bg-red-900/30 border-red-500/30",
-    info: "bg-blue-900/30 border-blue-500/30",
-    accent: "bg-cyan-900/30 border-cyan-500/30",
+    success: "bg-emerald-900/40 border-emerald-500/40",
+    warning: "bg-amber-900/40 border-amber-500/40",
+    danger: "bg-red-900/40 border-red-500/40",
+    info: "bg-blue-900/40 border-blue-500/40",
+    accent: "bg-cyan-900/40 border-cyan-500/40",
   };
 
   const iconColors = {
-    default: "text-slate-400",
-    success: "text-emerald-400",
-    warning: "text-amber-400",
-    danger: "text-red-400",
-    info: "text-blue-400",
-    accent: "text-cyan-400",
+    default: "text-slate-300",
+    success: "text-emerald-300",
+    warning: "text-amber-300",
+    danger: "text-red-300",
+    info: "text-blue-300",
+    accent: "text-cyan-300",
+  };
+
+  // CORES DE TEXTO COM ALTO CONTRASTE
+  const labelColors = {
+    default: "text-slate-200",
+    success: "text-emerald-200",
+    warning: "text-amber-200",
+    danger: "text-red-200",
+    info: "text-blue-200",
+    accent: "text-cyan-200",
   };
 
   return (
@@ -94,19 +171,23 @@ function KPICard({
     `}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-1">{label}</p>
-          <p className="text-xl font-bold text-white leading-tight">{value}</p>
+          {/* Label com cor clara para contraste */}
+          <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 ${labelColors[variant]}`}>
+            {label}
+          </p>
+          {/* Valor sempre branco para máximo contraste */}
+          <p className="text-2xl font-bold text-white leading-tight drop-shadow-sm">{value}</p>
           {subValue && (
-            <p className="text-[10px] text-gray-500 mt-0.5">{subValue}</p>
+            <p className="text-[11px] text-gray-300 mt-0.5 font-medium">{subValue}</p>
           )}
           {percentage !== undefined && (
-            <p className={`text-xs font-semibold mt-1 ${percentage >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <p className={`text-xs font-semibold mt-1 ${percentage >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
               {percentage >= 0 ? '+' : ''}{percentage}%
             </p>
           )}
         </div>
-        <div className={`p-2 rounded-lg bg-white/5 ${iconColors[variant]}`}>
-          <Icon className="w-4 h-4" />
+        <div className={`p-2 rounded-lg bg-white/10 ${iconColors[variant]}`}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
     </div>
@@ -117,7 +198,7 @@ function KPICard({
 function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" | "produtividade" }) {
   if (ranking.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-500">
+      <div className="flex items-center justify-center h-48 text-gray-400">
         <p>Nenhum corretor no ranking</p>
       </div>
     );
@@ -143,8 +224,8 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
         border: 'border-[5px] border-yellow-400',
         glow: 'shadow-[0_0_50px_rgba(250,204,21,0.5),0_0_100px_rgba(250,204,21,0.3)]',
         ring: 'ring-4 ring-yellow-300/30',
-        nameColor: 'text-yellow-400',
-        valueColor: 'text-yellow-300',
+        nameColor: 'text-yellow-300',
+        valueColor: 'text-yellow-200',
         bgGradient: 'from-yellow-500 to-amber-600',
       };
       case 2: return {
@@ -152,8 +233,8 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
         border: 'border-4 border-gray-300',
         glow: 'shadow-[0_0_40px_rgba(209,213,219,0.4)]',
         ring: 'ring-2 ring-gray-300/30',
-        nameColor: 'text-gray-200',
-        valueColor: 'text-gray-300',
+        nameColor: 'text-gray-100',
+        valueColor: 'text-gray-200',
         bgGradient: 'from-gray-400 to-gray-600',
       };
       case 3: return {
@@ -161,8 +242,8 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
         border: 'border-4 border-amber-500',
         glow: 'shadow-[0_0_35px_rgba(245,158,11,0.4)]',
         ring: 'ring-2 ring-amber-400/30',
-        nameColor: 'text-amber-400',
-        valueColor: 'text-amber-300',
+        nameColor: 'text-amber-300',
+        valueColor: 'text-amber-200',
         bgGradient: 'from-amber-600 to-orange-700',
       };
       default: return {
@@ -170,8 +251,8 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
         border: 'border-3 border-blue-400/60',
         glow: 'shadow-[0_0_25px_rgba(96,165,250,0.3)]',
         ring: 'ring-2 ring-blue-400/20',
-        nameColor: 'text-blue-300',
-        valueColor: 'text-cyan-400',
+        nameColor: 'text-blue-200',
+        valueColor: 'text-cyan-300',
         bgGradient: 'from-blue-500 to-blue-700',
       };
     }
@@ -198,40 +279,33 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
             >
               {/* Avatar com efeito de brilho */}
               <div className={`relative ${position === 1 ? 'mb-3' : 'mb-2'}`}>
-                {/* Anel de brilho externo */}
-                <div className={`absolute inset-0 rounded-full ${styles.glow} ${styles.ring}`} />
+                {/* Posição */}
+                <div className={`
+                  absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full 
+                  flex items-center justify-center text-sm font-bold
+                  bg-gradient-to-br ${styles.bgGradient} text-white
+                  shadow-lg border-2 border-white/20
+                `}>
+                  {position}
+                </div>
                 
-                {/* Avatar principal */}
-                <Avatar className={`${styles.size} ${styles.border} relative z-10`}>
-                  <AvatarImage 
-                    src={corretor.corretorFoto} 
-                    alt={corretor.corretorNome}
-                    className="object-cover"
-                  />
+                {/* Avatar */}
+                <Avatar className={`
+                  ${styles.size} ${styles.border} ${styles.glow} ${styles.ring}
+                  transition-all duration-300
+                `}>
+                  <AvatarImage src={corretor.corretorFoto || undefined} />
                   <AvatarFallback className={`bg-gradient-to-br ${styles.bgGradient} text-white text-lg font-bold`}>
                     {getInitials(corretor.corretorNome)}
                   </AvatarFallback>
                 </Avatar>
-                
-                {/* Badge de posição */}
-                <div className={`
-                  absolute -bottom-1 -right-1 w-7 h-7 rounded-full 
-                  flex items-center justify-center text-xs font-bold
-                  ${position === 1 ? 'bg-yellow-400 text-yellow-900' : 
-                    position === 2 ? 'bg-gray-300 text-gray-800' :
-                    position === 3 ? 'bg-amber-500 text-amber-900' :
-                    'bg-blue-500 text-white'}
-                  border-2 border-slate-900 z-20
-                `}>
-                  {position}º
-                </div>
               </div>
               
-              {/* Nome e valor */}
-              <p className={`text-xs font-semibold ${styles.nameColor} text-center max-w-[100px] truncate`}>
+              {/* Nome e Valor */}
+              <p className={`font-bold text-sm ${styles.nameColor} text-center max-w-[120px] truncate`}>
                 {corretor.corretorNome?.split(' ')[0] || 'Corretor'}
               </p>
-              <p className={`text-sm font-bold ${styles.valueColor}`}>
+              <p className={`text-xs font-semibold ${styles.valueColor}`}>
                 {displayValue}
               </p>
             </div>
@@ -243,61 +317,69 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
 }
 
 // Componente de Ranking Lateral
-function RankingList({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" | "produtividade" }) {
+function RankingLateral({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" | "produtividade" }) {
   return (
-    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-      {ranking.map((corretor, index) => {
-        const displayValue = type === "vgv"
-          ? formatCurrency(corretor.vgvTotal || 0)
-          : `${corretor.pontuacaoTotal || 0} pts`;
-        
-        return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-12 gap-2 text-[10px] text-gray-400 uppercase tracking-wider px-2 pb-2 border-b border-slate-700/50">
+        <div className="col-span-1">#</div>
+        <div className="col-span-7">Executivo</div>
+        <div className="col-span-4 text-right">{type === "vgv" ? "VGV Realizado" : "Pontuação"}</div>
+      </div>
+      
+      <div className="space-y-1 max-h-[400px] overflow-y-auto pr-2">
+        {ranking.map((item, index) => (
           <div 
-            key={corretor.corretorId || index}
+            key={item.corretorId || index}
             className={`
-              flex items-center gap-3 p-2 rounded-lg
-              ${index === 0 ? 'bg-yellow-500/10 border border-yellow-500/30' :
-                index === 1 ? 'bg-gray-500/10 border border-gray-500/30' :
-                index === 2 ? 'bg-amber-500/10 border border-amber-500/30' :
-                'bg-slate-800/40 border border-slate-700/30'}
+              grid grid-cols-12 gap-2 items-center py-2 px-2 rounded-lg
+              ${index < 3 ? 'bg-slate-800/40' : 'hover:bg-slate-800/30'}
+              transition-colors
             `}
           >
-            <span className={`
-              w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-              ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                index === 1 ? 'bg-gray-300 text-gray-800' :
-                index === 2 ? 'bg-amber-500 text-amber-900' :
-                'bg-slate-700 text-gray-300'}
-            `}>
-              {index + 1}
-            </span>
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={corretor.corretorFoto} />
-              <AvatarFallback className="text-xs bg-slate-700">
-                {getInitials(corretor.corretorNome)}
-              </AvatarFallback>
-            </Avatar>
-            <span className="flex-1 text-sm text-gray-200 truncate">
-              {corretor.corretorNome || 'Corretor'}
-            </span>
-            <span className={`text-sm font-bold ${
+            <div className={`col-span-1 font-bold text-sm ${
               index === 0 ? 'text-yellow-400' :
               index === 1 ? 'text-gray-300' :
               index === 2 ? 'text-amber-400' :
-              'text-cyan-400'
+              'text-gray-500'
             }`}>
-              {displayValue}
-            </span>
+              {index + 1}º
+            </div>
+            <div className="col-span-7 flex items-center gap-2">
+              <Avatar className="w-7 h-7">
+                <AvatarImage src={item.corretorFoto || undefined} />
+                <AvatarFallback className="text-[10px] bg-slate-700 text-white">
+                  {getInitials(item.corretorNome)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-white truncate">{item.corretorNome || 'Corretor'}</span>
+            </div>
+            <div className={`col-span-4 text-right text-sm font-semibold ${
+              index === 0 ? 'text-yellow-300' :
+              index === 1 ? 'text-gray-200' :
+              index === 2 ? 'text-amber-300' :
+              'text-cyan-300'
+            }`}>
+              {type === "vgv" 
+                ? formatFullCurrency(item.vgvTotal || 0)
+                : `${item.pontuacaoTotal || 0} pts`
+              }
+            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }
 
-// Componente de Gráfico de Barras
-function BarChart({ data, type = "vgv" }: { data: any[]; type?: "vgv" | "produtividade" }) {
-  if (data.length === 0) return null;
+// Componente de Gráfico de Barras com Linha de Tendência
+function BarChartWithTrend({ data, type = "vgv" }: { data: any[]; type?: "vgv" | "produtividade" }) {
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-48 text-gray-400">
+        <p>Sem dados para exibir</p>
+      </div>
+    );
+  }
   
   const maxValue = type === "vgv"
     ? Math.max(...data.map(d => d.vgvTotal || 0))
@@ -312,8 +394,8 @@ function BarChart({ data, type = "vgv" }: { data: any[]; type?: "vgv" | "produti
         return (
           <div key={item.corretorId || index} className="space-y-1">
             <div className="flex justify-between text-xs">
-              <span className="text-gray-400">{item.corretorNome?.split(' ')[0] || 'Corretor'}</span>
-              <span className="text-gray-300">{Math.round(percentage)}%</span>
+              <span className="text-gray-300 font-medium">{item.corretorNome?.split(' ')[0] || 'Corretor'}</span>
+              <span className="text-white font-semibold">{Math.round(percentage)}%</span>
             </div>
             <div className="h-6 bg-slate-800/60 rounded-lg overflow-hidden relative">
               <div 
@@ -339,9 +421,17 @@ function BarChart({ data, type = "vgv" }: { data: any[]; type?: "vgv" | "produti
 }
 
 export default function PerformanceTV() {
-  const [periodo, setPeriodo] = useState<'mes' | 'trimestre' | 'ano'>('mes');
+  const [periodo, setPeriodo] = useState<PeriodOption>('this_month');
+  const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [tempRange, setTempRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<'vgv' | 'produtividade'>('vgv');
+  
+  // Calcular range de datas baseado no período selecionado
+  const dateRange = useMemo(() => {
+    return getDateRangeForPeriod(periodo, customRange);
+  }, [periodo, customRange]);
   
   // Queries
   const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.corretores.useQuery();
@@ -367,6 +457,31 @@ export default function PerformanceTV() {
       setIsFullscreen(false);
     }
   };
+  
+  // Handler para seleção de período
+  const handlePeriodSelect = (period: PeriodOption) => {
+    if (period === "custom") {
+      setIsCalendarOpen(true);
+      return;
+    }
+    setPeriodo(period);
+  };
+  
+  const handleCustomRangeSelect = () => {
+    if (tempRange.from && tempRange.to) {
+      setCustomRange(tempRange);
+      setPeriodo("custom");
+      setIsCalendarOpen(false);
+    }
+  };
+  
+  // Label do período
+  const periodLabel = useMemo(() => {
+    if (periodo === "custom" && customRange?.from && customRange?.to) {
+      return `${format(customRange.from, "dd/MM/yy", { locale: ptBR })} - ${format(customRange.to, "dd/MM/yy", { locale: ptBR })}`;
+    }
+    return periodLabels[periodo];
+  }, [periodo, customRange]);
   
   // Formatar ranking para o formato esperado
   const rankingFormatado = rankingVGV?.map((item: any, index: number) => ({
@@ -427,7 +542,7 @@ export default function PerformanceTV() {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-white">SEU METRO QUADRADO</h1>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">Performance em Vendas</p>
+                  <p className="text-[10px] text-cyan-300 uppercase tracking-wider font-medium">Performance em Vendas</p>
                 </div>
               </div>
             </div>
@@ -435,11 +550,11 @@ export default function PerformanceTV() {
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'vgv' | 'produtividade')} className="mx-4">
               <TabsList className="bg-slate-800/50 border border-slate-700/50">
-                <TabsTrigger value="vgv" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="vgv" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300">
                   <DollarSign className="w-4 h-4 mr-2" />
                   VGV / Vendas
                 </TabsTrigger>
-                <TabsTrigger value="produtividade" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                <TabsTrigger value="produtividade" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-gray-300">
                   <Activity className="w-4 h-4 mr-2" />
                   Produtividade Diária
                 </TabsTrigger>
@@ -448,23 +563,85 @@ export default function PerformanceTV() {
             
             {/* Controles */}
             <div className="flex items-center gap-2">
-              <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
-                <SelectTrigger className="w-[130px] bg-slate-800/50 border-slate-700/50 text-white">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mes">Mês</SelectItem>
-                  <SelectItem value="trimestre">Trimestre</SelectItem>
-                  <SelectItem value="ano">Ano</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Filtro de Período Completo */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    {periodLabel}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {(Object.keys(periodLabels) as PeriodOption[]).map((period) => (
+                    period !== "custom" ? (
+                      <DropdownMenuItem
+                        key={period}
+                        onClick={() => handlePeriodSelect(period)}
+                        className={periodo === period ? "bg-accent" : ""}
+                      >
+                        {periodLabels[period]}
+                        {periodo === period && (
+                          <span className="ml-auto text-primary">✓</span>
+                        )}
+                      </DropdownMenuItem>
+                    ) : null
+                  ))}
+                  <DropdownMenuSeparator />
+                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <PopoverTrigger asChild>
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setIsCalendarOpen(true);
+                        }}
+                        className={periodo === "custom" ? "bg-accent" : ""}
+                      >
+                        {periodLabels.custom}
+                        {periodo === "custom" && (
+                          <span className="ml-auto text-primary">✓</span>
+                        )}
+                      </DropdownMenuItem>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <div className="p-4">
+                        <CalendarComponent
+                          mode="range"
+                          selected={{ from: tempRange.from, to: tempRange.to }}
+                          onSelect={(range) => setTempRange({ from: range?.from, to: range?.to })}
+                          locale={ptBR}
+                          numberOfMonths={2}
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setIsCalendarOpen(false)}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={handleCustomRangeSelect}
+                            disabled={!tempRange.from || !tempRange.to}
+                          >
+                            Aplicar
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </DropdownMenuContent>
+              </DropdownMenu>
               
               <Button 
                 variant="outline" 
                 size="icon"
                 onClick={() => { refetchVGV(); refetchDia(); }}
-                className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50"
+                className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-white"
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
@@ -473,7 +650,7 @@ export default function PerformanceTV() {
                 variant="outline" 
                 size="icon"
                 onClick={toggleFullscreen}
-                className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50"
+                className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-white"
               >
                 <Maximize className="w-4 h-4" />
               </Button>
@@ -549,8 +726,11 @@ export default function PerformanceTV() {
                 
                 {/* Gráfico de Barras */}
                 <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
-                  <h2 className="text-lg font-bold text-white mb-4">RANKING DE EQUIPES</h2>
-                  <BarChart data={rankingFormatado} type="vgv" />
+                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-cyan-400" />
+                    RANKING DE EQUIPES
+                  </h2>
+                  <BarChartWithTrend data={rankingFormatado} type="vgv" />
                 </div>
               </div>
               
@@ -560,24 +740,24 @@ export default function PerformanceTV() {
                   <TrendingUp className="w-5 h-5 text-cyan-400" />
                   RANKING VGV
                 </h2>
-                <RankingList ranking={rankingFormatado} type="vgv" />
+                <RankingLateral ranking={rankingFormatado} type="vgv" />
               </div>
             </div>
           </>
         ) : (
           <>
-            {/* KPIs de Produtividade Diária */}
+            {/* KPIs de Produtividade */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
               <KPICard 
                 label="Ligações" 
-                value={totalLigacoes.toString()} 
+                value={totalLigacoes.toString()}
+                subValue={`${totalLigacoesAtendidas} atendidas`}
                 icon={Phone}
                 variant="info"
-                subValue={`${totalLigacoesAtendidas} atendidas`}
               />
               <KPICard 
                 label="WhatsApp" 
-                value={totalWhatsapp.toString()} 
+                value={totalWhatsapp.toString()}
                 icon={MessageSquare}
                 variant="success"
               />
@@ -597,20 +777,20 @@ export default function PerformanceTV() {
                 label="Documentações" 
                 value={totalDocumentacoes.toString()}
                 icon={FileText}
-                variant="info"
+                variant="success"
               />
               <KPICard 
                 label="Pontuação Total" 
                 value={totalPontos.toString()}
                 icon={Trophy}
-                variant="success"
+                variant="accent"
                 highlight
               />
               <KPICard 
                 label="Corretores Ativos" 
                 value={rankingProdutividade.filter((r: any) => r.pontuacaoTotal > 0).length.toString()}
                 icon={Users}
-                variant="accent"
+                variant="info"
               />
             </div>
             
@@ -621,86 +801,73 @@ export default function PerformanceTV() {
                 {/* Pódio Visual */}
                 <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
                   <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-emerald-400" />
-                    TOP PERFORMERS - PRODUTIVIDADE DO DIA
+                    <Trophy className="w-5 h-5 text-yellow-400" />
+                    TOP PERFORMERS - PRODUTIVIDADE
                   </h2>
                   <PodiumVisual ranking={rankingProdutividade} type="produtividade" />
                 </div>
                 
-                {/* Detalhes de Atividades */}
-                <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
-                  <h2 className="text-lg font-bold text-white mb-4">DETALHES POR CORRETOR</h2>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-gray-400 text-xs uppercase border-b border-slate-700/50">
-                          <th className="text-left py-3 px-2">#</th>
-                          <th className="text-left py-3 px-2">Corretor</th>
-                          <th className="text-center py-3 px-2">📞 Lig.</th>
-                          <th className="text-center py-3 px-2">💬 Wpp</th>
-                          <th className="text-center py-3 px-2">📅 Agend.</th>
-                          <th className="text-center py-3 px-2">👁 Visitas</th>
-                          <th className="text-center py-3 px-2">📄 Docs</th>
-                          <th className="text-right py-3 px-2">Pontos</th>
+                {/* Tabela de Atividades */}
+                <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6 overflow-x-auto">
+                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-emerald-400" />
+                    ATIVIDADES DO DIA
+                  </h2>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-gray-300 border-b border-slate-700/50">
+                        <th className="text-left py-2 px-2">#</th>
+                        <th className="text-left py-2 px-2">Corretor</th>
+                        <th className="text-center py-2 px-2">📞</th>
+                        <th className="text-center py-2 px-2">💬</th>
+                        <th className="text-center py-2 px-2">📅</th>
+                        <th className="text-center py-2 px-2">👁️</th>
+                        <th className="text-center py-2 px-2">📄</th>
+                        <th className="text-right py-2 px-2">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rankingProdutividade.slice(0, 10).map((item: any, index: number) => (
+                        <tr 
+                          key={item.corretorId || index}
+                          className={`border-b border-slate-800/30 ${index < 3 ? 'bg-slate-800/20' : ''}`}
+                        >
+                          <td className={`py-2 px-2 font-bold ${
+                            index === 0 ? 'text-yellow-400' :
+                            index === 1 ? 'text-gray-300' :
+                            index === 2 ? 'text-amber-400' :
+                            'text-gray-500'
+                          }`}>{index + 1}º</td>
+                          <td className="py-2 px-2 text-white">{item.corretorNome?.split(' ')[0] || 'Corretor'}</td>
+                          <td className="py-2 px-2 text-center text-blue-300">{item.ligacoesRealizadas}</td>
+                          <td className="py-2 px-2 text-center text-green-300">{item.whatsappEnviados}</td>
+                          <td className="py-2 px-2 text-center text-purple-300">{item.agendamentosConfirmados}</td>
+                          <td className="py-2 px-2 text-center text-amber-300">{item.visitasRealizadas}</td>
+                          <td className="py-2 px-2 text-center text-cyan-300">{item.documentacoesRecolhidas}</td>
+                          <td className={`py-2 px-2 text-right font-bold ${
+                            index === 0 ? 'text-yellow-300' :
+                            index === 1 ? 'text-gray-200' :
+                            index === 2 ? 'text-amber-300' :
+                            'text-white'
+                          }`}>{item.pontuacaoTotal}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {rankingProdutividade.slice(0, 10).map((item: any, index: number) => (
-                          <tr key={item.corretorId || index} className="border-b border-slate-800/30 hover:bg-slate-800/30">
-                            <td className="py-3 px-2">
-                              <span className={`
-                                w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                                ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                                  index === 1 ? 'bg-gray-300 text-gray-800' :
-                                  index === 2 ? 'bg-amber-500 text-amber-900' :
-                                  'bg-slate-700 text-gray-300'}
-                              `}>
-                                {index + 1}
-                              </span>
-                            </td>
-                            <td className="py-3 px-2">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-7 w-7">
-                                  <AvatarImage src={item.corretorFoto} />
-                                  <AvatarFallback className="text-xs bg-slate-700">
-                                    {getInitials(item.corretorNome)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-gray-200 truncate max-w-[120px]">
-                                  {item.corretorNome?.split(' ')[0] || 'Corretor'}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="text-center py-3 px-2 text-blue-400">{item.ligacoesRealizadas}</td>
-                            <td className="text-center py-3 px-2 text-green-400">{item.whatsappEnviados}</td>
-                            <td className="text-center py-3 px-2 text-cyan-400">{item.agendamentosConfirmados}</td>
-                            <td className="text-center py-3 px-2 text-amber-400">{item.visitasRealizadas}</td>
-                            <td className="text-center py-3 px-2 text-purple-400">{item.documentacoesRecolhidas}</td>
-                            <td className="text-right py-3 px-2 font-bold text-emerald-400">{item.pontuacaoTotal}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
               
               {/* Ranking Lateral */}
               <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-emerald-400" />
+                  <TrendingUp className="w-5 h-5 text-emerald-400" />
                   RANKING PONTUAÇÃO
                 </h2>
-                <RankingList ranking={rankingProdutividade} type="produtividade" />
+                <RankingLateral ranking={rankingProdutividade} type="produtividade" />
               </div>
             </div>
           </>
         )}
-      </div>
-      
-      {/* Footer com data/hora */}
-      <div className="fixed bottom-4 right-4 text-xs text-gray-500 bg-slate-900/80 px-3 py-1.5 rounded-full border border-slate-700/50">
-        Atualizado: {new Date().toLocaleString('pt-BR')}
       </div>
     </div>
   );

@@ -83,7 +83,8 @@ const menuGroups = [
       { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance" },
       { icon: Trophy, label: "Ranking TV", path: "/ranking-tv", roles: ["gestor", "admin"] },
       { icon: Tv, label: "Performance TV", path: "/performance-tv", roles: ["gestor", "admin"] },
-      { icon: Target, label: "Metas", path: "/metas", roles: ["gestor", "admin"] },
+      { icon: Target, label: "Metas Mensais", path: "/metas", roles: ["gestor", "admin"] },
+      { icon: Target, label: "Metas Diárias", path: "/metas-diarias", roles: ["gestor", "admin"] },
     ],
   },
   {
@@ -209,10 +210,12 @@ function DashboardContent({
       try {
         return JSON.parse(saved);
       } catch {
-        return { inicio: true, leads: true, performance: true };
+        // Todas as abas fechadas por padrão
+        return {};
       }
     }
-    return { inicio: true, leads: true, performance: true };
+    // Todas as abas fechadas por padrão
+    return {};
   });
 
   // Salvar estado dos grupos no localStorage
@@ -458,7 +461,7 @@ function DashboardContent({
               return (
                 <Collapsible
                   key={group.id}
-                  open={openGroups[group.id]}
+                  open={openGroups[group.id] ?? false}
                   onOpenChange={() => toggleGroup(group.id)}
                 >
                   <CollapsibleTrigger className={`

@@ -592,3 +592,104 @@ export const atividadesDiarias = mysqlTable("atividades_diarias", {
 
 export type AtividadeDiaria = typeof atividadesDiarias.$inferSelect;
 export type InsertAtividadeDiaria = typeof atividadesDiarias.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE METAS DIÁRIAS POR CORRETOR
+// ============================================================================
+
+/**
+ * Metas diárias de produtividade para cada corretor
+ * O gestor pode definir metas específicas para cada corretor
+ */
+export const metasDiarias = mysqlTable("metas_diarias", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull(),
+  
+  // Metas de atividades diárias
+  metaLigacoes: int("metaLigacoes").default(20).notNull(),
+  metaWhatsapp: int("metaWhatsapp").default(30).notNull(),
+  metaAgendamentos: int("metaAgendamentos").default(3).notNull(),
+  metaVisitas: int("metaVisitas").default(2).notNull(),
+  metaDocumentacoes: int("metaDocumentacoes").default(1).notNull(),
+  metaVendas: int("metaVendas").default(1).notNull(),
+  
+  // Ativo/Inativo
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("metas_diarias_corretor_idx").on(table.corretorId),
+}));
+
+export type MetaDiaria = typeof metasDiarias.$inferSelect;
+export type InsertMetaDiaria = typeof metasDiarias.$inferInsert;
+
+// ============================================================================
+// TABELA DE CONFIGURAÇÃO DE PONTUAÇÃO
+// ============================================================================
+
+/**
+ * Configuração global de pontuação por atividade
+ * Permite que o gestor defina quantos pontos vale cada atividade
+ */
+export const configuracaoPontuacao = mysqlTable("configuracao_pontuacao", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Pontos por atividade
+  pontosLigacao: int("pontosLigacao").default(1).notNull(),
+  pontosLigacaoAtendida: int("pontosLigacaoAtendida").default(2).notNull(),
+  pontosWhatsapp: int("pontosWhatsapp").default(1).notNull(),
+  pontosWhatsappRespondido: int("pontosWhatsappRespondido").default(2).notNull(),
+  pontosAgendamento: int("pontosAgendamento").default(15).notNull(),
+  pontosVisita: int("pontosVisita").default(25).notNull(),
+  pontosDocumentacao: int("pontosDocumentacao").default(35).notNull(),
+  pontosVenda: int("pontosVenda").default(80).notNull(),
+  pontosClienteCadastrado: int("pontosClienteCadastrado").default(5).notNull(),
+  pontosAlteracaoStatus: int("pontosAlteracaoStatus").default(2).notNull(),
+  
+  // Metadados
+  atualizadoPor: int("atualizadoPor"), // ID do gestor que atualizou
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ConfiguracaoPontuacao = typeof configuracaoPontuacao.$inferSelect;
+export type InsertConfiguracaoPontuacao = typeof configuracaoPontuacao.$inferInsert;
+
+// ============================================================================
+// TABELA DE ALERTAS DE PRODUTIVIDADE
+// ============================================================================
+
+/**
+ * Registro de alertas de baixa produtividade
+ * Gerados automaticamente quando corretor está abaixo da meta
+ */
+export const alertasProdutividade = mysqlTable("alertas_produtividade", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  corretorId: int("corretorId").notNull(),
+  data: timestamp("data").notNull(),
+  
+  // Tipo de alerta
+  tipo: mysqlEnum("tipo", ["baixa_produtividade", "meta_nao_atingida", "inativo"]).notNull(),
+  
+  // Detalhes
+  mensagem: text("mensagem").notNull(),
+  percentualMeta: int("percentualMeta").default(0).notNull(), // % da meta atingida
+  
+  // Status do alerta
+  lido: boolean("lido").default(false).notNull(),
+  lidoPor: int("lidoPor"), // ID do gestor que leu
+  lidoEm: timestamp("lidoEm"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("alertas_corretor_idx").on(table.corretorId),
+  dataIdx: index("alertas_data_idx").on(table.data),
+  lidoIdx: index("alertas_lido_idx").on(table.lido),
+}));
+
+export type AlertaProdutividade = typeof alertasProdutividade.$inferSelect;
+export type InsertAlertaProdutividade = typeof alertasProdutividade.$inferInsert;

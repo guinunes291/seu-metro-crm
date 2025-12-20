@@ -1210,3 +1210,32 @@
 - [x] Grupo "Sistema" - Relatórios, Configurações
 - [x] Manter navegação intuitiva e responsiva
 - [x] Salvar estado de grupos abertos/fechados no localStorage
+
+
+## Nova Feature: Metas de Produtividade Diária com Pontuação Configurável (20/12/2025)
+- [ ] Criar tabela de configuração de metas diárias no schema (metasDiarias)
+- [ ] Criar tabela de configuração de pontuação por atividade (pontuacaoAtividades)
+- [ ] Implementar CRUD de metas diárias no backend
+- [ ] Implementar CRUD de pontuação de atividades no backend
+- [ ] Criar interface para gestor definir metas diárias por corretor
+- [ ] Criar interface para gestor configurar pontos por atividade
+- [ ] Adicionar barras de progresso no dashboard de produtividade
+- [ ] Mostrar % de conclusão de cada meta por corretor
+- [ ] Implementar sistema de alertas de baixa produtividade
+- [ ] Notificar gestor quando corretor estiver abaixo de 50% da meta
+- [ ] Destacar visualmente corretores com baixa produtividade no dashboard
+
+
+## Nova Feature: Filtro de Período e Correção de Contraste (20/12/2025)
+- [ ] Corrigir contraste de texto nos KPIs do Performance TV (textos brancos sobre fundo escuro)
+- [ ] Criar componente de filtro de período reutilizável (Todo o período, Hoje, Ontem, Esta semana, etc.)
+- [ ] Adicionar filtro de período no Performance TV
+- [ ] Adicionar filtro de período na página de Metas Diárias
+- [ ] Adicionar filtro de período na página de Ranking TV
+- [ ] Adicionar filtro de período na página de Minha Performance
+- [ ] Adicionar filtro de período na página de Leads por Corretor
+- [ ] Garantir contraste adequado em todas as páginas com tema escuro
+
+
+## Ajuste: Menu Lateral Retraído por Padrão (20/12/2025)
+- [x] Alterar estado inicial das abas do menu para retraídas (fechadas)

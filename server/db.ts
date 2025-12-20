@@ -15,7 +15,10 @@ import {
   webhookConfig, InsertWebhookConfig, WebhookConfig,
   tarefas, InsertTarefa, Tarefa,
   followUps, InsertFollowUp, FollowUp,
-  atividadesDiarias, InsertAtividadeDiaria, AtividadeDiaria
+  atividadesDiarias, InsertAtividadeDiaria, AtividadeDiaria,
+  metasDiarias, InsertMetaDiaria, MetaDiaria,
+  configuracaoPontuacao, InsertConfiguracaoPontuacao, ConfiguracaoPontuacao,
+  alertasProdutividade, InsertAlertaProdutividade, AlertaProdutividade
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -3175,4 +3178,356 @@ export async function getLeadsParaExportar(filters?: ExportFilters) {
   }));
   
   return leadsComInfo;
+}
+
+
+// ============================================================================
+// METAS DIÁRIAS
+// ============================================================================
+
+export async function getMetasDiarias(corretorId?: number): Promise<MetaDiaria[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  if (corretorId) {
+    return db.select().from(metasDiarias).where(eq(metasDiarias.corretorId, corretorId));
+  }
+  return db.select().from(metasDiarias);
+}
+
+export async function getMetaDiariaCorretor(corretorId: number): Promise<MetaDiaria | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(metasDiarias)
+    .where(and(
+      eq(metasDiarias.corretorId, corretorId),
+      eq(metasDiarias.ativo, true)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+export async function createMetaDiaria(data: InsertMetaDiaria): Promise<MetaDiaria | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Desativar metas anteriores do corretor
+  await db.update(metasDiarias)
+    .set({ ativo: false })
+    .where(eq(metasDiarias.corretorId, data.corretorId));
+  
+  const result = await db.insert(metasDiarias).values(data);
+  const insertId = result[0].insertId;
+  
+  const newMeta = await db.select().from(metasDiarias).where(eq(metasDiarias.id, insertId)).limit(1);
+  return newMeta[0] || null;
+}
+
+export async function updateMetaDiaria(id: number, data: Partial<InsertMetaDiaria>): Promise<MetaDiaria | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(metasDiarias).set(data).where(eq(metasDiarias.id, id));
+  
+  const updated = await db.select().from(metasDiarias).where(eq(metasDiarias.id, id)).limit(1);
+  return updated[0] || null;
+}
+
+export async function deleteMetaDiaria(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.delete(metasDiarias).where(eq(metasDiarias.id, id));
+  return true;
+}
+
+// ============================================================================
+// CONFIGURAÇÃO DE PONTUAÇÃO
+// ============================================================================
+
+export async function getConfiguracaoPontuacao(): Promise<ConfiguracaoPontuacao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(configuracaoPontuacao).limit(1);
+  return result[0] || null;
+}
+
+export async function upsertConfiguracaoPontuacao(data: Partial<InsertConfiguracaoPontuacao>): Promise<ConfiguracaoPontuacao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const existing = await getConfiguracaoPontuacao();
+  
+  if (existing) {
+    await db.update(configuracaoPontuacao).set(data).where(eq(configuracaoPontuacao.id, existing.id));
+    const updated = await db.select().from(configuracaoPontuacao).where(eq(configuracaoPontuacao.id, existing.id)).limit(1);
+    return updated[0] || null;
+  } else {
+    const result = await db.insert(configuracaoPontuacao).values(data as InsertConfiguracaoPontuacao);
+    const insertId = result[0].insertId;
+    const newConfig = await db.select().from(configuracaoPontuacao).where(eq(configuracaoPontuacao.id, insertId)).limit(1);
+    return newConfig[0] || null;
+  }
+}
+
+// ============================================================================
+// ALERTAS DE PRODUTIVIDADE
+// ============================================================================
+
+export async function getAlertasProdutividade(filtros?: {
+  corretorId?: number;
+  lido?: boolean;
+  dataInicio?: Date;
+  dataFim?: Date;
+}): Promise<AlertaProdutividade[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filtros?.corretorId) {
+    conditions.push(eq(alertasProdutividade.corretorId, filtros.corretorId));
+  }
+  if (filtros?.lido !== undefined) {
+    conditions.push(eq(alertasProdutividade.lido, filtros.lido));
+  }
+  if (filtros?.dataInicio) {
+    conditions.push(gte(alertasProdutividade.data, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(alertasProdutividade.data, filtros.dataFim));
+  }
+  
+  if (conditions.length > 0) {
+    return db.select()
+      .from(alertasProdutividade)
+      .where(and(...conditions))
+      .orderBy(desc(alertasProdutividade.createdAt));
+  }
+  
+  return db.select()
+    .from(alertasProdutividade)
+    .orderBy(desc(alertasProdutividade.createdAt));
+}
+
+export async function getAlertasNaoLidos(): Promise<AlertaProdutividade[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select()
+    .from(alertasProdutividade)
+    .where(eq(alertasProdutividade.lido, false))
+    .orderBy(desc(alertasProdutividade.createdAt));
+}
+
+export async function createAlertaProdutividade(data: InsertAlertaProdutividade): Promise<AlertaProdutividade | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(alertasProdutividade).values(data);
+  const insertId = result[0].insertId;
+  
+  const newAlerta = await db.select().from(alertasProdutividade).where(eq(alertasProdutividade.id, insertId)).limit(1);
+  return newAlerta[0] || null;
+}
+
+export async function marcarAlertaComoLido(id: number, gestorId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(alertasProdutividade)
+    .set({ 
+      lido: true, 
+      lidoPor: gestorId,
+      lidoEm: new Date()
+    })
+    .where(eq(alertasProdutividade.id, id));
+  
+  return true;
+}
+
+export async function marcarTodosAlertasComoLidos(gestorId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(alertasProdutividade)
+    .set({ 
+      lido: true, 
+      lidoPor: gestorId,
+      lidoEm: new Date()
+    })
+    .where(eq(alertasProdutividade.lido, false));
+  
+  return true;
+}
+
+// ============================================================================
+// VERIFICAÇÃO DE PRODUTIVIDADE E GERAÇÃO DE ALERTAS
+// ============================================================================
+
+export async function verificarProdutividadeEGerarAlertas(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Buscar todos os corretores ativos
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  let alertasGerados = 0;
+  
+  for (const corretor of corretores) {
+    // Buscar meta diária do corretor
+    const meta = await getMetaDiariaCorretor(corretor.id);
+    if (!meta) continue;
+    
+    // Buscar atividades do dia
+    const atividades = await db.select()
+      .from(atividadesDiarias)
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretor.id),
+        gte(atividadesDiarias.data, hoje)
+      ))
+      .limit(1);
+    
+    const atividadeDia = atividades[0];
+    
+    // Calcular percentual de meta atingida
+    let totalMeta = 0;
+    let totalRealizado = 0;
+    
+    if (meta.metaLigacoes > 0) {
+      totalMeta += meta.metaLigacoes;
+      totalRealizado += atividadeDia?.ligacoesRealizadas || 0;
+    }
+    if (meta.metaAgendamentos > 0) {
+      totalMeta += meta.metaAgendamentos * 5; // Peso maior para agendamentos
+      totalRealizado += (atividadeDia?.agendamentosConfirmados || 0) * 5;
+    }
+    if (meta.metaVisitas > 0) {
+      totalMeta += meta.metaVisitas * 10; // Peso maior para visitas
+      totalRealizado += (atividadeDia?.visitasRealizadas || 0) * 10;
+    }
+    
+    const percentualMeta = totalMeta > 0 ? Math.round((totalRealizado / totalMeta) * 100) : 0;
+    
+    // Gerar alerta se abaixo de 50%
+    if (percentualMeta < 50) {
+      // Verificar se já existe alerta para hoje
+      const alertaExistente = await db.select()
+        .from(alertasProdutividade)
+        .where(and(
+          eq(alertasProdutividade.corretorId, corretor.id),
+          gte(alertasProdutividade.data, hoje)
+        ))
+        .limit(1);
+      
+      if (alertaExistente.length === 0) {
+        await createAlertaProdutividade({
+          corretorId: corretor.id,
+          data: hoje,
+          tipo: 'baixa_produtividade',
+          mensagem: `${corretor.name || 'Corretor'} está com apenas ${percentualMeta}% da meta diária atingida.`,
+          percentualMeta,
+        });
+        alertasGerados++;
+      }
+    }
+  }
+  
+  return alertasGerados;
+}
+
+// ============================================================================
+// PROGRESSO DE METAS DIÁRIAS
+// ============================================================================
+
+export async function getProgressoMetasDiarias(corretorId?: number): Promise<any[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Buscar corretores
+  let corretoresQuery = db.select().from(users).where(eq(users.role, 'corretor'));
+  if (corretorId) {
+    corretoresQuery = db.select().from(users).where(eq(users.id, corretorId));
+  }
+  const corretores = await corretoresQuery;
+  
+  const resultado = [];
+  
+  for (const corretor of corretores) {
+    // Buscar meta diária
+    const meta = await getMetaDiariaCorretor(corretor.id);
+    
+    // Buscar atividades do dia
+    const atividades = await db.select()
+      .from(atividadesDiarias)
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretor.id),
+        gte(atividadesDiarias.data, hoje)
+      ))
+      .limit(1);
+    
+    const atividadeDia = atividades[0] || {
+      ligacoesRealizadas: 0,
+      ligacoesAtendidas: 0,
+      whatsappEnviados: 0,
+      whatsappRespondidos: 0,
+      agendamentosConfirmados: 0,
+      visitasRealizadas: 0,
+      documentacoesRecolhidas: 0,
+      vendasRealizadas: 0,
+      pontuacaoTotal: 0,
+    };
+    
+    // Calcular progresso
+    const progresso = {
+      ligacoes: meta?.metaLigacoes ? Math.round((atividadeDia.ligacoesRealizadas / meta.metaLigacoes) * 100) : 0,
+      whatsapp: meta?.metaWhatsapp ? Math.round((atividadeDia.whatsappEnviados / meta.metaWhatsapp) * 100) : 0,
+      agendamentos: meta?.metaAgendamentos ? Math.round((atividadeDia.agendamentosConfirmados / meta.metaAgendamentos) * 100) : 0,
+      visitas: meta?.metaVisitas ? Math.round((atividadeDia.visitasRealizadas / meta.metaVisitas) * 100) : 0,
+      documentacoes: meta?.metaDocumentacoes ? Math.round((atividadeDia.documentacoesRecolhidas / meta.metaDocumentacoes) * 100) : 0,
+      vendas: meta?.metaVendas ? Math.round(((atividadeDia as any).vendasRealizadas || 0) / meta.metaVendas * 100) : 0,
+    };
+    
+    // Calcular progresso geral
+    const totalProgresso = Object.values(progresso).reduce((a, b) => a + b, 0);
+    const mediaProgresso = Math.round(totalProgresso / Object.keys(progresso).length);
+    
+    resultado.push({
+      corretor: {
+        id: corretor.id,
+        nome: corretor.name,
+        foto: corretor.fotoUrl,
+        status: corretor.status,
+      },
+      meta: meta || {
+        metaLigacoes: 20,
+        metaWhatsapp: 30,
+        metaAgendamentos: 3,
+        metaVisitas: 2,
+        metaDocumentacoes: 1,
+        metaVendas: 1,
+      },
+      realizado: atividadeDia,
+      progresso,
+      progressoGeral: mediaProgresso,
+      pontuacaoTotal: atividadeDia.pontuacaoTotal,
+    });
+  }
+  
+  // Ordenar por progresso geral (maior primeiro)
+  resultado.sort((a, b) => b.progressoGeral - a.progressoGeral);
+  
+  return resultado;
 }

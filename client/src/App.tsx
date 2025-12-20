@@ -31,6 +31,7 @@ import TarefasDoDia from "@/pages/TarefasDoDia";
 import RankingTV from "@/pages/RankingTV";
 import PerformanceTV from "@/pages/PerformanceTV";
 import Lixeira from "@/pages/Lixeira";
+import MetasDiarias from "@/pages/MetasDiarias";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -62,6 +63,7 @@ function Router() {
       <Route path="/ranking-tv" component={RankingTV} />
       <Route path="/performance-tv" component={PerformanceTV} />
       <Route path="/lixeira" component={Lixeira} />
+      <Route path="/metas-diarias" component={MetasDiarias} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
