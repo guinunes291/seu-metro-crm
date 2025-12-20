@@ -29,6 +29,7 @@ import BoasVindas from "@/pages/BoasVindas";
 import TarefasDoDia from "@/pages/TarefasDoDia";
 import RankingTV from "@/pages/RankingTV";
 import Lixeira from "@/pages/Lixeira";
+import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
 
@@ -73,6 +74,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
+            <SMQCopilotFloating />
           </TooltipProvider>
         </CompareProvider>
       </ThemeProvider>

@@ -180,10 +180,10 @@ function DashboardLayoutContent({
       const previousStatus = utils.corretores.meuStatus.getData();
       
       // Atualizar otimisticamente
-      const novoStatusVisual = newStatus.status === 'ativo' ? 'ativo' : 'inativo';
+      const novoStatusVisual = newStatus.status === 'ativo' ? 'presente' : 'ausente';
       utils.corretores.meuStatus.setData(undefined, (old) => ({
         ...old,
-        status: novoStatusVisual,
+        status: novoStatusVisual as 'presente' | 'ausente',
         name: old?.name || '',
       }));
       
@@ -212,7 +212,7 @@ function DashboardLayoutContent({
   });
 
   const isCorretor = user?.role === 'corretor';
-  const isAtivo = corretorStatus?.status === 'ativo';
+  const isAtivo = corretorStatus?.status === 'presente';
 
   useEffect(() => {
     if (isCollapsed) {

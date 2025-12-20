@@ -1609,12 +1609,24 @@ export const appRouter = router({
           content: z.string()
         })),
         leadId: z.number().optional(),
-        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento', 'chat']).default('chat')
+        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento', 'recomendar', 'chat']).default('chat')
       }))
       .mutation(async ({ input }) => {
-        const { chatWithCopilot, LeadContext } = await import('./smqCopilot');
+        const smqCopilot = await import('./smqCopilot');
+        const { chatWithCopilot } = smqCopilot;
         
-        let leadContext: LeadContext | undefined;
+        // Tipo inline para contexto do lead
+        let leadContext: {
+          nome: string;
+          telefone?: string;
+          email?: string;
+          status: string;
+          projeto?: string;
+          origem?: string;
+          observacoes?: string;
+          historicoInteracoes?: Array<{ tipo: string; descricao: string; data: string; }>;
+          diasSemContato?: number;
+        } | undefined;
         
         // Se tiver leadId, buscar contexto do lead
         if (input.leadId) {
@@ -1625,8 +1637,8 @@ export const appRouter = router({
             
             // Buscar projeto se existir
             let projetoNome: string | undefined;
-            if (lead.projetoId) {
-              const projeto = await db.getProjectById(lead.projetoId);
+            if (lead.projectId) {
+              const projeto = await db.getProjectById(lead.projectId);
               projetoNome = projeto?.nome;
             }
             
@@ -1640,7 +1652,7 @@ export const appRouter = router({
               observacoes: lead.observacoes || undefined,
               historicoInteracoes: historico.slice(0, 5).map(h => ({
                 tipo: h.tipo,
-                descricao: h.descricao,
+                descricao: h.observacoes || h.tipo,
                 data: new Date(h.createdAt).toLocaleDateString('pt-BR')
               })),
               diasSemContato: lead.ultimoContato 
@@ -1663,11 +1675,12 @@ export const appRouter = router({
     quickAction: protectedProcedure
       .input(z.object({
         leadId: z.number(),
-        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento']),
+        mode: z.enum(['briefing', 'primeiro_contato', 'qualificacao', 'objecoes', 'credito', 'followup', 'treinamento', 'recomendar']),
         additionalContext: z.string().optional()
       }))
       .mutation(async ({ input }) => {
-        const { quickAction, LeadContext } = await import('./smqCopilot');
+        const smqCopilot = await import('./smqCopilot');
+        const { quickAction } = smqCopilot;
         
         // Buscar lead
         const lead = await db.getLeadById(input.leadId);
@@ -1680,12 +1693,12 @@ export const appRouter = router({
         
         // Buscar projeto se existir
         let projetoNome: string | undefined;
-        if (lead.projetoId) {
-          const projeto = await db.getProjectById(lead.projetoId);
+        if (lead.projectId) {
+          const projeto = await db.getProjectById(lead.projectId);
           projetoNome = projeto?.nome;
         }
         
-        const leadContext: LeadContext = {
+        const leadContext = {
           nome: lead.nome,
           telefone: lead.telefone || undefined,
           email: lead.email || undefined,
@@ -1695,7 +1708,7 @@ export const appRouter = router({
           observacoes: lead.observacoes || undefined,
           historicoInteracoes: historico.slice(0, 5).map(h => ({
             tipo: h.tipo,
-            descricao: h.descricao,
+            descricao: h.observacoes || h.tipo,
             data: new Date(h.createdAt).toLocaleDateString('pt-BR')
           })),
           diasSemContato: lead.ultimoContato 
@@ -1707,6 +1720,66 @@ export const appRouter = router({
           input.mode,
           leadContext,
           input.additionalContext
+        );
+        
+        return { response };
+      }),
+
+    // Recomendar imóveis com base no perfil do lead
+    recomendarImoveis: protectedProcedure
+      .input(z.object({
+        leadId: z.number(),
+        dadosAdicionais: z.object({
+          rendaFamiliar: z.number().optional(),
+          tipoRenda: z.string().optional(),
+          entradaDisponivel: z.number().optional(),
+          fgts: z.boolean().optional(),
+          valorFgts: z.number().optional(),
+          primeiroImovel: z.boolean().optional(),
+          regiaoDesejada: z.string().optional(),
+          prioridades: z.string().optional(),
+        }).optional()
+      }))
+      .mutation(async ({ input }) => {
+        const { recomendarImoveis } = await import('./smqCopilot');
+        
+        // Buscar lead
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new Error('Lead não encontrado');
+        }
+        
+        // Buscar histórico de interações
+        const historico = await db.getLeadHistory(input.leadId);
+        
+        // Buscar projeto se existir
+        let projetoNome: string | undefined;
+        if (lead.projectId) {
+          const projeto = await db.getProjectById(lead.projectId);
+          projetoNome = projeto?.nome;
+        }
+        
+        const leadContext = {
+          nome: lead.nome,
+          telefone: lead.telefone || undefined,
+          email: lead.email || undefined,
+          status: lead.status,
+          projeto: projetoNome,
+          origem: lead.origem || undefined,
+          observacoes: lead.observacoes || undefined,
+          historicoInteracoes: historico.slice(0, 5).map(h => ({
+            tipo: h.tipo,
+            descricao: h.observacoes || h.tipo,
+            data: new Date(h.createdAt).toLocaleDateString('pt-BR')
+          })),
+          diasSemContato: lead.ultimoContato 
+            ? Math.floor((Date.now() - new Date(lead.ultimoContato).getTime()) / (1000 * 60 * 60 * 24))
+            : undefined
+        };
+        
+        const response = await recomendarImoveis(
+          leadContext,
+          input.dadosAdicionais
         );
         
         return { response };

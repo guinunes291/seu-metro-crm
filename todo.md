@@ -1117,3 +1117,36 @@
 - [x] Integrar no modal de detalhes do lead
 - [x] Testar integração com IA - funcionando perfeitamente!
 - [x] Modos disponíveis: Briefing, 1º Contato, Qualificação, Objeções, Crédito, Follow-up, Treinamento
+
+
+## Aprimoramento: SMQ Copilot com Catálogo de Projetos
+- [ ] Criar função de consulta ao catálogo de projetos do sistema
+- [ ] Implementar filtros por região, faixa de preço, características
+- [ ] Atualizar system prompt do Copilot com instruções de recomendação
+- [ ] Criar nova ação rápida "Recomendar Imóveis"
+- [ ] Passar dados do catálogo no contexto da IA
+- [ ] Testar recomendações com dados reais
+
+
+## Nova Feature: Chat Flutuante SMQ Copilot
+- [ ] Criar componente de chat flutuante persistente
+- [ ] Botão fixo no canto inferior direito
+- [ ] Pode ser minimizado sem perder contexto
+- [ ] Mantém histórico ao navegar entre páginas
+- [ ] Integrar no layout principal (App.tsx)
+- [ ] Testar persistência do chat
+- [ ] Corrigir erro na recomendação de imóveis
+
+
+## Implementação: Chat Flutuante SMQ Copilot (20/12/2025)
+- [x] Corrigir erros de TypeScript no servidor (smqCopilot.ts, routers.ts)
+- [x] Corrigir erro de import do db no smqCopilot.ts (usar getDb ao invés de db)
+- [x] Corrigir tipagem dos filtros de catálogo de projetos
+- [x] Corrigir referência ao LeadContext no routers.ts
+- [x] Criar componente SMQCopilotFloating.tsx (chat flutuante persistente)
+- [x] Integrar chat flutuante no App.tsx (visível em todas as páginas)
+- [x] Implementar seletor de modos (Chat Livre, Treinamento, 1º Contato, Qualificação, Objeções, Crédito, Follow-up, Recomendar)
+- [x] Implementar botões de sugestão rápida (MCMV, FGTS, 1º Contato)
+- [x] Integrar com API da OpenAI (GPT-4o-mini) via chave própria
+- [x] Testar chat com pergunta sobre MCMV - funcionando corretamente
+- [x] Corrigir extração da resposta na mutation (data.response)

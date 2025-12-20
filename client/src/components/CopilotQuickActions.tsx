@@ -4,8 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Bot, 
   Loader2, 
@@ -18,12 +22,13 @@ import {
   DollarSign,
   Clock,
   GraduationCap,
+  Home,
   X
 } from 'lucide-react';
 import { Streamdown } from 'streamdown';
 import { toast } from 'sonner';
 
-type QuickActionMode = 'briefing' | 'primeiro_contato' | 'qualificacao' | 'objecoes' | 'credito' | 'followup' | 'treinamento';
+type QuickActionMode = 'briefing' | 'primeiro_contato' | 'qualificacao' | 'objecoes' | 'credito' | 'followup' | 'treinamento' | 'recomendar';
 
 interface QuickAction {
   mode: QuickActionMode;
@@ -82,6 +87,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     description: 'Explicações sobre MCMV, FGTS, etc',
     icon: <GraduationCap className="h-4 w-4" />,
     color: 'bg-indigo-500 hover:bg-indigo-600'
+  },
+  {
+    mode: 'recomendar',
+    label: 'Recomendar Imóveis',
+    description: 'Sugere imóveis do catálogo real',
+    icon: <Home className="h-4 w-4" />,
+    color: 'bg-rose-500 hover:bg-rose-600'
   }
 ];
 
@@ -91,31 +103,87 @@ interface CopilotQuickActionsProps {
   compact?: boolean;
 }
 
+// Formulário de dados para recomendação de imóveis
+interface RecomendacaoForm {
+  rendaFamiliar: string;
+  tipoRenda: string;
+  entradaDisponivel: string;
+  fgts: boolean;
+  valorFgts: string;
+  primeiroImovel: boolean;
+  regiaoDesejada: string;
+  prioridades: string;
+}
+
 export function CopilotQuickActions({ leadId, leadNome, compact = false }: CopilotQuickActionsProps) {
   const [selectedAction, setSelectedAction] = useState<QuickAction | null>(null);
   const [additionalContext, setAdditionalContext] = useState('');
   const [response, setResponse] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   
+  // Estado para formulário de recomendação
+  const [recomendacaoForm, setRecomendacaoForm] = useState<RecomendacaoForm>({
+    rendaFamiliar: '',
+    tipoRenda: '',
+    entradaDisponivel: '',
+    fgts: false,
+    valorFgts: '',
+    primeiroImovel: true,
+    regiaoDesejada: '',
+    prioridades: ''
+  });
+  
   const quickActionMutation = trpc.copilot.quickAction.useMutation();
+  const recomendarMutation = trpc.copilot.recomendarImoveis.useMutation();
   
   const handleAction = async (action: QuickAction) => {
     setSelectedAction(action);
     setResponse(null);
     setAdditionalContext('');
+    // Reset form de recomendação
+    if (action.mode === 'recomendar') {
+      setRecomendacaoForm({
+        rendaFamiliar: '',
+        tipoRenda: '',
+        entradaDisponivel: '',
+        fgts: false,
+        valorFgts: '',
+        primeiroImovel: true,
+        regiaoDesejada: '',
+        prioridades: ''
+      });
+    }
   };
   
   const executeAction = async () => {
     if (!selectedAction) return;
     
     try {
-      const result = await quickActionMutation.mutateAsync({
-        leadId,
-        mode: selectedAction.mode,
-        additionalContext: additionalContext || undefined
-      });
-      
-      setResponse(result.response);
+      if (selectedAction.mode === 'recomendar') {
+        // Usar mutation específica para recomendação
+        const result = await recomendarMutation.mutateAsync({
+          leadId,
+          dadosAdicionais: {
+            rendaFamiliar: recomendacaoForm.rendaFamiliar ? parseFloat(recomendacaoForm.rendaFamiliar.replace(/\D/g, '')) : undefined,
+            tipoRenda: recomendacaoForm.tipoRenda || undefined,
+            entradaDisponivel: recomendacaoForm.entradaDisponivel ? parseFloat(recomendacaoForm.entradaDisponivel.replace(/\D/g, '')) : undefined,
+            fgts: recomendacaoForm.fgts,
+            valorFgts: recomendacaoForm.valorFgts ? parseFloat(recomendacaoForm.valorFgts.replace(/\D/g, '')) : undefined,
+            primeiroImovel: recomendacaoForm.primeiroImovel,
+            regiaoDesejada: recomendacaoForm.regiaoDesejada || undefined,
+            prioridades: recomendacaoForm.prioridades || undefined
+          }
+        });
+        setResponse(result.response);
+      } else {
+        // Usar mutation padrão para outras ações
+        const result = await quickActionMutation.mutateAsync({
+          leadId,
+          mode: selectedAction.mode,
+          additionalContext: additionalContext || undefined
+        });
+        setResponse(result.response);
+      }
     } catch (error) {
       console.error('Erro ao executar ação:', error);
       toast.error('Erro ao processar ação. Tente novamente.');
@@ -136,6 +204,199 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
     setResponse(null);
     setAdditionalContext('');
   };
+  
+  const formatCurrency = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (!numbers) return '';
+    return new Intl.NumberFormat('pt-BR').format(parseInt(numbers));
+  };
+
+  const isPending = quickActionMutation.isPending || recomendarMutation.isPending;
+
+  // Renderiza o formulário de recomendação de imóveis
+  const renderRecomendacaoForm = () => (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Preencha os dados do lead para receber recomendações de imóveis do catálogo real da Seu Metro Quadrado.
+      </p>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="rendaFamiliar">Renda Familiar (R$)</Label>
+          <Input
+            id="rendaFamiliar"
+            placeholder="Ex: 8.000"
+            value={recomendacaoForm.rendaFamiliar}
+            onChange={(e) => setRecomendacaoForm(prev => ({
+              ...prev,
+              rendaFamiliar: formatCurrency(e.target.value)
+            }))}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="tipoRenda">Tipo de Renda</Label>
+          <Select 
+            value={recomendacaoForm.tipoRenda} 
+            onValueChange={(value) => setRecomendacaoForm(prev => ({ ...prev, tipoRenda: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CLT">CLT</SelectItem>
+              <SelectItem value="Autônomo">Autônomo</SelectItem>
+              <SelectItem value="MEI">MEI</SelectItem>
+              <SelectItem value="Empresário">Empresário</SelectItem>
+              <SelectItem value="Aposentado">Aposentado</SelectItem>
+              <SelectItem value="Servidor Público">Servidor Público</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="entradaDisponivel">Entrada Disponível (R$)</Label>
+          <Input
+            id="entradaDisponivel"
+            placeholder="Ex: 10.000"
+            value={recomendacaoForm.entradaDisponivel}
+            onChange={(e) => setRecomendacaoForm(prev => ({
+              ...prev,
+              entradaDisponivel: formatCurrency(e.target.value)
+            }))}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="regiaoDesejada">Região Desejada</Label>
+          <Select 
+            value={recomendacaoForm.regiaoDesejada} 
+            onValueChange={(value) => setRecomendacaoForm(prev => ({ ...prev, regiaoDesejada: value }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="norte">Zona Norte</SelectItem>
+              <SelectItem value="sul">Zona Sul</SelectItem>
+              <SelectItem value="leste">Zona Leste</SelectItem>
+              <SelectItem value="oeste">Zona Oeste</SelectItem>
+              <SelectItem value="centro">Centro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div>
+            <Label htmlFor="fgts">Possui FGTS?</Label>
+            <p className="text-xs text-muted-foreground">Pode usar para entrada</p>
+          </div>
+          <Switch
+            id="fgts"
+            checked={recomendacaoForm.fgts}
+            onCheckedChange={(checked) => setRecomendacaoForm(prev => ({ ...prev, fgts: checked }))}
+          />
+        </div>
+        
+        <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div>
+            <Label htmlFor="primeiroImovel">1º Imóvel?</Label>
+            <p className="text-xs text-muted-foreground">Nunca teve imóvel</p>
+          </div>
+          <Switch
+            id="primeiroImovel"
+            checked={recomendacaoForm.primeiroImovel}
+            onCheckedChange={(checked) => setRecomendacaoForm(prev => ({ ...prev, primeiroImovel: checked }))}
+          />
+        </div>
+      </div>
+      
+      {recomendacaoForm.fgts && (
+        <div className="space-y-2">
+          <Label htmlFor="valorFgts">Valor do FGTS (R$)</Label>
+          <Input
+            id="valorFgts"
+            placeholder="Ex: 20.000"
+            value={recomendacaoForm.valorFgts}
+            onChange={(e) => setRecomendacaoForm(prev => ({
+              ...prev,
+              valorFgts: formatCurrency(e.target.value)
+            }))}
+          />
+        </div>
+      )}
+      
+      <div className="space-y-2">
+        <Label htmlFor="prioridades">Prioridades do Cliente</Label>
+        <Input
+          id="prioridades"
+          placeholder="Ex: vaga, sacada, lazer, perto do metrô"
+          value={recomendacaoForm.prioridades}
+          onChange={(e) => setRecomendacaoForm(prev => ({ ...prev, prioridades: e.target.value }))}
+        />
+      </div>
+      
+      <Button
+        onClick={executeAction}
+        disabled={isPending}
+        className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700"
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Buscando no catálogo...
+          </>
+        ) : (
+          <>
+            <Home className="h-4 w-4 mr-2" />
+            Recomendar Imóveis
+          </>
+        )}
+      </Button>
+    </div>
+  );
+
+  // Renderiza o formulário padrão para outras ações
+  const renderDefaultForm = () => (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        {selectedAction?.description}
+      </p>
+      
+      <div>
+        <label className="text-sm font-medium">
+          Informação adicional (opcional):
+        </label>
+        <Textarea
+          value={additionalContext}
+          onChange={(e) => setAdditionalContext(e.target.value)}
+          placeholder="Ex: O cliente mencionou que tem pressa, está com restrição no nome..."
+          className="mt-1"
+          rows={3}
+        />
+      </div>
+      
+      <Button
+        onClick={executeAction}
+        disabled={isPending}
+        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+      >
+        {isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Processando...
+          </>
+        ) : (
+          <>
+            <Sparkles className="h-4 w-4 mr-2" />
+            Gerar Resposta
+          </>
+        )}
+      </Button>
+    </div>
+  );
 
   if (compact) {
     return (
@@ -146,7 +407,7 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
               key={action.mode}
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className={`h-7 px-2 text-xs ${action.mode === 'recomendar' ? 'border-rose-300 text-rose-600 hover:bg-rose-50' : ''}`}
               onClick={() => handleAction(action)}
             >
               {action.icon}
@@ -156,7 +417,7 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
         </div>
         
         <Dialog open={!!selectedAction} onOpenChange={(open) => !open && handleClose()}>
-          <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-purple-600" />
@@ -166,42 +427,7 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
             </DialogHeader>
             
             {!response ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  {selectedAction?.description}
-                </p>
-                
-                <div>
-                  <label className="text-sm font-medium">
-                    Informação adicional (opcional):
-                  </label>
-                  <Textarea
-                    value={additionalContext}
-                    onChange={(e) => setAdditionalContext(e.target.value)}
-                    placeholder="Ex: O cliente mencionou que tem pressa, está com restrição no nome..."
-                    className="mt-1"
-                    rows={3}
-                  />
-                </div>
-                
-                <Button
-                  onClick={executeAction}
-                  disabled={quickActionMutation.isPending}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
-                  {quickActionMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Gerar Resposta
-                    </>
-                  )}
-                </Button>
-              </div>
+              selectedAction?.mode === 'recomendar' ? renderRecomendacaoForm() : renderDefaultForm()
             ) : (
               <div className="space-y-4">
                 <ScrollArea className="h-[400px] border rounded-lg p-4">
@@ -256,7 +482,9 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
               <Button
                 key={action.mode}
                 variant="outline"
-                className="h-auto py-2 px-3 flex flex-col items-start gap-1 hover:border-purple-300"
+                className={`h-auto py-2 px-3 flex flex-col items-start gap-1 hover:border-purple-300 ${
+                  action.mode === 'recomendar' ? 'col-span-2 border-rose-200 hover:border-rose-400 bg-rose-50/50' : ''
+                }`}
                 onClick={() => handleAction(action)}
               >
                 <div className="flex items-center gap-2">
@@ -264,6 +492,11 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
                     {action.icon}
                   </div>
                   <span className="font-medium text-sm">{action.label}</span>
+                  {action.mode === 'recomendar' && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      Catálogo Real
+                    </Badge>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground text-left">
                   {action.description}
@@ -275,7 +508,7 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
       </Card>
       
       <Dialog open={!!selectedAction} onOpenChange={(open) => !open && handleClose()}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-purple-600" />
@@ -285,42 +518,7 @@ export function CopilotQuickActions({ leadId, leadNome, compact = false }: Copil
           </DialogHeader>
           
           {!response ? (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {selectedAction?.description}
-              </p>
-              
-              <div>
-                <label className="text-sm font-medium">
-                  Informação adicional (opcional):
-                </label>
-                <Textarea
-                  value={additionalContext}
-                  onChange={(e) => setAdditionalContext(e.target.value)}
-                  placeholder="Ex: O cliente mencionou que tem pressa, está com restrição no nome..."
-                  className="mt-1"
-                  rows={3}
-                />
-              </div>
-              
-              <Button
-                onClick={executeAction}
-                disabled={quickActionMutation.isPending}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-              >
-                {quickActionMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Gerar Resposta
-                  </>
-                )}
-              </Button>
-            </div>
+            selectedAction?.mode === 'recomendar' ? renderRecomendacaoForm() : renderDefaultForm()
           ) : (
             <div className="space-y-4">
               <ScrollArea className="h-[400px] border rounded-lg p-4">
