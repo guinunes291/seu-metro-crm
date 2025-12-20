@@ -434,9 +434,9 @@ export default function PerformanceTV() {
   }, [periodo, customRange]);
   
   // Queries
-  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.corretores.useQuery();
+  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
   const { data: rankingDia, refetch: refetchDia } = trpc.ranking.dia.useQuery({});
-  const { data: estatisticas } = trpc.leads.estatisticas.useQuery();
+  const { data: estatisticas } = trpc.distribuicao.getEstatisticas.useQuery();
   
   // Auto-refresh a cada 30 segundos
   useEffect(() => {

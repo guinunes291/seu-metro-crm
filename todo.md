@@ -1239,3 +1239,27 @@
 
 ## Ajuste: Menu Lateral Retraído por Padrão (20/12/2025)
 - [x] Alterar estado inicial das abas do menu para retraídas (fechadas)
+
+
+## Nova Feature: Foto de Perfil do Corretor (20/12/2025)
+- [x] Adicionar campo fotoUrl ao schema de corretores (já existia)
+- [x] Migrar banco de dados com novo campo (já existia)
+- [x] Criar procedure de upload de foto no backend
+- [x] Criar interface de upload nas configurações do corretor
+- [x] Replicar foto no pódio do Performance TV
+- [x] Replicar foto no ranking lateral
+- [x] Replicar foto nos cards de leads
+- [x] Replicar foto no menu lateral (avatar do usuário)
+- [x] Testar upload e exibição em todos os lugares
+
+## Nova Feature: Sistema de Conquistas/Medalhas (20/12/2025)
+- [x] Criar tabela de conquistas no schema (tipo, data, corretor)
+- [x] Criar tabela de tipos de conquistas (nome, descrição, ícone, critério)
+- [x] Migrar banco de dados
+- [x] Implementar lógica de verificação de metas semanais
+- [x] Implementar lógica de verificação de metas mensais
+- [x] Criar conquistas: Top Vendedor Semana, Meta Mensal Batida, Streak de Dias, etc.
+- [x] Criar seção de conquistas no perfil do corretor
+- [ ] Exibir medalhas no pódio do Performance TV
+- [x] Criar notificação quando corretor ganha nova conquista
+- [x] Testar sistema completo de conquistas

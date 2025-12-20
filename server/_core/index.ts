@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import webhookRoutes from "../webhookRoutes";
+import uploadRoutes from "../uploadRoutes";
 
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -40,6 +41,9 @@ async function startServer() {
   
   // Webhook routes (público, sem autenticação)
   app.use('/api/webhook', webhookRoutes);
+  
+  // Upload routes (requer autenticação via cookie)
+  app.use('/api', uploadRoutes);
   
   // tRPC API
   app.use(

@@ -18,7 +18,9 @@ import {
   atividadesDiarias, InsertAtividadeDiaria, AtividadeDiaria,
   metasDiarias, InsertMetaDiaria, MetaDiaria,
   configuracaoPontuacao, InsertConfiguracaoPontuacao, ConfiguracaoPontuacao,
-  alertasProdutividade, InsertAlertaProdutividade, AlertaProdutividade
+  alertasProdutividade, InsertAlertaProdutividade, AlertaProdutividade,
+  tiposConquista, TipoConquista, InsertTipoConquista,
+  conquistas, Conquista, InsertConquista
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -3530,4 +3532,275 @@ export async function getProgressoMetasDiarias(corretorId?: number): Promise<any
   resultado.sort((a, b) => b.progressoGeral - a.progressoGeral);
   
   return resultado;
+}
+
+
+// ============================================================================
+// FOTO DE PERFIL DO CORRETOR
+// ============================================================================
+
+export async function atualizarFotoPerfil(userId: number, fotoUrl: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(users)
+    .set({ fotoUrl })
+    .where(eq(users.id, userId));
+  
+  return true;
+}
+
+export async function getFotoPerfil(userId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select({ fotoUrl: users.fotoUrl })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  
+  return result[0]?.fotoUrl || null;
+}
+
+// ============================================================================
+// SISTEMA DE CONQUISTAS
+// ============================================================================
+
+// Criar tipos de conquistas padrão
+export async function criarTiposConquistaPadrao(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const tiposPadrao = [
+    // Conquistas de Vendas
+    { codigo: "top_vendedor_semana", nome: "Top Vendedor da Semana", descricao: "Maior VGV na semana", icone: "trophy", cor: "gold", categoria: "vendas" as const, criterioTipo: "ranking_semanal" as const, criterioValor: 1 },
+    { codigo: "top_vendedor_mes", nome: "Top Vendedor do Mês", descricao: "Maior VGV no mês", icone: "crown", cor: "gold", categoria: "vendas" as const, criterioTipo: "ranking_mensal" as const, criterioValor: 1 },
+    { codigo: "segundo_lugar_semana", nome: "Vice-Campeão Semanal", descricao: "2º maior VGV na semana", icone: "medal", cor: "silver", categoria: "vendas" as const, criterioTipo: "ranking_semanal" as const, criterioValor: 2 },
+    { codigo: "terceiro_lugar_semana", nome: "Bronze Semanal", descricao: "3º maior VGV na semana", icone: "award", cor: "bronze", categoria: "vendas" as const, criterioTipo: "ranking_semanal" as const, criterioValor: 3 },
+    
+    // Conquistas de Meta
+    { codigo: "meta_semanal_batida", nome: "Meta Semanal Batida", descricao: "Atingiu 100% da meta semanal", icone: "target", cor: "green", categoria: "produtividade" as const, criterioTipo: "meta_semanal" as const, criterioValor: 100 },
+    { codigo: "meta_mensal_batida", nome: "Meta Mensal Batida", descricao: "Atingiu 100% da meta mensal", icone: "flag", cor: "blue", categoria: "produtividade" as const, criterioTipo: "meta_mensal" as const, criterioValor: 100 },
+    { codigo: "meta_superada_120", nome: "Superação 120%", descricao: "Superou 120% da meta mensal", icone: "rocket", cor: "purple", categoria: "produtividade" as const, criterioTipo: "meta_mensal" as const, criterioValor: 120 },
+    
+    // Conquistas de Streak
+    { codigo: "streak_5_dias", nome: "Streak de 5 Dias", descricao: "5 dias consecutivos batendo meta diária", icone: "flame", cor: "orange", categoria: "streak" as const, criterioTipo: "streak_dias" as const, criterioValor: 5 },
+    { codigo: "streak_10_dias", nome: "Streak de 10 Dias", descricao: "10 dias consecutivos batendo meta diária", icone: "fire-extinguisher", cor: "red", categoria: "streak" as const, criterioTipo: "streak_dias" as const, criterioValor: 10 },
+    { codigo: "streak_30_dias", nome: "Mês Perfeito", descricao: "30 dias consecutivos batendo meta diária", icone: "star", cor: "gold", categoria: "streak" as const, criterioTipo: "streak_dias" as const, criterioValor: 30 },
+    
+    // Conquistas Especiais
+    { codigo: "primeira_venda", nome: "Primeira Venda", descricao: "Fechou a primeira venda no sistema", icone: "sparkles", cor: "blue", categoria: "especial" as const, criterioTipo: "total_vendas" as const, criterioValor: 1, recorrente: false },
+    { codigo: "10_vendas", nome: "10 Vendas", descricao: "Acumulou 10 vendas no sistema", icone: "gem", cor: "purple", categoria: "especial" as const, criterioTipo: "total_vendas" as const, criterioValor: 10, recorrente: false },
+    { codigo: "50_vendas", nome: "50 Vendas", descricao: "Acumulou 50 vendas no sistema", icone: "diamond", cor: "gold", categoria: "especial" as const, criterioTipo: "total_vendas" as const, criterioValor: 50, recorrente: false },
+  ];
+  
+  for (const tipo of tiposPadrao) {
+    // Verificar se já existe
+    const existente = await db.select().from(tiposConquista).where(eq(tiposConquista.codigo, tipo.codigo)).limit(1);
+    if (existente.length === 0) {
+      await db.insert(tiposConquista).values(tipo as any);
+    }
+  }
+}
+
+// Buscar todos os tipos de conquistas
+export async function getTiposConquista(): Promise<TipoConquista[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(tiposConquista).where(eq(tiposConquista.ativo, true));
+}
+
+// Buscar conquistas de um corretor
+export async function getConquistasCorretor(corretorId: number): Promise<(Conquista & { tipo: TipoConquista })[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const resultado = await db.select({
+    conquista: conquistas,
+    tipo: tiposConquista,
+  })
+    .from(conquistas)
+    .innerJoin(tiposConquista, eq(conquistas.tipoConquistaId, tiposConquista.id))
+    .where(eq(conquistas.corretorId, corretorId))
+    .orderBy(desc(conquistas.createdAt));
+  
+  return resultado.map(r => ({ ...r.conquista, tipo: r.tipo }));
+}
+
+// Conceder conquista a um corretor
+export async function concederConquista(
+  corretorId: number, 
+  tipoConquistaCodigo: string,
+  dados?: { valor?: number; posicao?: number; periodoInicio?: Date; periodoFim?: Date; observacao?: string }
+): Promise<Conquista | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar tipo de conquista
+  const tipos = await db.select().from(tiposConquista).where(eq(tiposConquista.codigo, tipoConquistaCodigo)).limit(1);
+  if (tipos.length === 0) return null;
+  
+  const tipo = tipos[0];
+  
+  // Verificar se já tem essa conquista (se não for recorrente)
+  if (!tipo.recorrente) {
+    const existente = await db.select().from(conquistas)
+      .where(and(
+        eq(conquistas.corretorId, corretorId),
+        eq(conquistas.tipoConquistaId, tipo.id)
+      ))
+      .limit(1);
+    
+    if (existente.length > 0) return null; // Já tem essa conquista
+  }
+  
+  // Verificar se já ganhou no mesmo período (para conquistas recorrentes)
+  if (tipo.recorrente && dados?.periodoInicio && dados?.periodoFim) {
+    const existente = await db.select().from(conquistas)
+      .where(and(
+        eq(conquistas.corretorId, corretorId),
+        eq(conquistas.tipoConquistaId, tipo.id),
+        eq(conquistas.periodoInicio, dados.periodoInicio),
+        eq(conquistas.periodoFim, dados.periodoFim)
+      ))
+      .limit(1);
+    
+    if (existente.length > 0) return null; // Já ganhou nesse período
+  }
+  
+  // Conceder conquista
+  const [result] = await db.insert(conquistas).values({
+    corretorId,
+    tipoConquistaId: tipo.id,
+    valor: dados?.valor,
+    posicao: dados?.posicao,
+    periodoInicio: dados?.periodoInicio,
+    periodoFim: dados?.periodoFim,
+    observacao: dados?.observacao,
+  });
+  
+  const novaConquista = await db.select().from(conquistas).where(eq(conquistas.id, result.insertId)).limit(1);
+  return novaConquista[0] || null;
+}
+
+// Verificar e conceder conquistas automaticamente
+export async function verificarConquistas(corretorId: number): Promise<Conquista[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conquistasGanhas: Conquista[] = [];
+  const tipos = await getTiposConquista();
+  
+  // Buscar dados do corretor
+  const corretorData = await db.select().from(users).where(eq(users.id, corretorId)).limit(1);
+  if (corretorData.length === 0) return [];
+  
+  // Buscar leads do corretor
+  const leadsCorretor = await db.select().from(leads).where(eq(leads.corretorId, corretorId));
+  const vendasTotais = leadsCorretor.filter(l => l.status === 'contrato_fechado').length;
+  
+  for (const tipo of tipos) {
+    let conquistaGanha: Conquista | null = null;
+    
+    switch (tipo.criterioTipo) {
+      case 'total_vendas':
+        if (vendasTotais >= tipo.criterioValor) {
+          conquistaGanha = await concederConquista(corretorId, tipo.codigo, { valor: vendasTotais });
+        }
+        break;
+        
+      // Outros tipos serão verificados por jobs periódicos
+    }
+    
+    if (conquistaGanha) {
+      conquistasGanhas.push(conquistaGanha);
+    }
+  }
+  
+  return conquistasGanhas;
+}
+
+// Verificar conquistas de ranking semanal/mensal (chamado por job)
+export async function verificarConquistasRanking(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  let conquistasConcedidas = 0;
+  const agora = new Date();
+  
+  // Calcular início e fim da semana atual
+  const inicioSemana = new Date(agora);
+  inicioSemana.setDate(agora.getDate() - agora.getDay());
+  inicioSemana.setHours(0, 0, 0, 0);
+  
+  const fimSemana = new Date(inicioSemana);
+  fimSemana.setDate(inicioSemana.getDate() + 6);
+  fimSemana.setHours(23, 59, 59, 999);
+  
+  // Buscar ranking da semana
+  const ranking = await getRankingCorretores();
+  
+  // Conceder conquistas de ranking semanal
+  const conquistasRanking = [
+    { posicao: 1, codigo: "top_vendedor_semana" },
+    { posicao: 2, codigo: "segundo_lugar_semana" },
+    { posicao: 3, codigo: "terceiro_lugar_semana" },
+  ];
+  
+  for (const { posicao, codigo } of conquistasRanking) {
+    if (ranking[posicao - 1] && ranking[posicao - 1].metricas.vgv > 0) {
+      const conquista = await concederConquista(
+        ranking[posicao - 1].corretor.id,
+        codigo,
+        {
+          valor: ranking[posicao - 1].metricas.vgv,
+          posicao,
+          periodoInicio: inicioSemana,
+          periodoFim: fimSemana,
+        }
+      );
+      if (conquista) conquistasConcedidas++;
+    }
+  }
+  
+  return conquistasConcedidas;
+}
+
+// Buscar resumo de conquistas para exibição no perfil
+export async function getResumoConquistas(corretorId: number): Promise<{
+  total: number;
+  porCategoria: Record<string, number>;
+  recentes: (Conquista & { tipo: TipoConquista })[];
+  destaque: (Conquista & { tipo: TipoConquista }) | null;
+}> {
+  const db = await getDb();
+  if (!db) return { total: 0, porCategoria: {}, recentes: [], destaque: null };
+  
+  const todasConquistas = await getConquistasCorretor(corretorId);
+  
+  // Contar por categoria
+  const porCategoria: Record<string, number> = {};
+  for (const c of todasConquistas) {
+    const cat = c.tipo.categoria;
+    porCategoria[cat] = (porCategoria[cat] || 0) + 1;
+  }
+  
+  // Pegar as 5 mais recentes
+  const recentes = todasConquistas.slice(0, 5);
+  
+  // Pegar a mais importante (gold > silver > bronze > outras)
+  const ordemCor = ['gold', 'purple', 'blue', 'silver', 'bronze', 'green', 'orange', 'red'];
+  const destaque = todasConquistas.sort((a, b) => {
+    const idxA = ordemCor.indexOf(a.tipo.cor);
+    const idxB = ordemCor.indexOf(b.tipo.cor);
+    return idxA - idxB;
+  })[0] || null;
+  
+  return {
+    total: todasConquistas.length,
+    porCategoria,
+    recentes,
+    destaque,
+  };
 }

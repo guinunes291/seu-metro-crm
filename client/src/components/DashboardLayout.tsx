@@ -174,7 +174,7 @@ export default function DashboardLayout({
 
 // Componente para badge de notificações
 function NotificationBadge() {
-  const { data: count } = trpc.notifications.getUnreadCount.useQuery();
+  const { data: count } = trpc.notifications.unreadCount.useQuery();
   
   if (!count || count === 0) return null;
   
@@ -448,7 +448,7 @@ function DashboardContent({
                           >
                             <div className="relative">
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
-                              {item.showBadge && <NotificationBadge />}
+                              {(item as any).showBadge && <NotificationBadge />}
                             </div>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -487,7 +487,7 @@ function DashboardContent({
                           >
                             <div className="relative">
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
-                              {item.showBadge && <NotificationBadge />}
+                              {(item as any).showBadge && <NotificationBadge />}
                             </div>
                             <span>{item.label}</span>
                           </SidebarMenuButton>
@@ -532,6 +532,23 @@ function DashboardContent({
                   {user?.role === 'gestor' ? 'Gestor' : user?.role === 'admin' ? 'Admin' : 'Corretor'}
                 </Badge>
               </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = "/meu-perfil";
+                }}
+              >
+                <UserCircle className="mr-2 h-4 w-4" />
+                Meu Perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  window.location.href = "/configuracoes";
+                }}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Configurações
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {

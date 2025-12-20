@@ -1935,5 +1935,86 @@ export const appRouter = router({
         return { alertasGerados };
       }),
   }),
+
+  // ============================================================================
+  // CONQUISTAS / MEDALHAS
+  // ============================================================================
+  conquistas: router({
+    // Buscar conquistas do corretor logado
+    minhas: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await db.getConquistasCorretor(ctx.user.id);
+      }),
+    
+    // Buscar conquistas de um corretor específico (gestor)
+    porCorretor: gestorProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getConquistasCorretor(input.corretorId);
+      }),
+    
+    // Buscar resumo de conquistas (para exibição no perfil)
+    resumo: protectedProcedure
+      .input(z.object({ corretorId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const corretorId = input?.corretorId || ctx.user.id;
+        return await db.getResumoConquistas(corretorId);
+      }),
+    
+    // Buscar tipos de conquistas disponíveis
+    tipos: protectedProcedure
+      .query(async () => {
+        return await db.getTiposConquista();
+      }),
+    
+    // Conceder conquista manualmente (gestor)
+    conceder: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        tipoConquistaCodigo: z.string(),
+        valor: z.number().optional(),
+        observacao: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.concederConquista(
+          input.corretorId,
+          input.tipoConquistaCodigo,
+          { valor: input.valor, observacao: input.observacao }
+        );
+      }),
+    
+    // Verificar e conceder conquistas automáticas
+    verificar: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        return await db.verificarConquistas(ctx.user.id);
+      }),
+    
+    // Inicializar tipos de conquistas padrão (admin)
+    inicializarTipos: gestorProcedure
+      .mutation(async () => {
+        await db.criarTiposConquistaPadrao();
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // PERFIL / FOTO
+  // ============================================================================
+  perfil: router({
+    // Atualizar foto de perfil
+    atualizarFoto: protectedProcedure
+      .input(z.object({ fotoUrl: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.atualizarFotoPerfil(ctx.user.id, input.fotoUrl);
+      }),
+    
+    // Buscar foto de perfil
+    foto: protectedProcedure
+      .input(z.object({ userId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const userId = input?.userId || ctx.user.id;
+        return await db.getFotoPerfil(userId);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

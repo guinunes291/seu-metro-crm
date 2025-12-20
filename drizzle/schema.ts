@@ -693,3 +693,75 @@ export const alertasProdutividade = mysqlTable("alertas_produtividade", {
 
 export type AlertaProdutividade = typeof alertasProdutividade.$inferSelect;
 export type InsertAlertaProdutividade = typeof alertasProdutividade.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE CONQUISTAS/MEDALHAS
+// ============================================================================
+
+/**
+ * Tipos de conquistas disponíveis no sistema
+ * Cada tipo define os critérios para ganhar a medalha
+ */
+export const tiposConquista = mysqlTable("tipos_conquista", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identificação
+  codigo: varchar("codigo", { length: 50 }).notNull().unique(), // ex: "top_vendedor_semana"
+  nome: varchar("nome", { length: 100 }).notNull(), // ex: "Top Vendedor da Semana"
+  descricao: text("descricao"), // ex: "Maior número de vendas na semana"
+  
+  // Visual
+  icone: varchar("icone", { length: 50 }).default("trophy").notNull(), // nome do ícone Lucide
+  cor: varchar("cor", { length: 20 }).default("gold").notNull(), // gold, silver, bronze, blue, green
+  
+  // Categoria
+  categoria: mysqlEnum("categoria", ["vendas", "produtividade", "streak", "especial"]).default("vendas").notNull(),
+  
+  // Critérios (valores numéricos para verificação automática)
+  criterioTipo: mysqlEnum("criterioTipo", ["meta_semanal", "meta_mensal", "ranking_semanal", "ranking_mensal", "streak_dias", "total_vendas", "total_leads", "manual"]).notNull(),
+  criterioValor: int("criterioValor").default(1).notNull(), // ex: 1 para top 1, 5 para streak de 5 dias
+  
+  // Configuração
+  ativo: boolean("ativo").default(true).notNull(),
+  recorrente: boolean("recorrente").default(true).notNull(), // pode ganhar múltiplas vezes?
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TipoConquista = typeof tiposConquista.$inferSelect;
+export type InsertTipoConquista = typeof tiposConquista.$inferInsert;
+
+/**
+ * Conquistas ganhas pelos corretores
+ * Registro histórico de todas as medalhas
+ */
+export const conquistas = mysqlTable("conquistas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  corretorId: int("corretorId").notNull(),
+  tipoConquistaId: int("tipoConquistaId").notNull(),
+  
+  // Período de referência (quando aplicável)
+  periodoInicio: timestamp("periodoInicio"),
+  periodoFim: timestamp("periodoFim"),
+  
+  // Detalhes da conquista
+  valor: int("valor"), // ex: valor de VGV, número de vendas, dias de streak
+  posicao: int("posicao"), // ex: 1º lugar, 2º lugar
+  observacao: text("observacao"),
+  
+  // Notificação
+  notificado: boolean("notificado").default(false).notNull(),
+  notificadoEm: timestamp("notificadoEm"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("conquistas_corretor_idx").on(table.corretorId),
+  tipoIdx: index("conquistas_tipo_idx").on(table.tipoConquistaId),
+  periodoIdx: index("conquistas_periodo_idx").on(table.periodoInicio, table.periodoFim),
+}));
+
+export type Conquista = typeof conquistas.$inferSelect;
+export type InsertConquista = typeof conquistas.$inferInsert;
