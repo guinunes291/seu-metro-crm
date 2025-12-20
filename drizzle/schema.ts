@@ -220,6 +220,58 @@ export type LeadHistory = typeof leadHistory.$inferSelect;
 export type InsertLeadHistory = typeof leadHistory.$inferInsert;
 
 // ============================================================================
+// TABELA DE HISTÓRICO DE TRANSIÇÕES DE STATUS (FUNIL DE VENDAS)
+// ============================================================================
+
+/**
+ * Registra cada mudança de status de um lead para métricas do funil.
+ * Permite contabilizar quantos agendamentos, visitas, análises, etc.
+ * cada corretor realizou, independente do status atual do lead.
+ */
+export const leadStatusTransitions = mysqlTable("lead_status_transitions", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  
+  // Status anterior e novo
+  statusAnterior: mysqlEnum("statusAnterior", [
+    "novo",
+    "aguardando_atendimento",
+    "em_atendimento",
+    "agendado",
+    "visita_realizada",
+    "analise_credito",
+    "contrato_fechado",
+    "perdido"
+  ]).notNull(),
+  
+  statusNovo: mysqlEnum("statusNovo", [
+    "novo",
+    "aguardando_atendimento",
+    "em_atendimento",
+    "agendado",
+    "visita_realizada",
+    "analise_credito",
+    "contrato_fechado",
+    "perdido"
+  ]).notNull(),
+  
+  // Observações opcionais
+  observacao: text("observacao"),
+  
+  // Data/hora da transição
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("transition_lead_idx").on(table.leadId),
+  corretorIdx: index("transition_corretor_idx").on(table.corretorId),
+  statusNovoIdx: index("transition_status_novo_idx").on(table.statusNovo),
+  createdAtIdx: index("transition_created_idx").on(table.createdAt),
+}));
+
+export type LeadStatusTransition = typeof leadStatusTransitions.$inferSelect;
+export type InsertLeadStatusTransition = typeof leadStatusTransitions.$inferInsert;
+
+// ============================================================================
 // TABELA DE LOG DE DISTRIBUIÇÃO
 // ============================================================================
 

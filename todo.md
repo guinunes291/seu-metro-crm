@@ -1438,3 +1438,12 @@
 - [x] Corrigir erro SQL no job de conquistas (campo valorImovel inexistente)
 - [ ] Adicionar proteção contra exclusão em massa de dados
 - [ ] Documentar política de retenção de dados
+
+
+## Sistema de Histórico de Transições de Status (20/12/2025)
+- [x] Criar tabela lead_status_transitions no schema
+- [x] Implementar registro automático ao mudar status do lead
+- [x] Criar queries para métricas do funil por corretor
+- [x] Adicionar procedures dashboard.metricasFunil e dashboard.metricasFunilPorCorretor
+- [x] Adicionar procedure dashboardCorretor.metricasFunil
+- [x] Criar testes unitários para validar o sistema (5 testes passando)

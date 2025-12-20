@@ -127,6 +127,13 @@
       "when": 1766252683488,
       "tag": "0017_familiar_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1766259519288,
+      "tag": "0018_boring_thor",
+      "breakpoints": true
     }
   ]
 }

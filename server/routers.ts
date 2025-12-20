@@ -1117,6 +1117,30 @@ export const appRouter = router({
         } : undefined;
         return await db.getVendasPorCorretor(filtros);
       }),
+    
+    // Métricas do funil baseadas em transições de status
+    metricasFunil: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        return await db.getMetricasFunilGeral(dataInicio, dataFim);
+      }),
+    
+    // Métricas do funil por corretor (baseadas em transições)
+    metricasFunilPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim);
+      }),
   }),
 
   // ============================================================================
@@ -1168,6 +1192,18 @@ export const appRouter = router({
       .input(z.object({ dias: z.number().default(30) }).optional())
       .query(async ({ ctx, input }) => {
         return await db.getCorretorEvolucaoFunil(ctx.user.id, input?.dias || 30);
+      }),
+    
+    // Métricas do funil baseadas em transições (histórico real)
+    metricasFunil: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        return await db.getMetricasFunilCorretor(ctx.user.id, dataInicio, dataFim);
       }),
   }),
 

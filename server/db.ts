@@ -6,6 +6,7 @@ import {
   properties, InsertProperty, Property,
   leads, InsertLead, Lead,
   leadHistory, InsertLeadHistory,
+  leadStatusTransitions, InsertLeadStatusTransition, LeadStatusTransition,
   distributionLog, InsertDistributionLog,
   conversionStats, InsertConversionStats,
   quickMessages, InsertQuickMessage,
@@ -448,9 +449,44 @@ export async function updateLead(id: number, data: Partial<InsertLead>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Se está mudando o status, registrar a transição
+  if (data.status) {
+    // Buscar o lead atual para pegar o status anterior e corretorId
+    const leadAtual = await getLeadById(id);
+    if (leadAtual && leadAtual.status !== data.status) {
+      // Registrar a transição de status
+      await registrarTransicaoStatus({
+        leadId: id,
+        corretorId: leadAtual.corretorId || 0,
+        statusAnterior: leadAtual.status as any,
+        statusNovo: data.status as any,
+      });
+    }
+  }
+  
   await db.update(leads)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(leads.id, id));
+}
+
+// Função para registrar transição de status
+export async function registrarTransicaoStatus(data: {
+  leadId: number;
+  corretorId: number;
+  statusAnterior: string;
+  statusNovo: string;
+  observacao?: string;
+}) {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.insert(leadStatusTransitions).values({
+    leadId: data.leadId,
+    corretorId: data.corretorId,
+    statusAnterior: data.statusAnterior as any,
+    statusNovo: data.statusNovo as any,
+    observacao: data.observacao,
+  });
 }
 
 export async function deleteLead(id: number) {
@@ -3803,4 +3839,257 @@ export async function getResumoConquistas(corretorId: number): Promise<{
     recentes,
     destaque,
   };
+}
+
+
+// ============================================================================
+// MÉTRICAS DO FUNIL DE VENDAS (BASEADAS EM TRANSIÇÕES DE STATUS)
+// ============================================================================
+
+/**
+ * Busca todas as transições de status de um corretor em um período
+ */
+export async function getTransicoesCorretor(
+  corretorId: number,
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<LeadStatusTransition[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select()
+    .from(leadStatusTransitions)
+    .where(eq(leadStatusTransitions.corretorId, corretorId))
+    .orderBy(desc(leadStatusTransitions.createdAt));
+  
+  if (dataInicio && dataFim) {
+    query = db.select()
+      .from(leadStatusTransitions)
+      .where(and(
+        eq(leadStatusTransitions.corretorId, corretorId),
+        gte(leadStatusTransitions.createdAt, dataInicio),
+        lte(leadStatusTransitions.createdAt, dataFim)
+      ))
+      .orderBy(desc(leadStatusTransitions.createdAt));
+  }
+  
+  return await query;
+}
+
+/**
+ * Conta quantas vezes um corretor atingiu cada status no funil
+ * Isso permite saber quantos agendamentos, visitas, etc. foram feitos
+ * independente do status atual do lead
+ */
+export async function getMetricasFunilCorretor(
+  corretorId: number,
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<{
+  agendamentos: number;
+  visitasRealizadas: number;
+  analisesCredito: number;
+  contratosFechados: number;
+  perdidos: number;
+  emAtendimento: number;
+}> {
+  const db = await getDb();
+  if (!db) return {
+    agendamentos: 0,
+    visitasRealizadas: 0,
+    analisesCredito: 0,
+    contratosFechados: 0,
+    perdidos: 0,
+    emAtendimento: 0
+  };
+  
+  // Construir condições de filtro
+  const conditions = [eq(leadStatusTransitions.corretorId, corretorId)];
+  if (dataInicio) {
+    conditions.push(gte(leadStatusTransitions.createdAt, dataInicio));
+  }
+  if (dataFim) {
+    conditions.push(lte(leadStatusTransitions.createdAt, dataFim));
+  }
+  
+  // Contar transições para cada status
+  const transicoes = await db.select({
+    statusNovo: leadStatusTransitions.statusNovo,
+    total: sql<number>`COUNT(*)`
+  })
+    .from(leadStatusTransitions)
+    .where(and(...conditions))
+    .groupBy(leadStatusTransitions.statusNovo);
+  
+  // Mapear resultados
+  const metricas = {
+    agendamentos: 0,
+    visitasRealizadas: 0,
+    analisesCredito: 0,
+    contratosFechados: 0,
+    perdidos: 0,
+    emAtendimento: 0
+  };
+  
+  for (const t of transicoes) {
+    switch (t.statusNovo) {
+      case 'agendado':
+        metricas.agendamentos = Number(t.total);
+        break;
+      case 'visita_realizada':
+        metricas.visitasRealizadas = Number(t.total);
+        break;
+      case 'analise_credito':
+        metricas.analisesCredito = Number(t.total);
+        break;
+      case 'contrato_fechado':
+        metricas.contratosFechados = Number(t.total);
+        break;
+      case 'perdido':
+        metricas.perdidos = Number(t.total);
+        break;
+      case 'em_atendimento':
+        metricas.emAtendimento = Number(t.total);
+        break;
+    }
+  }
+  
+  return metricas;
+}
+
+/**
+ * Busca métricas do funil para todos os corretores
+ */
+export async function getMetricasFunilTodosCorretores(
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<{
+  corretorId: number;
+  corretorNome: string;
+  corretorFoto: string | null;
+  metricas: {
+    agendamentos: number;
+    visitasRealizadas: number;
+    analisesCredito: number;
+    contratosFechados: number;
+    perdidos: number;
+    emAtendimento: number;
+  };
+}[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar todos os corretores
+  const corretores = await db.select()
+    .from(users)
+    .where(sql`${users.role} IN ('corretor', 'user')`);
+  
+  const resultado = [];
+  
+  for (const corretor of corretores) {
+    const metricas = await getMetricasFunilCorretor(corretor.id, dataInicio, dataFim);
+    resultado.push({
+      corretorId: corretor.id,
+      corretorNome: corretor.name || 'Corretor',
+      corretorFoto: corretor.fotoUrl,
+      metricas
+    });
+  }
+  
+  return resultado;
+}
+
+/**
+ * Busca métricas gerais do funil (soma de todos os corretores)
+ */
+export async function getMetricasFunilGeral(
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<{
+  agendamentos: number;
+  visitasRealizadas: number;
+  analisesCredito: number;
+  contratosFechados: number;
+  perdidos: number;
+  emAtendimento: number;
+  totalTransicoes: number;
+}> {
+  const db = await getDb();
+  if (!db) return {
+    agendamentos: 0,
+    visitasRealizadas: 0,
+    analisesCredito: 0,
+    contratosFechados: 0,
+    perdidos: 0,
+    emAtendimento: 0,
+    totalTransicoes: 0
+  };
+  
+  // Construir condições de filtro
+  const conditions = [];
+  if (dataInicio) {
+    conditions.push(gte(leadStatusTransitions.createdAt, dataInicio));
+  }
+  if (dataFim) {
+    conditions.push(lte(leadStatusTransitions.createdAt, dataFim));
+  }
+  
+  // Contar transições para cada status
+  const transicoes = await db.select({
+    statusNovo: leadStatusTransitions.statusNovo,
+    total: sql<number>`COUNT(*)`
+  })
+    .from(leadStatusTransitions)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(leadStatusTransitions.statusNovo);
+  
+  // Mapear resultados
+  const metricas = {
+    agendamentos: 0,
+    visitasRealizadas: 0,
+    analisesCredito: 0,
+    contratosFechados: 0,
+    perdidos: 0,
+    emAtendimento: 0,
+    totalTransicoes: 0
+  };
+  
+  for (const t of transicoes) {
+    metricas.totalTransicoes += Number(t.total);
+    switch (t.statusNovo) {
+      case 'agendado':
+        metricas.agendamentos = Number(t.total);
+        break;
+      case 'visita_realizada':
+        metricas.visitasRealizadas = Number(t.total);
+        break;
+      case 'analise_credito':
+        metricas.analisesCredito = Number(t.total);
+        break;
+      case 'contrato_fechado':
+        metricas.contratosFechados = Number(t.total);
+        break;
+      case 'perdido':
+        metricas.perdidos = Number(t.total);
+        break;
+      case 'em_atendimento':
+        metricas.emAtendimento = Number(t.total);
+        break;
+    }
+  }
+  
+  return metricas;
+}
+
+/**
+ * Busca histórico de transições de um lead específico
+ */
+export async function getHistoricoTransicoesLead(leadId: number): Promise<LeadStatusTransition[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(leadStatusTransitions)
+    .where(eq(leadStatusTransitions.leadId, leadId))
+    .orderBy(leadStatusTransitions.createdAt);
 }
