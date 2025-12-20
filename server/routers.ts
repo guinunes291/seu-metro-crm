@@ -620,6 +620,19 @@ export const appRouter = router({
         );
       }),
     
+    // Gerar dados para gráfico de horas por corretor
+    horasPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await presenca.gerarDadosHorasPorCorretor(
+          new Date(input.dataInicio),
+          new Date(input.dataFim)
+        );
+      }),
+    
     // Gerar dados para heatmap de presença
     heatmap: gestorProcedure
       .input(z.object({

@@ -31,7 +31,11 @@ export async function registrarMudancaStatus(
   origem: "manual" | "automatico_fim" | "automatico_3h" | "sistema" = "manual",
   observacao?: string
 ): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Presenca] Database not available");
+    return;
+  }
   
   const tipo = statusNovo === "presente" ? "entrada" : "saida";
   
@@ -53,7 +57,11 @@ export async function registrarMudancaStatus(
  * Atualiza o resumo diário de presença de um corretor
  */
 export async function atualizarResumoDiario(corretorId: number, data: Date): Promise<void> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Presenca] Database not available for resumo diario");
+    return;
+  }
   
   // Início e fim do dia
   const inicioDia = new Date(data);
@@ -188,7 +196,8 @@ export async function buscarHistoricoPresenca(
   dataInicio?: Date,
   dataFim?: Date
 ): Promise<any[]> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   let query = db
     .select()
@@ -221,7 +230,8 @@ export async function buscarResumoPresenca(
   dataInicio?: Date,
   dataFim?: Date
 ): Promise<any[]> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   const conditions = [];
   
@@ -260,7 +270,8 @@ export async function calcularEstatisticasPresenca(
   mediaHorasDia: number;
   percentualPresenca: number;
 }> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   const resumos = await db
     .select()
@@ -303,7 +314,8 @@ export async function calcularEstatisticasPresenca(
  * Busca corretores que estão presentes há mais de 3 horas sem confirmação
  */
 export async function buscarCorretoresSemConfirmacao(): Promise<any[]> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   const tresHorasAtras = new Date();
   tresHorasAtras.setHours(tresHorasAtras.getHours() - EXPEDIENTE.VERIFICACAO_INTERVALO_HORAS);
@@ -360,7 +372,8 @@ export async function gerarDadosGraficoPresenca(
     backgroundColor: string;
   }[];
 }> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   // Buscar todos os corretores
   const corretores = await db
@@ -431,6 +444,65 @@ export async function gerarDadosGraficoPresenca(
 }
 
 /**
+ * Gera dados para gráfico de horas totais por corretor
+ */
+export async function gerarDadosHorasPorCorretor(
+  dataInicio: Date,
+  dataFim: Date
+): Promise<{
+  corretores: {
+    id: number;
+    nome: string;
+    horasTotais: number;
+    diasTrabalhados: number;
+    mediaHorasDia: number;
+  }[];
+}> {
+  const db = await getDb();
+  if (!db) return [] as any;
+  
+  // Buscar todos os corretores
+  const corretores = await db
+    .select()
+    .from(users)
+    .where(eq(users.role, "corretor"));
+  
+  const resultado = [];
+  
+  for (const corretor of corretores) {
+    // Buscar resumos de presença do corretor no período
+    const resumos = await db
+      .select()
+      .from(resumoPresencaDiaria)
+      .where(
+        and(
+          eq(resumoPresencaDiaria.corretorId, corretor.id),
+          gte(resumoPresencaDiaria.data, dataInicio),
+          lte(resumoPresencaDiaria.data, dataFim)
+        )
+      );
+    
+    const totalMinutos = resumos.reduce((acc, r) => acc + r.totalMinutosPresente, 0);
+    const horasTotais = Math.round(totalMinutos / 60 * 10) / 10;
+    const diasTrabalhados = resumos.filter(r => r.totalMinutosPresente > 0).length;
+    const mediaHorasDia = diasTrabalhados > 0 ? Math.round(totalMinutos / diasTrabalhados / 60 * 10) / 10 : 0;
+    
+    resultado.push({
+      id: corretor.id,
+      nome: corretor.name || `Corretor ${corretor.id}`,
+      horasTotais,
+      diasTrabalhados,
+      mediaHorasDia,
+    });
+  }
+  
+  // Ordenar por horas totais (decrescente)
+  resultado.sort((a, b) => b.horasTotais - a.horasTotais);
+  
+  return { corretores: resultado };
+}
+
+/**
  * Gera dados para heatmap de presença
  */
 export async function gerarDadosHeatmap(
@@ -440,7 +512,8 @@ export async function gerarDadosHeatmap(
 ): Promise<{
   data: { day: number; hour: number; value: number }[];
 }> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   const registros = await db
     .select()
@@ -512,7 +585,8 @@ export async function gerarRelatorioSemanal(): Promise<{
     corretorMenosPresente: string;
   };
 }> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) return [] as any;
   
   // Calcular período da semana anterior
   const hoje = new Date();

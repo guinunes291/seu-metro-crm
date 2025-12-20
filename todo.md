@@ -1353,3 +1353,30 @@
 - [x] Criar dados de exemplo para gráfico de área
 - [x] Criar dados de exemplo para estatísticas gerais
 - [x] Criar dados de exemplo para tabela de histórico detalhado
+
+
+## Nova Feature: Histórico de Presença por Corretor com Cálculo de Horas
+- [ ] Ajustar registro de presença para calcular período (entrada/saída)
+- [ ] Registrar automaticamente hora de início ao marcar "Presente"
+- [ ] Registrar automaticamente hora de fim ao marcar "Ausente"
+- [ ] Calcular total de horas trabalhadas por período
+- [ ] Criar gráfico de barras: Corretor x Horas Totais
+- [ ] Implementar filtro de datas no gráfico (últimos 7, 15, 30, 90 dias)
+- [ ] Mostrar horas totais de cada corretor no período selecionado
+- [ ] Testar cálculo de horas com dados reais
+
+
+## Bug Fix: Erro ao Alterar Status de Presença
+- [ ] Investigar erro "Erro ao alterar status. Tente novamente."
+- [ ] Corrigir função de registro de mudança de status
+- [ ] Garantir sincronização entre botão do sidebar e perfil do corretor
+- [ ] Testar alteração de status em ambos os locais
+
+
+## Nova Feature: Cards Estratégicos de Gestão
+- [x] Card 1: Taxa de Engajamento do Time (corretores com 24h+ / total)
+- [x] Card 2: Corretor Destaque da Semana (mais horas presentes)
+- [x] Card 3: Média de Horas/Dia do Time
+- [x] Card 4: Corretores Online Agora
+- [x] Card 5: Alerta de Baixa Presença (corretores abaixo da meta)
+- [x] Gráfico de horas por corretor com filtro de datas

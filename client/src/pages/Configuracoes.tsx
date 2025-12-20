@@ -107,7 +107,16 @@ async function getCroppedImg(
 
 export default function Configuracoes() {
   const { user, refresh: refetchUser } = useAuth();
-  const updateStatusMutation = trpc.corretores.updateStatus.useMutation();
+  const updateStatusMutation = trpc.corretores.alterarMeuStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Status alterado para ${data.status === "presente" ? "Presente" : "Ausente"}`);
+      utils.corretores.meuStatus.invalidate();
+      utils.auth.me.invalidate();
+    },
+    onError: () => {
+      toast.error("Erro ao alterar status. Tente novamente.");
+    }
+  });
   const uploadFotoMutation = trpc.foto.upload.useMutation();
   const utils = trpc.useUtils();
 
@@ -125,20 +134,10 @@ export default function Configuracoes() {
   const imgRef = useRef<HTMLImageElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleToggleStatus = async () => {
+  const handleToggleStatus = () => {
     if (!isCorretor) return;
-
-    try {
-      const newStatus = isPresente ? "ausente" : "presente";
-      await updateStatusMutation.mutateAsync({ status: newStatus });
-      
-      toast.success(`Status alterado para ${newStatus === "presente" ? "Presente" : "Ausente"}`);
-      
-      // Invalidar cache para atualizar o status
-      utils.auth.me.invalidate();
-    } catch (error) {
-      toast.error("Erro ao alterar status");
-    }
+    const newStatus = isPresente ? "inativo" : "ativo";
+    updateStatusMutation.mutate({ status: newStatus });
   };
 
   // Selecionar arquivo
