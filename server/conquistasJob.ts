@@ -53,14 +53,9 @@ async function calcularEstatisticasCorretor(corretorId: number): Promise<Estatis
       eq(leads.status, "Contrato Fechado")
     ));
 
-  // Calcular VGV total
-  const vgvResult = await db
-    .select({ total: sql<number>`COALESCE(SUM(${leads.valorImovel}), 0)` })
-    .from(leads)
-    .where(and(
-      eq(leads.corretorId, corretorId),
-      eq(leads.status, "Contrato Fechado")
-    ));
+  // Calcular VGV total (usando valor do projeto associado ao lead)
+  // Por enquanto, retorna 0 pois leads não têm campo valorImovel
+  const vgvTotal = 0;
 
   // Contar leads recebidos
   const leadsResult = await db
@@ -86,7 +81,7 @@ async function calcularEstatisticasCorretor(corretorId: number): Promise<Estatis
     visitas: Number(atividadesResult[0]?.visitas || 0),
     documentacoes: Number(atividadesResult[0]?.documentacoes || 0),
     vendas: Number(vendasResult[0]?.count || 0),
-    vgvTotal: Number(vgvResult[0]?.total || 0),
+    vgvTotal: vgvTotal,
     diasAtivos: Number(diasAtivosResult[0]?.count || 0),
     streakAtual,
     leadsRecebidos: Number(leadsResult[0]?.count || 0),
@@ -237,7 +232,7 @@ export async function verificarConquistasCorretor(corretorId: number): Promise<{
 
   // Buscar conquistas já desbloqueadas
   const conquistasDesbloqueadas = await db.select().from(conquistas).where(eq(conquistas.corretorId, corretorId));
-  const idsDesbloqueadas = new Set(conquistasDesbloqueadas.map(c => c.conquistaId));
+  const idsDesbloqueadas = new Set(conquistasDesbloqueadas.map(c => c.tipoConquistaId));
 
   const novasConquistas: Conquista[] = [];
   const progressos: { conquistaId: number; progresso: number }[] = [];
@@ -256,9 +251,9 @@ export async function verificarConquistasCorretor(corretorId: number): Promise<{
       // Registrar conquista no banco
       await db.insert(conquistas).values({
         corretorId,
-        conquistaId: conquista.id,
-        dataConquista: new Date(),
-        pontos: conquista.pontos
+        tipoConquistaId: conquista.id,
+        valor: conquista.pontos,
+        observacao: conquista.nome
       });
 
       novasConquistas.push(conquista);

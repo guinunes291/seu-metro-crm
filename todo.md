@@ -1411,3 +1411,30 @@
 - [x] Remover barra de meta 24h do gráfico
 - [x] Trocar texto "Meta Semanal" para "Horas Trabalhadas"
 - [x] Exibir nome real do corretor na coluna Corretor da tabela de histórico
+
+
+## Preparação para Operacional - Segunda-feira
+- [ ] Identificar dados de teste a serem removidos
+- [ ] Limpar corretores de teste (Corretor Teste Performance, João Silva Teste, etc.)
+- [ ] Limpar histórico de presença de teste
+- [ ] Manter apenas corretores reais (Guilherme Nunes, Andrew, kauanthyago34)
+- [ ] Implementar proteção contra exclusão de dados (soft delete ou confirmação dupla)
+- [ ] Validar sistema limpo e pronto para operação
+
+
+## Limpeza e Proteção de Dados - Go-Live Segunda-feira (20/12/2025)
+- [x] Identificar corretores reais vs corretores de teste
+- [x] Remover todos os leads (reimportação na segunda)
+- [x] Remover histórico de leads
+- [x] Remover log de distribuição
+- [x] Remover notificações
+- [x] Remover histórico de presença de corretores de teste
+- [x] Remover atividades diárias
+- [x] Remover follow-ups
+- [x] Remover tarefas
+- [x] Remover corretores de teste (manter 4 reais)
+- [x] Limpar todo o histórico de presença (começar do zero)
+- [x] Limpar resumo de presença diária
+- [x] Corrigir erro SQL no job de conquistas (campo valorImovel inexistente)
+- [ ] Adicionar proteção contra exclusão em massa de dados
+- [ ] Documentar política de retenção de dados
