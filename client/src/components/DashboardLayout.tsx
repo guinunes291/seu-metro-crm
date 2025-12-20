@@ -33,7 +33,7 @@ import {
   BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, 
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
-  UserCog, Import, Home
+  UserCog, Import, Home, Clock
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -100,6 +100,7 @@ const menuGroups = [
       { icon: History, label: "Histórico", path: "/historico-distribuicao", roles: ["gestor", "admin"] },
       { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
       { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["gestor", "admin"] },
+      { icon: Clock, label: "Histórico Presença", path: "/historico-presenca", roles: ["gestor", "admin"] },
     ],
   },
   {

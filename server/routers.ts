@@ -8,6 +8,7 @@ import { TRPCError } from "@trpc/server";
 
 import * as sheetsImport from "./sheetsImport";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
+import * as presenca from "./presenca";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -527,15 +528,123 @@ export const appRouter = router({
         status: z.enum(['ativo', 'inativo', 'presente', 'ausente'])
       }))
       .mutation(async ({ input, ctx }) => {
+        // Buscar status atual
+        const userAtual = await db.getUserById(ctx.user.id);
+        const statusAnterior = userAtual?.status || 'ausente';
+        
         // Normalizar status: ativo -> presente, inativo -> ausente
         const statusNormalizado = input.status === 'ativo' ? 'presente' : 
                                    input.status === 'inativo' ? 'ausente' : input.status;
+        
+        // Registrar mudança de presença no histórico
+        if (statusAnterior !== statusNormalizado) {
+          await presenca.registrarMudancaStatus(
+            ctx.user.id,
+            statusAnterior as 'presente' | 'ausente',
+            statusNormalizado as 'presente' | 'ausente',
+            'manual'
+          );
+        }
         
         await db.updateUserStatus(ctx.user.id, statusNormalizado as 'presente' | 'ausente');
         return { 
           success: true, 
           status: statusNormalizado 
         };
+      }),
+  }),
+
+  // ============================================================================
+  // HISTÓRICO DE PRESENÇA
+  // ============================================================================
+  
+  presenca: router({
+    // Buscar histórico de presença de um corretor
+    historico: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        
+        if (input.corretorId) {
+          return await presenca.buscarHistoricoPresenca(input.corretorId, dataInicio, dataFim);
+        }
+        
+        // Se não especificou corretor, buscar de todos
+        return await presenca.buscarResumoPresenca(undefined, dataInicio, dataFim);
+      }),
+    
+    // Buscar resumo diário de presença
+    resumoDiario: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        
+        return await presenca.buscarResumoPresenca(input.corretorId, dataInicio, dataFim);
+      }),
+    
+    // Calcular estatísticas de presença de um corretor
+    estatisticas: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await presenca.calcularEstatisticasPresenca(
+          input.corretorId,
+          new Date(input.dataInicio),
+          new Date(input.dataFim)
+        );
+      }),
+    
+    // Gerar dados para gráfico de presença do time
+    graficoTime: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await presenca.gerarDadosGraficoPresenca(
+          new Date(input.dataInicio),
+          new Date(input.dataFim)
+        );
+      }),
+    
+    // Gerar dados para heatmap de presença
+    heatmap: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input }) => {
+        return await presenca.gerarDadosHeatmap(
+          input.corretorId,
+          new Date(input.dataInicio),
+          new Date(input.dataFim)
+        );
+      }),
+    
+    // Buscar corretores que estão presentes há mais de 3h sem confirmação
+    semConfirmacao: gestorProcedure
+      .query(async () => {
+        return await presenca.buscarCorretoresSemConfirmacao();
+      }),
+    
+    // Gerar relatório semanal
+    relatorioSemanal: gestorProcedure
+      .query(async () => {
+        return await presenca.gerarRelatorioSemanal();
       }),
   }),
 

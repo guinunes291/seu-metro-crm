@@ -1297,3 +1297,45 @@
 - [ ] Verificar onde a aba de Conquistas deveria aparecer
 - [ ] Adicionar link de Conquistas no menu lateral para gestores e corretores
 - [ ] Testar acesso de ambos os perfis
+
+## Nova Feature: Sistema de Histórico de Presença/Ausência
+- [ ] Criar tabela de histórico de presença no banco de dados
+- [ ] Implementar registro automático de entrada/saída ao mudar status
+- [ ] Criar página de histórico de presença para gestor
+- [ ] Implementar gráfico de presença do time ao longo dos dias
+- [ ] Adicionar filtros por corretor e período
+
+## Nova Feature: Compartilhamento de Conquistas nas Redes Sociais
+- [ ] Criar botão de compartilhamento em cada card de conquista
+- [ ] Desenvolver layout Instagramável com logo da imobiliária
+- [ ] Incluir @ da imobiliária (@seumetroquadrado.sp) no design
+- [ ] Implementar geração de imagem para download/compartilhamento
+
+
+## Nova Feature: Sistema de Histórico de Presença/Ausência
+- [x] Criar tabela historicoPresenca no schema
+- [x] Criar tabela resumoPresencaDiaria no schema
+- [x] Migrar banco de dados (pnpm db:push)
+- [x] Criar funções de registro e consulta de presença (presenca.ts)
+- [x] Criar procedures tRPC para histórico de presença
+- [x] Criar página de histórico de presença para gestor (/historico-presenca)
+- [x] Implementar gráfico de barras empilhadas (presente vs ausente)
+- [x] Implementar timeline visual de horas trabalhadas
+- [x] Implementar gráfico de área de evolução
+- [x] Adicionar item de menu no DashboardLayout
+- [ ] Implementar heatmap de presença por hora/dia
+- [ ] Implementar relatório semanal por email
+- [ ] Implementar verificação de 3h sem confirmação (notificação WhatsApp)
+- [ ] Implementar marcação automática de ausência no fim do expediente
+- [ ] Criar testes unitários para sistema de presença
+
+## Nova Feature: Botão de Compartilhamento de Conquistas
+- [x] Criar componente ConquistaShareCard com layout Instagramável
+- [x] Adicionar logo e @seumetroquadrado.sp no card
+- [x] Implementar geração de imagem com html2canvas
+- [x] Implementar botão de download da imagem
+- [x] Implementar botão de copiar texto
+- [x] Implementar compartilhamento no Instagram (Web Share API)
+- [x] Implementar compartilhamento no Facebook
+- [x] Implementar compartilhamento no Twitter
+- [x] Adicionar botão de compartilhamento nos cards de conquistas desbloqueadas

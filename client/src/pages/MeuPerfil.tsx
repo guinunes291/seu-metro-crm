@@ -15,8 +15,9 @@ import { CONQUISTAS, CATEGORIAS, getNivelAtual, type Conquista } from "../../../
 import { 
   Camera, Trophy, Target, Flame, Star, Crown, Medal, Award, 
   Gem, Rocket, Flag, Sparkles, Upload, User, Calendar,
-  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, Lock
+  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, Lock, Share2
 } from "lucide-react";
+import ConquistaShareCard from "@/components/ConquistaShareCard";
 
 export default function MeuPerfil() {
   const { user } = useAuth();
@@ -369,7 +370,7 @@ export default function MeuPerfil() {
                             />
                           </div>
 
-                          {/* Pontos */}
+                          {/* Pontos e Compartilhamento */}
                           <div className="mt-2 flex items-center justify-between">
                             <Badge 
                               variant="outline" 
@@ -377,9 +378,19 @@ export default function MeuPerfil() {
                             >
                               +{conquista.pontos} pts
                             </Badge>
-                            {isUnlocked && (
-                              <Sparkles className="h-4 w-4 text-amber-400" />
-                            )}
+                            <div className="flex items-center gap-1">
+                              {isUnlocked && (
+                                <>
+                                  <ConquistaShareCard 
+                                    conquista={conquista} 
+                                    userName={user?.name || "Corretor"}
+                                    nivel={nivelInfo.nivel}
+                                    titulo={nivelInfo.titulo}
+                                  />
+                                  <Sparkles className="h-4 w-4 text-amber-400" />
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

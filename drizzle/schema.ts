@@ -765,3 +765,102 @@ export const conquistas = mysqlTable("conquistas", {
 
 export type Conquista = typeof conquistas.$inferSelect;
 export type InsertConquista = typeof conquistas.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE HISTÓRICO DE PRESENÇA/AUSÊNCIA
+// ============================================================================
+
+/**
+ * Registro histórico de presença/ausência dos corretores
+ * Permite acompanhar quando cada corretor marcou presença/ausência
+ * e calcular horas trabalhadas por dia, semana e mês
+ */
+export const historicoPresenca = mysqlTable("historico_presenca", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamento
+  corretorId: int("corretorId").notNull(),
+  
+  // Tipo de registro
+  tipo: mysqlEnum("tipo", ["entrada", "saida"]).notNull(),
+  
+  // Status anterior e novo (para auditoria)
+  statusAnterior: mysqlEnum("statusAnterior", ["presente", "ausente"]).notNull(),
+  statusNovo: mysqlEnum("statusNovo", ["presente", "ausente"]).notNull(),
+  
+  // Origem do registro
+  origem: mysqlEnum("origem", [
+    "manual",           // Corretor alterou manualmente
+    "automatico_fim",   // Sistema marcou ausência no fim do expediente
+    "automatico_3h",    // Sistema marcou ausência após 3h sem confirmação
+    "sistema"           // Outros registros automáticos
+  ]).default("manual").notNull(),
+  
+  // Data e hora do registro
+  dataHora: timestamp("dataHora").defaultNow().notNull(),
+  
+  // Observações (opcional)
+  observacao: text("observacao"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("presenca_corretor_idx").on(table.corretorId),
+  dataHoraIdx: index("presenca_data_hora_idx").on(table.dataHora),
+  tipoIdx: index("presenca_tipo_idx").on(table.tipo),
+  corretorDataIdx: index("presenca_corretor_data_idx").on(table.corretorId, table.dataHora),
+}));
+
+export type HistoricoPresenca = typeof historicoPresenca.$inferSelect;
+export type InsertHistoricoPresenca = typeof historicoPresenca.$inferInsert;
+
+// ============================================================================
+// TABELA DE RESUMO DIÁRIO DE PRESENÇA
+// ============================================================================
+
+/**
+ * Resumo consolidado de presença por dia
+ * Facilita consultas de horas trabalhadas e relatórios
+ */
+export const resumoPresencaDiaria = mysqlTable("resumo_presenca_diaria", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamento
+  corretorId: int("corretorId").notNull(),
+  
+  // Data do resumo
+  data: timestamp("data").notNull(),
+  
+  // Horários
+  primeiraEntrada: timestamp("primeiraEntrada"),
+  ultimaSaida: timestamp("ultimaSaida"),
+  
+  // Totais calculados
+  totalMinutosPresente: int("totalMinutosPresente").default(0).notNull(),
+  totalMinutosAusente: int("totalMinutosAusente").default(0).notNull(),
+  
+  // Contadores
+  quantidadeEntradas: int("quantidadeEntradas").default(0).notNull(),
+  quantidadeSaidas: int("quantidadeSaidas").default(0).notNull(),
+  
+  // Status do dia
+  statusDia: mysqlEnum("statusDia", [
+    "presente",         // Trabalhou normalmente
+    "ausente",          // Não trabalhou
+    "parcial",          // Trabalhou parcialmente
+    "fora_expediente"   // Trabalhou fora do horário normal
+  ]).default("ausente").notNull(),
+  
+  // Flags
+  trabalhouForaExpediente: boolean("trabalhouForaExpediente").default(false).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("resumo_presenca_corretor_idx").on(table.corretorId),
+  dataIdx: index("resumo_presenca_data_idx").on(table.data),
+  corretorDataIdx: index("resumo_presenca_corretor_data_idx").on(table.corretorId, table.data),
+}));
+
+export type ResumoPresencaDiaria = typeof resumoPresencaDiaria.$inferSelect;
+export type InsertResumoPresencaDiaria = typeof resumoPresencaDiaria.$inferInsert;

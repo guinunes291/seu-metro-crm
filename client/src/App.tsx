@@ -33,6 +33,7 @@ import PerformanceTV from "@/pages/PerformanceTV";
 import Lixeira from "@/pages/Lixeira";
 import MetasDiarias from "@/pages/MetasDiarias";
 import MeuPerfil from "@/pages/MeuPerfil";
+import HistoricoPresenca from "@/pages/HistoricoPresenca";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/lixeira" component={Lixeira} />
       <Route path="/metas-diarias" component={MetasDiarias} />
       <Route path="/meu-perfil" component={MeuPerfil} />
+      <Route path="/historico-presenca" component={HistoricoPresenca} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
