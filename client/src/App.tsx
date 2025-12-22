@@ -36,6 +36,7 @@ import MeuPerfil from "@/pages/MeuPerfil";
 import HistoricoPresenca from "@/pages/HistoricoPresenca";
 import Agendamentos from "@/pages/Agendamentos";
 import AprovarProjetos from "@/pages/AprovarProjetos";
+import Conquistas from "@/pages/Conquistas";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/metas-diarias" component={MetasDiarias} />
       <Route path="/meu-perfil" component={MeuPerfil} />
       <Route path="/historico-presenca" component={HistoricoPresenca} />
+      <Route path="/conquistas" component={Conquistas} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

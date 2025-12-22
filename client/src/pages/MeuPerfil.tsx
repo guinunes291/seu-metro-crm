@@ -15,8 +15,13 @@ import { CONQUISTAS, CATEGORIAS, getNivelAtual, type Conquista } from "../../../
 import { 
   Camera, Trophy, Target, Flame, Star, Crown, Medal, Award, 
   Gem, Rocket, Flag, Sparkles, Upload, User, Calendar,
-  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, Lock, Share2
+  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, ChevronDown, Lock, Share2
 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import ConquistaShareCard from "@/components/ConquistaShareCard";
 
 export default function MeuPerfil() {
@@ -27,6 +32,27 @@ export default function MeuPerfil() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>("todas");
   const [showUnlocked, setShowUnlocked] = useState<boolean | null>(null);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(["Primeiros Passos"]));
+  
+  const toggleGroup = (categoria: string) => {
+    setOpenGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(categoria)) {
+        newSet.delete(categoria);
+      } else {
+        newSet.add(categoria);
+      }
+      return newSet;
+    });
+  };
+  
+  const expandAll = () => {
+    setOpenGroups(new Set(CATEGORIAS));
+  };
+  
+  const collapseAll = () => {
+    setOpenGroups(new Set());
+  };
   
   // Queries
   const { data: conquistasUsuario, refetch: refetchConquistas } = trpc.conquistas.minhasConquistas.useQuery();
@@ -292,6 +318,22 @@ export default function MeuPerfil() {
                     <option value="desbloqueadas">Desbloqueadas</option>
                     <option value="bloqueadas">Bloqueadas</option>
                   </select>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={expandAll}
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      Expandir Todas
+                    </Button>
+                    <Button
+                      onClick={collapseAll}
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      Recolher Todas
+                    </Button>
+                  </div>
                   <Button
                     onClick={() => verificarConquistas.mutate()}
                     disabled={verificarConquistas.isPending}
@@ -304,100 +346,129 @@ export default function MeuPerfil() {
               </CardContent>
             </Card>
 
-            {/* Lista de Conquistas por Categoria */}
+            {/* Lista de Conquistas por Categoria - Grupos Expansíveis */}
             {conquistasPorCategoria.map(grupo => (
-              <Card key={grupo.categoria} className="bg-slate-900 border-slate-700">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-white flex items-center gap-2">
-                      <span>{grupo.categoria}</span>
-                      <Badge variant="outline" className="border-slate-600 text-slate-400">
-                        {grupo.desbloqueadas}/{grupo.total}
-                      </Badge>
-                    </CardTitle>
-                    <Progress 
-                      value={(grupo.desbloqueadas / grupo.total) * 100} 
-                      className="w-32 h-2 bg-slate-700"
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {grupo.conquistas.map(conquista => {
-                      const isUnlocked = idsDesbloqueadas.has(conquista.id);
-                      const progresso = getProgressoConquista(conquista);
-                      
-                      return (
-                        <div
-                          key={conquista.id}
-                          className={`relative p-4 rounded-lg border transition-all ${
-                            isUnlocked
-                              ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/50 shadow-lg shadow-amber-500/10"
-                              : "bg-slate-800/50 border-slate-700 opacity-60 hover:opacity-80"
-                          }`}
-                        >
-                          {/* Ícone e Nome */}
-                          <div className="flex items-start gap-3">
-                            <div className={`text-3xl ${isUnlocked ? "" : "grayscale"}`}>
-                              {conquista.icone}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className={`font-semibold text-sm leading-tight ${isUnlocked ? "text-white" : "text-slate-400"}`}>
-                                {conquista.nome}
-                              </h4>
-                              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                {conquista.descricao}
-                              </p>
-                            </div>
-                            {!isUnlocked && (
-                              <Lock className="h-4 w-4 text-slate-500 flex-shrink-0" />
-                            )}
+              <Collapsible
+                key={grupo.categoria}
+                open={openGroups.has(grupo.categoria)}
+                onOpenChange={() => toggleGroup(grupo.categoria)}
+              >
+                <Card className="bg-slate-900 border-slate-700 overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                    <CardHeader className="pb-2 cursor-pointer hover:bg-slate-800/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg transition-transform duration-300 ${
+                            openGroups.has(grupo.categoria) ? "bg-amber-500/20" : "bg-slate-800"
+                          }`}>
+                            <ChevronDown className={`h-5 w-5 text-amber-400 transition-transform duration-300 ${
+                              openGroups.has(grupo.categoria) ? "rotate-0" : "-rotate-90"
+                            }`} />
                           </div>
-
-                          {/* Barra de Progresso */}
-                          <div className="mt-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className={isUnlocked ? "text-amber-400" : "text-slate-500"}>
-                                {conquista.meta}
-                              </span>
-                              <span className={isUnlocked ? "text-green-400" : "text-slate-500"}>
-                                {isUnlocked ? "✓ Completo" : `${Math.round(progresso)}%`}
-                              </span>
-                            </div>
-                            <Progress 
-                              value={progresso} 
-                              className={`h-1.5 ${isUnlocked ? "bg-amber-900" : "bg-slate-700"}`}
-                            />
-                          </div>
-
-                          {/* Pontos e Compartilhamento */}
-                          <div className="mt-2 flex items-center justify-between">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs ${isUnlocked ? "border-amber-500 text-amber-400" : "border-slate-600 text-slate-500"}`}
-                            >
-                              +{conquista.pontos} pts
+                          <CardTitle className="text-lg text-white flex items-center gap-2">
+                            <span>{grupo.categoria}</span>
+                            <Badge variant="outline" className={`border-slate-600 ${
+                              grupo.desbloqueadas === grupo.total ? "border-green-500 text-green-400" : "text-slate-400"
+                            }`}>
+                              {grupo.desbloqueadas}/{grupo.total}
                             </Badge>
-                            <div className="flex items-center gap-1">
-                              {isUnlocked && (
-                                <>
-                                  <ConquistaShareCard 
-                                    conquista={conquista} 
-                                    userName={user?.name || "Corretor"}
-                                    nivel={nivelInfo.nivel}
-                                    titulo={nivelInfo.titulo}
-                                  />
-                                  <Sparkles className="h-4 w-4 text-amber-400" />
-                                </>
-                              )}
-                            </div>
-                          </div>
+                          </CardTitle>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                        <div className="flex items-center gap-4">
+                          <Progress 
+                            value={(grupo.desbloqueadas / grupo.total) * 100} 
+                            className="w-32 h-2 bg-slate-700"
+                          />
+                          <span className="text-sm text-slate-400 min-w-[3rem] text-right">
+                            {Math.round((grupo.desbloqueadas / grupo.total) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="animate-in slide-in-from-top-2 duration-300">
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {grupo.conquistas.map(conquista => {
+                          const isUnlocked = idsDesbloqueadas.has(conquista.id);
+                          const progresso = getProgressoConquista(conquista);
+                          
+                          return (
+                            <div
+                              key={conquista.id}
+                              className={`relative p-4 rounded-lg border cursor-pointer
+                                transition-all duration-300 ease-out
+                                hover:scale-[1.02] hover:-translate-y-1 hover:shadow-xl
+                                ${
+                                isUnlocked
+                                  ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500/50 shadow-lg shadow-amber-500/10 hover:shadow-amber-500/20"
+                                  : "bg-slate-800/50 border-slate-700 opacity-60 hover:opacity-100 hover:border-slate-500"
+                              }`}
+                            >
+                              {/* Ícone e Nome */}
+                              <div className="flex items-start gap-3">
+                                <div className={`text-3xl transition-transform duration-300 hover:scale-110 ${isUnlocked ? "" : "grayscale"}`}>
+                                  {conquista.icone}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <h4 className={`font-semibold text-sm leading-tight ${isUnlocked ? "text-white" : "text-slate-400"}`}>
+                                    {conquista.nome}
+                                  </h4>
+                                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    {conquista.descricao}
+                                  </p>
+                                </div>
+                                {!isUnlocked && (
+                                  <Lock className="h-4 w-4 text-slate-500 flex-shrink-0" />
+                                )}
+                              </div>
+
+                              {/* Barra de Progresso */}
+                              <div className="mt-3">
+                                <div className="flex justify-between text-xs mb-1">
+                                  <span className={isUnlocked ? "text-amber-400" : "text-slate-500"}>
+                                    {conquista.meta}
+                                  </span>
+                                  <span className={isUnlocked ? "text-green-400" : "text-slate-500"}>
+                                    {isUnlocked ? "✓ Completo" : `${Math.round(progresso)}%`}
+                                  </span>
+                                </div>
+                                <Progress 
+                                  value={progresso} 
+                                  className={`h-1.5 ${isUnlocked ? "bg-amber-900" : "bg-slate-700"}`}
+                                />
+                              </div>
+
+                              {/* Pontos e Compartilhamento */}
+                              <div className="mt-2 flex items-center justify-between">
+                                <Badge 
+                                  variant="outline" 
+                                  className={`text-xs ${isUnlocked ? "border-amber-500 text-amber-400" : "border-slate-600 text-slate-500"}`}
+                                >
+                                  +{conquista.pontos} pts
+                                </Badge>
+                                <div className="flex items-center gap-1">
+                                  {isUnlocked && (
+                                    <>
+                                      <ConquistaShareCard 
+                                        conquista={conquista} 
+                                        userName={user?.name || "Corretor"}
+                                        nivel={nivelInfo.nivel}
+                                        titulo={nivelInfo.titulo}
+                                      />
+                                      <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             ))}
 
             {conquistasFiltradas.length === 0 && (

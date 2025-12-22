@@ -1543,3 +1543,9 @@
 - [x] Atualizar formulário de edição de corretor
 - [x] Criar visualização da ficha completa do corretor (botão Ver Detalhes)
 - [x] Adicionar estatísticas de Ativos/Inativos no dashboard de corretores
+
+## Reorganização da Página de Conquistas (22/12/2025)
+- [ ] Definir grupos de conquistas (ex: Atendimento, Vendas, Presença, etc.)
+- [ ] Criar layout com grupos expansíveis igual menu lateral
+- [ ] Adicionar animações nos cards ao passar o mouse (hover effects)
+- [ ] Manter indicação visual de conquistas desbloqueadas vs bloqueadas
