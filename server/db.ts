@@ -2617,6 +2617,25 @@ export async function registrarTentativaFollowUp(
     const leadData = await db.select().from(leads).where(eq(leads.id, atual.leadId)).limit(1);
     if (!leadData[0]) throw new Error("Lead não encontrado");
     
+    // Se o lead for de captação própria do corretor, NÃO transferir - apenas encerrar
+    if (leadData[0].origem === "captacao_corretor") {
+      // Registrar interação no histórico
+      await db.insert(leadHistory).values({
+        leadId: atual.leadId,
+        corretorId: atual.corretorId,
+        tipo: "outro",
+        resultado: "outro",
+        observacoes: `Follow-up encerrado após 5 tentativas sem resposta (lead de captação própria - não transferível)`,
+        statusAnterior: leadData[0].status,
+        statusNovo: leadData[0].status
+      });
+      
+      return { 
+        status: "encerrado", 
+        mensagem: "Follow-up encerrado após 5 tentativas. Lead de captação própria não é transferido." 
+      };
+    }
+    
     // Parsear lista de corretores que já tentaram
     let corretoresQueTentaram: number[] = [];
     try {

@@ -1499,3 +1499,8 @@
 - [x] Implementar transferência para outro corretor após 5/5 (ao invés de perdido)
 - [x] Rastrear quais corretores já tentaram o lead (campo corretoresQueTentaram)
 - [x] Mover para Lixeira apenas quando TODOS corretores completarem 5/5
+
+## Origem Captação Corretor (22/12/2025)
+- [x] Adicionar origem "captacao_corretor" no enum de origens do lead
+- [x] Ajustar lógica de transferência para não transferir leads de captação própria
+- [x] Leads de captação corretor ficam com o corretor mesmo após 5/5

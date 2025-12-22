@@ -128,7 +128,17 @@ export const leads = mysqlTable("leads", {
   cpf: varchar("cpf", { length: 14 }), // CPF do lead (formato: 000.000.000-00)
   
   // Origem e interesse
-  origem: varchar("origem", { length: 255 }), // Canal de captação
+  origem: mysqlEnum("origem", [
+    "facebook",           // Facebook Lead Ads
+    "google_sheets",      // Importado do Google Sheets
+    "site",               // Formulário do site
+    "indicacao",          // Indicação de cliente
+    "captacao_corretor",  // Captação própria do corretor (NÃO transfere após 5/5)
+    "whatsapp",           // Contato via WhatsApp
+    "telefone",           // Ligação telefônica
+    "plantao",            // Plantão de vendas
+    "outro"               // Outras origens
+  ]).default("outro"), // Canal de captação
   projectId: int("projectId"), // Projeto de interesse
   
   // Atribuição

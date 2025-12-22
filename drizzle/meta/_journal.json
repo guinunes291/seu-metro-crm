@@ -155,6 +155,13 @@
       "when": 1766404900884,
       "tag": "0021_third_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1766405195899,
+      "tag": "0022_foamy_captain_universe",
+      "breakpoints": true
     }
   ]
 }
