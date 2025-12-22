@@ -3064,8 +3064,36 @@ export async function getRankingDia(data?: Date) {
     ))
     .orderBy(desc(atividadesDiarias.pontuacaoTotal));
   
+  // Agrupar atividades por corretor (somar múltiplos registros do mesmo corretor)
+  const atividadesAgrupadas = new Map<number, typeof atividades[0]>();
+  
+  for (const atividade of atividades) {
+    const existente = atividadesAgrupadas.get(atividade.corretorId);
+    if (existente) {
+      // Somar valores
+      existente.ligacoesRealizadas += atividade.ligacoesRealizadas;
+      existente.ligacoesAtendidas += atividade.ligacoesAtendidas;
+      existente.whatsappEnviados += atividade.whatsappEnviados;
+      existente.whatsappRespondidos += atividade.whatsappRespondidos;
+      existente.agendamentosConfirmados += atividade.agendamentosConfirmados;
+      existente.visitasRealizadas += atividade.visitasRealizadas;
+      existente.propostasEnviadas += atividade.propostasEnviadas;
+      existente.documentacoesRecolhidas += atividade.documentacoesRecolhidas;
+      existente.analiseCreditoEnviadas += atividade.analiseCreditoEnviadas;
+      existente.contratosFechados += atividade.contratosFechados;
+      existente.vgvDia += atividade.vgvDia;
+      existente.pontuacaoTotal += atividade.pontuacaoTotal;
+    } else {
+      atividadesAgrupadas.set(atividade.corretorId, { ...atividade });
+    }
+  }
+  
+  // Converter Map para array e ordenar por pontuação
+  const atividadesUnicas = Array.from(atividadesAgrupadas.values())
+    .sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
+  
   // Buscar metas de cada corretor para calcular percentuais
-  const resultado = await Promise.all(atividades.map(async (atividade) => {
+  const resultado = await Promise.all(atividadesUnicas.map(async (atividade) => {
     const metasCorretor = await db.select()
       .from(metas)
       .where(eq(metas.corretorId, atividade.corretorId))

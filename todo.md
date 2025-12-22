@@ -1578,3 +1578,8 @@
 - [x] Melhorar tratamento de erros com mensagens mais específicas
 - [x] Adicionar validação de tamanho antes do upload
 - [x] Adicionar try-catch no backend para erros do S3
+
+## Bug: Corretores Duplicados no Ranking (22/12/2025) - CORRIGIDO
+- [x] Investigar causa da duplicação (múltiplas atividades diárias por corretor)
+- [x] Agrupar atividades por corretor na query do ranking
+- [x] Somar pontuação de todas as atividades do período

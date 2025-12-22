@@ -1,0 +1,50 @@
+{
+  "query": "SELECT \n  ad.id,\n  ad.corretorId,\n  u.name as corretor,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY u.name, ad.data;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  ad.id,\n  ad.corretorId,\n  u.name as corretor,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY u.name, ad.data;",
+  "rows": [
+    {
+      "id": "60002",
+      "corretorId": "5050301",
+      "corretor": "Anderson ANTOINE",
+      "data": "2025-12-22 05:00:00",
+      "ligacoesRealizadas": "17",
+      "pontuacaoTotal": "17"
+    },
+    {
+      "id": "60006",
+      "corretorId": "4236208",
+      "corretor": "Andrew",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "6",
+      "pontuacaoTotal": "18"
+    },
+    {
+      "id": "60003",
+      "corretorId": "4236208",
+      "corretor": "Andrew",
+      "data": "2025-12-22 05:00:00",
+      "ligacoesRealizadas": "4",
+      "pontuacaoTotal": "4"
+    },
+    {
+      "id": "60005",
+      "corretorId": "5053030",
+      "corretor": "Breno Brunelli",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "1",
+      "pontuacaoTotal": "3"
+    },
+    {
+      "id": "60004",
+      "corretorId": "5053030",
+      "corretor": "Breno Brunelli",
+      "data": "2025-12-22 05:00:00",
+      "ligacoesRealizadas": "26",
+      "pontuacaoTotal": "26"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tcorretor\tdata\tligacoesRealizadas\tpontuacaoTotal\n60002\t5050301\tAnderson ANTOINE\t2025-12-22 05:00:00\t17\t17\n60006\t4236208\tAndrew\t2025-12-22 00:00:00\t6\t18\n60003\t4236208\tAndrew\t2025-12-22 05:00:00\t4\t4\n60005\t5053030\tBreno Brunelli\t2025-12-22 00:00:00\t1\t3\n60004\t5053030\tBreno Brunelli\t2025-12-22 05:00:00\t26\t26\n",
+  "stderr": "",
+  "execution_time_ms": 103
+}
