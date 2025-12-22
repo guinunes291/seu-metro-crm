@@ -161,6 +161,9 @@ export const leads = mysqlTable("leads", {
   dataMovidoLixeira: timestamp("dataMovidoLixeira"),
   corretorAnteriorId: int("corretorAnteriorId"), // Guarda o corretor que perdeu o lead
   
+  // Rastreamento de corretores que já tentaram o lead (JSON array de IDs)
+  corretoresQueTentaram: text("corretoresQueTentaram"), // JSON: [1, 5, 8] - IDs dos corretores
+  
   // Campos do Facebook Lead Ads
   campanha: varchar("campanha", { length: 255 }), // Nome da campanha (campaign_name)
   faixaRenda: varchar("faixaRenda", { length: 100 }), // Faixa de renda (faixa_de_renda)

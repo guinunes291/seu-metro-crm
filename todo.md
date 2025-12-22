@@ -1489,3 +1489,13 @@
 - [x] Criar contador de leads urgentes por nível (normal, atenção, prioridade alta, crítico)
 - [x] Criar componente de funil de vendas visual em formato de funil
 - [x] Integrar contador e funil no dashboard do gestor
+
+## Sistema de Tarefas do Dia - Follow-ups (22/12/2025)
+- [x] Tabela de follow-ups já existe no schema
+- [x] Lógica de incremento de tentativas (1/5 até 5/5) já existe
+- [x] Página Tarefas do Dia já existe com follow-ups pendentes
+- [x] Melhorar interface com botões claros "Cliente respondeu? Sim/Não"
+- [x] Registrar interação no histórico ao marcar follow-up
+- [x] Implementar transferência para outro corretor após 5/5 (ao invés de perdido)
+- [x] Rastrear quais corretores já tentaram o lead (campo corretoresQueTentaram)
+- [x] Mover para Lixeira apenas quando TODOS corretores completarem 5/5

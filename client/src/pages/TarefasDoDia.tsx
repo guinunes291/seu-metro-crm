@@ -247,7 +247,7 @@ export default function TarefasDoDia() {
                 Follow-ups Pendentes
               </CardTitle>
               <CardDescription>
-                Clientes novos aguardando contato. Após 5 tentativas sem resposta, o lead é encerrado automaticamente.
+                Clientes aguardando contato. Após 5 tentativas sem resposta, o lead é transferido para outro corretor automaticamente.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -279,15 +279,25 @@ export default function TarefasDoDia() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <Badge variant="outline" className="bg-orange-100">
-                        Tentativa {followUp.tentativaAtual} de {followUp.maxTentativas}
+                    <div className="flex items-center gap-2 sm:gap-4">
+                      <Badge variant="outline" className="bg-orange-100 whitespace-nowrap">
+                        {followUp.tentativaAtual}/{followUp.maxTentativas}
                       </Badge>
+                      {followUp.leadTelefone && (
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="hidden sm:flex"
+                          onClick={() => window.open(`https://wa.me/55${followUp.leadTelefone?.replace(/\D/g, '')}`, '_blank')}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button 
                         size="sm" 
                         onClick={() => setShowRegistrarTentativa(followUp.id)}
                       >
-                        Registrar Contato
+                        Cliente respondeu?
                       </Button>
                     </div>
                   </div>
@@ -528,38 +538,45 @@ export default function TarefasDoDia() {
 
       {/* Dialog: Registrar Tentativa de Follow-up */}
       <AlertDialog open={showRegistrarTentativa !== null} onOpenChange={() => setShowRegistrarTentativa(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>Registrar Tentativa de Contato</AlertDialogTitle>
-            <AlertDialogDescription>
-              Como foi a tentativa de contato com o cliente?
+            <AlertDialogTitle className="text-center text-xl">Cliente respondeu?</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Registre o resultado da tentativa de contato
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Button 
+                size="lg"
+                variant="outline"
+                className="h-24 flex-col gap-2 border-red-200 hover:bg-red-50 hover:border-red-300"
+                onClick={() => handleRegistrarTentativa("nao_atendeu")}
+                disabled={registrarTentativaMutation.isPending}
+              >
+                <XCircle className="h-8 w-8 text-red-500" />
+                <span className="font-semibold text-red-600">Não</span>
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                className="h-24 flex-col gap-2 border-green-200 hover:bg-green-50 hover:border-green-300"
+                onClick={() => handleRegistrarTentativa("respondeu")}
+                disabled={registrarTentativaMutation.isPending}
+              >
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+                <span className="font-semibold text-green-600">Sim</span>
+              </Button>
+            </div>
             <Textarea
               placeholder="Observações (opcional)..."
               value={observacaoTentativa}
               onChange={(e) => setObservacaoTentativa(e.target.value)}
+              className="mt-4"
             />
           </div>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button 
-              variant="destructive"
-              onClick={() => handleRegistrarTentativa("nao_atendeu")}
-              disabled={registrarTentativaMutation.isPending}
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Não Atendeu
-            </Button>
-            <Button 
-              variant="default"
-              onClick={() => handleRegistrarTentativa("respondeu")}
-              disabled={registrarTentativaMutation.isPending}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-              Cliente Respondeu
-            </Button>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="w-full">Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
