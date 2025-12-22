@@ -117,7 +117,7 @@ export default function Leads() {
     telefone: "",
     email: "",
     projectId: "",
-    origem: "indicacao" as "facebook" | "instagram" | "google" | "site" | "indicacao" | "outro",
+    origem: "captacao_corretor" as "captacao_corretor" | "indicacao" | "whatsapp" | "telefone" | "plantao" | "facebook" | "site" | "outro",
     observacoes: "",
   });
 
@@ -1048,10 +1048,12 @@ export default function Leads() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="captacao_corretor">Captação Própria</SelectItem>
                     <SelectItem value="indicacao">Indicação</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="telefone">Telefone</SelectItem>
+                    <SelectItem value="plantao">Plantão</SelectItem>
                     <SelectItem value="facebook">Facebook</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="google">Google</SelectItem>
                     <SelectItem value="site">Site</SelectItem>
                     <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
