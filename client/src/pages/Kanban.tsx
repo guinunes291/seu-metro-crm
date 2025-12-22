@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Phone, Mail, GripVertical, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import LeadTimer from "@/components/LeadTimer";
 
 // Definição das colunas do Kanban baseadas nos status do lead
 const KANBAN_COLUMNS = [
@@ -182,11 +183,14 @@ export default function Kanban() {
 
 
 
-                          {lead.origem && (
-                            <Badge variant="outline" className="text-xs mt-2">
-                              {lead.origem}
-                            </Badge>
-                          )}
+                          <div className="flex items-center justify-between mt-2">
+                            {lead.origem && (
+                              <Badge variant="outline" className="text-xs">
+                                {lead.origem}
+                              </Badge>
+                            )}
+                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon />
+                          </div>
                         </div>
                       </div>
                     </CardContent>

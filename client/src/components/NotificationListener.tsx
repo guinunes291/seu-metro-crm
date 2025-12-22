@@ -2,17 +2,70 @@ import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
-import { Bell, Volume2, VolumeX } from "lucide-react";
+import { Bell, Volume2, VolumeX, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // URL do som de notificação (usando um som público)
 const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
+// Função para solicitar permissão de notificação do navegador
+async function requestNotificationPermission(): Promise<boolean> {
+  if (!("Notification" in window)) {
+    console.log("Este navegador não suporta notificações");
+    return false;
+  }
+  
+  if (Notification.permission === "granted") {
+    return true;
+  }
+  
+  if (Notification.permission !== "denied") {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  }
+  
+  return false;
+}
+
+// Função para enviar notificação do navegador
+function sendBrowserNotification(title: string, body: string, leadId?: number) {
+  if (Notification.permission === "granted") {
+    const notification = new Notification(title, {
+      body,
+      icon: "/favicon.ico",
+      badge: "/favicon.ico",
+      tag: leadId ? `lead-${leadId}` : undefined,
+      requireInteraction: true, // Mantém a notificação até o usuário interagir
+    });
+    
+    notification.onclick = () => {
+      window.focus();
+      if (leadId) {
+        window.location.href = `/leads?leadId=${leadId}`;
+      }
+      notification.close();
+    };
+  }
+}
+
 export default function NotificationListener() {
   const { user } = useAuth();
   const [lastCheck, setLastCheck] = useState(() => Date.now());
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [browserNotificationsEnabled, setBrowserNotificationsEnabled] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Solicitar permissão de notificação do navegador ao carregar
+  useEffect(() => {
+    if (user) {
+      requestNotificationPermission().then(granted => {
+        setBrowserNotificationsEnabled(granted);
+        if (granted) {
+          console.log("Notificações do navegador ativadas");
+        }
+      });
+    }
+  }, [user]);
   
   // Criar elemento de áudio
   useEffect(() => {
@@ -84,6 +137,7 @@ export default function NotificationListener() {
       
       // Mostrar toast para cada notificação
       newNotifications.forEach((notification) => {
+        // Toast interno do app
         toast(notification.titulo, {
           description: notification.mensagem,
           duration: 10000, // 10 segundos
@@ -95,6 +149,15 @@ export default function NotificationListener() {
             },
           } : undefined,
         });
+        
+        // Notificação do navegador (funciona mesmo com aba em segundo plano)
+        if (browserNotificationsEnabled && document.hidden) {
+          sendBrowserNotification(
+            notification.titulo,
+            notification.mensagem,
+            notification.leadId || undefined
+          );
+        }
       });
       
       // Atualizar timestamp para próxima verificação

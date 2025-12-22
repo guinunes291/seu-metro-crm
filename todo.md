@@ -1475,3 +1475,12 @@
 
 ## Melhorias de UI (22/12/2025)
 - [x] Diferenciar visualmente botões principais dos itens de submenu no sidebar
+
+
+## Notificações Push e Timer de Atendimento (22/12/2025)
+- [x] Implementar notificações push no navegador para novos leads
+- [x] Notificar corretor quando lead é atribuído a ele
+- [x] Notificar gestor quando novo lead chega no sistema
+- [x] Implementar timer de atendimento no lead (tempo aguardando)
+- [x] Destaque visual para leads urgentes (aguardando há muito tempo)
+- [x] Configurar limites de tempo para alertas (5min amarelo, 30min vermelho, 2h crítico)

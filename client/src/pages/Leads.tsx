@@ -38,6 +38,7 @@ import { CopilotQuickActions } from "@/components/CopilotQuickActions";
 import { SMQCopilotButton } from "@/components/SMQCopilotChat";
 import { useCopilot } from "@/contexts/CopilotContext";
 import { Bot } from "lucide-react";
+import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -437,10 +438,13 @@ export default function Leads() {
                             {lead.origem && `Origem: ${lead.origem}`}
                           </CardDescription>
                         </div>
-                        <Badge variant={getStatusVariant(lead.status)} className="flex items-center gap-1">
-                          {getStatusIcon(lead.status)}
-                          {statusLabels[lead.status]}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant={getStatusVariant(lead.status)} className="flex items-center gap-1">
+                            {getStatusIcon(lead.status)}
+                            {statusLabels[lead.status]}
+                          </Badge>
+                          <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -582,6 +586,7 @@ export default function Leads() {
                     <TableHead>Telefone</TableHead>
                     <TableHead>Projeto</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Aguardando</TableHead>
                     <TableHead>Último Contato</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -599,6 +604,9 @@ export default function Leads() {
                           <Badge variant={getStatusVariant(lead.status)}>
                             {statusLabels[lead.status]}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon={false} />
                         </TableCell>
                         <TableCell>
                           {lead.ultimoContato 
