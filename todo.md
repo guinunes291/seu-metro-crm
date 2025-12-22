@@ -1572,3 +1572,9 @@
 - [x] Adicionar endpoint para recalcular pontuação de todos os corretores
 - [x] Simplificar sistema de pontuação: 1 ponto por ligação (sem bônus extras)
 - [x] Corrigir filtro de data do ranking (problema de fuso horário UTC)
+
+## Bug: Erro no Upload de Foto do Perfil (22/12/2025) - CORRIGIDO
+- [x] Investigar erro "Erro ao fazer upload da foto" no perfil do corretor
+- [x] Melhorar tratamento de erros com mensagens mais específicas
+- [x] Adicionar validação de tamanho antes do upload
+- [x] Adicionar try-catch no backend para erros do S3

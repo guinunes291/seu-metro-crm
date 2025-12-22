@@ -203,6 +203,14 @@ export default function Configuracoes() {
         try {
           const base64 = reader.result as string;
           
+          // Verificar tamanho do base64 (aproximadamente 1.37x o tamanho do arquivo)
+          const base64Size = base64.length * 0.75; // Tamanho aproximado em bytes
+          if (base64Size > 5 * 1024 * 1024) {
+            toast.error('Imagem muito grande após processamento. Tente uma foto menor.');
+            setUploading(false);
+            return;
+          }
+          
           await uploadFotoMutation.mutateAsync({
             fileData: base64,
             fileName: `foto-perfil-${Date.now()}.jpg`,
@@ -217,7 +225,19 @@ export default function Configuracoes() {
           refetchUser?.();
           utils.ranking.getCompleto.invalidate();
         } catch (error: any) {
-          toast.error(error.message || 'Erro ao fazer upload da foto');
+          console.error('Erro no upload da foto:', error);
+          // Mensagens de erro mais específicas
+          let errorMessage = 'Erro ao fazer upload da foto';
+          if (error.message?.includes('Storage')) {
+            errorMessage = 'Erro no servidor de armazenamento. Tente novamente.';
+          } else if (error.message?.includes('grande') || error.message?.includes('size')) {
+            errorMessage = 'Arquivo muito grande. Tente uma foto menor.';
+          } else if (error.message?.includes('tipo') || error.message?.includes('type')) {
+            errorMessage = 'Tipo de arquivo não permitido.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          toast.error(errorMessage);
         } finally {
           setUploading(false);
         }

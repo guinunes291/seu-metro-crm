@@ -1486,13 +1486,21 @@ export const appRouter = router({
         const ext = input.fileName.split('.').pop() || 'jpg';
         const uniqueFileName = `corretores/${ctx.user.id}/foto-${Date.now()}.${ext}`;
         
-        // Fazer upload para S3
-        const { url } = await storagePut(uniqueFileName, buffer, input.contentType);
-        
-        // Atualizar URL da foto no banco
-        await db.updateCorretorFoto(ctx.user.id, url);
-        
-        return { success: true, url };
+        try {
+          // Fazer upload para S3
+          const { url } = await storagePut(uniqueFileName, buffer, input.contentType);
+          
+          // Atualizar URL da foto no banco
+          await db.updateCorretorFoto(ctx.user.id, url);
+          
+          return { success: true, url };
+        } catch (storageError: any) {
+          console.error('Erro no upload para S3:', storageError);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: 'Erro ao salvar a foto. Por favor, tente novamente.' 
+          });
+        }
       }),
     
     // Atualizar foto do corretor (apenas URL)
