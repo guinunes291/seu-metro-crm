@@ -26,12 +26,24 @@ import {
   MessageCircle,
   Eye,
   Edit,
-  Smartphone
+  Smartphone,
+  RefreshCw,
+  Trash2,
+  Shield,
+  Award,
+  ListTodo,
+  CalendarDays,
+  Timer,
+  XCircle,
+  ArrowLeftRight,
+  UserPlus,
+  AlertCircle
 } from "lucide-react";
 import { useLocation } from "wouter";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
 
 export default function BoasVindas() {
   const [, setLocation] = useLocation();
@@ -45,7 +57,7 @@ export default function BoasVindas() {
       icon: UserCheck,
       title: "Presença / Ausência",
       description: "Controle quando você está disponível para receber leads",
-      path: null, // Não tem página, é no sidebar
+      path: null,
       color: "bg-emerald-500",
       steps: [
         "No menu lateral, você verá um botão PRESENTE (verde) ou AUSENTE (vermelho)",
@@ -67,9 +79,25 @@ export default function BoasVindas() {
         "Clique no TELEFONE (verde) ou botão WHATSAPP para contatar o cliente diretamente",
         "Use os filtros para encontrar leads por status, data ou projeto",
         "Clique em 'Ver Detalhes' para abrir informações completas do lead",
-        "Atualize o status do lead conforme o progresso do atendimento"
+        "Atualize o status do lead conforme o progresso do atendimento",
+        "O TIMER mostra há quanto tempo o lead está aguardando (amarelo +5min, vermelho +30min, crítico +2h)"
       ],
       important: "💡 DICA: Leads novos devem ser contatados em até 5 minutos para maior conversão!"
+    },
+    {
+      icon: UserPlus,
+      title: "Cadastrar Lead (Captação Própria)",
+      description: "Cadastre leads que você mesmo captou",
+      path: "/leads",
+      color: "bg-teal-500",
+      steps: [
+        "Na página 'Meus Leads', clique no botão 'Novo Lead'",
+        "Preencha nome, telefone, email e projeto de interesse",
+        "A origem já vem selecionada como 'Captação Própria'",
+        "Leads de captação própria NUNCA são transferidos para outros corretores",
+        "Esses leads ficam com você mesmo após 5 tentativas de follow-up sem resposta"
+      ],
+      important: "🎯 REGRA: Leads de Captação Própria são seus para sempre!"
     },
     {
       icon: Kanban,
@@ -82,8 +110,37 @@ export default function BoasVindas() {
         "Arraste e solte os cards para mover leads entre as etapas",
         "Clique no card para ver detalhes e adicionar observações",
         "Acompanhe visualmente quantos leads estão em cada etapa",
-        "Use para ter uma visão geral do seu funil de vendas"
+        "O timer de urgência aparece em cada card"
       ]
+    },
+    {
+      icon: CalendarDays,
+      title: "Agendamentos",
+      description: "Gerencie suas visitas e compromissos",
+      path: "/agendamentos",
+      color: "bg-orange-500",
+      steps: [
+        "Crie agendamentos de visitas com seus clientes",
+        "Visualize em formato de calendário (mensal ou semanal)",
+        "Busque o lead por telefone para vincular ao agendamento",
+        "Selecione o projeto, data, hora e adicione observações",
+        "Acompanhe o status: pendente, confirmado, realizado ou cancelado"
+      ]
+    },
+    {
+      icon: ListTodo,
+      title: "Tarefas do Dia (Follow-ups)",
+      description: "Acompanhe os follow-ups pendentes",
+      path: "/tarefas-do-dia",
+      color: "bg-red-500",
+      steps: [
+        "Veja todos os leads que precisam de follow-up hoje",
+        "Cada lead tem um contador de tentativas (1/5 até 5/5)",
+        "Ao registrar contato, responda: 'Cliente respondeu? Sim ou Não'",
+        "Se SIM: contador reseta e lead sai das tarefas do dia",
+        "Se NÃO: contador avança (2/5, 3/5...) e você tenta novamente amanhã"
+      ],
+      important: "⚠️ REGRA: Após 5 tentativas sem resposta, o lead é transferido para outro corretor automaticamente!"
     },
     {
       icon: TrendingUp,
@@ -95,8 +152,20 @@ export default function BoasVindas() {
         "Veja seu ranking no pódio mensal comparado aos outros corretores",
         "Acompanhe sua taxa de conversão (leads → vendas)",
         "Veja quantos leads recebeu, agendamentos feitos e contratos fechados",
-        "Compare seu desempenho com as metas estabelecidas",
-        "Use para identificar pontos de melhoria"
+        "Compare seu desempenho com as metas estabelecidas"
+      ]
+    },
+    {
+      icon: Award,
+      title: "Conquistas",
+      description: "Desbloqueie conquistas e ganhe pontos",
+      path: "/conquistas",
+      color: "bg-yellow-500",
+      steps: [
+        "Ganhe conquistas por atingir metas e marcos importantes",
+        "Cada conquista vale pontos que contam no ranking",
+        "Conquistas são exibidas no seu perfil",
+        "Tipos: primeiro lead, primeira venda, metas batidas, etc"
       ]
     },
     {
@@ -104,13 +173,12 @@ export default function BoasVindas() {
       title: "Notificações",
       description: "Fique por dentro de novos leads e atualizações",
       path: "/notificacoes",
-      color: "bg-orange-500",
+      color: "bg-pink-500",
       steps: [
         "Receba alertas sonoros quando novos leads forem atribuídos a você",
+        "Notificações push aparecem mesmo com a aba em segundo plano",
         "Clique na notificação para abrir os detalhes do lead automaticamente",
-        "O ícone de sino no menu mostra quantas notificações não lidas você tem",
-        "Mantenha o som ativado (ícone no topo) para não perder novos leads",
-        "Marque notificações como lidas após visualizar"
+        "Mantenha o som ativado (ícone 🔔 no topo) para não perder novos leads"
       ],
       important: "🔔 ATENÇÃO: Mantenha o som ativado para não perder leads!"
     },
@@ -223,6 +291,81 @@ export default function BoasVindas() {
     }
   ];
 
+  // Regras do Sistema
+  const regrasDoSistema = [
+    {
+      icon: Timer,
+      title: "Timer de Urgência",
+      description: "Cada lead mostra há quanto tempo está aguardando atendimento",
+      rules: [
+        "Amarelo: Lead aguardando há mais de 5 minutos",
+        "Vermelho: Lead aguardando há mais de 30 minutos",
+        "Crítico (pulsando): Lead aguardando há mais de 2 horas"
+      ],
+      color: "bg-amber-100 border-amber-300 text-amber-800"
+    },
+    {
+      icon: RefreshCw,
+      title: "Sistema de Follow-up (5 Tentativas)",
+      description: "Cada lead tem direito a 5 tentativas de contato",
+      rules: [
+        "Tentativa 1/5 até 5/5 - você tenta contatar o cliente",
+        "Se o cliente RESPONDER: contador reseta e você continua o atendimento",
+        "Se o cliente NÃO RESPONDER após 5 tentativas: lead é transferido automaticamente",
+        "Novo corretor recebe o lead e começa 1/5 novamente"
+      ],
+      color: "bg-blue-100 border-blue-300 text-blue-800"
+    },
+    {
+      icon: Shield,
+      title: "Captação Própria (Não Transfere)",
+      description: "Leads cadastrados por você com origem 'Captação Própria'",
+      rules: [
+        "Leads de captação própria NUNCA são transferidos",
+        "Mesmo após 5/5 tentativas, o lead continua com você",
+        "Ao cadastrar um lead, selecione 'Captação Própria' como origem",
+        "Essa regra protege os leads que você mesmo captou"
+      ],
+      color: "bg-green-100 border-green-300 text-green-800"
+    },
+    {
+      icon: ArrowLeftRight,
+      title: "Transferência Automática",
+      description: "Como funciona a transferência de leads entre corretores",
+      rules: [
+        "Após 5/5 tentativas sem resposta → lead vai para outro corretor",
+        "O sistema escolhe um corretor que ainda não tentou esse lead",
+        "O novo corretor começa do 1/5 novamente",
+        "Leads de 'Captação Própria' são exceção e não são transferidos"
+      ],
+      color: "bg-purple-100 border-purple-300 text-purple-800"
+    },
+    {
+      icon: Trash2,
+      title: "Lixeira (Leads Perdidos)",
+      description: "Quando um lead vai para a lixeira",
+      rules: [
+        "Lead só vai para lixeira quando TODOS os corretores completarem 5/5",
+        "Ou seja, todos tentaram 5x e ninguém conseguiu contato",
+        "Leads na lixeira podem ser recuperados pelo gestor",
+        "Motivo é registrado automaticamente no histórico"
+      ],
+      color: "bg-red-100 border-red-300 text-red-800"
+    },
+    {
+      icon: Bell,
+      title: "Notificações Push",
+      description: "Alertas em tempo real para novos leads",
+      rules: [
+        "Você recebe notificação quando um novo lead é atribuído",
+        "Funciona mesmo com a aba do navegador em segundo plano",
+        "Permita notificações no navegador para receber alertas",
+        "Mantenha o som ativado para não perder leads"
+      ],
+      color: "bg-orange-100 border-orange-300 text-orange-800"
+    }
+  ];
+
   const dicasCorretores = [
     {
       icon: Clock,
@@ -256,41 +399,7 @@ export default function BoasVindas() {
     }
   ];
 
-  const dicasGestores = [
-    {
-      icon: Clock,
-      title: "Responda Rápido",
-      description: "Leads respondidos em até 5 minutos têm 21x mais chances de conversão"
-    },
-    {
-      icon: Phone,
-      title: "Prefira Ligação",
-      description: "Sempre que possível, faça uma ligação. É mais pessoal e efetivo"
-    },
-    {
-      icon: Calendar,
-      title: "Agende Visitas",
-      description: "Converta leads em visitas agendadas o mais rápido possível"
-    },
-    {
-      icon: MessageSquare,
-      title: "Registre Tudo",
-      description: "Adicione observações em cada interação para não perder informações"
-    },
-    {
-      icon: Target,
-      title: "Foque nas Metas",
-      description: "Acompanhe suas metas diariamente e ajuste sua estratégia"
-    },
-    {
-      icon: Star,
-      title: "Qualifique Bem",
-      description: "Entenda as necessidades do cliente antes de apresentar imóveis"
-    }
-  ];
-
   const sections = isGestor ? [...corretorSections, ...gestorSections] : corretorSections;
-  const dicas = isGestor ? dicasGestores : dicasCorretores;
 
   return (
     <DashboardLayout>
@@ -321,6 +430,7 @@ export default function BoasVindas() {
                 <li>Verifique se você está marcado como <strong>PRESENTE</strong> no menu lateral para receber leads</li>
                 <li>Mantenha o <strong>som de notificações ativado</strong> (ícone 🔔 no topo)</li>
                 <li>Sempre marque <strong>AUSENTE</strong> quando não puder atender (almoço, reunião, etc)</li>
+                <li>Leads de <strong>Captação Própria</strong> nunca são transferidos - são seus!</li>
               </ul>
             </AlertDescription>
           </Alert>
@@ -360,6 +470,42 @@ export default function BoasVindas() {
             </CardContent>
           </Card>
         )}
+
+        {/* REGRAS DO SISTEMA - Nova Seção */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <AlertCircle className="h-6 w-6 text-red-500" />
+            Regras do Sistema - LEIA COM ATENÇÃO
+          </h2>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {regrasDoSistema.map((regra) => (
+              <Card key={regra.title} className={`${regra.color} border`}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <regra.icon className="h-5 w-5" />
+                    {regra.title}
+                  </CardTitle>
+                  <CardDescription className="text-current opacity-80">
+                    {regra.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-1 text-sm">
+                    {regra.rules.map((rule, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 opacity-70" />
+                        <span>{rule}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
 
         {/* Seções do Tutorial */}
         <div className="space-y-6">
@@ -426,11 +572,11 @@ export default function BoasVindas() {
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold flex items-center gap-2">
             <Star className="h-6 w-6 text-yellow-500" />
-            {isGestor ? "Dicas para vender mais" : "Dicas para você vender mais"}
+            Dicas para você vender mais
           </h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dicas.map((dica) => (
+            {dicasCorretores.map((dica) => (
               <Card key={dica.title} className="hover:shadow-md transition-shadow">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
@@ -507,6 +653,7 @@ export default function BoasVindas() {
                     <li>1. Marque-se como PRESENTE</li>
                     <li>2. Ative o som de notificações</li>
                     <li>3. Verifique leads pendentes</li>
+                    <li>4. Veja as Tarefas do Dia (follow-ups)</li>
                   </ul>
                 </div>
                 <div className="space-y-2">
@@ -515,6 +662,7 @@ export default function BoasVindas() {
                     <li>1. Marque-se como AUSENTE</li>
                     <li>2. Atualize status dos leads em andamento</li>
                     <li>3. Registre observações importantes</li>
+                    <li>4. Complete os follow-ups pendentes</li>
                   </ul>
                 </div>
               </div>
@@ -552,9 +700,9 @@ export default function BoasVindas() {
                     <Users className="h-4 w-4 mr-2" />
                     Ver Meus Leads
                   </Button>
-                  <Button onClick={() => setLocation("/kanban")} variant="outline" size="lg">
-                    <Kanban className="h-4 w-4 mr-2" />
-                    Abrir Kanban
+                  <Button onClick={() => setLocation("/tarefas-do-dia")} variant="outline" size="lg">
+                    <ListTodo className="h-4 w-4 mr-2" />
+                    Tarefas do Dia
                   </Button>
                 </>
               )}

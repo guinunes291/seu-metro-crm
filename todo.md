@@ -1504,3 +1504,8 @@
 - [x] Adicionar origem "captacao_corretor" no enum de origens do lead
 - [x] Ajustar lógica de transferência para não transferir leads de captação própria
 - [x] Leads de captação corretor ficam com o corretor mesmo após 5/5
+
+## Atualização Página Boas-Vindas (22/12/2025)
+- [x] Atualizar página de Boas-Vindas com todas as funcionalidades novas
+- [x] Incluir regras do sistema (transferência após 5/5, captação própria não transfere, etc)
+- [x] Documentar todas as funcionalidades disponíveis para o corretor
