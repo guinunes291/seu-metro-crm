@@ -1472,3 +1472,6 @@
 - [x] Filtro por corretor para o gestor
 - [x] Integrar calendário na página de Agendamentos
 - [x] Permitir criar agendamento clicando no calendário
+
+## Melhorias de UI (22/12/2025)
+- [x] Diferenciar visualmente botões principais dos itens de submenu no sidebar

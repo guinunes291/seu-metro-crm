@@ -469,17 +469,22 @@ function DashboardContent({
                   onOpenChange={() => toggleGroup(group.id)}
                 >
                   <CollapsibleTrigger className={`
-                    w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium
-                    transition-colors hover:bg-accent/50
-                    ${hasActiveItem ? 'text-primary bg-accent/30' : 'text-muted-foreground'}
+                    w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold
+                    transition-all duration-200 border
+                    ${hasActiveItem 
+                      ? 'text-primary bg-primary/10 border-primary/30 shadow-sm' 
+                      : 'text-foreground bg-muted/50 border-transparent hover:bg-muted hover:border-border'
+                    }
                   `}>
-                    <div className="flex items-center gap-2">
-                      <GroupIcon className="h-4 w-4" />
+                    <div className="flex items-center gap-2.5">
+                      <div className={`p-1 rounded ${hasActiveItem ? 'bg-primary/20' : 'bg-muted-foreground/10'}`}>
+                        <GroupIcon className={`h-4 w-4 ${hasActiveItem ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
                       <span>{group.label}</span>
                     </div>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${openGroups[group.id] ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${openGroups[group.id] ? 'rotate-180' : ''}`} />
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="pl-4 mt-1 space-y-0.5">
+                  <CollapsibleContent className="ml-3 mt-1 pl-3 border-l-2 border-muted space-y-0.5">
                     {visibleItems.map(item => {
                       const isActive = location === item.path;
                       return (
@@ -487,10 +492,10 @@ function DashboardContent({
                           <SidebarMenuButton
                             isActive={isActive}
                             onClick={() => setLocation(item.path)}
-                            className="h-9 text-sm"
+                            className={`h-8 text-sm pl-2 ${isActive ? 'font-medium' : 'font-normal text-muted-foreground'}`}
                           >
                             <div className="relative">
-                              <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                              <item.icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                               {(item as any).showBadge && <NotificationBadge />}
                             </div>
                             <span>{item.label}</span>
