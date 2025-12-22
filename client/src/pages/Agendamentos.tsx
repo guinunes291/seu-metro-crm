@@ -49,8 +49,12 @@ import {
   XCircle,
   AlertCircle,
   Loader2,
-  MapPin
+  MapPin,
+  List,
+  CalendarDays
 } from "lucide-react";
+import CalendarioAgendamentos from "@/components/CalendarioAgendamentos";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -99,6 +103,8 @@ export default function Agendamentos() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [useCustomProject, setUseCustomProject] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -196,6 +202,16 @@ export default function Agendamentos() {
         construtora: projeto?.construtora || "",
       });
     }
+  };
+
+  // Abrir modal com data pré-selecionada do calendário
+  const handleCreateFromCalendar = (date: Date) => {
+    setSelectedDate(date);
+    setFormData({
+      ...formData,
+      dataAgendamento: format(date, "yyyy-MM-dd"),
+    });
+    setIsModalOpen(true);
   };
 
   // Agrupar agendamentos por data
@@ -419,64 +435,91 @@ export default function Agendamentos() {
           </Dialog>
         </div>
 
-        {/* Agendamentos de Hoje */}
-        {agendamentosHoje && agendamentosHoje.length > 0 && (
-          <Card className="border-primary/50 bg-primary/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Agendamentos de Hoje ({agendamentosHoje.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {agendamentosHoje.map((ag: Agendamento) => (
-                  <AgendamentoCard
-                    key={ag.id}
-                    agendamento={ag}
-                    onUpdateStatus={(status) => updateStatus.mutate({ id: ag.id, status })}
-                  />
+        {/* Tabs de Visualização */}
+        <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "calendar")} className="w-full">
+          <TabsList className="grid w-full max-w-[300px] grid-cols-2">
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Calendário
+            </TabsTrigger>
+            <TabsTrigger value="list" className="gap-2">
+              <List className="h-4 w-4" />
+              Lista
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Visualização em Calendário */}
+          <TabsContent value="calendar" className="mt-4">
+            <CalendarioAgendamentos
+              onCreateAgendamento={handleCreateFromCalendar}
+              onSelectAgendamento={(ag) => {
+                toast.info(`Agendamento: ${ag.projetoCustom || 'Sem projeto'} - ${ag.horaAgendamento}`);
+              }}
+            />
+          </TabsContent>
+
+          {/* Visualização em Lista */}
+          <TabsContent value="list" className="mt-4 space-y-6">
+            {/* Agendamentos de Hoje */}
+            {agendamentosHoje && agendamentosHoje.length > 0 && (
+              <Card className="border-primary/50 bg-primary/5">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Agendamentos de Hoje ({agendamentosHoje.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3">
+                    {agendamentosHoje.map((ag: Agendamento) => (
+                      <AgendamentoCard
+                        key={ag.id}
+                        agendamento={ag}
+                        onUpdateStatus={(status) => updateStatus.mutate({ id: ag.id, status })}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lista de Agendamentos */}
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : datasOrdenadas.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium">Nenhum agendamento</h3>
+                  <p className="text-muted-foreground">
+                    Clique em "Criar Agendamento" para agendar uma visita
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {datasOrdenadas.map((data) => (
+                  <div key={data}>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                      {format(new Date(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: ptBR })}
+                    </h3>
+                    <div className="grid gap-3">
+                      {agendamentosPorData[data].map((ag: Agendamento) => (
+                        <AgendamentoCard
+                          key={ag.id}
+                          agendamento={ag}
+                          onUpdateStatus={(status) => updateStatus.mutate({ id: ag.id, status })}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Lista de Agendamentos */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : datasOrdenadas.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">Nenhum agendamento</h3>
-              <p className="text-muted-foreground">
-                Clique em "Criar Agendamento" para agendar uma visita
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {datasOrdenadas.map((data) => (
-              <div key={data}>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                  {format(new Date(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: ptBR })}
-                </h3>
-                <div className="grid gap-3">
-                  {agendamentosPorData[data].map((ag: Agendamento) => (
-                    <AgendamentoCard
-                      key={ag.id}
-                      agendamento={ag}
-                      onUpdateStatus={(status) => updateStatus.mutate({ id: ag.id, status })}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

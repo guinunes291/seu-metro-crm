@@ -1463,3 +1463,12 @@
 - [x] Criar testes unitários (13 testes passando)
 - [x] Adicionar campo CPF na tabela de leads
 - [x] Usar telefone + email + CPF como identificadores únicos do lead
+
+
+## Calendário Visual de Agendamentos (22/12/2025)
+- [x] Criar componente de calendário com visualização semanal e mensal
+- [x] Corretor vê apenas seus agendamentos
+- [x] Gestor vê agendamentos de toda a equipe
+- [x] Filtro por corretor para o gestor
+- [x] Integrar calendário na página de Agendamentos
+- [x] Permitir criar agendamento clicando no calendário
