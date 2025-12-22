@@ -3030,10 +3030,14 @@ export async function getRankingDia(data?: Date) {
   const db = await getDb();
   if (!db) return [];
   
+  // Usar início e fim do dia para evitar problemas de fuso horário
   const dataRef = data || new Date();
-  dataRef.setHours(0, 0, 0, 0);
+  const inicioDia = new Date(dataRef);
+  inicioDia.setHours(0, 0, 0, 0);
+  const fimDia = new Date(dataRef);
+  fimDia.setHours(23, 59, 59, 999);
   
-  // Buscar atividades do dia com dados do corretor
+  // Buscar atividades do dia com dados do corretor (usando intervalo de datas)
   const atividades = await db.select({
     id: atividadesDiarias.id,
     corretorId: atividadesDiarias.corretorId,
@@ -3054,7 +3058,10 @@ export async function getRankingDia(data?: Date) {
   })
     .from(atividadesDiarias)
     .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
-    .where(eq(atividadesDiarias.data, dataRef))
+    .where(and(
+      gte(atividadesDiarias.data, inicioDia),
+      lte(atividadesDiarias.data, fimDia)
+    ))
     .orderBy(desc(atividadesDiarias.pontuacaoTotal));
   
   // Buscar metas de cada corretor para calcular percentuais
@@ -3291,25 +3298,74 @@ export async function registrarClienteCadastrado(corretorId: number) {
   await calcularPontuacaoDiaria(corretorId);
 }
 
-// Recalcular pontuação de todos os corretores para o dia atual
+// Recalcular pontuação de todos os corretores para TODAS as atividades
 export async function recalcularPontuacaoTodosCorretores() {
   const db = await getDb();
   if (!db) return;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  
-  // Buscar todas as atividades do dia
+  // Buscar TODAS as atividades (não só do dia atual)
   const atividades = await db.select()
-    .from(atividadesDiarias)
-    .where(eq(atividadesDiarias.data, hoje));
+    .from(atividadesDiarias);
   
-  // Recalcular pontuação de cada corretor
+  // Recalcular pontuação de cada atividade
   for (const atividade of atividades) {
-    await calcularPontuacaoDiaria(atividade.corretorId);
+    await recalcularPontuacaoAtividade(atividade.id);
   }
   
   return atividades.length;
+}
+
+// Recalcular pontuação de uma atividade específica pelo ID
+// Sistema simplificado: 1 ponto por ligação/contato realizado
+export async function recalcularPontuacaoAtividade(atividadeId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Buscar a atividade
+  const [atividade] = await db.select()
+    .from(atividadesDiarias)
+    .where(eq(atividadesDiarias.id, atividadeId))
+    .limit(1);
+  
+  if (!atividade) return;
+  
+  // Sistema de pontuação simplificado
+  const PONTOS = {
+    LIGACAO: 1,           // 1 ponto por ligação/contato
+    WHATSAPP: 1,          // 1 ponto por WhatsApp
+    AGENDAMENTO: 15,      // 15 pontos por agendamento
+    VISITA: 25,           // 25 pontos por visita
+    DOCUMENTACAO: 35,     // 35 pontos por documentação
+    VENDA: 80,            // 80 pontos por venda
+  };
+  
+  let pontuacao = 0;
+  
+  // Pontos por ligações/contatos realizados (+1 por cada contato)
+  pontuacao += (atividade.ligacoesRealizadas || 0) * PONTOS.LIGACAO;
+  
+  // Pontos por WhatsApp enviados (+1 por cada)
+  pontuacao += (atividade.whatsappEnviados || 0) * PONTOS.WHATSAPP;
+  
+  // Pontos por agendamentos
+  pontuacao += (atividade.agendamentosConfirmados || 0) * PONTOS.AGENDAMENTO;
+  
+  // Pontos por visitas realizadas
+  pontuacao += (atividade.visitasRealizadas || 0) * PONTOS.VISITA;
+  
+  // Pontos por documentação/análise de crédito
+  pontuacao += (atividade.documentacoesRecolhidas || 0) * PONTOS.DOCUMENTACAO;
+  pontuacao += (atividade.analiseCreditoEnviadas || 0) * PONTOS.DOCUMENTACAO;
+  
+  // Pontos por vendas
+  pontuacao += (atividade.contratosFechados || 0) * PONTOS.VENDA;
+  
+  // Atualizar pontuação
+  await db.update(atividadesDiarias)
+    .set({ pontuacaoTotal: pontuacao })
+    .where(eq(atividadesDiarias.id, atividadeId));
+  
+  return pontuacao;
 }
 
 

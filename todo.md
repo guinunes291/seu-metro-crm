@@ -1570,3 +1570,5 @@
 - [x] Remover texto "atendidas" do card de Ligações (são contatos feitos, não atendidas)
 - [x] Corrigir cálculo de pontuação - contatos realizados devem gerar pontos (+1 por ligação)
 - [x] Adicionar endpoint para recalcular pontuação de todos os corretores
+- [x] Simplificar sistema de pontuação: 1 ponto por ligação (sem bônus extras)
+- [x] Corrigir filtro de data do ranking (problema de fuso horário UTC)

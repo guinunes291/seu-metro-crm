@@ -1,0 +1,62 @@
+{
+  "query": "SELECT id, corretorId, data, ligacoesRealizadas, ligacoesAtendidas, whatsappEnviados, agendamentosConfirmados, visitasRealizadas, documentacoesRecolhidas, contratosFechados, pontuacaoTotal FROM atividades_diarias;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, corretorId, data, ligacoesRealizadas, ligacoesAtendidas, whatsappEnviados, agendamentosConfirmados, visitasRealizadas, documentacoesRecolhidas, contratosFechados, pontuacaoTotal FROM atividades_diarias;",
+  "rows": [
+    {
+      "id": "60001",
+      "corretorId": "2",
+      "data": "2025-12-22 05:00:00",
+      "ligacoesRealizadas": "2",
+      "ligacoesAtendidas": "2",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "4",
+      "visitasRealizadas": "4",
+      "documentacoesRecolhidas": "2",
+      "contratosFechados": "4",
+      "pontuacaoTotal": "626"
+    },
+    {
+      "id": "60002",
+      "corretorId": "5050301",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "17",
+      "ligacoesAtendidas": "17",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "17"
+    },
+    {
+      "id": "60003",
+      "corretorId": "4236208",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "4",
+      "ligacoesAtendidas": "4",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "4"
+    },
+    {
+      "id": "60004",
+      "corretorId": "5053030",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "22",
+      "ligacoesAtendidas": "22",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "66"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tdata\tligacoesRealizadas\tligacoesAtendidas\twhatsappEnviados\tagendamentosConfirmados\tvisitasRealizadas\tdocumentacoesRecolhidas\tcontratosFechados\tpontuacaoTotal\n60001\t2\t2025-12-22 05:00:00\t2\t2\t0\t4\t4\t2\t4\t626\n60002\t5050301\t2025-12-22 00:00:00\t17\t17\t0\t0\t0\t0\t0\t17\n60003\t4236208\t2025-12-22 00:00:00\t4\t4\t0\t0\t0\t0\t0\t4\n60004\t5053030\t2025-12-22 00:00:00\t22\t22\t0\t0\t0\t0\t0\t66\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}
