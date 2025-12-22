@@ -522,6 +522,21 @@ export const appRouter = router({
         telefone: z.string().optional(),
         status: z.enum(["presente", "ausente"]).default("ausente"),
         enviarConvite: z.boolean().default(true),
+        // Novos campos
+        cpf: z.string().optional(),
+        dataNascimento: z.date().optional(),
+        creci: z.string().optional(),
+        dataCredenciamento: z.date().optional(),
+        dataDescredenciamento: z.date().optional(),
+        situacao: z.enum(["ativo", "inativo"]).default("ativo"),
+        // Endereço
+        logradouro: z.string().optional(),
+        numero: z.string().optional(),
+        complemento: z.string().optional(),
+        bairro: z.string().optional(),
+        cidade: z.string().optional(),
+        estado: z.string().optional(),
+        cep: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         const resultado = await db.createCorretor(input);
@@ -543,6 +558,21 @@ export const appRouter = router({
           email: z.string().email().optional(),
           telefone: z.string().optional(),
           status: z.enum(["presente", "ausente"]).optional(),
+          // Novos campos
+          cpf: z.string().optional(),
+          dataNascimento: z.date().nullable().optional(),
+          creci: z.string().optional(),
+          dataCredenciamento: z.date().nullable().optional(),
+          dataDescredenciamento: z.date().nullable().optional(),
+          situacao: z.enum(["ativo", "inativo"]).optional(),
+          // Endereço
+          logradouro: z.string().optional(),
+          numero: z.string().optional(),
+          complemento: z.string().optional(),
+          bairro: z.string().optional(),
+          cidade: z.string().optional(),
+          estado: z.string().optional(),
+          cep: z.string().optional(),
         })
       }))
       .mutation(async ({ input }) => {

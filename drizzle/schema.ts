@@ -28,6 +28,25 @@ export const users = mysqlTable("users", {
   telefone: varchar("telefone", { length: 20 }),
   fotoUrl: text("fotoUrl"), // URL da foto de perfil do corretor
   
+  // Dados pessoais do corretor
+  cpf: varchar("cpf", { length: 14 }), // 000.000.000-00
+  dataNascimento: timestamp("dataNascimento"),
+  
+  // Dados profissionais
+  creci: varchar("creci", { length: 20 }), // Número do CRECI se houver
+  dataCredenciamento: timestamp("dataCredenciamento"),
+  dataDescredenciamento: timestamp("dataDescredenciamento"),
+  situacao: mysqlEnum("situacao", ["ativo", "inativo"]).default("ativo").notNull(),
+  
+  // Endereço completo
+  logradouro: varchar("logradouro", { length: 255 }),
+  numero: varchar("numero", { length: 20 }),
+  complemento: varchar("complemento", { length: 100 }),
+  bairro: varchar("bairro", { length: 100 }),
+  cidade: varchar("cidade", { length: 100 }),
+  estado: varchar("estado", { length: 2 }),
+  cep: varchar("cep", { length: 9 }), // 00000-000
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

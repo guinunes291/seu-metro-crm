@@ -1519,3 +1519,27 @@
 - [x] Criar interface para corretor sugerir projeto
 - [x] Criar interface para corretor fazer upload de book PDF
 - [x] Criar painel de aprovação de projetos para o gestor
+
+## Ficha Completa do Corretor (22/12/2025)
+- [ ] Adicionar campo CPF na tabela de corretores
+- [ ] Adicionar campo dataNascimento na tabela de corretores
+- [ ] Adicionar campo dataCredenciamento na tabela de corretores
+- [ ] Adicionar campo dataDescredenciamento na tabela de corretores
+- [ ] Adicionar campo situacao (ativo/inativo) na tabela de corretores
+- [ ] Adicionar campos de endereço (logradouro, numero, complemento, bairro, cidade, estado, cep)
+- [ ] Adicionar campo CRECI na tabela de corretores
+- [ ] Atualizar procedures de CRUD de corretores
+- [ ] Atualizar interface de cadastro de corretor
+- [ ] Atualizar interface de edição de corretor
+- [ ] Atualizar listagem de corretores com novos campos
+
+
+## Ficha Completa do Corretor - CONCLUÍDO (22/12/2025)
+- [x] Adicionar campos: Nome completo, CPF, Data Nascimento, Email, Telefone
+- [x] Adicionar campos: Data Credenciamento, Data Descredenciamento, Situação (Ativo/Inativo)
+- [x] Adicionar campos: Endereço completo com CEP (logradouro, número, complemento, bairro, cidade, estado)
+- [x] Adicionar campo: CRECI (se houver)
+- [x] Atualizar formulário de cadastro de corretor (com abas: Dados Pessoais, Profissional, Endereço)
+- [x] Atualizar formulário de edição de corretor
+- [x] Criar visualização da ficha completa do corretor (botão Ver Detalhes)
+- [x] Adicionar estatísticas de Ativos/Inativos no dashboard de corretores
