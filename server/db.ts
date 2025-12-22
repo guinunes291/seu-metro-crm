@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
   projects, InsertProject, Project,
+  projectSuggestions, InsertProjectSuggestion, ProjectSuggestion,
   properties, InsertProperty, Property,
   leads, InsertLead, Lead,
   leadHistory, InsertLeadHistory,
@@ -384,6 +385,123 @@ export async function deleteProject(id: number) {
   if (!db) throw new Error("Database not available");
   
   await db.delete(projects).where(eq(projects.id, id));
+}
+
+// Função para atualizar o book URL de um projeto
+export async function updateProjectBook(projectId: number, bookUrl: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(projects)
+    .set({ bookUrl, updatedAt: new Date() })
+    .where(eq(projects.id, projectId));
+}
+
+// ============================================================================
+// SUGESTÕES DE PROJETOS
+// ============================================================================
+
+export async function createProjectSuggestion(suggestion: InsertProjectSuggestion) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(projectSuggestions).values(suggestion);
+  return Number(result[0].insertId);
+}
+
+export async function getPendingProjectSuggestions() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(projectSuggestions)
+    .where(eq(projectSuggestions.status, "pendente"))
+    .orderBy(desc(projectSuggestions.createdAt));
+}
+
+export async function getProjectSuggestionById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select()
+    .from(projectSuggestions)
+    .where(eq(projectSuggestions.id, id))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getProjectSuggestionsByCorretor(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(projectSuggestions)
+    .where(eq(projectSuggestions.corretorId, corretorId))
+    .orderBy(desc(projectSuggestions.createdAt));
+}
+
+export async function approveProjectSuggestion(suggestionId: number, gestorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar a sugestão
+  const suggestion = await getProjectSuggestionById(suggestionId);
+  if (!suggestion) throw new Error("Sugestão não encontrada");
+  
+  // Criar o projeto com os dados da sugestão
+  const projectData: InsertProject = {
+    nome: suggestion.nome,
+    construtora: suggestion.construtora,
+    endereco: suggestion.endereco,
+    bairro: suggestion.bairro,
+    cidade: suggestion.cidade,
+    estado: suggestion.estado,
+    descricao: suggestion.descricao,
+    tipo: suggestion.tipo,
+    valorMinimo: suggestion.valorMinimo,
+    valorMaximo: suggestion.valorMaximo,
+    metragemMinima: suggestion.metragemMinima,
+    metragemMaxima: suggestion.metragemMaxima,
+    dormitorios: suggestion.dormitorios,
+    zona: suggestion.zona,
+    status: "ativo"
+  };
+  
+  await db.insert(projects).values(projectData);
+  
+  // Atualizar status da sugestão
+  await db.update(projectSuggestions)
+    .set({
+      status: "aprovado",
+      aprovadoPor: gestorId,
+      dataAprovacao: new Date(),
+      updatedAt: new Date()
+    })
+    .where(eq(projectSuggestions.id, suggestionId));
+  
+  return suggestion;
+}
+
+export async function rejectProjectSuggestion(suggestionId: number, gestorId: number, motivo: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(projectSuggestions)
+    .set({
+      status: "reprovado",
+      aprovadoPor: gestorId,
+      motivoReprovacao: motivo,
+      dataAprovacao: new Date(),
+      updatedAt: new Date()
+    })
+    .where(eq(projectSuggestions.id, suggestionId));
+}
+
+export async function deleteProjectSuggestion(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(projectSuggestions).where(eq(projectSuggestions.id, id));
 }
 
 // ============================================================================

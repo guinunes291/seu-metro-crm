@@ -1509,3 +1509,13 @@
 - [x] Atualizar página de Boas-Vindas com todas as funcionalidades novas
 - [x] Incluir regras do sistema (transferência após 5/5, captação própria não transfere, etc)
 - [x] Documentar todas as funcionalidades disponíveis para o corretor
+
+## Contribuição de Corretores em Projetos (22/12/2025)
+- [x] Criar tabela de sugestões de projetos (pendentes de aprovação)
+- [x] Adicionar campo bookUrl na tabela de projetos
+- [x] Implementar procedure para corretor sugerir novo projeto
+- [x] Implementar procedure para gestor aprovar/reprovar sugestão
+- [x] Criar notificação para gestor quando corretor sugere projeto
+- [x] Criar interface para corretor sugerir projeto
+- [x] Criar interface para corretor fazer upload de book PDF
+- [x] Criar painel de aprovação de projetos para o gestor

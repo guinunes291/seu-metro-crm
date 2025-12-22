@@ -35,6 +35,7 @@ import MetasDiarias from "@/pages/MetasDiarias";
 import MeuPerfil from "@/pages/MeuPerfil";
 import HistoricoPresenca from "@/pages/HistoricoPresenca";
 import Agendamentos from "@/pages/Agendamentos";
+import AprovarProjetos from "@/pages/AprovarProjetos";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -44,7 +45,8 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
-      <Route path={"/projetos"} component={Projetos} />
+      <Route path="/projetos" component={Projetos} />
+      <Route path="/aprovar-projetos" component={AprovarProjetos} />
       <Route path="/leads" component={Leads} />
       <Route path="/relatorios" component={Relatorios} />
       <Route path="/configuracoes" component={Configuracoes} />

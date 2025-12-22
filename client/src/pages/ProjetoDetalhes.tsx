@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink, Pencil, Trash2, FileText, Upload, Loader2 } from "lucide-react";
 import { MapView } from "@/components/Map";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -27,6 +27,8 @@ export default function ProjetoDetalhes() {
   
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [uploadingBook, setUploadingBook] = useState(false);
+  const uploadBookMutation = trpc.projects.uploadBook.useMutation();
   const [formData, setFormData] = useState({
     nome: "",
     construtora: "",
@@ -129,6 +131,44 @@ export default function ProjetoDetalhes() {
         });
       }
     });
+  };
+
+  const handleUploadBook = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF');
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 10MB');
+      return;
+    }
+    
+    setUploadingBook(true);
+    
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        
+        await uploadBookMutation.mutateAsync({
+          projectId,
+          fileName: file.name,
+          fileData: base64,
+        });
+        
+        toast.success('Book do projeto enviado com sucesso!');
+        refetch();
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error('Erro ao enviar o book');
+    } finally {
+      setUploadingBook(false);
+    }
   };
 
   if (isLoading) {
@@ -380,6 +420,85 @@ export default function ProjetoDetalhes() {
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Book do Projeto */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Book do Projeto
+                </CardTitle>
+                <CardDescription>
+                  Material de apresentação em PDF
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {project.bookUrl ? (
+                  <div className="space-y-3">
+                    <Button asChild className="w-full">
+                      <a href={project.bookUrl} target="_blank" rel="noopener noreferrer">
+                        <FileText className="h-4 w-4 mr-2" />
+                        Visualizar Book
+                        <ExternalLink className="h-4 w-4 ml-2" />
+                      </a>
+                    </Button>
+                    
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleUploadBook}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploadingBook}
+                      />
+                      <Button variant="outline" className="w-full" disabled={uploadingBook}>
+                        {uploadingBook ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Atualizar Book
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Nenhum book cadastrado
+                    </p>
+                    
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleUploadBook}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={uploadingBook}
+                      />
+                      <Button variant="outline" className="w-full" disabled={uploadingBook}>
+                        {uploadingBook ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4 mr-2" />
+                            Enviar Book (PDF)
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

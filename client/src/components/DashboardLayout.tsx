@@ -74,6 +74,7 @@ const menuGroups = [
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
       { icon: Import, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin"] },
+      { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos", roles: ["gestor", "admin"] },
     ],
   },
   {

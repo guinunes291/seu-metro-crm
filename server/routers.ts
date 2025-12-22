@@ -136,6 +136,108 @@ export const appRouter = router({
         const result = await importProjectsFromSheet(input.sheetUrl, input.sheetName, input.syncMode);
         return result;
       }),
+    
+    // Upload de book PDF (qualquer corretor pode fazer)
+    uploadBook: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+        bookUrl: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateProjectBook(input.projectId, input.bookUrl);
+        return { success: true };
+      }),
+    
+    // Sugerir novo projeto (corretor sugere, gestor aprova)
+    suggest: protectedProcedure
+      .input(z.object({
+        nome: z.string(),
+        construtora: z.string().optional(),
+        endereco: z.string().optional(),
+        bairro: z.string().optional(),
+        cidade: z.string().default("São Paulo"),
+        estado: z.string().default("SP"),
+        descricao: z.string().optional(),
+        tipo: z.enum(["mcmv", "sfh", "outro"]).default("mcmv"),
+        valorMinimo: z.number().optional(),
+        valorMaximo: z.number().optional(),
+        metragemMinima: z.number().optional(),
+        metragemMaxima: z.number().optional(),
+        dormitorios: z.string().optional(),
+        zona: z.enum(["norte", "sul", "leste", "oeste", "centro"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const suggestionId = await db.createProjectSuggestion({
+          ...input,
+          corretorId: ctx.user.id,
+        });
+        
+        // Notificar gestores sobre a nova sugestão
+        const gestores = await db.getGestores();
+        for (const gestor of gestores) {
+          await db.createNotification({
+            userId: gestor.id,
+            tipo: "projeto_sugerido",
+            titulo: "Nova Sugestão de Projeto",
+            mensagem: `${ctx.user.name} sugeriu o projeto "${input.nome}". Clique para revisar e aprovar/reprovar.`,
+            dados: JSON.stringify({ suggestionId, projectName: input.nome, corretorName: ctx.user.name }),
+          });
+        }
+        
+        return { success: true, suggestionId };
+      }),
+    
+    // Listar sugestões pendentes (apenas gestor)
+    listSuggestions: gestorProcedure.query(async () => {
+      return await db.getPendingProjectSuggestions();
+    }),
+    
+    // Minhas sugestões (corretor vê suas próprias)
+    mySuggestions: protectedProcedure.query(async ({ ctx }) => {
+      return await db.getProjectSuggestionsByCorretor(ctx.user.id);
+    }),
+    
+    // Aprovar sugestão (apenas gestor)
+    approveSuggestion: gestorProcedure
+      .input(z.object({ suggestionId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const suggestion = await db.approveProjectSuggestion(input.suggestionId, ctx.user.id);
+        
+        // Notificar o corretor que sugeriu
+        await db.createNotification({
+          userId: suggestion.corretorId,
+          tipo: "projeto_aprovado",
+          titulo: "Projeto Aprovado!",
+          mensagem: `Seu projeto "${suggestion.nome}" foi aprovado e já está disponível no sistema.`,
+          dados: JSON.stringify({ projectName: suggestion.nome }),
+        });
+        
+        return { success: true };
+      }),
+    
+    // Reprovar sugestão (apenas gestor)
+    rejectSuggestion: gestorProcedure
+      .input(z.object({
+        suggestionId: z.number(),
+        motivo: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const suggestion = await db.getProjectSuggestionById(input.suggestionId);
+        if (!suggestion) throw new Error("Sugestão não encontrada");
+        
+        await db.rejectProjectSuggestion(input.suggestionId, ctx.user.id, input.motivo);
+        
+        // Notificar o corretor que sugeriu
+        await db.createNotification({
+          userId: suggestion.corretorId,
+          tipo: "projeto_reprovado",
+          titulo: "Projeto Não Aprovado",
+          mensagem: `Seu projeto "${suggestion.nome}" não foi aprovado. Motivo: ${input.motivo}`,
+          dados: JSON.stringify({ projectName: suggestion.nome, motivo: input.motivo }),
+        });
+        
+        return { success: true };
+      }),
   }),
 
   // ============================================================================

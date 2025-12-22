@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Plus, Search, Filter, Check, X } from "lucide-react";
+import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useCompare } from "@/contexts/CompareContext";
@@ -19,7 +19,10 @@ export default function Projetos() {
   const [, setLocation] = useLocation();
   const { data: projects = [], isLoading, refetch } = trpc.projects.list.useQuery();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const createProjectMutation = trpc.projects.create.useMutation();
+  const suggestProjectMutation = trpc.projects.suggest.useMutation();
+  const { data: mySuggestions = [] } = trpc.projects.mySuggestions.useQuery();
   const { addProject, removeProject, isSelected, canAddMore } = useCompare();
 
   const isGestor = user?.role === "gestor" || user?.role === "admin";
@@ -31,6 +34,23 @@ export default function Projetos() {
   const [dormitoriosFilter, setDormitoriosFilter] = useState<string>("todos");
   const [enquadramentoFilter, setEnquadramentoFilter] = useState<string>("todos");
   const [vagasFilter, setVagasFilter] = useState<string>("todos");
+
+  const [suggestFormData, setSuggestFormData] = useState({
+    nome: "",
+    construtora: "",
+    endereco: "",
+    bairro: "",
+    cidade: "São Paulo",
+    estado: "SP",
+    descricao: "",
+    tipo: "mcmv" as "mcmv" | "sfh" | "outro",
+    valorMinimo: "",
+    valorMaximo: "",
+    metragemMinima: "",
+    metragemMaxima: "",
+    dormitorios: "",
+    zona: undefined as "norte" | "sul" | "leste" | "oeste" | "centro" | undefined,
+  });
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -116,6 +136,42 @@ export default function Projetos() {
     }
   };
 
+  const handleSuggestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      await suggestProjectMutation.mutateAsync({
+        ...suggestFormData,
+        valorMinimo: suggestFormData.valorMinimo ? parseInt(suggestFormData.valorMinimo) * 100 : undefined,
+        valorMaximo: suggestFormData.valorMaximo ? parseInt(suggestFormData.valorMaximo) * 100 : undefined,
+        metragemMinima: suggestFormData.metragemMinima ? parseInt(suggestFormData.metragemMinima) : undefined,
+        metragemMaxima: suggestFormData.metragemMaxima ? parseInt(suggestFormData.metragemMaxima) : undefined,
+      });
+      
+      toast.success("Sugestão enviada! O gestor será notificado para aprovar.");
+      setSuggestDialogOpen(false);
+      
+      setSuggestFormData({
+        nome: "",
+        construtora: "",
+        endereco: "",
+        bairro: "",
+        cidade: "São Paulo",
+        estado: "SP",
+        descricao: "",
+        tipo: "mcmv",
+        valorMinimo: "",
+        valorMaximo: "",
+        metragemMinima: "",
+        metragemMaxima: "",
+        dormitorios: "",
+        zona: undefined,
+      });
+    } catch (error) {
+      toast.error("Erro ao enviar sugestão");
+    }
+  };
+
   const handleToggleCompare = (project: any) => {
     if (isSelected(project.id)) {
       removeProject(project.id);
@@ -149,7 +205,168 @@ export default function Projetos() {
             </p>
           </div>
           
-          {isGestor && (
+          <div className="flex gap-2">
+            {/* Botão de sugerir projeto (todos podem) */}
+            {!isGestor && (
+              <Dialog open={suggestDialogOpen} onOpenChange={setSuggestDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Lightbulb className="mr-2 h-4 w-4" />
+                    Sugerir Projeto
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Sugerir Novo Projeto</DialogTitle>
+                    <DialogDescription>
+                      Preencha as informações do projeto. O gestor será notificado para aprovar.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <form onSubmit={handleSuggestSubmit} className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="suggest-nome">Nome do Projeto *</Label>
+                        <Input
+                          id="suggest-nome"
+                          required
+                          value={suggestFormData.nome}
+                          onChange={(e) => setSuggestFormData({ ...suggestFormData, nome: e.target.value })}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-construtora">Construtora</Label>
+                          <Input
+                            id="suggest-construtora"
+                            value={suggestFormData.construtora}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, construtora: e.target.value })}
+                          />
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-bairro">Bairro</Label>
+                          <Input
+                            id="suggest-bairro"
+                            value={suggestFormData.bairro}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, bairro: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="suggest-endereco">Endereço</Label>
+                        <Input
+                          id="suggest-endereco"
+                          value={suggestFormData.endereco}
+                          onChange={(e) => setSuggestFormData({ ...suggestFormData, endereco: e.target.value })}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-zona">Zona</Label>
+                          <select
+                            id="suggest-zona"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={suggestFormData.zona || ""}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, zona: e.target.value as any || undefined })}
+                          >
+                            <option value="">Selecione...</option>
+                            <option value="norte">Zona Norte</option>
+                            <option value="sul">Zona Sul</option>
+                            <option value="leste">Zona Leste</option>
+                            <option value="oeste">Zona Oeste</option>
+                            <option value="centro">Centro</option>
+                          </select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-tipo">Tipo</Label>
+                          <select
+                            id="suggest-tipo"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            value={suggestFormData.tipo}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, tipo: e.target.value as any })}
+                          >
+                            <option value="mcmv">MCMV</option>
+                            <option value="sfh">SFH</option>
+                            <option value="outro">Outro</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label htmlFor="suggest-descricao">Descrição</Label>
+                        <textarea
+                          id="suggest-descricao"
+                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={suggestFormData.descricao}
+                          onChange={(e) => setSuggestFormData({ ...suggestFormData, descricao: e.target.value })}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-valorMinimo">Valor Mínimo (R$)</Label>
+                          <Input
+                            id="suggest-valorMinimo"
+                            type="number"
+                            value={suggestFormData.valorMinimo}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, valorMinimo: e.target.value })}
+                          />
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-valorMaximo">Valor Máximo (R$)</Label>
+                          <Input
+                            id="suggest-valorMaximo"
+                            type="number"
+                            value={suggestFormData.valorMaximo}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, valorMaximo: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-dormitorios">Dormitórios</Label>
+                          <Input
+                            id="suggest-dormitorios"
+                            placeholder="Ex: 1, 2, 3"
+                            value={suggestFormData.dormitorios}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, dormitorios: e.target.value })}
+                          />
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="suggest-metragemMinima">Metragem Mínima (m²)</Label>
+                          <Input
+                            id="suggest-metragemMinima"
+                            type="number"
+                            value={suggestFormData.metragemMinima}
+                            onChange={(e) => setSuggestFormData({ ...suggestFormData, metragemMinima: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setSuggestDialogOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit" disabled={suggestProjectMutation.isPending}>
+                        {suggestProjectMutation.isPending ? "Enviando..." : "Enviar Sugestão"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+            
+            {/* Botão de criar projeto (apenas gestor) */}
+            {isGestor && (
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -329,7 +546,44 @@ export default function Projetos() {
               </DialogContent>
             </Dialog>
           )}
+          </div>
         </div>
+
+        {/* Minhas Sugestões (apenas para corretores) */}
+        {!isGestor && mySuggestions.length > 0 && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Clock className="h-5 w-5" />
+                Minhas Sugestões de Projetos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {mySuggestions.map((suggestion: any) => (
+                  <div key={suggestion.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <div>
+                      <p className="font-medium">{suggestion.nome}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {suggestion.construtora && `${suggestion.construtora} • `}
+                        {suggestion.bairro || "Bairro não informado"}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={suggestion.status === "aprovado" ? "default" : suggestion.status === "reprovado" ? "destructive" : "secondary"}
+                      className="flex items-center gap-1"
+                    >
+                      {suggestion.status === "aprovado" && <CheckCircle className="h-3 w-3" />}
+                      {suggestion.status === "reprovado" && <XCircle className="h-3 w-3" />}
+                      {suggestion.status === "pendente" && <Clock className="h-3 w-3" />}
+                      {suggestion.status === "aprovado" ? "Aprovado" : suggestion.status === "reprovado" ? "Reprovado" : "Pendente"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filtros */}
         <Card className="mb-6">

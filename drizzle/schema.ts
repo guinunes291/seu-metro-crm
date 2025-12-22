@@ -73,6 +73,7 @@ export const projects = mysqlTable("projects", {
   logoUrl: text("logoUrl"), // Logo da construtora
   imagemPrincipal: text("imagemPrincipal"),
   imagensAdicionais: text("imagensAdicionais"), // JSON array de URLs
+  bookUrl: text("bookUrl"), // URL do PDF de apresentação do projeto
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -80,6 +81,45 @@ export const projects = mysqlTable("projects", {
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
+
+// ============================================================================
+// TABELA DE SUGESTÕES DE PROJETOS (PENDENTES DE APROVAÇÃO)
+// ============================================================================
+
+export const projectSuggestions = mysqlTable("project_suggestions", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Dados do projeto sugerido
+  nome: varchar("nome", { length: 255 }).notNull(),
+  construtora: varchar("construtora", { length: 255 }),
+  endereco: text("endereco"),
+  bairro: varchar("bairro", { length: 100 }),
+  cidade: varchar("cidade", { length: 100 }).default("São Paulo").notNull(),
+  estado: varchar("estado", { length: 2 }).default("SP").notNull(),
+  descricao: text("descricao"),
+  tipo: mysqlEnum("tipo", ["mcmv", "sfh", "outro"]).default("mcmv").notNull(),
+  valorMinimo: int("valorMinimo"),
+  valorMaximo: int("valorMaximo"),
+  metragemMinima: int("metragemMinima"),
+  metragemMaxima: int("metragemMaxima"),
+  dormitorios: varchar("dormitorios", { length: 50 }),
+  zona: mysqlEnum("zona", ["norte", "sul", "leste", "oeste", "centro"]),
+  
+  // Quem sugeriu
+  corretorId: int("corretorId").notNull(),
+  
+  // Status da sugestão
+  status: mysqlEnum("status", ["pendente", "aprovado", "reprovado"]).default("pendente").notNull(),
+  motivoReprovacao: text("motivoReprovacao"),
+  aprovadoPor: int("aprovadoPor"), // ID do gestor que aprovou/reprovou
+  dataAprovacao: timestamp("dataAprovacao"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProjectSuggestion = typeof projectSuggestions.$inferSelect;
+export type InsertProjectSuggestion = typeof projectSuggestions.$inferInsert;
 
 // ============================================================================
 // TABELA DE UNIDADES (IMÓVEIS ESPECÍFICOS)
