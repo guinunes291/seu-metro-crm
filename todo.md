@@ -1554,3 +1554,10 @@
 - [x] Implementar toggle de tema claro/escuro no DashboardLayout
 - [x] Persistir preferência do usuário (localStorage)
 - [x] Ajustar cores para ambos os temas
+
+## PWA - Progressive Web App (22/12/2025) - CONCLUÍDO
+- [x] Criar manifest.json com configurações do app
+- [x] Criar Service Worker para cache e funcionamento offline
+- [x] Configurar ícones para diferentes dispositivos (72x72 a 512x512)
+- [x] Registrar Service Worker no index.html
+- [x] Configurar meta tags para iOS e Android
