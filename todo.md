@@ -1565,3 +1565,8 @@
 - [x] Permitir digitação manual de projeto não cadastrado
 - [x] Integrar no formulário de cadastro de leads
 - [x] Salvar projeto manual nas observações do leadanual
+
+## Correções Performance TV (22/12/2025) - CONCLUÍDO
+- [x] Remover texto "atendidas" do card de Ligações (são contatos feitos, não atendidas)
+- [x] Corrigir cálculo de pontuação - contatos realizados devem gerar pontos (+1 por ligação)
+- [x] Adicionar endpoint para recalcular pontuação de todos os corretores

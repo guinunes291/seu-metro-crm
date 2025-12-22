@@ -751,7 +751,6 @@ export default function PerformanceTV() {
               <KPICard 
                 label="Ligações" 
                 value={totalLigacoes.toString()}
-                subValue={`${totalLigacoesAtendidas} atendidas`}
                 icon={Phone}
                 variant="info"
               />

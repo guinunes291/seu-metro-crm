@@ -3163,6 +3163,10 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   const meta = metasCorretor[0];
   
   // Sistema de pontuação (definido pelo gestor):
+  // - Ligação/Contato realizado = 1 ponto
+  // - Ligação atendida = 2 pontos
+  // - WhatsApp enviado = 1 ponto
+  // - WhatsApp respondido = 2 pontos
   // - Novo cliente cadastrado = 5 pontos
   // - Registro/alteração de status = 2 pontos
   // - Agendamento criado = 15 pontos
@@ -3172,6 +3176,10 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   // - Bônus por atingir meta: +50% dos pontos
   
   const PONTOS = {
+    LIGACAO: 1,
+    LIGACAO_ATENDIDA: 2,
+    WHATSAPP: 1,
+    WHATSAPP_RESPONDIDO: 2,
     CLIENTE_CADASTRADO: 5,
     ALTERACAO_STATUS: 2,
     AGENDAMENTO: 15,
@@ -3181,6 +3189,18 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   };
   
   let pontuacao = 0;
+  
+  // Pontos por ligações/contatos realizados (+1 por cada contato)
+  pontuacao += (atividade.ligacoesRealizadas || 0) * PONTOS.LIGACAO;
+  
+  // Pontos extras por ligações atendidas (+2 por cada atendida)
+  pontuacao += (atividade.ligacoesAtendidas || 0) * PONTOS.LIGACAO_ATENDIDA;
+  
+  // Pontos por WhatsApp enviados (+1 por cada)
+  pontuacao += (atividade.whatsappEnviados || 0) * PONTOS.WHATSAPP;
+  
+  // Pontos extras por WhatsApp respondidos (+2 por cada)
+  pontuacao += (atividade.whatsappRespondidos || 0) * PONTOS.WHATSAPP_RESPONDIDO;
   
   // Pontos por clientes cadastrados
   pontuacao += (atividade.clientesCadastrados || 0) * PONTOS.CLIENTE_CADASTRADO;
@@ -3269,6 +3289,27 @@ export async function registrarClienteCadastrado(corretorId: number) {
   // Usar ligacoesRealizadas como proxy para atividade
   await incrementarAtividade(corretorId, 'ligacoesRealizadas');
   await calcularPontuacaoDiaria(corretorId);
+}
+
+// Recalcular pontuação de todos os corretores para o dia atual
+export async function recalcularPontuacaoTodosCorretores() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  
+  // Buscar todas as atividades do dia
+  const atividades = await db.select()
+    .from(atividadesDiarias)
+    .where(eq(atividadesDiarias.data, hoje));
+  
+  // Recalcular pontuação de cada corretor
+  for (const atividade of atividades) {
+    await calcularPontuacaoDiaria(atividade.corretorId);
+  }
+  
+  return atividades.length;
 }
 
 

@@ -2197,6 +2197,13 @@ export const appRouter = router({
           atualizadoPor: ctx.user.id,
         });
       }),
+    
+    // Recalcular pontuação de todos os corretores do dia
+    recalcular: gestorProcedure
+      .mutation(async () => {
+        const total = await db.recalcularPontuacaoTodosCorretores();
+        return { success: true, corretoresRecalculados: total || 0 };
+      }),
   }),
 
   // ============================================================================
