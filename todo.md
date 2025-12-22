@@ -1544,8 +1544,13 @@
 - [x] Criar visualização da ficha completa do corretor (botão Ver Detalhes)
 - [x] Adicionar estatísticas de Ativos/Inativos no dashboard de corretores
 
-## Reorganização da Página de Conquistas (22/12/2025)
-- [ ] Definir grupos de conquistas (ex: Atendimento, Vendas, Presença, etc.)
-- [ ] Criar layout com grupos expansíveis igual menu lateral
-- [ ] Adicionar animações nos cards ao passar o mouse (hover effects)
-- [ ] Manter indicação visual de conquistas desbloqueadas vs bloqueadas
+## Reorganização da Página de Conquistas (22/12/2025) - CONCLUÍDO
+- [x] Definir grupos de conquistas (ex: Atendimento, Vendas, Presença, etc.)
+- [x] Criar layout com grupos expansíveis igual menu lateral
+- [x] Adicionar animações nos cards ao passar o mouse (hover effects)
+- [x] Manter indicação visual de conquistas desbloqueadas vs bloqueadas
+
+## Modo Noturno (22/12/2025) - CONCLUÍDO
+- [x] Implementar toggle de tema claro/escuro no DashboardLayout
+- [x] Persistir preferência do usuário (localStorage)
+- [x] Ajustar cores para ambos os temas

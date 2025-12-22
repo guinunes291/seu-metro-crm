@@ -33,8 +33,9 @@ import {
   BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, 
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
-  UserCog, Import, Home, Clock, CalendarCheck
+  UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -121,6 +122,29 @@ const MENU_GROUPS_KEY = "menu-groups-state";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
+
+// Componente de toggle de tema
+function ThemeToggle() {
+  const { theme, toggleTheme, switchable } = useTheme();
+  
+  if (!switchable || !toggleTheme) return null;
+  
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      className="h-9 w-9 rounded-lg"
+      title={theme === 'light' ? 'Ativar Modo Noturno' : 'Ativar Modo Claro'}
+    >
+      {theme === 'light' ? (
+        <Moon className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+      ) : (
+        <Sun className="h-5 w-5 text-amber-400 hover:text-amber-300 transition-colors" />
+      )}
+    </Button>
+  );
+}
 
 export default function DashboardLayout({
   children,
@@ -583,10 +607,11 @@ function DashboardContent({
       </Sidebar>
 
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4 lg:px-6">
+        <header className="flex h-14 items-center justify-between gap-2 border-b px-4 lg:px-6">
           <SidebarTrigger className="-ml-2">
             <PanelLeft className="h-5 w-5" />
           </SidebarTrigger>
+          <ThemeToggle />
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
       </SidebarInset>
