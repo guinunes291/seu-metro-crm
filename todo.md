@@ -1484,3 +1484,8 @@
 - [x] Implementar timer de atendimento no lead (tempo aguardando)
 - [x] Destaque visual para leads urgentes (aguardando há muito tempo)
 - [x] Configurar limites de tempo para alertas (5min amarelo, 30min vermelho, 2h crítico)
+
+## Dashboard Melhorias (22/12/2025)
+- [x] Criar contador de leads urgentes por nível (normal, atenção, prioridade alta, crítico)
+- [x] Criar componente de funil de vendas visual em formato de funil
+- [x] Integrar contador e funil no dashboard do gestor

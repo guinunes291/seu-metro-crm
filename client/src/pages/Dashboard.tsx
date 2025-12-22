@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import { Button } from "@/components/ui/button";
+import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
+import FunilVendasVisual from "@/components/FunilVendasVisual";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import {
@@ -173,6 +175,11 @@ export default function Dashboard() {
     { dias: 30 },
     { enabled: isGestor }
   );
+  
+  // Query de leads para o gestor (para o card de urgência)
+  const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
+    enabled: isGestor
+  });
   
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR
@@ -796,44 +803,27 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
 
-              {/* Gráfico de Funil de Vendas */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingDown className="h-5 w-5" />
-                    Funil de Vendas (30 dias)
-                  </CardTitle>
-                  <CardDescription>Distribuição de leads por etapa do funil</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {dadosFunil && dadosFunil.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={dadosFunil} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" fontSize={12} />
-                        <YAxis 
-                          dataKey="etapa" 
-                          type="category" 
-                          width={120}
-                          fontSize={11}
-                        />
-                        <Tooltip />
-                        <Bar dataKey="valor" name="Quantidade">
-                          {dadosFunil.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.cor} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>Sem dados para exibir</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Funil de Vendas Visual */}
+              <FunilVendasVisual
+                data={{
+                  novos: metrics?.novos || 0,
+                  aguardando: metrics?.aguardando || 0,
+                  emAtendimento: metrics?.emAtendimento || 0,
+                  agendados: metrics?.agendados || 0,
+                  visitaRealizada: metrics?.visitaRealizada || 0,
+                  analiseCredito: metrics?.analiseCredito || 0,
+                  contratoFechado: metrics?.contratosFechados || 0,
+                  perdidos: metrics?.perdidos || 0,
+                }}
+              />
             </div>
+
+            {/* Card de Leads Urgentes */}
+            {allLeads && allLeads.length > 0 && (
+              <div className="mb-8">
+                <LeadsUrgentesCard leads={allLeads} />
+              </div>
+            )}
 
             {/* Tabelas de ranking */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
