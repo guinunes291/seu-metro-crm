@@ -38,6 +38,7 @@ import { CopilotQuickActions } from "@/components/CopilotQuickActions";
 import { SMQCopilotButton } from "@/components/SMQCopilotChat";
 import { useCopilot } from "@/contexts/CopilotContext";
 import { Bot } from "lucide-react";
+import { ProjectCombobox } from "@/components/ProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 
 const statusLabels: Record<string, string> = {
@@ -117,6 +118,8 @@ export default function Leads() {
     telefone: "",
     email: "",
     projectId: "",
+    projectManual: "", // Nome do projeto digitado manualmente
+    isProjectManual: false, // Se o projeto foi digitado manualmente
     origem: "captacao_corretor" as "captacao_corretor" | "indicacao" | "whatsapp" | "telefone" | "plantao" | "facebook" | "site" | "outro",
     observacoes: "",
   });
@@ -128,13 +131,20 @@ export default function Leads() {
     }
 
     try {
+      // Se o projeto foi digitado manualmente, adiciona nas observações
+      let observacoesFinais = newLeadForm.observacoes || "";
+      if (newLeadForm.isProjectManual && newLeadForm.projectManual) {
+        const projetoInfo = `[Projeto de interesse: ${newLeadForm.projectManual}]`;
+        observacoesFinais = observacoesFinais ? `${projetoInfo}\n${observacoesFinais}` : projetoInfo;
+      }
+
       await createLeadMutation.mutateAsync({
         nome: newLeadForm.nome,
         telefone: newLeadForm.telefone,
         email: newLeadForm.email || undefined,
-        projectId: newLeadForm.projectId ? parseInt(newLeadForm.projectId) : undefined,
+        projectId: !newLeadForm.isProjectManual && newLeadForm.projectId ? parseInt(newLeadForm.projectId) : undefined,
         origem: newLeadForm.origem,
-        observacoes: newLeadForm.observacoes || undefined,
+        observacoes: observacoesFinais || undefined,
       });
 
       toast.success("Lead criado com sucesso!");
@@ -144,6 +154,8 @@ export default function Leads() {
         telefone: "",
         email: "",
         projectId: "",
+        projectManual: "",
+        isProjectManual: false,
         origem: "indicacao",
         observacoes: "",
       });
@@ -1021,21 +1033,33 @@ export default function Leads() {
               
               <div className="grid gap-2">
                 <Label htmlFor="projeto">Projeto de Interesse</Label>
-                <Select 
-                  value={newLeadForm.projectId} 
-                  onValueChange={(value) => setNewLeadForm({ ...newLeadForm, projectId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um projeto" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects?.map((project) => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
-                        {project.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ProjectCombobox
+                  projects={projects || []}
+                  value={newLeadForm.isProjectManual ? newLeadForm.projectManual : newLeadForm.projectId}
+                  onChange={(value, isManual) => {
+                    if (isManual) {
+                      setNewLeadForm({ 
+                        ...newLeadForm, 
+                        projectId: "",
+                        projectManual: value,
+                        isProjectManual: true 
+                      });
+                    } else {
+                      setNewLeadForm({ 
+                        ...newLeadForm, 
+                        projectId: value,
+                        projectManual: "",
+                        isProjectManual: false 
+                      });
+                    }
+                  }}
+                  placeholder="Buscar ou digitar projeto..."
+                />
+                {newLeadForm.isProjectManual && newLeadForm.projectManual && (
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Projeto não cadastrado. Será salvo nas observações.
+                  </p>
+                )}
               </div>
               
               <div className="grid gap-2">

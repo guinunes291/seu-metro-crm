@@ -1560,4 +1560,8 @@
 - [x] Criar Service Worker para cache e funcionamento offline
 - [x] Configurar ícones para diferentes dispositivos (72x72 a 512x512)
 - [x] Registrar Service Worker no index.html
-- [x] Configurar meta tags para iOS e Android
+- [x] Configurar meta tags para iOS e Andro## Busca de Projeto no Cadastro de Lead (22/12/2025) - CONCLUÍDO
+- [x] Criar componente Combobox com busca e autocomplete
+- [x] Permitir digitação manual de projeto não cadastrado
+- [x] Integrar no formulário de cadastro de leads
+- [x] Salvar projeto manual nas observações do leadanual
