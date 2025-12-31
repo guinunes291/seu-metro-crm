@@ -1623,3 +1623,17 @@
 - [x] Renomear "Ranking TV" para "Corrida dos Campeões"
 - [x] Atualizar sistema de pontuação (Ligação: 5pts, WhatsApp: 1pt, Agendamento: 25pts, Visita: 40pts, Análise: 60pts, Venda: 150pts)
 - [x] Corrigir filtro de período na Performance TV
+
+
+## Bug: Conquistas Não Atualizam na Página (31/12/2025)
+- [ ] Investigar por que o email de conquista é enviado mas a página não mostra o desbloqueio
+- [ ] Verificar sincronização entre tabela de conquistas e exibição no frontend
+- [ ] Corrigir para que o corretor veja o avanço e desbloqueio das conquistas
+
+
+## Bug: Conquistas Não Atualizam na Página (31/12/2025) - CORRIGIDO
+- [x] Email de nova conquista é enviado mas página não mostra desbloqueio
+- [x] Corrigido endpoint: minhasConquistas -> minhas
+- [x] Corrigido endpoint: verificarConquistas -> verificar
+- [x] Corrigido mapeamento: conquistaId -> tipoConquistaId
+- [x] Conquistas desbloqueadas agora aparecem corretamente com visual diferenciado
