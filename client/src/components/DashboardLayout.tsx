@@ -111,6 +111,7 @@ const menuGroups = [
     icon: Settings,
     items: [
       { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+      { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync", roles: ["gestor", "admin"] },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
     ],
   },

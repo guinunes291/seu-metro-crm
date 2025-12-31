@@ -37,6 +37,7 @@ import HistoricoPresenca from "@/pages/HistoricoPresenca";
 import Agendamentos from "@/pages/Agendamentos";
 import AprovarProjetos from "@/pages/AprovarProjetos";
 import Conquistas from "@/pages/Conquistas";
+import GoogleSheetsSync from "@/pages/GoogleSheetsSync";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/meu-perfil" component={MeuPerfil} />
       <Route path="/historico-presenca" component={HistoricoPresenca} />
       <Route path="/conquistas" component={Conquistas} />
+      <Route path="/google-sheets-sync" component={GoogleSheetsSync} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

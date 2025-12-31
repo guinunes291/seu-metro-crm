@@ -27,6 +27,49 @@ import {
   conquistas, Conquista, InsertConquista
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { appendLead } from './googleSheetsSync';
+
+// Função helper para sincronizar lead com Google Sheets (não bloqueia)
+async function syncLeadToGoogleSheets(lead: Lead) {
+  try {
+    // Buscar nome do corretor e projeto para a planilha
+    const db = await getDb();
+    if (!db) return;
+    
+    let corretorNome = '';
+    let projetoNome = '';
+    
+    if (lead.corretorId) {
+      const corretor = await db.select({ name: users.name }).from(users).where(eq(users.id, lead.corretorId)).limit(1);
+      corretorNome = corretor[0]?.name || '';
+    }
+    
+    if (lead.projectId) {
+      const projeto = await db.select({ nome: projects.nome }).from(projects).where(eq(projects.id, lead.projectId)).limit(1);
+      projetoNome = projeto[0]?.nome || '';
+    }
+    
+    await appendLead({
+      id: lead.id,
+      createdAt: lead.createdAt,
+      nome: lead.nome,
+      email: lead.email,
+      telefone: lead.telefone,
+      cpf: lead.cpf,
+      origem: lead.origem,
+      projetoNome,
+      corretorNome,
+      status: lead.status,
+      dataDistribuicao: lead.dataDistribuicao,
+      ultimoContato: lead.ultimoContato,
+      observacoes: lead.observacoes,
+      campanha: lead.campanha,
+      faixaRenda: lead.faixaRenda,
+    });
+  } catch (err: any) {
+    console.error('[GoogleSheets] Erro ao sincronizar lead:', err.message);
+  }
+}
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -537,6 +580,9 @@ export async function createLead(lead: InsertLead) {
   // Retornar o lead criado
   const createdLead = await getLeadById(insertId);
   if (!createdLead) throw new Error("Failed to retrieve created lead");
+  
+  // Sincronizar com Google Sheets (async, não bloqueia)
+  syncLeadToGoogleSheets(createdLead);
   
   return createdLead;
 }
@@ -5378,4 +5424,93 @@ export async function getRelatorioLeadsCriados(
     totalGeral: leadsQuery.length,
     leadsDetalhados,
   };
+}
+
+
+// ============================================================================
+// SINCRONIZAÇÃO COM GOOGLE SHEETS
+// ============================================================================
+
+/**
+ * Busca todos os leads com dados completos para sincronização com Google Sheets
+ */
+export async function getAllLeadsForSync(): Promise<{
+  id: number;
+  createdAt: Date;
+  nome: string;
+  email: string | null;
+  telefone: string;
+  cpf: string | null;
+  origem: string | null;
+  projetoNome: string | null;
+  corretorNome: string | null;
+  status: string;
+  dataDistribuicao: Date | null;
+  ultimoContato: Date | null;
+  observacoes: string | null;
+  campanha: string | null;
+  faixaRenda: string | null;
+}[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db.select({
+    id: leads.id,
+    createdAt: leads.createdAt,
+    nome: leads.nome,
+    email: leads.email,
+    telefone: leads.telefone,
+    cpf: leads.cpf,
+    origem: leads.origem,
+    projectId: leads.projectId,
+    corretorId: leads.corretorId,
+    status: leads.status,
+    dataDistribuicao: leads.dataDistribuicao,
+    ultimoContato: leads.ultimoContato,
+    observacoes: leads.observacoes,
+    campanha: leads.campanha,
+    faixaRenda: leads.faixaRenda,
+  })
+    .from(leads)
+    .where(eq(leads.naLixeira, false))
+    .orderBy(desc(leads.createdAt));
+
+  // Buscar nomes dos projetos e corretores
+  const projectIds = [...new Set(result.filter(l => l.projectId).map(l => l.projectId!))];
+  const corretorIds = [...new Set(result.filter(l => l.corretorId).map(l => l.corretorId!))];
+
+  const projectsMap = new Map<number, string>();
+  const corretoresMap = new Map<number, string>();
+
+  if (projectIds.length > 0) {
+    const projectsResult = await db.select({ id: projects.id, nome: projects.nome })
+      .from(projects)
+      .where(inArray(projects.id, projectIds));
+    projectsResult.forEach(p => projectsMap.set(p.id, p.nome));
+  }
+
+  if (corretorIds.length > 0) {
+    const corretoresResult = await db.select({ id: users.id, name: users.name })
+      .from(users)
+      .where(inArray(users.id, corretorIds));
+    corretoresResult.forEach(c => corretoresMap.set(c.id, c.name || 'Sem Nome'));
+  }
+
+  return result.map(lead => ({
+    id: lead.id,
+    createdAt: lead.createdAt,
+    nome: lead.nome,
+    email: lead.email,
+    telefone: lead.telefone,
+    cpf: lead.cpf,
+    origem: lead.origem,
+    projetoNome: lead.projectId ? projectsMap.get(lead.projectId) || null : null,
+    corretorNome: lead.corretorId ? corretoresMap.get(lead.corretorId) || null : null,
+    status: lead.status,
+    dataDistribuicao: lead.dataDistribuicao,
+    ultimoContato: lead.ultimoContato,
+    observacoes: lead.observacoes,
+    campanha: lead.campanha,
+    faixaRenda: lead.faixaRenda,
+  }));
 }

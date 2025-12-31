@@ -9,6 +9,7 @@ import { TRPCError } from "@trpc/server";
 import * as sheetsImport from "./sheetsImport";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 import * as presenca from "./presenca";
+import * as sheetsSync from "./googleSheetsSync";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -2664,6 +2665,46 @@ export const appRouter = router({
           input?.dataInicio ? new Date(input.dataInicio) : undefined,
           input?.dataFim ? new Date(input.dataFim) : undefined
         );
+      }),
+  }),
+
+  // ============================================================================
+  // SINCRONIZAÇÃO COM GOOGLE SHEETS
+  // ============================================================================
+  sheetsSync: router({
+    // Testar conexão com a planilha
+    testConnection: gestorProcedure
+      .query(async () => {
+        return await sheetsSync.testConnection();
+      }),
+    
+    // Inicializar planilha com headers
+    initialize: gestorProcedure
+      .mutation(async () => {
+        await sheetsSync.initializeSheet();
+        return { success: true, message: "Planilha inicializada com sucesso" };
+      }),
+    
+    // Sincronizar todos os leads
+    syncAll: gestorProcedure
+      .mutation(async () => {
+        // Buscar todos os leads com dados completos
+        const allLeads = await db.getAllLeadsForSync();
+        const result = await sheetsSync.syncAllLeads(allLeads);
+        return {
+          success: result.errors === 0,
+          message: `${result.success} leads sincronizados, ${result.errors} erros`,
+          ...result
+        };
+      }),
+    
+    // Obter URL da planilha
+    getSpreadsheetUrl: gestorProcedure
+      .query(() => {
+        return {
+          url: sheetsSync.getSpreadsheetUrl(),
+          spreadsheetId: sheetsSync.getSpreadsheetId()
+        };
       }),
   }),
 });

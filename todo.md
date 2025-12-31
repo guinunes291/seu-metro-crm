@@ -1674,3 +1674,24 @@
 - [x] Criar gráfico de barras horizontal com distribuição por corretor
 - [x] Integrar relatório no Dashboard do Gestor
 - [x] Testar com dados reais
+
+
+## Nova Feature: Sincronização Automática de Leads para Google Sheets (31/12/2025)
+- [ ] Analisar integração atual com Google Sheets API
+- [ ] Verificar permissões de escrita na API (não apenas leitura)
+- [ ] Definir estrutura ideal da planilha de destino
+- [ ] Implementar função de escrita/append no Google Sheets
+- [ ] Criar trigger automático quando novo lead é criado
+- [ ] Implementar sincronização em lote para leads existentes
+- [ ] Testar sincronização com planilha real
+
+
+## Nova Feature: Sincronização Automática com Google Sheets (31/12/2025)
+- [x] Analisar viabilidade técnica da integração (Service Account necessário)
+- [x] Configurar Service Account do Google Cloud (crm-sheets-sync@seu-metro-quadrado-crm.iam.gserviceaccount.com)
+- [x] Definir estrutura ideal da planilha (15 colunas: ID, Data Criação, Nome, Email, Telefone, CPF, Origem, Projeto, Corretor, Status, Data Distribuição, Último Contato, Observações, Campanha, Faixa de Renda)
+- [x] Implementar módulo googleSheetsSync.ts com funções de escrita
+- [x] Criar página de configuração no painel do Gestor (/google-sheets-sync)
+- [x] Implementar sincronização completa (1.407 leads exportados)
+- [x] Implementar sincronização automática de novos leads (via createLead no db.ts)
+- [x] Testar conexão e sincronização com planilha real
