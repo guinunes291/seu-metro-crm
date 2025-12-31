@@ -496,19 +496,19 @@ export default function PerformanceTV() {
     posicao: index + 1,
   })) || [];
 
-  // Formatar ranking de produtividade
+  // Formatar ranking de produtividade - IMPORTANTE: converter para Number para evitar concatenação de strings
   const rankingProdutividade = rankingPeriodo?.map((item: any, index: number) => ({
     corretorId: item.corretorId,
     corretorNome: item.corretorNome,
     corretorFoto: item.corretorFoto,
-    pontuacaoTotal: item.totalPontos || 0,
-    ligacoesRealizadas: item.totalLigacoes || 0,
+    pontuacaoTotal: Number(item.totalPontos) || 0,
+    ligacoesRealizadas: Number(item.totalLigacoes) || 0,
     ligacoesAtendidas: 0,
-    whatsappEnviados: item.totalWhatsapp || 0,
+    whatsappEnviados: Number(item.totalWhatsapp) || 0,
     whatsappRespondidos: 0,
-    agendamentosConfirmados: item.totalAgendamentos || 0,
-    visitasRealizadas: item.totalVisitas || 0,
-    documentacoesRecolhidas: item.totalDocumentacoes || 0,
+    agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
+    visitasRealizadas: Number(item.totalVisitas) || 0,
+    documentacoesRecolhidas: Number(item.totalDocumentacoes) || 0,
     posicao: index + 1,
   })) || [];
   

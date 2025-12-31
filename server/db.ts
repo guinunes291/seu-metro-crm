@@ -4118,20 +4118,18 @@ export async function getTiposConquista(): Promise<TipoConquista[]> {
 }
 
 // Buscar conquistas de um corretor
-export async function getConquistasCorretor(corretorId: number): Promise<(Conquista & { tipo: TipoConquista })[]> {
+// Retorna apenas os campos básicos da conquista, sem JOIN com tipos_conquista
+// pois o sistema de gamificação usa IDs do arquivo shared/conquistas.ts
+export async function getConquistasCorretor(corretorId: number): Promise<Conquista[]> {
   const db = await getDb();
   if (!db) return [];
   
-  const resultado = await db.select({
-    conquista: conquistas,
-    tipo: tiposConquista,
-  })
+  const resultado = await db.select()
     .from(conquistas)
-    .innerJoin(tiposConquista, eq(conquistas.tipoConquistaId, tiposConquista.id))
     .where(eq(conquistas.corretorId, corretorId))
     .orderBy(desc(conquistas.createdAt));
   
-  return resultado.map(r => ({ ...r.conquista, tipo: r.tipo }));
+  return resultado;
 }
 
 // Conceder conquista a um corretor
@@ -4274,34 +4272,45 @@ export async function verificarConquistasRanking(): Promise<number> {
 }
 
 // Buscar resumo de conquistas para exibição no perfil
+// Usa o arquivo shared/conquistas.ts para obter informações das conquistas
 export async function getResumoConquistas(corretorId: number): Promise<{
   total: number;
   porCategoria: Record<string, number>;
-  recentes: (Conquista & { tipo: TipoConquista })[];
-  destaque: (Conquista & { tipo: TipoConquista }) | null;
+  recentes: { id: number; tipoConquistaId: number; nome: string; categoria: string; pontos: number; createdAt: Date }[];
+  destaque: { id: number; tipoConquistaId: number; nome: string; categoria: string; pontos: number } | null;
 }> {
   const db = await getDb();
   if (!db) return { total: 0, porCategoria: {}, recentes: [], destaque: null };
   
-  const todasConquistas = await getConquistasCorretor(corretorId);
+  // Importar conquistas do arquivo shared
+  const { CONQUISTAS } = await import("../shared/conquistas");
+  
+  const conquistasDb = await getConquistasCorretor(corretorId);
+  
+  // Mapear conquistas do banco com informações do arquivo shared
+  const todasConquistas = conquistasDb.map(c => {
+    const info = CONQUISTAS.find(cq => cq.id === c.tipoConquistaId);
+    return {
+      id: c.id,
+      tipoConquistaId: c.tipoConquistaId,
+      nome: info?.nome || "Conquista",
+      categoria: info?.categoria || "Geral",
+      pontos: info?.pontos || 0,
+      createdAt: c.createdAt,
+    };
+  });
   
   // Contar por categoria
   const porCategoria: Record<string, number> = {};
   for (const c of todasConquistas) {
-    const cat = c.tipo.categoria;
-    porCategoria[cat] = (porCategoria[cat] || 0) + 1;
+    porCategoria[c.categoria] = (porCategoria[c.categoria] || 0) + 1;
   }
   
   // Pegar as 5 mais recentes
   const recentes = todasConquistas.slice(0, 5);
   
-  // Pegar a mais importante (gold > silver > bronze > outras)
-  const ordemCor = ['gold', 'purple', 'blue', 'silver', 'bronze', 'green', 'orange', 'red'];
-  const destaque = todasConquistas.sort((a, b) => {
-    const idxA = ordemCor.indexOf(a.tipo.cor);
-    const idxB = ordemCor.indexOf(b.tipo.cor);
-    return idxA - idxB;
-  })[0] || null;
+  // Pegar a de maior pontuação como destaque
+  const destaque = [...todasConquistas].sort((a, b) => b.pontos - a.pontos)[0] || null;
   
   return {
     total: todasConquistas.length,

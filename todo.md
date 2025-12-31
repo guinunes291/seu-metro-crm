@@ -1637,3 +1637,30 @@
 - [x] Corrigido endpoint: verificarConquistas -> verificar
 - [x] Corrigido mapeamento: conquistaId -> tipoConquistaId
 - [x] Conquistas desbloqueadas agora aparecem corretamente com visual diferenciado
+
+
+## Bug: Contadores Performance TV com Valores Incorretos (31/12/2025)
+- [ ] LIGAÇÕES mostrando valor absurdo: 0514052316
+- [ ] PONTUAÇÃO TOTAL mostrando valor absurdo: 025520017517
+- [ ] Investigar origem dos valores incorretos
+- [ ] Corrigir cálculo dos contadores
+
+## Verificar: Conquistas do Corretor Kauan
+- [ ] Verificar se conquistas do Kauan estão atualizadas
+- [ ] Verificar se conquistas estão desbloqueadas corretamente
+
+
+## Bug Fix: Contadores Performance TV com Valores Concatenados (31/12/2025)
+- [x] Investigar valores incorretos nos contadores (LIGAÇÕES: 0514052316, PONTUAÇÃO: 025520017517)
+- [x] Identificar problema: valores sendo concatenados como strings ao invés de somados
+- [x] Corrigir cálculo dos totais em PerformanceTV.tsx convertendo para Number()
+- [x] Verificar que contadores agora mostram valores corretos (LIGAÇÕES: 135, PONTUAÇÃO: 825)
+
+## Bug Fix: Conquistas não Aparecendo na Página de Perfil (31/12/2025)
+- [x] Investigar por que conquistas desbloqueadas não apareciam
+- [x] Identificar problema 1: MeuPerfil.tsx usando endpoints incorretos (minhasConquistas → minhas)
+- [x] Identificar problema 2: MeuPerfil.tsx usando campo incorreto (conquistaId → tipoConquistaId)
+- [x] Corrigir endpoints em MeuPerfil.tsx
+- [x] Corrigir mapeamento de campos em MeuPerfil.tsx
+- [x] Atualizar função getConquistasCorretor para retornar dados sem JOIN obrigatório
+- [x] Verificar que conquistas do Guilherme (1) e Kauan (6) agora aparecem corretamente

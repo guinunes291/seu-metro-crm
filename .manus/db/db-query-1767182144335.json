@@ -1,0 +1,88 @@
+{
+  "query": "SELECT id, nome, categoria, descricao FROM tipos_conquista ORDER BY categoria, id LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, categoria, descricao FROM tipos_conquista ORDER BY categoria, id LIMIT 50;",
+  "rows": [
+    {
+      "id": "1",
+      "nome": "Top Vendedor da Semana",
+      "categoria": "vendas",
+      "descricao": "Maior VGV na semana"
+    },
+    {
+      "id": "2",
+      "nome": "Top Vendedor do Mês",
+      "categoria": "vendas",
+      "descricao": "Maior VGV no mês"
+    },
+    {
+      "id": "3",
+      "nome": "Vice-Campeão Semanal",
+      "categoria": "vendas",
+      "descricao": "2º maior VGV na semana"
+    },
+    {
+      "id": "4",
+      "nome": "Bronze Semanal",
+      "categoria": "vendas",
+      "descricao": "3º maior VGV na semana"
+    },
+    {
+      "id": "5",
+      "nome": "Meta Semanal Batida",
+      "categoria": "produtividade",
+      "descricao": "Atingiu 100% da meta semanal"
+    },
+    {
+      "id": "6",
+      "nome": "Meta Mensal Batida",
+      "categoria": "produtividade",
+      "descricao": "Atingiu 100% da meta mensal"
+    },
+    {
+      "id": "7",
+      "nome": "Superação 120%",
+      "categoria": "produtividade",
+      "descricao": "Superou 120% da meta mensal"
+    },
+    {
+      "id": "8",
+      "nome": "Streak de 5 Dias",
+      "categoria": "streak",
+      "descricao": "5 dias consecutivos batendo meta diária"
+    },
+    {
+      "id": "9",
+      "nome": "Streak de 10 Dias",
+      "categoria": "streak",
+      "descricao": "10 dias consecutivos batendo meta diária"
+    },
+    {
+      "id": "10",
+      "nome": "Mês Perfeito",
+      "categoria": "streak",
+      "descricao": "30 dias consecutivos batendo meta diária"
+    },
+    {
+      "id": "11",
+      "nome": "Primeira Venda",
+      "categoria": "especial",
+      "descricao": "Fechou a primeira venda no sistema"
+    },
+    {
+      "id": "12",
+      "nome": "10 Vendas",
+      "categoria": "especial",
+      "descricao": "Acumulou 10 vendas no sistema"
+    },
+    {
+      "id": "13",
+      "nome": "50 Vendas",
+      "categoria": "especial",
+      "descricao": "Acumulou 50 vendas no sistema"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tcategoria\tdescricao\n1\tTop Vendedor da Semana\tvendas\tMaior VGV na semana\n2\tTop Vendedor do Mês\tvendas\tMaior VGV no mês\n3\tVice-Campeão Semanal\tvendas\t2º maior VGV na semana\n4\tBronze Semanal\tvendas\t3º maior VGV na semana\n5\tMeta Semanal Batida\tprodutividade\tAtingiu 100% da meta semanal\n6\tMeta Mensal Batida\tprodutividade\tAtingiu 100% da meta mensal\n7\tSuperação 120%\tprodutividade\tSuperou 120% da meta mensal\n8\tStreak de 5 Dias\tstreak\t5 dias consecutivos batendo meta diária\n9\tStreak de 10 Dias\tstreak\t10 dias consecutivos batendo meta diária\n10\tMês Perfeito\tstreak\t30 dias consecutivos batendo meta diária\n11\tPrimeira Venda\tespecial\tFechou a primeira venda no sistema\n12\t10 Vendas\tespecial\tAcumulou 10 vendas no sistema\n13\t50 Vendas\tespecial\tAcumulou 50 vendas no sistema\n",
+  "stderr": "",
+  "execution_time_ms": 53
+}

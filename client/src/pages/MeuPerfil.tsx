@@ -55,7 +55,7 @@ export default function MeuPerfil() {
   };
   
   // Queries
-  const { data: conquistasUsuario, refetch: refetchConquistas } = trpc.conquistas.minhasConquistas.useQuery();
+  const { data: conquistasUsuario, refetch: refetchConquistas } = trpc.conquistas.minhas.useQuery();
   const { data: estatisticas } = trpc.ranking.minhaPerformance.useQuery();
   
   // Mutations
@@ -68,7 +68,7 @@ export default function MeuPerfil() {
     }
   });
 
-  const verificarConquistas = trpc.conquistas.verificarConquistas.useMutation({
+  const verificarConquistas = trpc.conquistas.verificar.useMutation({
     onSuccess: (data) => {
       if (data.novasConquistas && data.novasConquistas.length > 0) {
         celebrate();
@@ -81,12 +81,13 @@ export default function MeuPerfil() {
   });
 
   // Calcular progresso das conquistas
-  const conquistasDesbloqueadas = conquistasUsuario?.conquistas || [];
-  const idsDesbloqueadas = new Set(conquistasDesbloqueadas.map((c: any) => c.conquistaId));
+  // O backend retorna array direto com tipoConquistaId que corresponde ao id da conquista
+  const conquistasDesbloqueadas = conquistasUsuario || [];
+  const idsDesbloqueadas = new Set(conquistasDesbloqueadas.map((c: any) => c.tipoConquistaId));
   
   // Calcular pontos totais
   const pontosTotal = conquistasDesbloqueadas.reduce((acc: number, c: any) => {
-    const conquista = CONQUISTAS.find(cq => cq.id === c.conquistaId);
+    const conquista = CONQUISTAS.find(cq => cq.id === c.tipoConquistaId);
     return acc + (conquista?.pontos || 0);
   }, 0);
   
