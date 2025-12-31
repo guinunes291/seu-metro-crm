@@ -1600,3 +1600,26 @@
 ## Bugs Pendentes (reportados pelo usuário)
 - [ ] Histórico de Presença mostra dados incorretos
 - [ ] Conquistas não atualizam na página do corretor (email é enviado mas página não mostra)
+
+
+## Sistema de Follow-up 5 Dias (31/12/2025)
+- [ ] Lead aparece em Tarefas do Dia no dia seguinte ao primeiro contato
+- [ ] Contador 1/5, 2/5, 3/5, 4/5, 5/5 baseado em dias consecutivos
+- [ ] Botão "Respondeu" - zera contador, lead sai do fluxo de follow-up
+- [ ] Botão "Não Respondeu" - incrementa contador, lead volta amanhã
+- [ ] Após 5/5 sem resposta - lead vai para status "Perdido" e Lixeira
+- [ ] Lead só aparece uma vez por dia nas Tarefas do Dia
+
+
+## Sistema de Follow-up 5 Dias (31/12/2025) - CONCLUÍDO
+- [x] Lead recebe primeiro contato → follow-up criado para dia seguinte
+- [x] Dia 1/5: Lead aparece em Tarefas do Dia
+- [x] Botões "Respondeu" (reseta contador, continua no fluxo) e "Não Respondeu" (avança contador)
+- [x] Ao atingir 5/5 sem resposta → Lead vai para Perdido/Lixeira
+- [x] Atualizar interface com botões claros e contador visível
+
+## Reorganização das Abas de Performance (31/12/2025) - CONCLUÍDO
+- [x] Remover aba "Minha Performance" do menu
+- [x] Renomear "Ranking TV" para "Corrida dos Campeões"
+- [x] Atualizar sistema de pontuação (Ligação: 5pts, WhatsApp: 1pt, Agendamento: 25pts, Visita: 40pts, Análise: 60pts, Venda: 150pts)
+- [x] Corrigir filtro de período na Performance TV

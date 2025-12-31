@@ -2764,21 +2764,40 @@ export async function registrarTentativaFollowUp(
   });
   
   if (resultado === "respondeu") {
-    // Cliente respondeu - resetar contador e marcar como respondido
+    // Cliente respondeu - resetar contador para 0 e agendar próxima tentativa para amanhã
+    // O lead continua no fluxo de follow-up, apenas reseta o contador
+    const proximaTentativa = new Date(agora);
+    proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+    proximaTentativa.setHours(9, 0, 0, 0);
+    
     await db.update(followUps)
       .set({
-        status: "respondido",
+        tentativaAtual: 0, // Reseta o contador
+        proximaTentativa,
         ultimaTentativa: agora,
         historicoTentativas: JSON.stringify(historico),
         updatedAt: agora
+        // Mantém status "ativo" para continuar no fluxo
       })
       .where(eq(followUps.id, followUpId));
     
-    return { status: "respondido", mensagem: "Follow-up concluído - cliente respondeu" };
+    // Atualizar contador no lead também
+    await db.update(leads)
+      .set({
+        diasFollowupConsecutivos: 0,
+        updatedAt: agora
+      })
+      .where(eq(leads.id, atual.leadId));
+    
+    return { 
+      status: "respondeu", 
+      mensagem: "Cliente respondeu! Contador resetado. Próximo follow-up amanhã.",
+      proximaTentativa
+    };
   }
   
   if (atual.tentativaAtual >= atual.maxTentativas) {
-    // Atingiu máximo de tentativas - encerrar follow-up atual
+    // Atingiu máximo de tentativas (5/5) - mover lead para Perdido e Lixeira
     await db.update(followUps)
       .set({
         status: "encerrado",
@@ -2788,129 +2807,36 @@ export async function registrarTentativaFollowUp(
       })
       .where(eq(followUps.id, followUpId));
     
-    // Buscar o lead para ver quais corretores já tentaram
+    // Buscar o lead
     const leadData = await db.select().from(leads).where(eq(leads.id, atual.leadId)).limit(1);
     if (!leadData[0]) throw new Error("Lead não encontrado");
     
-    // Se o lead for de captação própria do corretor, NÃO transferir - apenas encerrar
-    if (leadData[0].origem === "captacao_corretor") {
-      // Registrar interação no histórico
-      await db.insert(leadHistory).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tipo: "outro",
-        resultado: "outro",
-        observacoes: `Follow-up encerrado após 5 tentativas sem resposta (lead de captação própria - não transferível)`,
-        statusAnterior: leadData[0].status,
-        statusNovo: leadData[0].status
-      });
-      
-      return { 
-        status: "encerrado", 
-        mensagem: "Follow-up encerrado após 5 tentativas. Lead de captação própria não é transferido." 
-      };
-    }
+    // Mover lead para status Perdido e Lixeira (independente da origem)
+    await db.update(leads)
+      .set({
+        status: "perdido",
+        naLixeira: true,
+        dataMovidoLixeira: agora,
+        motivoPerdido: "Sem resposta após 5 tentativas de follow-up",
+        updatedAt: agora
+      })
+      .where(eq(leads.id, atual.leadId));
     
-    // Parsear lista de corretores que já tentaram
-    let corretoresQueTentaram: number[] = [];
-    try {
-      corretoresQueTentaram = leadData[0].corretoresQueTentaram 
-        ? JSON.parse(leadData[0].corretoresQueTentaram) 
-        : [];
-    } catch (e) {
-      corretoresQueTentaram = [];
-    }
+    // Registrar interação no histórico
+    await db.insert(leadHistory).values({
+      leadId: atual.leadId,
+      corretorId: atual.corretorId,
+      tipo: "outro",
+      resultado: "outro",
+      observacoes: `Lead movido para Perdido/Lixeira após 5 tentativas de follow-up sem resposta`,
+      statusAnterior: leadData[0].status,
+      statusNovo: "perdido"
+    });
     
-    // Adicionar corretor atual à lista se ainda não estiver
-    if (!corretoresQueTentaram.includes(atual.corretorId)) {
-      corretoresQueTentaram.push(atual.corretorId);
-    }
-    
-    // Buscar corretores disponíveis que ainda não tentaram este lead
-    const todosCorretores = await db.select({ id: users.id })
-      .from(users)
-      .where(and(
-        eq(users.role, "corretor"),
-        eq(users.status, "presente")
-      ));
-    
-    const corretoresDisponiveis = todosCorretores.filter(
-      c => !corretoresQueTentaram.includes(c.id)
-    );
-    
-    if (corretoresDisponiveis.length > 0) {
-      // Transferir para outro corretor
-      const novoCorretor = corretoresDisponiveis[0];
-      
-      // Atualizar lead com novo corretor e lista de quem já tentou
-      await db.update(leads)
-        .set({
-          corretorId: novoCorretor.id,
-          corretorAnteriorId: atual.corretorId,
-          corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
-          status: "aguardando_atendimento",
-          updatedAt: agora
-        })
-        .where(eq(leads.id, atual.leadId));
-      
-      // Criar novo follow-up para o novo corretor
-      const proximaTentativa = new Date(agora);
-      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-      proximaTentativa.setHours(9, 0, 0, 0);
-      
-      await db.insert(followUps).values({
-        leadId: atual.leadId,
-        corretorId: novoCorretor.id,
-        tentativaAtual: 1,
-        maxTentativas: 5,
-        proximaTentativa,
-        status: "ativo",
-        historicoTentativas: "[]"
-      });
-      
-      // Registrar interação no histórico
-      await db.insert(leadHistory).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tipo: "outro",
-        resultado: "outro",
-        observacoes: `Lead transferido para outro corretor após 5 tentativas sem resposta`,
-        statusAnterior: leadData[0].status,
-        statusNovo: "aguardando_atendimento"
-      });
-      
-      return { 
-        status: "transferido", 
-        mensagem: "Lead transferido para outro corretor após 5 tentativas sem resposta" 
-      };
-    } else {
-      // Todos os corretores já tentaram - mover para lixeira
-      await db.update(leads)
-        .set({
-          naLixeira: true,
-          dataMovidoLixeira: agora,
-          corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
-          motivoPerdido: "Sem resposta após todos os corretores tentarem 5x",
-          updatedAt: agora
-        })
-        .where(eq(leads.id, atual.leadId));
-      
-      // Registrar interação no histórico
-      await db.insert(leadHistory).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tipo: "outro",
-        resultado: "outro",
-        observacoes: `Lead movido para lixeira - todos os corretores completaram 5 tentativas sem resposta`,
-        statusAnterior: leadData[0].status,
-        statusNovo: "perdido"
-      });
-      
-      return { 
-        status: "lixeira", 
-        mensagem: "Lead movido para lixeira - todos os corretores já tentaram 5x sem resposta" 
-      };
-    }
+    return { 
+      status: "perdido", 
+      mensagem: "Lead movido para Perdido e Lixeira após 5 tentativas sem resposta." 
+    };
   }
   
   // Agendar próxima tentativa para amanhã

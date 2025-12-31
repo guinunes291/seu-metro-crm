@@ -244,10 +244,10 @@ export default function TarefasDoDia() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5 text-orange-500" />
-                Follow-ups Pendentes
+                Follow-ups do Dia
               </CardTitle>
               <CardDescription>
-                Clientes aguardando contato. Após 5 tentativas sem resposta, o lead é transferido para outro corretor automaticamente.
+                Clientes aguardando contato. Após 5 dias sem resposta, o lead vai para Perdido/Lixeira.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -255,20 +255,25 @@ export default function TarefasDoDia() {
                 {followUps.map((followUp) => (
                   <div 
                     key={followUp.id} 
-                    className="flex items-center justify-between p-4 rounded-lg border bg-orange-50/50"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-orange-50/50 dark:bg-orange-950/20 gap-4"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100">
-                        <AlertTriangle className="h-5 w-5 text-orange-600" />
+                      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900">
+                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                          {followUp.tentativaAtual}/{followUp.maxTentativas}
+                        </span>
                       </div>
                       <div>
-                        <p className="font-medium">{followUp.leadNome}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <p className="font-medium text-lg">{followUp.leadNome}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                           {followUp.leadTelefone && (
-                            <span className="flex items-center gap-1">
+                            <a 
+                              href={`tel:${followUp.leadTelefone}`}
+                              className="flex items-center gap-1 hover:text-primary"
+                            >
                               <Phone className="h-3 w-3" />
                               {followUp.leadTelefone}
-                            </span>
+                            </a>
                           )}
                           {followUp.leadEmail && (
                             <span className="flex items-center gap-1">
@@ -277,27 +282,65 @@ export default function TarefasDoDia() {
                             </span>
                           )}
                         </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {followUp.tentativaAtual === 0 
+                            ? "Primeiro contato do dia" 
+                            : `Dia ${followUp.tentativaAtual} de follow-up`}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4">
-                      <Badge variant="outline" className="bg-orange-100 whitespace-nowrap">
-                        {followUp.tentativaAtual}/{followUp.maxTentativas}
-                      </Badge>
+                    <div className="flex items-center gap-2 sm:gap-3">
                       {followUp.leadTelefone && (
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="hidden sm:flex"
-                          onClick={() => window.open(`https://wa.me/55${followUp.leadTelefone?.replace(/\D/g, '')}`, '_blank')}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`tel:${followUp.leadTelefone}`, '_self')}
+                            title="Ligar"
+                          >
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => window.open(`https://wa.me/55${followUp.leadTelefone?.replace(/\D/g, '')}`, '_blank')}
+                            title="WhatsApp"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                        </>
                       )}
                       <Button 
                         size="sm" 
-                        onClick={() => setShowRegistrarTentativa(followUp.id)}
+                        variant="destructive"
+                        onClick={() => {
+                          registrarTentativaMutation.mutate({
+                            followUpId: followUp.id,
+                            resultado: "nao_atendeu",
+                            observacao: "Cliente não respondeu"
+                          });
+                        }}
+                        className="whitespace-nowrap"
+                        disabled={registrarTentativaMutation.isPending}
                       >
-                        Cliente respondeu?
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Não Respondeu
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
+                        onClick={() => {
+                          registrarTentativaMutation.mutate({
+                            followUpId: followUp.id,
+                            resultado: "respondeu",
+                            observacao: "Cliente respondeu"
+                          });
+                        }}
+                        disabled={registrarTentativaMutation.isPending}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Respondeu
                       </Button>
                     </div>
                   </div>
