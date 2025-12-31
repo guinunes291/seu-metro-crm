@@ -541,7 +541,7 @@ export default function RankingTV() {
           <h1 className="text-3xl font-black flex items-center gap-3">
             <Trophy className="w-10 h-10 text-yellow-500" />
             <span className="bg-gradient-to-r from-yellow-500 to-orange-500 bg-clip-text text-transparent">
-              RANKING DE PRODUTIVIDADE
+              CORRIDA DOS CAMPEÕES
             </span>
           </h1>
           <p className="text-muted-foreground mt-1">

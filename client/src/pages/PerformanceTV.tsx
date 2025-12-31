@@ -435,17 +435,20 @@ export default function PerformanceTV() {
   
   // Queries
   const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
-  const { data: rankingDia, refetch: refetchDia } = trpc.ranking.dia.useQuery({});
+  const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery({
+    dataInicio: dateRange.from,
+    dataFim: dateRange.to,
+  });
   const { data: estatisticas } = trpc.distribuicao.getEstatisticas.useQuery();
   
   // Auto-refresh a cada 30 segundos
   useEffect(() => {
     const interval = setInterval(() => {
       refetchVGV();
-      refetchDia();
+      refetchPeriodo();
     }, 30000);
     return () => clearInterval(interval);
-  }, [refetchVGV, refetchDia]);
+  }, [refetchVGV, refetchPeriodo]);
   
   // Fullscreen
   const toggleFullscreen = () => {
@@ -494,18 +497,18 @@ export default function PerformanceTV() {
   })) || [];
 
   // Formatar ranking de produtividade
-  const rankingProdutividade = rankingDia?.map((item: any, index: number) => ({
+  const rankingProdutividade = rankingPeriodo?.map((item: any, index: number) => ({
     corretorId: item.corretorId,
     corretorNome: item.corretorNome,
     corretorFoto: item.corretorFoto,
-    pontuacaoTotal: item.pontuacaoTotal || 0,
-    ligacoesRealizadas: item.ligacoesRealizadas || 0,
-    ligacoesAtendidas: item.ligacoesAtendidas || 0,
-    whatsappEnviados: item.whatsappEnviados || 0,
-    whatsappRespondidos: item.whatsappRespondidos || 0,
-    agendamentosConfirmados: item.agendamentosConfirmados || 0,
-    visitasRealizadas: item.visitasRealizadas || 0,
-    documentacoesRecolhidas: item.documentacoesRecolhidas || 0,
+    pontuacaoTotal: item.totalPontos || 0,
+    ligacoesRealizadas: item.totalLigacoes || 0,
+    ligacoesAtendidas: 0,
+    whatsappEnviados: item.totalWhatsapp || 0,
+    whatsappRespondidos: 0,
+    agendamentosConfirmados: item.totalAgendamentos || 0,
+    visitasRealizadas: item.totalVisitas || 0,
+    documentacoesRecolhidas: item.totalDocumentacoes || 0,
     posicao: index + 1,
   })) || [];
   

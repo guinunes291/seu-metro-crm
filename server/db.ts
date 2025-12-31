@@ -656,7 +656,64 @@ export async function createLeadHistory(history: InsertLeadHistory) {
   if (!db) throw new Error("Database not available");
   
   const result = await db.insert(leadHistory).values(history);
+  
+  // Atualizar contador de follow-up do lead
+  await atualizarContadorFollowUp(history.leadId);
+  
   return result;
+}
+
+/**
+ * Atualiza o contador de dias consecutivos de follow-up do lead
+ * Conta quantos dias consecutivos (incluindo hoje) o corretor fez contato
+ */
+export async function atualizarContadorFollowUp(leadId: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Buscar histórico de interações ordenado por data (mais recente primeiro)
+  const historico = await db
+    .select({ createdAt: leadHistory.createdAt })
+    .from(leadHistory)
+    .where(eq(leadHistory.leadId, leadId))
+    .orderBy(desc(leadHistory.createdAt));
+  
+  if (historico.length === 0) {
+    await db.update(leads).set({ diasFollowupConsecutivos: 0 }).where(eq(leads.id, leadId));
+    return;
+  }
+  
+  // Agrupar interações por dia (usando data local)
+  const diasComContato = new Set<string>();
+  for (const h of historico) {
+    const data = new Date(h.createdAt);
+    const diaStr = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+    diasComContato.add(diaStr);
+  }
+  
+  // Ordenar dias (mais recente primeiro)
+  const diasOrdenados = Array.from(diasComContato).sort().reverse();
+  
+  // Contar dias consecutivos a partir de hoje
+  const hoje = new Date();
+  const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+  
+  let diasConsecutivos = 0;
+  let dataVerificar = new Date(hoje);
+  
+  for (let i = 0; i < 5; i++) {
+    const diaStr = `${dataVerificar.getFullYear()}-${String(dataVerificar.getMonth() + 1).padStart(2, '0')}-${String(dataVerificar.getDate()).padStart(2, '0')}`;
+    
+    if (diasComContato.has(diaStr)) {
+      diasConsecutivos++;
+      dataVerificar.setDate(dataVerificar.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  
+  // Atualizar o lead
+  await db.update(leads).set({ diasFollowupConsecutivos: diasConsecutivos }).where(eq(leads.id, leadId));
 }
 
 export async function getLeadHistory(leadId: number) {
@@ -2913,6 +2970,97 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
   return result[0].insertId;
 }
 
+/**
+ * Cria follow-ups automáticos para leads que precisam de acompanhamento
+ * Leads em status "novo", "aguardando_atendimento" ou "em_atendimento" sem follow-up ativo
+ */
+export async function criarFollowUpsAutomaticos(corretorId: number) {
+  const db = await getDb();
+  if (!db) return { criados: 0 };
+  
+  // Buscar leads do corretor que precisam de follow-up
+  const leadsDoCorretor = await db.select()
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      sql`${leads.status} IN ('novo', 'aguardando_atendimento', 'em_atendimento')`
+    ));
+  
+  let criados = 0;
+  
+  for (const lead of leadsDoCorretor) {
+    // Verificar se já existe follow-up ativo para este lead
+    const existente = await db.select()
+      .from(followUps)
+      .where(and(
+        eq(followUps.leadId, lead.id),
+        eq(followUps.status, "ativo")
+      ))
+      .limit(1);
+    
+    if (existente.length === 0) {
+      // Criar follow-up para hoje (para aparecer nas tarefas do dia)
+      const proximaTentativa = new Date();
+      proximaTentativa.setHours(9, 0, 0, 0);
+      
+      await db.insert(followUps).values({
+        leadId: lead.id,
+        corretorId,
+        tentativaAtual: 0,
+        maxTentativas: 5,
+        proximaTentativa,
+        status: "ativo",
+        historicoTentativas: "[]"
+      });
+      criados++;
+    }
+  }
+  
+  return { criados };
+}
+
+/**
+ * Atualiza a função getFollowUpsDoDia para incluir leads que precisam de contato
+ * mesmo que não tenham follow-up formal criado
+ */
+export async function getFollowUpsDoDiaExpandido(corretorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Primeiro, criar follow-ups automáticos para leads sem acompanhamento
+  await criarFollowUpsAutomaticos(corretorId);
+  
+  // Agora buscar todos os follow-ups ativos (incluindo os recém-criados)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+  
+  // Buscar follow-ups com próxima tentativa para hoje OU que estão atrasados
+  return await db.select({
+    id: followUps.id,
+    leadId: followUps.leadId,
+    tentativaAtual: followUps.tentativaAtual,
+    maxTentativas: followUps.maxTentativas,
+    proximaTentativa: followUps.proximaTentativa,
+    ultimaTentativa: followUps.ultimaTentativa,
+    status: followUps.status,
+    leadNome: leads.nome,
+    leadTelefone: leads.telefone,
+    leadEmail: leads.email,
+    leadStatus: leads.status,
+    diasFollowup: leads.diasFollowupConsecutivos,
+  })
+    .from(followUps)
+    .innerJoin(leads, eq(followUps.leadId, leads.id))
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      eq(followUps.status, "ativo"),
+      lte(followUps.proximaTentativa, amanha) // Hoje ou atrasados
+    ))
+    .orderBy(followUps.proximaTentativa);
+}
+
 // Buscar leads agendados para hoje (para a aba Tarefas do Dia)
 export async function getLeadsAgendadosHoje(corretorId: number) {
   const db = await getDb();
@@ -3115,6 +3263,49 @@ export async function getRankingDia(data?: Date) {
   return resultado;
 }
 
+// Obter ranking por período (com filtro de datas)
+export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Se não tiver datas, retornar tudo
+  const conditions = [];
+  
+  if (dataInicio) {
+    const inicio = new Date(dataInicio);
+    inicio.setHours(0, 0, 0, 0);
+    conditions.push(gte(atividadesDiarias.data, inicio));
+  }
+  
+  if (dataFim) {
+    const fim = new Date(dataFim);
+    fim.setHours(23, 59, 59, 999);
+    conditions.push(lte(atividadesDiarias.data, fim));
+  }
+  
+  const ranking = await db.select({
+    corretorId: atividadesDiarias.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    totalLigacoes: sql<number>`SUM(${atividadesDiarias.ligacoesRealizadas})`,
+    totalWhatsapp: sql<number>`SUM(${atividadesDiarias.whatsappEnviados})`,
+    totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
+    totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
+    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
+    totalAnalises: sql<number>`SUM(${atividadesDiarias.analiseCreditoEnviadas})`,
+    totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
+    totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
+    totalPontos: sql<number>`SUM(${atividadesDiarias.pontuacaoTotal})`,
+  })
+    .from(atividadesDiarias)
+    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(atividadesDiarias.corretorId, users.name, users.fotoUrl)
+    .orderBy(desc(sql`SUM(${atividadesDiarias.pontuacaoTotal})`));
+  
+  return ranking;
+}
+
 // Obter ranking semanal
 export async function getRankingSemanal() {
   const db = await getDb();
@@ -3197,30 +3388,25 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   
   const meta = metasCorretor[0];
   
-  // Sistema de pontuação (definido pelo gestor):
-  // - Ligação/Contato realizado = 1 ponto
-  // - Ligação atendida = 2 pontos
+  // Sistema de pontuação (definido pelo gestor - atualizado 22/12/2025):
+  // - Ligação realizada = 5 pontos
   // - WhatsApp enviado = 1 ponto
-  // - WhatsApp respondido = 2 pontos
-  // - Novo cliente cadastrado = 5 pontos
-  // - Registro/alteração de status = 2 pontos
-  // - Agendamento criado = 15 pontos
-  // - Visita realizada = 25 pontos
-  // - Documentação/Análise de Crédito = 35 pontos
-  // - Venda = 80 pontos
-  // - Bônus por atingir meta: +50% dos pontos
+  // - Agendamento confirmado = 25 pontos
+  // - Visita realizada = 40 pontos
+  // - Análise de Crédito enviada = 60 pontos
+  // - Contrato fechado (venda) = 150 pontos
   
   const PONTOS = {
-    LIGACAO: 1,
-    LIGACAO_ATENDIDA: 2,
+    LIGACAO: 5,
+    LIGACAO_ATENDIDA: 0, // Não usado mais
     WHATSAPP: 1,
-    WHATSAPP_RESPONDIDO: 2,
-    CLIENTE_CADASTRADO: 5,
-    ALTERACAO_STATUS: 2,
-    AGENDAMENTO: 15,
-    VISITA: 25,
-    DOCUMENTACAO: 35,
-    VENDA: 80,
+    WHATSAPP_RESPONDIDO: 0, // Não usado mais
+    CLIENTE_CADASTRADO: 0, // Não usado mais
+    ALTERACAO_STATUS: 0, // Não usado mais
+    AGENDAMENTO: 25,
+    VISITA: 40,
+    DOCUMENTACAO: 60,
+    VENDA: 150,
   };
   
   let pontuacao = 0;
@@ -3357,14 +3543,14 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
   
   if (!atividade) return;
   
-  // Sistema de pontuação simplificado
+  // Sistema de pontuação (atualizado 22/12/2025)
   const PONTOS = {
-    LIGACAO: 1,           // 1 ponto por ligação/contato
+    LIGACAO: 5,           // 5 pontos por ligação
     WHATSAPP: 1,          // 1 ponto por WhatsApp
-    AGENDAMENTO: 15,      // 15 pontos por agendamento
-    VISITA: 25,           // 25 pontos por visita
-    DOCUMENTACAO: 35,     // 35 pontos por documentação
-    VENDA: 80,            // 80 pontos por venda
+    AGENDAMENTO: 25,      // 25 pontos por agendamento
+    VISITA: 40,           // 40 pontos por visita
+    DOCUMENTACAO: 60,     // 60 pontos por análise de crédito
+    VENDA: 150,           // 150 pontos por venda
   };
   
   let pontuacao = 0;

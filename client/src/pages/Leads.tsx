@@ -111,6 +111,11 @@ export default function Leads() {
     { enabled: !!selectedLead }
   );
 
+  // Estado para o dialog de tipo de contato (obrigatório ao sair de 'novo' ou 'aguardando')
+  const [contactTypeDialog, setContactTypeDialog] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{leadId: number, newStatus: string, currentStatus: string} | null>(null);
+  const [selectedContactType, setSelectedContactType] = useState<'ligacao' | 'whatsapp' | ''>('');
+
   // Estado para o dialog de novo lead
   const [newLeadDialog, setNewLeadDialog] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({
@@ -193,18 +198,63 @@ export default function Leads() {
     }
   };
 
-  const handleUpdateStatus = async (leadId: number, newStatus: string) => {
+  const handleUpdateStatus = async (leadId: number, newStatus: string, currentStatus?: string) => {
+    // Se o status atual é 'novo' ou 'aguardando_atendimento' e está mudando para outro,
+    // obrigar a especificar o tipo de contato (ligação ou WhatsApp)
+    const statusAtual = currentStatus || leads?.find(l => l.id === leadId)?.status;
+    const statusQueExigemContato = ['novo', 'aguardando_atendimento'];
+    
+    if (statusQueExigemContato.includes(statusAtual || '') && !statusQueExigemContato.includes(newStatus)) {
+      // Mostrar modal para escolher tipo de contato
+      setPendingStatusChange({ leadId, newStatus, currentStatus: statusAtual || '' });
+      setContactTypeDialog(true);
+      return;
+    }
+    
+    // Atualizar status normalmente
+    await executeStatusUpdate(leadId, newStatus);
+  };
+
+  const executeStatusUpdate = async (leadId: number, newStatus: string, contactType?: 'ligacao' | 'whatsapp') => {
     try {
       await updateLeadMutation.mutateAsync({
         id: leadId,
         data: { status: newStatus as any },
       });
 
+      // Se foi especificado tipo de contato, registrar a atividade
+      if (contactType) {
+        await addInteractionMutation.mutateAsync({
+          leadId,
+          tipo: contactType,
+          resultado: 'contato_realizado',
+          observacoes: `Primeiro contato realizado via ${contactType === 'ligacao' ? 'Ligação' : 'WhatsApp'}`,
+        });
+      }
+
       toast.success("Status atualizado com sucesso!");
       refetch();
     } catch (error) {
       toast.error("Erro ao atualizar status");
     }
+  };
+
+  const handleConfirmContactType = async () => {
+    if (!pendingStatusChange || !selectedContactType) {
+      toast.error("Selecione o tipo de contato realizado");
+      return;
+    }
+    
+    await executeStatusUpdate(
+      pendingStatusChange.leadId, 
+      pendingStatusChange.newStatus, 
+      selectedContactType
+    );
+    
+    // Limpar estados
+    setContactTypeDialog(false);
+    setPendingStatusChange(null);
+    setSelectedContactType('');
   };
 
   const handleUpdateObservacoes = async (leadId: number, observacoes: string) => {
@@ -1114,6 +1164,78 @@ export default function Leads() {
                     <Plus className="h-4 w-4" />
                     Criar Lead
                   </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Tipo de Contato - Obrigatório ao sair de 'novo' ou 'aguardando' */}
+        <Dialog open={contactTypeDialog} onOpenChange={(open) => {
+          if (!open) {
+            setContactTypeDialog(false);
+            setPendingStatusChange(null);
+            setSelectedContactType('');
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5 text-primary" />
+                Tipo de Contato Realizado
+              </DialogTitle>
+              <DialogDescription>
+                Para alterar o status deste lead, informe como foi feito o primeiro contato.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setSelectedContactType('ligacao')}
+                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 transition-all ${
+                    selectedContactType === 'ligacao'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50 hover:bg-muted'
+                  }`}
+                >
+                  <Phone className={`h-10 w-10 ${selectedContactType === 'ligacao' ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <span className="font-semibold">Ligação</span>
+                  <span className="text-xs text-muted-foreground">+5 pontos</span>
+                </button>
+                <button
+                  onClick={() => setSelectedContactType('whatsapp')}
+                  className={`flex flex-col items-center justify-center gap-3 p-6 rounded-xl border-2 transition-all ${
+                    selectedContactType === 'whatsapp'
+                      ? 'border-green-500 bg-green-500/10 text-green-600'
+                      : 'border-border hover:border-green-500/50 hover:bg-muted'
+                  }`}
+                >
+                  <MessageCircle className={`h-10 w-10 ${selectedContactType === 'whatsapp' ? 'text-green-500' : 'text-muted-foreground'}`} />
+                  <span className="font-semibold">WhatsApp</span>
+                  <span className="text-xs text-muted-foreground">+1 ponto</span>
+                </button>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setContactTypeDialog(false);
+                setPendingStatusChange(null);
+                setSelectedContactType('');
+              }}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleConfirmContactType}
+                disabled={!selectedContactType || updateLeadMutation.isPending}
+                className="gap-2"
+              >
+                {updateLeadMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Atualizando...
+                  </>
+                ) : (
+                  'Confirmar e Atualizar Status'
                 )}
               </Button>
             </DialogFooter>

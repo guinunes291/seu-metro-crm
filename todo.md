@@ -1583,3 +1583,20 @@
 - [x] Investigar causa da duplicação (múltiplas atividades diárias por corretor)
 - [x] Agrupar atividades por corretor na query do ranking
 - [x] Somar pontuação de todas as atividades do período
+
+## Reorganização das Abas de Performance (22/12/2025)
+- [ ] Remover aba "Minha Performance" do menu lateral
+- [ ] Renomear "Ranking TV" para "Corrida dos Campeões"
+- [ ] Atualizar pontuação: Ligação=5pts, WhatsApp=1pt, Agendamento=25pts, Visita=40pts, Análise=60pts, Contrato=150pts
+- [ ] Corrigir filtro de período na Performance TV (não mostra corretores)
+- [ ] Obrigar tipo de contato (Ligação/WhatsApp) ao alterar status de "Novo" ou "Aguardando"
+
+
+## Bugs Críticos - Follow-Up e Tarefas (31/12/2025) - CORRIGIDO
+- [x] Contador de Follow-Up não avança - Agora atualiza automaticamente ao registrar contato
+- [x] Tarefas do Dia não mostra leads - Agora cria follow-ups automáticos para leads sem acompanhamento
+- [x] Leads não aparecem na sequência de follow-up - Função getFollowUpsDoDiaExpandido implementada
+
+## Bugs Pendentes (reportados pelo usuário)
+- [ ] Histórico de Presença mostra dados incorretos
+- [ ] Conquistas não atualizam na página do corretor (email é enviado mas página não mostra)

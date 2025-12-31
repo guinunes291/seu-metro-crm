@@ -83,9 +83,8 @@ const menuGroups = [
     label: "Performance",
     icon: TrendingUp,
     items: [
-      { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance" },
       { icon: Trophy, label: "Conquistas", path: "/meu-perfil" },
-      { icon: Trophy, label: "Ranking TV", path: "/ranking-tv" },
+      { icon: Trophy, label: "Corrida dos Campeões", path: "/ranking-tv" },
       { icon: Tv, label: "Performance TV", path: "/performance-tv" },
       { icon: Target, label: "Metas Mensais", path: "/metas", roles: ["gestor", "admin"] },
       { icon: Target, label: "Metas Diárias", path: "/metas-diarias", roles: ["gestor", "admin"] },

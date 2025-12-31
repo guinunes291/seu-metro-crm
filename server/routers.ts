@@ -1770,7 +1770,7 @@ export const appRouter = router({
     getAll: corretorProcedure
       .query(async ({ ctx }) => {
         const [followUps, tarefas, agendados] = await Promise.all([
-          db.getFollowUpsDoDia(ctx.user.id),
+          db.getFollowUpsDoDiaExpandido(ctx.user.id), // Usa a versão expandida que cria follow-ups automáticos
           db.getTarefasDoDia(ctx.user.id),
           db.getLeadsAgendadosHoje(ctx.user.id),
         ]);
@@ -1850,6 +1850,16 @@ export const appRouter = router({
       .input(z.object({ data: z.date().optional() }).optional())
       .query(async ({ input }) => {
         return await db.getRankingDia(input?.data);
+      }),
+    
+    // Ranking por período (com filtro de datas)
+    porPeriodo: protectedProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getRankingPorPeriodo(input?.dataInicio, input?.dataFim);
       }),
     
     // Ranking semanal
