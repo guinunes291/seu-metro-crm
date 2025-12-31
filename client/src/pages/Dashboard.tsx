@@ -181,6 +181,12 @@ export default function Dashboard() {
     enabled: isGestor
   });
   
+  // Query para o relatório de leads criados por corretor
+  const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(
+    dateFilter,
+    { enabled: isGestor }
+  );
+  
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR
   // ============================================================================
@@ -944,6 +950,188 @@ export default function Dashboard() {
                     </Table>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Relatório de Leads Criados por Corretor */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Relatório de Leads Criados por Corretor
+                      </CardTitle>
+                      <CardDescription>Distribuição de leads por corretor, origem e projeto</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-sm">
+                      Total: {relatorioLeadsCriados?.totalGeral || 0} leads
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {relatorioLeadsCriados && relatorioLeadsCriados.porCorretor.length > 0 ? (
+                    <div className="space-y-6">
+                      {/* Gráfico de Barras Horizontal */}
+                      <div className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={relatorioLeadsCriados.porCorretor.slice(0, 10)}
+                            layout="vertical"
+                            margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis 
+                              type="category" 
+                              dataKey="corretorNome" 
+                              width={90}
+                              fontSize={12}
+                            />
+                            <Tooltip 
+                              formatter={(value: number) => [`${value} leads`, 'Total']}
+                            />
+                            <Bar 
+                              dataKey="totalLeads" 
+                              fill="#3b82f6" 
+                              radius={[0, 4, 4, 0]}
+                            >
+                              {relatorioLeadsCriados.porCorretor.slice(0, 10).map((_, index) => (
+                                <Cell 
+                                  key={`cell-${index}`} 
+                                  fill={index === 0 ? '#22c55e' : index === 1 ? '#3b82f6' : index === 2 ? '#f59e0b' : '#6b7280'}
+                                />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      {/* Tabela Detalhada */}
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="font-semibold">Corretor</TableHead>
+                              <TableHead className="text-center font-semibold">Total Leads</TableHead>
+                              <TableHead className="font-semibold">Principais Origens</TableHead>
+                              <TableHead className="font-semibold">Principais Projetos</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {relatorioLeadsCriados.porCorretor.map((corretor, index) => (
+                              <TableRow key={corretor.corretorId} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {corretor.corretorFoto ? (
+                                      <img 
+                                        src={corretor.corretorFoto} 
+                                        alt={corretor.corretorNome}
+                                        className="w-8 h-8 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <Users className="h-4 w-4 text-primary" />
+                                      </div>
+                                    )}
+                                    <span className="font-medium">{corretor.corretorNome}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="secondary" className="text-lg px-3">
+                                    {corretor.totalLeads}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1">
+                                    {Object.entries(corretor.porOrigem)
+                                      .sort(([,a], [,b]) => b - a)
+                                      .slice(0, 3)
+                                      .map(([origem, qtd]) => (
+                                        <Badge key={origem} variant="outline" className="text-xs">
+                                          {origem.replace('_', ' ')}: {qtd}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1">
+                                    {corretor.porProjeto
+                                      .slice(0, 2)
+                                      .map((proj) => (
+                                        <Badge key={proj.projetoId || 'sem'} variant="outline" className="text-xs">
+                                          {proj.projetoNome.substring(0, 20)}{proj.projetoNome.length > 20 ? '...' : ''}: {proj.quantidade}
+                                        </Badge>
+                                      ))}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+
+                      {/* Resumo por Origem */}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm">Distribuição por Origem</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {relatorioLeadsCriados.porOrigem.slice(0, 5).map((item) => (
+                                <div key={item.origem} className="flex items-center justify-between">
+                                  <span className="text-sm capitalize">{item.origem.replace('_', ' ')}</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-primary rounded-full" 
+                                        style={{ width: `${(item.quantidade / relatorioLeadsCriados.totalGeral) * 100}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-sm font-medium w-12 text-right">{item.quantidade}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="pb-2">
+                            <CardTitle className="text-sm">Distribuição por Projeto</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {relatorioLeadsCriados.porProjeto.slice(0, 5).map((item) => (
+                                <div key={item.projetoId || 'sem'} className="flex items-center justify-between">
+                                  <span className="text-sm truncate max-w-[150px]" title={item.projetoNome}>
+                                    {item.projetoNome}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                      <div 
+                                        className="h-full bg-green-500 rounded-full" 
+                                        style={{ width: `${(item.quantidade / relatorioLeadsCriados.totalGeral) * 100}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-sm font-medium w-12 text-right">{item.quantidade}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhum lead encontrado no período selecionado</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>

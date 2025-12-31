@@ -1664,3 +1664,13 @@
 - [x] Corrigir mapeamento de campos em MeuPerfil.tsx
 - [x] Atualizar função getConquistasCorretor para retornar dados sem JOIN obrigatório
 - [x] Verificar que conquistas do Guilherme (1) e Kauan (6) agora aparecem corretamente
+
+
+## Nova Feature: Relatório de Leads por Corretor no Dashboard (31/12/2025)
+- [x] Criar endpoint no backend para buscar leads criados por corretor
+- [x] Implementar filtros de data (período) no endpoint
+- [x] Retornar dados: Corretor, Quantidade, Origem, Projeto/Interesse, Data
+- [x] Criar componente de tabela com os dados do relatório
+- [x] Criar gráfico de barras horizontal com distribuição por corretor
+- [x] Integrar relatório no Dashboard do Gestor
+- [x] Testar com dados reais

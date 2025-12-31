@@ -5193,3 +5193,189 @@ export async function getMetricasFunilLeadsUnicos(
     perdidos: Number(perdidosResult[0]?.count || 0)
   };
 }
+
+
+// ============================================================================
+// RELATÓRIO DE LEADS CRIADOS POR CORRETOR
+// ============================================================================
+
+/**
+ * Busca relatório detalhado de leads criados por corretor
+ * Retorna dados para tabela e gráfico de barras horizontal
+ */
+export async function getRelatorioLeadsCriados(
+  dataInicio?: Date,
+  dataFim?: Date
+): Promise<{
+  porCorretor: {
+    corretorId: number;
+    corretorNome: string;
+    corretorFoto: string | null;
+    totalLeads: number;
+    porOrigem: Record<string, number>;
+    porProjeto: { projetoId: number | null; projetoNome: string; quantidade: number }[];
+  }[];
+  porOrigem: { origem: string; quantidade: number }[];
+  porProjeto: { projetoId: number | null; projetoNome: string; quantidade: number }[];
+  totalGeral: number;
+  leadsDetalhados: {
+    id: number;
+    nome: string;
+    telefone: string;
+    origem: string | null;
+    projetoNome: string | null;
+    corretorNome: string | null;
+    createdAt: Date;
+  }[];
+}> {
+  const db = await getDb();
+  if (!db) return { 
+    porCorretor: [], 
+    porOrigem: [], 
+    porProjeto: [], 
+    totalGeral: 0,
+    leadsDetalhados: []
+  };
+
+  // Construir condições de filtro
+  const conditions: SQL[] = [];
+  if (dataInicio) {
+    conditions.push(gte(leads.createdAt, dataInicio));
+  }
+  if (dataFim) {
+    conditions.push(lte(leads.createdAt, dataFim));
+  }
+
+  // Buscar todos os leads com filtro de data
+  const leadsQuery = await db.select({
+    id: leads.id,
+    nome: leads.nome,
+    telefone: leads.telefone,
+    origem: leads.origem,
+    projectId: leads.projectId,
+    corretorId: leads.corretorId,
+    createdAt: leads.createdAt,
+  })
+    .from(leads)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(leads.createdAt));
+
+  // Buscar corretores
+  const corretoresQuery = await db.select({
+    id: users.id,
+    name: users.name,
+    fotoUrl: users.fotoUrl,
+  })
+    .from(users)
+    .where(inArray(users.role, ['corretor', 'gestor', 'admin']));
+
+  const corretoresMap = new Map(corretoresQuery.map(c => [c.id, c]));
+
+  // Buscar projetos
+  const projetosQuery = await db.select({
+    id: projects.id,
+    nome: projects.nome,
+  }).from(projects);
+
+  const projetosMap = new Map(projetosQuery.map(p => [p.id, p.nome]));
+
+  // Agrupar por corretor
+  const porCorretorMap = new Map<number, {
+    corretorId: number;
+    corretorNome: string;
+    corretorFoto: string | null;
+    totalLeads: number;
+    porOrigem: Record<string, number>;
+    porProjeto: Map<number | null, { projetoId: number | null; projetoNome: string; quantidade: number }>;
+  }>();
+
+  // Contadores gerais
+  const origemGeral = new Map<string, number>();
+  const projetoGeral = new Map<number | null, { projetoId: number | null; projetoNome: string; quantidade: number }>();
+
+  // Leads detalhados para tabela
+  const leadsDetalhados: {
+    id: number;
+    nome: string;
+    telefone: string;
+    origem: string | null;
+    projetoNome: string | null;
+    corretorNome: string | null;
+    createdAt: Date;
+  }[] = [];
+
+  for (const lead of leadsQuery) {
+    const corretorId = lead.corretorId || 0;
+    const corretor = corretoresMap.get(corretorId);
+    const corretorNome = corretor?.name || 'Sem Corretor';
+    const corretorFoto = corretor?.fotoUrl || null;
+    const origem = lead.origem || 'outro';
+    const projetoId = lead.projectId;
+    const projetoNome = projetoId ? (projetosMap.get(projetoId) || 'Projeto Desconhecido') : 'Sem Projeto';
+
+    // Adicionar ao mapa do corretor
+    if (!porCorretorMap.has(corretorId)) {
+      porCorretorMap.set(corretorId, {
+        corretorId,
+        corretorNome,
+        corretorFoto,
+        totalLeads: 0,
+        porOrigem: {},
+        porProjeto: new Map(),
+      });
+    }
+
+    const corretorData = porCorretorMap.get(corretorId)!;
+    corretorData.totalLeads++;
+    corretorData.porOrigem[origem] = (corretorData.porOrigem[origem] || 0) + 1;
+
+    if (!corretorData.porProjeto.has(projetoId)) {
+      corretorData.porProjeto.set(projetoId, { projetoId, projetoNome, quantidade: 0 });
+    }
+    corretorData.porProjeto.get(projetoId)!.quantidade++;
+
+    // Contadores gerais
+    origemGeral.set(origem, (origemGeral.get(origem) || 0) + 1);
+
+    if (!projetoGeral.has(projetoId)) {
+      projetoGeral.set(projetoId, { projetoId, projetoNome, quantidade: 0 });
+    }
+    projetoGeral.get(projetoId)!.quantidade++;
+
+    // Adicionar aos leads detalhados (limitar a 100 para performance)
+    if (leadsDetalhados.length < 100) {
+      leadsDetalhados.push({
+        id: lead.id,
+        nome: lead.nome,
+        telefone: lead.telefone,
+        origem: lead.origem,
+        projetoNome,
+        corretorNome,
+        createdAt: lead.createdAt,
+      });
+    }
+  }
+
+  // Converter mapas para arrays
+  const porCorretor = Array.from(porCorretorMap.values())
+    .map(c => ({
+      ...c,
+      porProjeto: Array.from(c.porProjeto.values()).sort((a, b) => b.quantidade - a.quantidade),
+    }))
+    .sort((a, b) => b.totalLeads - a.totalLeads);
+
+  const porOrigem = Array.from(origemGeral.entries())
+    .map(([origem, quantidade]) => ({ origem, quantidade }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+
+  const porProjeto = Array.from(projetoGeral.values())
+    .sort((a, b) => b.quantidade - a.quantidade);
+
+  return {
+    porCorretor,
+    porOrigem,
+    porProjeto,
+    totalGeral: leadsQuery.length,
+    leadsDetalhados,
+  };
+}

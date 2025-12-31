@@ -1273,6 +1273,18 @@ export const appRouter = router({
         const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
         return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim);
       }),
+    
+    // Relatório detalhado de leads criados por corretor
+    relatorioLeadsCriados: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        return await db.getRelatorioLeadsCriados(dataInicio, dataFim);
+      }),
   }),
 
   // ============================================================================
