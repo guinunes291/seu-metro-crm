@@ -2120,3 +2120,16 @@
 - [x] Corrigir erro "storagePut is not defined" no download de PDF
 - [ ] Verificar valores na página pública da proposta
 - [ ] Corrigir autenticação na página pública (deveria ser pública)
+
+## CORREÇÕES URGENTES - Propostas Digitais
+- [ ] 1. PDF com todas as 11 seções (capa, resumo, apresentação, localização, planta, tabela pagamento, simulação, benefícios, documentação, cronograma, termo aceite)
+- [ ] 2. Corrigir erro de download do PDF (storagePut)
+- [ ] 3. Implementar edição de proposta completa
+- [ ] 4. Garantir link público sem necessidade de login
+
+## Correções Implementadas (01/01/2026)
+- [x] PDF com todas as 11 seções (Capa, Resumo, Apresentação, Localização, Planta, Pagamento, Simulação, Benefícios, Documentação, Cronograma, Termo de Aceite)
+- [x] Download do PDF funcionando corretamente
+- [x] Edição de proposta implementada com modal completo
+- [x] Valores corrigidos (não divide mais por 100)
+- [ ] Link público - requer configuração no painel do Manus (Settings > General > Visibility = Public)

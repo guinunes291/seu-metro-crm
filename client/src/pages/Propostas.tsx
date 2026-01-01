@@ -53,6 +53,8 @@ export default function Propostas() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPropostaId, setEditingPropostaId] = useState<number | null>(null);
   const [searchLead, setSearchLead] = useState("");
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("dados");
@@ -137,6 +139,20 @@ export default function Propostas() {
     }
   });
 
+  const updateProposta = trpc.propostas.update.useMutation({
+    onSuccess: () => {
+      utils.propostas.list.invalidate();
+      setShowCreateDialog(false);
+      setIsEditing(false);
+      setEditingPropostaId(null);
+      resetForm();
+      toast.success("Proposta atualizada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao atualizar proposta");
+    }
+  });
+
   const resetForm = () => {
     setNovaProposta({
       leadId: 0,
@@ -171,6 +187,8 @@ export default function Propostas() {
     setImagensBook([]);
     setPlantaUrl("");
     setActiveTab("dados");
+    setIsEditing(false);
+    setEditingPropostaId(null);
   };
 
   const handleSelectLead = (lead: any) => {
@@ -262,12 +280,100 @@ export default function Propostas() {
     // Preparar planta
     const plantasUrls = plantaUrl ? [plantaUrl] : [];
     
-    createProposta.mutate({
-      ...novaProposta,
-      imagensSelecionadas: imagensUrls,
-      plantasSelecionadas: plantasUrls,
-      validoAte: novaProposta.validoAte || undefined
+    if (isEditing && editingPropostaId) {
+      // Atualizar proposta existente
+      updateProposta.mutate({
+        id: editingPropostaId,
+        data: {
+          nomeCliente: novaProposta.nomeCliente,
+          emailCliente: novaProposta.emailCliente || undefined,
+          telefoneCliente: novaProposta.telefoneCliente || undefined,
+          unidade: novaProposta.unidade || undefined,
+          tipologia: novaProposta.tipologia || undefined,
+          metragem: novaProposta.metragem || undefined,
+          valorImovel: novaProposta.valorImovel,
+          valorEntrada: novaProposta.valorEntrada || undefined,
+          valorFinanciamento: novaProposta.valorFinanciamento || undefined,
+          parcelas: novaProposta.parcelas || undefined,
+          valorParcela: novaProposta.valorParcela || undefined,
+          taxaJuros: novaProposta.taxaJuros || undefined,
+          desconto: novaProposta.desconto || undefined,
+          motivoDesconto: novaProposta.motivoDesconto || undefined,
+          mensagemPersonalizada: novaProposta.mensagemPersonalizada || undefined,
+          imagensSelecionadas: imagensUrls.length > 0 ? imagensUrls : undefined,
+          plantasSelecionadas: plantasUrls.length > 0 ? plantasUrls : undefined,
+          validoAte: novaProposta.validoAte || undefined
+        }
+      });
+    } else {
+      // Criar nova proposta
+      createProposta.mutate({
+        ...novaProposta,
+        imagensSelecionadas: imagensUrls,
+        plantasSelecionadas: plantasUrls,
+        validoAte: novaProposta.validoAte || undefined
+      });
+    }
+  };
+
+  const handleEditProposta = (proposta: any) => {
+    setIsEditing(true);
+    setEditingPropostaId(proposta.id);
+    setNovaProposta({
+      leadId: proposta.leadId || 0,
+      projectId: proposta.projectId || 0,
+      nomeCliente: proposta.nomeCliente || "",
+      emailCliente: proposta.emailCliente || "",
+      telefoneCliente: proposta.telefoneCliente || "",
+      unidade: proposta.unidade || "",
+      tipologia: proposta.tipologia || "",
+      metragem: proposta.metragem || 0,
+      valorImovel: proposta.valorImovel || 0,
+      valorEntrada: proposta.valorEntrada || 0,
+      valorFinanciamento: proposta.valorFinanciamento || 0,
+      parcelas: proposta.parcelas || 360,
+      valorParcela: proposta.valorParcela || 0,
+      taxaJuros: proposta.taxaJuros || "9.5% a.a.",
+      desconto: proposta.desconto || 0,
+      motivoDesconto: proposta.motivoDesconto || "",
+      mensagemPersonalizada: proposta.mensagemPersonalizada || "",
+      validoAte: proposta.validoAte ? new Date(proposta.validoAte).toISOString().split('T')[0] : "",
+      rendaFamiliar: 0,
+      dataNascimento: "",
+      prazoMeses: proposta.parcelas || 0,
+      primeiraPrestacao: proposta.valorParcela || 0,
+      jurosEfetivos: proposta.taxaJuros || "",
+      tabelaPagamento: ""
     });
+    
+    // Carregar imagens e plantas se existirem
+    if (proposta.imagensSelecionadas) {
+      try {
+        const imgs = JSON.parse(proposta.imagensSelecionadas);
+        setImagensBook(imgs.map((url: string, idx: number) => ({
+          id: `img-${idx}`,
+          url,
+          descricao: `Imagem ${idx + 1}`,
+          selecionada: true
+        })));
+      } catch (e) {
+        console.error('Erro ao parsear imagens:', e);
+      }
+    }
+    
+    if (proposta.plantasSelecionadas) {
+      try {
+        const plantas = JSON.parse(proposta.plantasSelecionadas);
+        if (plantas.length > 0) {
+          setPlantaUrl(plantas[0]);
+        }
+      } catch (e) {
+        console.error('Erro ao parsear plantas:', e);
+      }
+    }
+    
+    setShowCreateDialog(true);
+    setActiveTab("dados");
   };
 
   return (
@@ -287,9 +393,9 @@ export default function Propostas() {
             </DialogTrigger>
             <DialogContent className="bg-slate-800 border-slate-600 w-[95vw] !max-w-[900px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-white">Criar Nova Proposta</DialogTitle>
+                <DialogTitle className="text-white">{isEditing ? 'Editar Proposta' : 'Criar Nova Proposta'}</DialogTitle>
                 <DialogDescription className="text-slate-400">
-                  Preencha os dados para gerar uma proposta digital interativa
+                  {isEditing ? 'Atualize os dados da proposta' : 'Preencha os dados para gerar uma proposta digital interativa'}
                 </DialogDescription>
               </DialogHeader>
               
@@ -610,11 +716,11 @@ export default function Propostas() {
                 </Button>
                 <Button 
                   onClick={handleCreateProposta}
-                  disabled={createProposta.isPending || !novaProposta.leadId || !novaProposta.projectId || !novaProposta.valorImovel}
+                  disabled={(createProposta.isPending || updateProposta.isPending) || (!isEditing && (!novaProposta.leadId || !novaProposta.projectId)) || !novaProposta.valorImovel}
                   className="bg-amber-500 hover:bg-amber-600"
                 >
-                  {createProposta.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Criar Proposta
+                  {(createProposta.isPending || updateProposta.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  {isEditing ? 'Salvar Alterações' : 'Criar Proposta'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -708,7 +814,7 @@ export default function Propostas() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toast.info("Função de edição em desenvolvimento")}
+                        onClick={() => handleEditProposta(proposta)}
                         className="text-slate-400 hover:text-blue-400"
                       >
                         <Pencil className="h-4 w-4" />

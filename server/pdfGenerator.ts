@@ -97,11 +97,12 @@ export interface DadosProposta {
 }
 
 // Função auxiliar para formatar moeda
+// NOTA: Os valores já estão em reais, não em centavos
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
-  }).format(value / 100); // Converter de centavos para reais
+  }).format(value);
 }
 
 // Função auxiliar para formatar data
@@ -898,8 +899,8 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
                 <tr>
                   <td>${p.nome}</td>
                   <td>${p.quantidade}x</td>
-                  <td>${formatCurrency(p.valorUnitario * 100)}</td>
-                  <td>${formatCurrency(p.total * 100)}</td>
+                  <td>${formatCurrency(p.valorUnitario)}</td>
+                  <td>${formatCurrency(p.total)}</td>
                 </tr>
               `).join('') : `
                 <tr>
@@ -917,7 +918,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
               `}
             <tr class="total">
               <td colspan="3"><strong>TOTAL</strong></td>
-              <td><strong>${formatCurrency(totalPagamento > 0 ? totalPagamento * 100 : dados.valorImovel)}</strong></td>
+              <td><strong>${formatCurrency(totalPagamento > 0 ? totalPagamento : dados.valorImovel)}</strong></td>
             </tr>
           </tbody>
         </table>
