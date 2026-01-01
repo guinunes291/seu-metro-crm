@@ -2834,6 +2834,22 @@ export const appRouter = router({
         return await db.getLinksAgendamentoCorretor(ctx.user.id);
       }),
     
+    // Excluir link de agendamento
+    delete: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se o link pertence ao corretor
+        const links = await db.getLinksAgendamentoCorretor(ctx.user.id);
+        const link = links.find(l => l.id === input.id);
+        if (!link) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Link não encontrado' });
+        }
+        
+        // Deletar o link
+        await db.deleteLinkAgendamento(input.id);
+        return { success: true };
+      }),
+    
     // Buscar link por token (público)
     getByToken: publicProcedure
       .input(z.object({ token: z.string() }))
@@ -2933,17 +2949,27 @@ export const appRouter = router({
         }
         
         // Atualizar status do lead para "agendado" se ainda não estiver
+        // Criar data corretamente para evitar problemas de fuso horário
+        const [anoFollowup, mesFollowup, diaFollowup] = input.data.split('-').map(Number);
+        const [horaFollowup, minutoFollowup] = input.hora.split(':').map(Number);
+        const dataFollowup = new Date(anoFollowup, mesFollowup - 1, diaFollowup, horaFollowup, minutoFollowup, 0);
+        
         await db.updateLead(leadId, { 
           status: 'agendado',
-          proximoFollowup: new Date(`${input.data}T${input.hora}:00`)
+          proximoFollowup: dataFollowup
         });
         
-        // Criar agendamento
+        // Criar agendamento - usar data e hora combinadas para evitar problemas de fuso horário
+        // A data vem no formato yyyy-MM-dd e a hora no formato HH:mm
+        const [ano, mes, dia] = input.data.split('-').map(Number);
+        const [hora, minuto] = input.hora.split(':').map(Number);
+        const dataAgendamentoCorreta = new Date(ano, mes - 1, dia, hora, minuto, 0);
+        
         const agendamento = await db.createAgendamento({
           leadId,
           corretorId: link.corretorId,
           projectId: link.projectId || undefined,
-          dataAgendamento: new Date(input.data),
+          dataAgendamento: dataAgendamentoCorreta,
           horaAgendamento: input.hora,
           observacoes: input.observacoes
         });

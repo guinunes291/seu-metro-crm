@@ -1910,3 +1910,14 @@
 - [x] Implementar exclusão automática de links expirados (job a cada 1 minuto)
 - [x] Mostrar tempo restante de expiração na lista de links
 - [x] Permitir links recorrentes (sem expiração) e esporádicos (com expiração)
+
+
+## Bug: Data do Agendamento via AutoAgendamento (01/01/2026)
+- [x] Corrigir bug onde a data do agendamento está pegando a data de criação em vez da data selecionada pelo cliente
+- [x] Cliente selecionou 02/01/2026 às 16:00 mas apareceu 01/01/2026 às 16:00
+- [x] Corrigido: agora usa new Date(ano, mes-1, dia, hora, minuto) para evitar problemas de fuso horário
+
+## Melhoria: Exclusão de Links de Agendamento (01/01/2026)
+- [x] Adicionar botão de exclusão de links já criados na página Minha Agenda
+- [x] Criar mutation delete no backend
+- [x] Adicionar confirmação antes de excluir

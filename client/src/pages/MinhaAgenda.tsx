@@ -125,6 +125,7 @@ export default function MinhaAgenda() {
       setSelectedLead(null);
       setSearchTerm("");
       setLinkExclusivo(false);
+      setTipoExpiracao('indeterminado');
       toast.success("Link criado!");
       
       // Copiar link automaticamente
@@ -133,6 +134,16 @@ export default function MinhaAgenda() {
         navigator.clipboard.writeText(url);
         toast.success("Link copiado para a área de transferência!");
       }
+    }
+  });
+
+  const deleteLink = trpc.linksAgendamento.delete.useMutation({
+    onSuccess: () => {
+      utils.linksAgendamento.list.invalidate();
+      toast.success("Link excluído!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao excluir link");
     }
   });
 
@@ -850,6 +861,20 @@ export default function MinhaAgenda() {
                             </Button>
                           </>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Tem certeza que deseja excluir este link?')) {
+                              deleteLink.mutate({ id: link.id });
+                            }
+                          }}
+                          disabled={deleteLink.isPending}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          title="Excluir link"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   );

@@ -6365,3 +6365,15 @@ export async function getAllAgendamentos(filters?: {
     projetoNome: r.projetoNome || null
   }));
 }
+
+
+// ============================================================================
+// DELETAR LINK DE AGENDAMENTO
+// ============================================================================
+
+export async function deleteLinkAgendamento(linkId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.delete(linksAgendamento).where(eq(linksAgendamento.id, linkId));
+}
