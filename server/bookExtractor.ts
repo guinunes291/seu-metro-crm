@@ -1,10 +1,9 @@
 /**
  * Serviço de extração de imagens do Book PDF
- * Converte páginas do PDF em imagens e usa IA para classificar
+ * Versão simplificada - apenas faz upload do PDF e extrai páginas específicas
  */
 
 import { PDFDocument } from 'pdf-lib';
-import { invokeLLM } from './_core/llm';
 import { storagePut } from './storage';
 
 // Tipos para as imagens extraídas
@@ -20,11 +19,13 @@ export interface ResultadoExtracao {
   sucesso: boolean;
   imagens: ImagemExtraida[];
   totalPaginas: number;
+  bookUrl?: string;
   erro?: string;
 }
 
 /**
- * Extrai imagens do PDF do Book e classifica usando IA
+ * Processa o Book PDF de forma simplificada
+ * Faz upload do PDF completo e extrai apenas as primeiras páginas como previews
  */
 export async function extrairImagensDoBook(
   pdfBuffer: Buffer,
@@ -38,13 +39,26 @@ export async function extrairImagensDoBook(
     
     console.log(`[BookExtractor] PDF carregado com ${totalPaginas} páginas`);
     
-    // Limitar a 20 páginas para não sobrecarregar
-    const paginasParaProcessar = Math.min(totalPaginas, 20);
+    // Fazer upload do PDF completo primeiro
+    const bookKey = `propostas/books/${propostaId}/book-${Date.now()}.pdf`;
+    const { url: bookUrl } = await storagePut(bookKey, pdfBuffer, 'application/pdf');
     
+    console.log(`[BookExtractor] Book completo salvo em ${bookUrl}`);
+    
+    // Extrair apenas as primeiras 4 páginas como previews
+    // Geralmente: página 1-2 = capa/fachada, página 3-4 = planta/lazer
+    const paginasParaExtrair = Math.min(totalPaginas, 4);
     const imagensExtraidas: ImagemExtraida[] = [];
     
-    // Para cada página, converter em imagem e analisar
-    for (let i = 0; i < paginasParaProcessar; i++) {
+    // Mapeamento de páginas para tipos (heurística comum em books imobiliários)
+    const tiposPorPagina: Record<number, ImagemExtraida['tipo']> = {
+      0: 'fachada',      // Primeira página geralmente é a fachada
+      1: 'perspectiva',  // Segunda página geralmente é perspectiva interna
+      2: 'planta',       // Terceira página geralmente é a planta
+      3: 'lazer'         // Quarta página geralmente é área de lazer
+    };
+    
+    for (let i = 0; i < paginasParaExtrair; i++) {
       try {
         // Criar um novo PDF com apenas esta página
         const singlePagePdf = await PDFDocument.create();
@@ -60,31 +74,14 @@ export async function extrairImagensDoBook(
         
         console.log(`[BookExtractor] Página ${i + 1} salva em ${pageUrl}`);
         
-        // Usar LLM com visão para analisar a página
-        const classificacao = await classificarPaginaComIA(pageUrl, projetoNome, i + 1);
-        
-        if (classificacao && classificacao.tipo !== 'outro') {
-          // Se for uma imagem relevante, salvar a URL
-          imagensExtraidas.push({
-            tipo: classificacao.tipo,
-            url: pageUrl,
-            pagina: i + 1,
-            confianca: classificacao.confianca,
-            descricao: classificacao.descricao
-          });
-          
-          console.log(`[BookExtractor] Página ${i + 1} classificada como: ${classificacao.tipo} (${classificacao.confianca}%)`);
-        }
-        
-        // Parar se já temos imagens suficientes de cada tipo
-        const tiposEncontrados = new Set(imagensExtraidas.map(img => img.tipo));
-        if (tiposEncontrados.has('fachada') && 
-            tiposEncontrados.has('lazer') && 
-            tiposEncontrados.has('planta') &&
-            imagensExtraidas.length >= 6) {
-          console.log('[BookExtractor] Imagens suficientes encontradas, parando extração');
-          break;
-        }
+        // Adicionar à lista com tipo baseado na posição
+        imagensExtraidas.push({
+          tipo: tiposPorPagina[i] || 'outro',
+          url: pageUrl,
+          pagina: i + 1,
+          confianca: 70, // Confiança média pois é heurística
+          descricao: `Página ${i + 1} do book - ${tiposPorPagina[i] || 'conteúdo'}`
+        });
         
       } catch (pageError) {
         console.error(`[BookExtractor] Erro ao processar página ${i + 1}:`, pageError);
@@ -92,36 +89,11 @@ export async function extrairImagensDoBook(
       }
     }
     
-    // Ordenar por confiança e tipo
-    imagensExtraidas.sort((a, b) => {
-      // Priorizar por tipo
-      const prioridade: Record<string, number> = {
-        'fachada': 1,
-        'planta': 2,
-        'lazer': 3,
-        'area_comum': 4,
-        'perspectiva': 5,
-        'outro': 6
-      };
-      
-      const prioridadeA = prioridade[a.tipo] || 6;
-      const prioridadeB = prioridade[b.tipo] || 6;
-      
-      if (prioridadeA !== prioridadeB) {
-        return prioridadeA - prioridadeB;
-      }
-      
-      // Se mesmo tipo, ordenar por confiança
-      return b.confianca - a.confianca;
-    });
-    
-    // Limitar a 4 imagens principais
-    const imagensFinais = imagensExtraidas.slice(0, 4);
-    
     return {
       sucesso: true,
-      imagens: imagensFinais,
-      totalPaginas
+      imagens: imagensExtraidas,
+      totalPaginas,
+      bookUrl
     };
     
   } catch (error) {
@@ -132,98 +104,6 @@ export async function extrairImagensDoBook(
       totalPaginas: 0,
       erro: error instanceof Error ? error.message : 'Erro desconhecido'
     };
-  }
-}
-
-/**
- * Classifica uma página do PDF usando IA com visão
- */
-async function classificarPaginaComIA(
-  pdfUrl: string,
-  projetoNome: string,
-  numeroPagina: number
-): Promise<{ tipo: ImagemExtraida['tipo']; confianca: number; descricao: string } | null> {
-  try {
-    const response = await invokeLLM({
-      messages: [
-        {
-          role: 'system',
-          content: `Você é um especialista em análise de materiais de marketing imobiliário.
-Analise a página do book de vendas e classifique o tipo de conteúdo visual.
-
-Tipos possíveis:
-- fachada: Imagem da fachada do prédio/empreendimento (exterior do edifício)
-- lazer: Áreas de lazer como piscina, churrasqueira, playground, salão de festas, academia
-- planta: Planta baixa do apartamento/unidade
-- perspectiva: Imagem ilustrativa de ambientes internos decorados
-- area_comum: Hall de entrada, corredores, áreas comuns
-- outro: Textos, tabelas, mapas, logos, ou conteúdo não visual relevante
-
-Responda APENAS com um JSON válido no formato:
-{
-  "tipo": "fachada|lazer|planta|perspectiva|area_comum|outro",
-  "confianca": 0-100,
-  "descricao": "breve descrição do que aparece na imagem"
-}`
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Analise esta página ${numeroPagina} do book do empreendimento "${projetoNome}" e classifique o tipo de conteúdo visual.`
-            },
-            {
-              type: 'file_url',
-              file_url: {
-                url: pdfUrl,
-                mime_type: 'application/pdf'
-              }
-            }
-          ]
-        }
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'classificacao_imagem',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              tipo: {
-                type: 'string',
-                enum: ['fachada', 'lazer', 'planta', 'perspectiva', 'area_comum', 'outro']
-              },
-              confianca: {
-                type: 'integer',
-                description: 'Nível de confiança de 0 a 100'
-              },
-              descricao: {
-                type: 'string',
-                description: 'Breve descrição do conteúdo visual'
-              }
-            },
-            required: ['tipo', 'confianca', 'descricao'],
-            additionalProperties: false
-          }
-        }
-      }
-    });
-    
-    const content = response.choices[0]?.message?.content;
-    if (!content) return null;
-    
-    const resultado = JSON.parse(content);
-    return {
-      tipo: resultado.tipo as ImagemExtraida['tipo'],
-      confianca: resultado.confianca,
-      descricao: resultado.descricao
-    };
-    
-  } catch (error) {
-    console.error(`[BookExtractor] Erro ao classificar página ${numeroPagina}:`, error);
-    return null;
   }
 }
 

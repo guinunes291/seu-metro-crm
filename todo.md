@@ -2173,3 +2173,36 @@
 - [x] Remover dependência sharp que requer bibliotecas nativas
 - [x] Remover dependência pdf2pic que requer bibliotecas nativas
 - [x] Manter bookExtractor usando apenas pdf-lib (JavaScript puro)
+
+## Bug Fix: Erro de Upload do PDF do Book
+- [ ] Simplificar processamento do Book PDF para evitar timeout de 3 minutos
+- [ ] Processar apenas primeiras páginas do PDF
+- [ ] Reduzir chamadas de IA para classificação
+
+## Feature: Fluxo de Etapas Obrigatórias na Criação de Proposta
+- [ ] Implementar wizard com navegação sequencial obrigatória
+- [ ] Etapa 1: Dados - campos obrigatórios + botão Avançar
+- [ ] Etapa 2: Simulação - anexar PDF da simulação + botão Avançar
+- [ ] Etapa 3: Book/Planta - anexar arquivos + botão Avançar
+- [ ] Etapa 4: Pagamento - montar tabela + botão Criar Proposta
+- [ ] Validar preenchimento antes de permitir avançar
+
+
+## Correções Urgentes - Propostas Digitais (01/01/2026)
+- [ ] Implementar fluxo wizard com etapas obrigatórias (Dados → Simulação → Book/Planta → Pagamento)
+- [ ] Substituir abas livres por navegação sequencial com botões Avançar/Voltar
+- [ ] Adicionar validação em cada etapa antes de permitir avançar
+- [ ] Manter botão "Criar Proposta" apenas na última etapa (Pagamento)
+- [ ] Corrigir erro de upload do Book PDF (timeout após 3 minutos)
+- [ ] Implementar upload direto para S3 ao invés de base64 para arquivos grandes
+- [ ] Adicionar melhor tratamento de erros e feedback de progresso no upload
+
+
+## Correções Urgentes - Propostas (01/01/2026)
+- [x] Implementar fluxo wizard com etapas obrigatórias (Dados → Simulação → Book/Planta → Pagamento)
+- [x] Substituir abas livres por navegação sequencial com botões Avançar/Voltar
+- [x] Adicionar validação em cada etapa antes de permitir avançar
+- [x] Manter botão "Criar Proposta" apenas na última etapa (Pagamento)
+- [x] Indicador visual de progresso entre etapas (checkmarks verdes)
+- [ ] Corrigir erro de upload do Book PDF (timeout após 3 minutos)
+- [ ] Implementar upload direto para S3 ao invés de base64 para arquivos grandes

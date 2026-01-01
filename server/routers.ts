@@ -3517,7 +3517,161 @@ O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do for
         }
       }),
     
-    // Processar Book PDF e extrair imagens automaticamente
+    // Upload direto do Book PDF para S3 (suporta chunks para arquivos grandes)
+    uploadBookDireto: corretorProcedure
+      .input(z.object({
+        fileData: z.string(), // base64 data (chunk ou arquivo completo)
+        fileName: z.string(),
+        fileSize: z.number(),
+        chunkIndex: z.number().optional(),
+        totalChunks: z.number().optional(),
+        uploadId: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut, storageGet } = await import('./storage');
+        
+        // Se não tem chunks, é upload direto de arquivo pequeno
+        if (!input.chunkIndex && !input.totalChunks) {
+          const buffer = Buffer.from(input.fileData, 'base64');
+          
+          // Validar tamanho (máx 50MB)
+          const maxSize = 50 * 1024 * 1024;
+          if (buffer.length > maxSize) {
+            throw new TRPCError({ 
+              code: 'BAD_REQUEST', 
+              message: 'Arquivo muito grande. Máximo permitido: 50MB.' 
+            });
+          }
+          
+          const uniqueFileName = `propostas/books/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+          const { url: bookUrl } = await storagePut(uniqueFileName, buffer, 'application/pdf');
+          
+          console.log(`[uploadBookDireto] Book salvo em: ${bookUrl}`);
+          
+          return {
+            success: true,
+            bookUrl,
+            isComplete: true
+          };
+        }
+        
+        // Upload em chunks
+        const { chunkIndex, totalChunks, uploadId } = input;
+        
+        if (chunkIndex === undefined || totalChunks === undefined || !uploadId) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Parâmetros de chunk inválidos.' 
+          });
+        }
+        
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // Salvar chunk temporário
+        const chunkKey = `propostas/books-temp/${ctx.user.id}/${uploadId}/chunk-${chunkIndex}`;
+        await storagePut(chunkKey, buffer, 'application/octet-stream');
+        
+        console.log(`[uploadBookDireto] Chunk ${chunkIndex + 1}/${totalChunks} salvo`);
+        
+        // Se é o último chunk, combinar todos
+        if (chunkIndex === totalChunks - 1) {
+          const chunks: Buffer[] = [];
+          
+          for (let i = 0; i < totalChunks; i++) {
+            const chunkKeyToRead = `propostas/books-temp/${ctx.user.id}/${uploadId}/chunk-${i}`;
+            try {
+              // Buscar URL do chunk
+              const { url: chunkUrl } = await storageGet(chunkKeyToRead);
+              // Baixar o chunk
+              const response = await fetch(chunkUrl);
+              const arrayBuffer = await response.arrayBuffer();
+              chunks.push(Buffer.from(arrayBuffer));
+            } catch (e) {
+              console.error(`Erro ao ler chunk ${i}:`, e);
+            }
+          }
+          
+          // Combinar chunks
+          const completeBuffer = Buffer.concat(chunks);
+          
+          // Salvar arquivo completo
+          const uniqueFileName = `propostas/books/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+          const { url: bookUrl } = await storagePut(uniqueFileName, completeBuffer, 'application/pdf');
+          
+          console.log(`[uploadBookDireto] Book completo salvo em: ${bookUrl} (${completeBuffer.length} bytes)`);
+          
+          return {
+            success: true,
+            bookUrl,
+            isComplete: true
+          };
+        }
+        
+        return {
+          success: true,
+          isComplete: false,
+          chunkIndex
+        };
+      }),
+    
+    // Processar Book PDF já salvo no S3 (por URL)
+    processarBookPorUrl: corretorProcedure
+      .input(z.object({
+        bookUrl: z.string(),
+        projetoNome: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        const { extrairImagensDoBook, selecionarMelhoresImagens } = await import('./bookExtractor');
+        
+        console.log(`[processarBookPorUrl] Processando: ${input.bookUrl}`);
+        
+        try {
+          // Baixar o PDF do S3
+          const response = await fetch(input.bookUrl);
+          if (!response.ok) {
+            throw new Error(`Erro ao baixar PDF: ${response.status}`);
+          }
+          
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          
+          console.log(`[processarBookPorUrl] PDF baixado: ${buffer.length} bytes`);
+          
+          // Extrair imagens do PDF
+          const resultado = await extrairImagensDoBook(buffer, ctx.user.id, input.projetoNome);
+          
+          if (!resultado.sucesso) {
+            console.error('[processarBookPorUrl] Erro na extração:', resultado.erro);
+            return {
+              success: true,
+              imagens: [],
+              totalPaginas: 0,
+              erro: resultado.erro
+            };
+          }
+          
+          // Selecionar as melhores imagens
+          const melhoresImagens = selecionarMelhoresImagens(resultado.imagens);
+          
+          return {
+            success: true,
+            imagens: resultado.imagens,
+            melhoresImagens,
+            totalPaginas: resultado.totalPaginas
+          };
+        } catch (error: any) {
+          console.error('[processarBookPorUrl] Erro:', error);
+          return {
+            success: false,
+            imagens: [],
+            totalPaginas: 0,
+            erro: error.message || 'Erro ao processar PDF'
+          };
+        }
+      }),
+    
+    // Processar Book PDF e extrair imagens automaticamente (mantido para compatibilidade)
     processarBook: corretorProcedure
       .input(z.object({
         fileData: z.string(), // base64 data

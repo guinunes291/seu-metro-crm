@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { FileText, Loader2, X, Check, AlertCircle, Image } from "lucide-react";
+import { FileText, Loader2, X, Check, AlertCircle, Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,6 +23,9 @@ interface UploadBookProps {
   projetoNome: string;
 }
 
+// Tamanho máximo do chunk para upload (5MB)
+const CHUNK_SIZE = 5 * 1024 * 1024;
+
 export default function UploadBook({ 
   onImagensExtraidas, 
   onBookUrl,
@@ -37,8 +40,9 @@ export default function UploadBook({
   const [imagensExtraidas, setImagensExtraidas] = useState<ImagemExtraida[]>(imagensSelecionadas);
   const [bookUrl, setBookUrl] = useState<string | null>(null);
 
-  // Usar o novo endpoint que processa e extrai imagens automaticamente
-  const processarBookMutation = trpc.propostas.processarBook.useMutation();
+  // Usar endpoints separados para upload e processamento
+  const uploadBookMutation = trpc.propostas.uploadBookDireto.useMutation();
+  const processarBookMutation = trpc.propostas.processarBookPorUrl.useMutation();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -62,6 +66,18 @@ export default function UploadBook({
     if (file) processFile(file);
   }, [projetoNome]);
 
+  // Função para converter ArrayBuffer para base64 em chunks menores
+  const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    return btoa(binary);
+  };
+
   const processFile = async (file: File) => {
     // Validar tipo de arquivo
     if (file.type !== "application/pdf") {
@@ -70,46 +86,116 @@ export default function UploadBook({
     }
 
     // Validar tamanho (máximo 50MB)
-    if (file.size > 50 * 1024 * 1024) {
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
       toast.error("O arquivo deve ter no máximo 50MB");
       return;
     }
 
     setIsProcessing(true);
-    setProgress(10);
-    setStatusMessage("Lendo arquivo...");
+    setProgress(5);
+    setStatusMessage("Preparando upload...");
 
     try {
-      // Converter arquivo para base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Remover prefixo data:application/pdf;base64,
-          const base64Data = result.includes('base64,') 
-            ? result.split('base64,')[1] 
-            : result;
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Para arquivos menores que 5MB, usar upload direto
+      if (file.size <= CHUNK_SIZE) {
+        await uploadSmallFile(file);
+      } else {
+        // Para arquivos maiores, usar upload em chunks
+        await uploadLargeFile(file);
+      }
+    } catch (error: any) {
+      console.error("Erro ao processar Book:", error);
+      toast.error(error.message || "Erro ao processar o Book. Tente novamente.");
+      setIsProcessing(false);
+      setProgress(0);
+      setStatusMessage("");
+    }
+  };
 
-      setProgress(20);
-      setStatusMessage("Enviando PDF...");
+  // Upload de arquivos pequenos (< 5MB)
+  const uploadSmallFile = async (file: File) => {
+    setStatusMessage("Enviando arquivo...");
+    setProgress(20);
 
-      // Processar Book e extrair imagens via IA
-      const result = await processarBookMutation.mutateAsync({
-        fileData: base64,
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = arrayBufferToBase64(arrayBuffer);
+
+    setProgress(40);
+    setStatusMessage("Salvando no servidor...");
+
+    // Upload direto
+    const uploadResult = await uploadBookMutation.mutateAsync({
+      fileData: base64,
+      fileName: file.name,
+      fileSize: file.size
+    });
+
+    setBookUrl(uploadResult.bookUrl);
+    onBookUrl?.(uploadResult.bookUrl);
+
+    setProgress(60);
+    setStatusMessage("Extraindo páginas do PDF...");
+
+    // Processar o PDF já salvo no S3
+    await processUploadedBook(uploadResult.bookUrl);
+  };
+
+  // Upload de arquivos grandes em chunks
+  const uploadLargeFile = async (file: File) => {
+    const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+    const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    setStatusMessage(`Enviando arquivo (0/${totalChunks} partes)...`);
+    
+    // Enviar cada chunk
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunk = file.slice(start, end);
+      
+      const arrayBuffer = await chunk.arrayBuffer();
+      const base64Chunk = arrayBufferToBase64(arrayBuffer);
+      
+      // Calcular progresso (0-50% para upload)
+      const uploadProgress = Math.round(((chunkIndex + 1) / totalChunks) * 50);
+      setProgress(uploadProgress);
+      setStatusMessage(`Enviando arquivo (${chunkIndex + 1}/${totalChunks} partes)...`);
+      
+      // Enviar chunk
+      const result = await uploadBookMutation.mutateAsync({
+        fileData: base64Chunk,
         fileName: file.name,
+        fileSize: file.size,
+        chunkIndex,
+        totalChunks,
+        uploadId
+      });
+      
+      // Se for o último chunk, teremos a URL do arquivo completo
+      if (chunkIndex === totalChunks - 1 && result.bookUrl) {
+        setBookUrl(result.bookUrl);
+        onBookUrl?.(result.bookUrl);
+        
+        setProgress(60);
+        setStatusMessage("Extraindo páginas do PDF...");
+        
+        // Processar o PDF já salvo no S3
+        await processUploadedBook(result.bookUrl);
+      }
+    }
+  };
+
+  // Processar o Book já salvo no S3
+  const processUploadedBook = async (bookUrl: string) => {
+    try {
+      setProgress(70);
+      setStatusMessage("Analisando páginas do PDF...");
+
+      const result = await processarBookMutation.mutateAsync({
+        bookUrl,
         projetoNome: projetoNome || "Empreendimento"
       });
-
-      setBookUrl(result.bookUrl);
-      onBookUrl?.(result.bookUrl);
-
-      setProgress(70);
-      setStatusMessage("Processando imagens extraídas...");
 
       if (result.imagens && result.imagens.length > 0) {
         // Converter imagens para o formato do componente
@@ -127,17 +213,19 @@ export default function UploadBook({
 
         setProgress(100);
         setStatusMessage("Extração concluída!");
-        toast.success(`${imagensComSelecao.length} imagens extraídas do Book!`);
+        toast.success(`${imagensComSelecao.length} páginas extraídas do Book!`);
       } else {
         // Nenhuma imagem extraída, mas o Book foi salvo
         setProgress(100);
         setStatusMessage("Book salvo!");
-        toast.info("Book salvo, mas nenhuma imagem foi identificada automaticamente.");
+        toast.info("Book salvo. As páginas serão incluídas como referência no PDF.");
       }
-
     } catch (error: any) {
       console.error("Erro ao processar Book:", error);
-      toast.error(error.message || "Erro ao processar o Book. Tente novamente.");
+      // Mesmo com erro no processamento, o Book foi salvo
+      setProgress(100);
+      setStatusMessage("Book salvo!");
+      toast.warning("Book salvo, mas houve um erro ao extrair as páginas automaticamente.");
     } finally {
       setIsProcessing(false);
       setTimeout(() => {
@@ -219,13 +307,15 @@ export default function UploadBook({
               <p className="text-slate-300">{statusMessage}</p>
               <Progress value={progress} className="w-full max-w-xs mx-auto" />
               <p className="text-xs text-slate-500">
-                A IA está analisando as páginas do Book para identificar fachada, lazer, planta...
+                {progress < 50 
+                  ? "Enviando arquivo para o servidor..." 
+                  : "Processando páginas do PDF..."}
               </p>
             </div>
           ) : (
             <>
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <FileText className="h-8 w-8 text-amber-500" />
+                <Upload className="h-8 w-8 text-amber-500" />
               </div>
               <h3 className="text-lg font-medium text-white mb-2">
                 Upload do Book do Projeto
@@ -240,7 +330,7 @@ export default function UploadBook({
                 <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">Perspectiva</span>
               </div>
               <p className="text-xs text-slate-500">
-                PDF até 50MB • A IA extrairá automaticamente até {maxImagens} imagens relevantes
+                PDF até 50MB • As primeiras {maxImagens} páginas serão extraídas automaticamente
               </p>
             </>
           )}
@@ -251,7 +341,7 @@ export default function UploadBook({
       {bookUrl && (
         <div className="flex items-center gap-2 p-3 bg-slate-700/50 rounded-lg">
           <FileText className="h-5 w-5 text-amber-500" />
-          <span className="text-sm text-slate-300 flex-1 truncate">Book carregado</span>
+          <span className="text-sm text-slate-300 flex-1 truncate">Book carregado com sucesso</span>
           <Button
             variant="ghost"
             size="sm"
@@ -268,7 +358,7 @@ export default function UploadBook({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-white">
-              Imagens Extraídas ({selecionadasCount}/{maxImagens} selecionadas)
+              Páginas Extraídas ({selecionadasCount}/{maxImagens} selecionadas)
             </h4>
             <Button
               variant="outline"
@@ -302,62 +392,26 @@ export default function UploadBook({
                 <CardContent className="p-0">
                   <div className="aspect-video relative bg-slate-800">
                     {/* Para PDFs, mostrar placeholder com ícone */}
-                    {imagem.url.endsWith('.pdf') ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
-                        <Image className="h-8 w-8 mb-2" />
-                        <span className="text-xs">Página {imagem.pagina}</span>
-                      </div>
-                    ) : (
-                      <img 
-                        src={imagem.url} 
-                        alt={imagem.descricao || `Imagem ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Se falhar ao carregar imagem, mostrar placeholder
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-                        }}
-                      />
-                    )}
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                      <FileText className="h-8 w-8 mb-2" />
+                      <span className="text-xs">Página {imagem.pagina}</span>
+                    </div>
                     
-                    {/* Badge de seleção */}
-                    <div className={`
-                      absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center
-                      ${imagem.selecionada 
-                        ? "bg-amber-500 text-white" 
-                        : "bg-slate-800/80 text-slate-400"
-                      }
-                    `}>
-                      {imagem.selecionada ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <span className="text-xs">{index + 1}</span>
-                      )}
-                    </div>
-
                     {/* Badge de tipo */}
-                    <div className="absolute bottom-2 left-2">
-                      <span className={`
-                        text-xs px-2 py-1 rounded-full
-                        ${getTipoBadgeColor(imagem.tipo)} text-white
-                      `}>
-                        {getTipoLabel(imagem.tipo)}
-                      </span>
+                    <div className={`absolute top-2 left-2 px-2 py-0.5 rounded text-xs text-white ${getTipoBadgeColor(imagem.tipo)}`}>
+                      {getTipoLabel(imagem.tipo)}
                     </div>
-
-                    {/* Badge de confiança */}
-                    {imagem.confianca && (
-                      <div className="absolute top-2 left-2">
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300">
-                          {imagem.confianca}%
-                        </span>
+                    
+                    {/* Indicador de seleção */}
+                    {imagem.selecionada && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center">
+                        <Check className="h-4 w-4 text-white" />
                       </div>
                     )}
                   </div>
                   
                   <div className="p-2">
-                    <p className="text-xs text-slate-300 line-clamp-2">
+                    <p className="text-xs text-slate-400 truncate">
                       {imagem.descricao || `Página ${imagem.pagina}`}
                     </p>
                   </div>
@@ -365,15 +419,10 @@ export default function UploadBook({
               </Card>
             ))}
           </div>
-
-          {selecionadasCount < maxImagens && (
-            <div className="flex items-center gap-2 p-3 bg-amber-500/10 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-              <span className="text-sm text-amber-400">
-                Selecione mais {maxImagens - selecionadasCount} imagem(ns) para a proposta
-              </span>
-            </div>
-          )}
+          
+          <p className="text-xs text-slate-500 text-center">
+            Clique nas páginas para selecionar quais serão incluídas na proposta
+          </p>
         </div>
       )}
     </div>

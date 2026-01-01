@@ -10,8 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen, FileDown } from "lucide-react";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen, FileDown, ChevronRight, ChevronLeft, Check, AlertCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -49,6 +48,14 @@ const PARCELAS_PADRAO: ParcelaPagamento[] = [
   { id: "6", tipo: "anuais", nome: "Anuais", quantidade: 3, valorUnitario: 0, total: 0 },
 ];
 
+// Definição das etapas do wizard
+const WIZARD_STEPS = [
+  { id: 1, key: "dados", title: "Dados", icon: User, description: "Dados do cliente e imóvel" },
+  { id: 2, key: "simulacao", title: "Simulação", icon: Upload, description: "Anexar PDF de simulação" },
+  { id: 3, key: "book", title: "Book/Planta", icon: BookOpen, description: "Anexar arquivos do projeto" },
+  { id: 4, key: "pagamento", title: "Pagamento", icon: Table, description: "Tabela de pagamento" },
+];
+
 export default function Propostas() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
@@ -57,7 +64,7 @@ export default function Propostas() {
   const [editingPropostaId, setEditingPropostaId] = useState<number | null>(null);
   const [searchLead, setSearchLead] = useState("");
   const [selectedLead, setSelectedLead] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState("dados");
+  const [currentStep, setCurrentStep] = useState(1);
   const [parcelas, setParcelas] = useState<ParcelaPagamento[]>(PARCELAS_PADRAO);
   const [dadosSimulacao, setDadosSimulacao] = useState<DadosSimulacao | null>(null);
   
@@ -186,7 +193,7 @@ export default function Propostas() {
     setDadosSimulacao(null);
     setImagensBook([]);
     setPlantaUrl("");
-    setActiveTab("dados");
+    setCurrentStep(1);
     setIsEditing(false);
     setEditingPropostaId(null);
   };
@@ -273,7 +280,68 @@ export default function Propostas() {
   const totalParcelas = parcelas.reduce((acc, p) => acc + p.total, 0);
   const imagensSelecionadas = imagensBook.filter(img => img.selecionada);
 
+  // Validação de cada etapa
+  const validateStep = (step: number): { valid: boolean; message?: string } => {
+    switch (step) {
+      case 1: // Dados
+        if (!isEditing && !novaProposta.leadId) {
+          return { valid: false, message: "Selecione um cliente" };
+        }
+        if (!novaProposta.projectId) {
+          return { valid: false, message: "Selecione um empreendimento" };
+        }
+        if (!novaProposta.valorImovel || novaProposta.valorImovel <= 0) {
+          return { valid: false, message: "Informe o valor do imóvel" };
+        }
+        return { valid: true };
+      
+      case 2: // Simulação
+        // Simulação é opcional, mas se não tiver, alertar
+        return { valid: true };
+      
+      case 3: // Book/Planta
+        // Book e planta são opcionais
+        return { valid: true };
+      
+      case 4: // Pagamento
+        // Validar se tem pelo menos uma parcela com valor
+        const temParcela = parcelas.some(p => p.total > 0);
+        if (!temParcela) {
+          return { valid: false, message: "Configure pelo menos uma parcela na tabela de pagamento" };
+        }
+        return { valid: true };
+      
+      default:
+        return { valid: true };
+    }
+  };
+
+  const handleNextStep = () => {
+    const validation = validateStep(currentStep);
+    if (!validation.valid) {
+      toast.error(validation.message || "Preencha os campos obrigatórios");
+      return;
+    }
+    
+    if (currentStep < WIZARD_STEPS.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleCreateProposta = () => {
+    // Validar última etapa
+    const validation = validateStep(currentStep);
+    if (!validation.valid) {
+      toast.error(validation.message || "Preencha os campos obrigatórios");
+      return;
+    }
+    
     // Preparar imagens selecionadas do Book
     const imagensUrls = imagensSelecionadas.map(img => img.url);
     
@@ -300,18 +368,46 @@ export default function Propostas() {
           desconto: novaProposta.desconto || undefined,
           motivoDesconto: novaProposta.motivoDesconto || undefined,
           mensagemPersonalizada: novaProposta.mensagemPersonalizada || undefined,
-          imagensSelecionadas: imagensUrls.length > 0 ? imagensUrls : undefined,
-          plantasSelecionadas: plantasUrls.length > 0 ? plantasUrls : undefined,
-          validoAte: novaProposta.validoAte || undefined
+          validoAte: novaProposta.validoAte || undefined,
+          rendaFamiliar: novaProposta.rendaFamiliar || undefined,
+          dataNascimento: novaProposta.dataNascimento || undefined,
+          prazoMeses: novaProposta.prazoMeses || undefined,
+          primeiraPrestacao: novaProposta.primeiraPrestacao || undefined,
+          jurosEfetivos: novaProposta.jurosEfetivos || undefined,
+          tabelaPagamento: JSON.stringify(parcelas),
+          imagensSelecionadas: JSON.stringify(imagensUrls),
+          plantasSelecionadas: JSON.stringify(plantasUrls)
         }
       });
     } else {
       // Criar nova proposta
       createProposta.mutate({
-        ...novaProposta,
-        imagensSelecionadas: imagensUrls,
-        plantasSelecionadas: plantasUrls,
-        validoAte: novaProposta.validoAte || undefined
+        leadId: novaProposta.leadId,
+        projectId: novaProposta.projectId,
+        nomeCliente: novaProposta.nomeCliente,
+        emailCliente: novaProposta.emailCliente || undefined,
+        telefoneCliente: novaProposta.telefoneCliente || undefined,
+        unidade: novaProposta.unidade || undefined,
+        tipologia: novaProposta.tipologia || undefined,
+        metragem: novaProposta.metragem || undefined,
+        valorImovel: novaProposta.valorImovel,
+        valorEntrada: novaProposta.valorEntrada || undefined,
+        valorFinanciamento: novaProposta.valorFinanciamento || undefined,
+        parcelas: novaProposta.parcelas || undefined,
+        valorParcela: novaProposta.valorParcela || undefined,
+        taxaJuros: novaProposta.taxaJuros || undefined,
+        desconto: novaProposta.desconto || undefined,
+        motivoDesconto: novaProposta.motivoDesconto || undefined,
+        mensagemPersonalizada: novaProposta.mensagemPersonalizada || undefined,
+        validoAte: novaProposta.validoAte || undefined,
+        rendaFamiliar: novaProposta.rendaFamiliar || undefined,
+        dataNascimento: novaProposta.dataNascimento || undefined,
+        prazoMeses: novaProposta.prazoMeses || undefined,
+        primeiraPrestacao: novaProposta.primeiraPrestacao || undefined,
+        jurosEfetivos: novaProposta.jurosEfetivos || undefined,
+        tabelaPagamento: JSON.stringify(parcelas),
+        imagensSelecionadas: JSON.stringify(imagensUrls),
+        plantasSelecionadas: JSON.stringify(plantasUrls)
       });
     }
   };
@@ -337,25 +433,37 @@ export default function Propostas() {
       desconto: proposta.desconto || 0,
       motivoDesconto: proposta.motivoDesconto || "",
       mensagemPersonalizada: proposta.mensagemPersonalizada || "",
-      validoAte: proposta.validoAte ? new Date(proposta.validoAte).toISOString().split('T')[0] : "",
-      rendaFamiliar: 0,
-      dataNascimento: "",
-      prazoMeses: proposta.parcelas || 0,
-      primeiraPrestacao: proposta.valorParcela || 0,
-      jurosEfetivos: proposta.taxaJuros || "",
-      tabelaPagamento: ""
+      validoAte: proposta.validoAte || "",
+      rendaFamiliar: proposta.rendaFamiliar || 0,
+      dataNascimento: proposta.dataNascimento || "",
+      prazoMeses: proposta.prazoMeses || 0,
+      primeiraPrestacao: proposta.primeiraPrestacao || 0,
+      jurosEfetivos: proposta.jurosEfetivos || "",
+      tabelaPagamento: proposta.tabelaPagamento || ""
     });
     
-    // Carregar imagens e plantas se existirem
+    // Carregar parcelas se existirem
+    if (proposta.tabelaPagamento) {
+      try {
+        const parcelasCarregadas = JSON.parse(proposta.tabelaPagamento);
+        setParcelas(parcelasCarregadas);
+      } catch (e) {
+        console.error('Erro ao parsear parcelas:', e);
+      }
+    }
+    
+    // Carregar imagens do Book se existirem
     if (proposta.imagensSelecionadas) {
       try {
-        const imgs = JSON.parse(proposta.imagensSelecionadas);
-        setImagensBook(imgs.map((url: string, idx: number) => ({
-          id: `img-${idx}`,
+        const imagens = JSON.parse(proposta.imagensSelecionadas);
+        const imagensFormatadas: ImagemExtraida[] = imagens.map((url: string, idx: number) => ({
           url,
-          descricao: `Imagem ${idx + 1}`,
-          selecionada: true
-        })));
+          tipo: 'perspectiva' as const,
+          selecionada: true,
+          pagina: idx + 1,
+          confianca: 100
+        }));
+        setImagensBook(imagensFormatadas);
       } catch (e) {
         console.error('Erro ao parsear imagens:', e);
       }
@@ -373,7 +481,389 @@ export default function Propostas() {
     }
     
     setShowCreateDialog(true);
-    setActiveTab("dados");
+    setCurrentStep(1);
+  };
+
+  // Renderizar indicador de progresso do wizard
+  const renderWizardProgress = () => (
+    <div className="mb-6">
+      <div className="flex items-center justify-between">
+        {WIZARD_STEPS.map((step, index) => {
+          const StepIcon = step.icon;
+          const isActive = currentStep === step.id;
+          const isCompleted = currentStep > step.id;
+          const validation = validateStep(step.id);
+          
+          return (
+            <div key={step.id} className="flex items-center flex-1">
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`
+                    w-10 h-10 rounded-full flex items-center justify-center transition-all
+                    ${isCompleted ? 'bg-green-500 text-white' : ''}
+                    ${isActive ? 'bg-amber-500 text-white ring-4 ring-amber-500/30' : ''}
+                    ${!isActive && !isCompleted ? 'bg-slate-700 text-slate-400' : ''}
+                  `}
+                >
+                  {isCompleted ? (
+                    <Check className="h-5 w-5" />
+                  ) : (
+                    <StepIcon className="h-5 w-5" />
+                  )}
+                </div>
+                <span className={`text-xs mt-2 font-medium ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>
+                  {step.title}
+                </span>
+              </div>
+              
+              {index < WIZARD_STEPS.length - 1 && (
+                <div 
+                  className={`
+                    flex-1 h-1 mx-2 rounded
+                    ${isCompleted ? 'bg-green-500' : 'bg-slate-700'}
+                  `}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Renderizar conteúdo de cada etapa
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1: // Dados
+        return (
+          <div className="space-y-6 py-4">
+            {/* Busca de Lead */}
+            <div className="space-y-2">
+              <Label className="text-white font-medium">Cliente *</Label>
+              {selectedLead ? (
+                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-white">{selectedLead.nome}</p>
+                    <p className="text-sm text-slate-400">{selectedLead.telefone}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedLead(null)}
+                    className="text-slate-400"
+                  >
+                    Alterar
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    value={searchLead}
+                    onChange={(e) => setSearchLead(e.target.value)}
+                    placeholder="Buscar por nome, telefone ou email..."
+                    className="pl-10 bg-slate-700 border-slate-600 text-white"
+                  />
+                  {leadsSearch && leadsSearch.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {leadsSearch.map((lead) => (
+                        <button
+                          key={lead.id}
+                          onClick={() => handleSelectLead(lead)}
+                          className="w-full p-3 text-left hover:bg-slate-600 border-b border-slate-600 last:border-0"
+                        >
+                          <p className="font-medium text-white">{lead.nome}</p>
+                          <p className="text-sm text-slate-400">{lead.telefone} • {lead.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Projeto */}
+            <div className="space-y-2">
+              <Label className="text-white font-medium">Empreendimento *</Label>
+              <Select 
+                value={novaProposta.projectId ? String(novaProposta.projectId) : ""}
+                onValueChange={(v) => setNovaProposta({ ...novaProposta, projectId: Number(v) })}
+              >
+                <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectValue placeholder="Selecione o empreendimento" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-700 border-slate-600">
+                  {projetos?.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)} className="text-white">
+                      {p.nome} - {p.construtora}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Dados do Imóvel */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-white font-medium">Unidade</Label>
+                <Input
+                  value={novaProposta.unidade}
+                  onChange={(e) => setNovaProposta({ ...novaProposta, unidade: e.target.value })}
+                  placeholder="Ex: Apto 101, Torre A"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white font-medium">Tipologia</Label>
+                <Input
+                  value={novaProposta.tipologia}
+                  onChange={(e) => setNovaProposta({ ...novaProposta, tipologia: e.target.value })}
+                  placeholder="Ex: 2 dorms, 1 suíte"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-white font-medium">Metragem (m²)</Label>
+                <Input
+                  type="number"
+                  value={novaProposta.metragem || ""}
+                  onChange={(e) => setNovaProposta({ ...novaProposta, metragem: Number(e.target.value) })}
+                  placeholder="Ex: 65"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-white font-medium">Valor do Imóvel (R$) *</Label>
+                <Input
+                  type="number"
+                  value={novaProposta.valorImovel || ""}
+                  onChange={(e) => setNovaProposta({ ...novaProposta, valorImovel: Number(e.target.value) })}
+                  placeholder="Ex: 250000"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+            </div>
+
+            {/* Mensagem Personalizada */}
+            <div className="space-y-2">
+              <Label className="text-white font-medium">Mensagem Personalizada (opcional)</Label>
+              <Textarea
+                value={novaProposta.mensagemPersonalizada}
+                onChange={(e) => setNovaProposta({ ...novaProposta, mensagemPersonalizada: e.target.value })}
+                placeholder="Adicione uma mensagem especial para o cliente..."
+                className="bg-slate-700 border-slate-600 text-white"
+                rows={3}
+              />
+            </div>
+
+            {/* Validade */}
+            <div className="space-y-2">
+              <Label className="text-white font-medium">Válido até (opcional)</Label>
+              <Input
+                type="date"
+                value={novaProposta.validoAte}
+                onChange={(e) => setNovaProposta({ ...novaProposta, validoAte: e.target.value })}
+                className="bg-slate-700 border-slate-600 text-white"
+              />
+            </div>
+          </div>
+        );
+      
+      case 2: // Simulação
+        return (
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-white font-medium mb-2">Upload do PDF de Simulação</h4>
+                <p className="text-slate-400 text-sm mb-4">
+                  Faça upload do PDF de simulação de financiamento (Portal CRM ou Simulador CAIXA) 
+                  para extrair automaticamente os dados do cliente.
+                </p>
+              </div>
+              
+              <UploadSimulacao onDadosExtraidos={handleDadosSimulacao} />
+              
+              {dadosSimulacao && (
+                <div className="mt-4 p-4 bg-slate-700/30 rounded-lg">
+                  <h5 className="text-white font-medium mb-3 flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-500" />
+                    Dados Extraídos
+                  </h5>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-slate-400">Renda Familiar:</span>
+                      <span className="text-white ml-2">{formatCurrency(dadosSimulacao.rendaFamiliar)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Data Nascimento:</span>
+                      <span className="text-white ml-2">{dadosSimulacao.dataNascimento}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Valor do Imóvel:</span>
+                      <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorImovel)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Financiamento:</span>
+                      <span className="text-green-400 ml-2">{formatCurrency(dadosSimulacao.valorFinanciamento)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Prazo:</span>
+                      <span className="text-white ml-2">{dadosSimulacao.prazoMeses} meses</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">1ª Prestação:</span>
+                      <span className="text-amber-400 ml-2">{formatCurrency(dadosSimulacao.primeiraPrestacao)}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Juros Efetivos:</span>
+                      <span className="text-white ml-2">{dadosSimulacao.jurosEfetivos}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400">Entrada:</span>
+                      <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorEntrada)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {!dadosSimulacao && (
+                <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-amber-400 text-sm flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Você pode pular esta etapa, mas os dados de simulação não serão incluídos na proposta.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      
+      case 3: // Book/Planta
+        return (
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Upload do Book */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-amber-500" />
+                    Book do Projeto
+                  </h4>
+                  <p className="text-slate-400 text-sm mb-4">
+                    Faça upload do PDF do Book do empreendimento para extrair automaticamente 
+                    as imagens de perspectiva (fachada, áreas de lazer, etc.)
+                  </p>
+                </div>
+                
+                <UploadBook 
+                  onImagensExtraidas={handleImagensBook}
+                  imagensSelecionadas={imagensBook}
+                  maxImagens={4}
+                  projetoNome={projetos?.find(p => p.id === novaProposta.projectId)?.nome || "Empreendimento"}
+                />
+                
+                {imagensSelecionadas.length > 0 && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <p className="text-green-400 text-sm flex items-center gap-2">
+                      <Check className="h-4 w-4" />
+                      {imagensSelecionadas.length} imagem(ns) selecionada(s) para a proposta
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              {/* Upload da Planta */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5 text-amber-500" />
+                    Planta da Unidade
+                  </h4>
+                  <p className="text-slate-400 text-sm mb-4">
+                    Faça upload da imagem da planta baixa da unidade escolhida pelo cliente.
+                  </p>
+                </div>
+                
+                <UploadPlanta 
+                  onPlantaUpload={handlePlantaUpload}
+                  plantaUrl={plantaUrl}
+                  label=""
+                />
+                
+                {plantaUrl && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <p className="text-green-400 text-sm flex items-center gap-2">
+                      <Check className="h-4 w-4" />
+                      Planta da unidade carregada
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {!imagensSelecionadas.length && !plantaUrl && (
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <p className="text-amber-400 text-sm flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Você pode pular esta etapa, mas as imagens do projeto não serão incluídas na proposta.
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      
+      case 4: // Pagamento
+        return (
+          <div className="space-y-6 py-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-white font-medium">Tabela de Pagamento *</h4>
+                  <p className="text-slate-400 text-sm">
+                    Configure as parcelas e condições de pagamento da proposta
+                  </p>
+                </div>
+                {novaProposta.valorImovel > 0 && (
+                  <div className="text-right">
+                    <p className="text-slate-400 text-sm">Valor do Imóvel</p>
+                    <p className="text-white font-bold">{formatCurrency(novaProposta.valorImovel)}</p>
+                  </div>
+                )}
+              </div>
+              
+              <TabelaPagamento
+                parcelas={parcelas}
+                onChange={handleParcelasChange}
+                valorImovel={novaProposta.valorImovel}
+              />
+              
+              {novaProposta.valorImovel > 0 && totalParcelas !== novaProposta.valorImovel && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-amber-400 text-sm">
+                    ⚠️ O total das parcelas ({formatCurrency(totalParcelas)}) não corresponde ao valor do imóvel ({formatCurrency(novaProposta.valorImovel)}).
+                    Diferença: {formatCurrency(novaProposta.valorImovel - totalParcelas)}
+                  </p>
+                </div>
+              )}
+              
+              {totalParcelas > 0 && (
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400 font-medium">Total Configurado:</span>
+                    <span className="text-green-400 font-bold text-lg">{formatCurrency(totalParcelas)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   return (
@@ -384,7 +874,10 @@ export default function Propostas() {
             <h1 className="text-2xl font-bold text-white">Propostas Digitais</h1>
             <p className="text-slate-400">Crie e gerencie propostas interativas para seus clientes</p>
           </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <Dialog open={showCreateDialog} onOpenChange={(open) => {
+            setShowCreateDialog(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-amber-500 hover:bg-amber-600">
                 <Plus className="h-4 w-4 mr-2" />
@@ -395,334 +888,59 @@ export default function Propostas() {
               <DialogHeader>
                 <DialogTitle className="text-white">{isEditing ? 'Editar Proposta' : 'Criar Nova Proposta'}</DialogTitle>
                 <DialogDescription className="text-slate-400">
-                  {isEditing ? 'Atualize os dados da proposta' : 'Preencha os dados para gerar uma proposta digital interativa'}
+                  {isEditing ? 'Atualize os dados da proposta' : 'Siga as etapas para criar uma proposta digital interativa'}
                 </DialogDescription>
               </DialogHeader>
               
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-slate-700/50">
-                  <TabsTrigger value="dados" className="data-[state=active]:bg-amber-500">
-                    <User className="h-4 w-4 mr-2" />
-                    Dados
-                  </TabsTrigger>
-                  <TabsTrigger value="simulacao" className="data-[state=active]:bg-amber-500">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Simulação
-                  </TabsTrigger>
-                  <TabsTrigger value="book" className="data-[state=active]:bg-amber-500">
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Book/Planta
-                  </TabsTrigger>
-                  <TabsTrigger value="pagamento" className="data-[state=active]:bg-amber-500">
-                    <Table className="h-4 w-4 mr-2" />
-                    Pagamento
-                  </TabsTrigger>
-                </TabsList>
-                
-                {/* Aba 1: Dados do Cliente e Imóvel */}
-                <TabsContent value="dados" className="space-y-6 py-4">
-                  {/* Busca de Lead */}
-                  <div className="space-y-2">
-                    <Label className="text-white font-medium">Cliente</Label>
-                    {selectedLead ? (
-                      <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                        <div>
-                          <p className="font-medium text-white">{selectedLead.nome}</p>
-                          <p className="text-sm text-slate-400">{selectedLead.telefone}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedLead(null)}
-                          className="text-slate-400"
-                        >
-                          Alterar
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                          value={searchLead}
-                          onChange={(e) => setSearchLead(e.target.value)}
-                          placeholder="Buscar por nome, telefone ou email..."
-                          className="pl-10 bg-slate-700 border-slate-600 text-white"
-                        />
-                        {leadsSearch && leadsSearch.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                            {leadsSearch.map((lead) => (
-                              <button
-                                key={lead.id}
-                                onClick={() => handleSelectLead(lead)}
-                                className="w-full p-3 text-left hover:bg-slate-600 border-b border-slate-600 last:border-0"
-                              >
-                                <p className="font-medium text-white">{lead.nome}</p>
-                                <p className="text-sm text-slate-400">{lead.telefone} • {lead.email}</p>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+              {/* Wizard Progress */}
+              {renderWizardProgress()}
+              
+              {/* Step Content */}
+              {renderStepContent()}
 
-                  {/* Projeto */}
-                  <div className="space-y-2">
-                    <Label className="text-white font-medium">Empreendimento</Label>
-                    <Select 
-                      value={novaProposta.projectId ? String(novaProposta.projectId) : ""}
-                      onValueChange={(v) => setNovaProposta({ ...novaProposta, projectId: Number(v) })}
+              {/* Navigation Buttons */}
+              <DialogFooter className="mt-6 flex justify-between">
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { setShowCreateDialog(false); resetForm(); }}
+                    className="border-slate-600 text-slate-300"
+                  >
+                    Cancelar
+                  </Button>
+                  
+                  {currentStep > 1 && (
+                    <Button 
+                      variant="outline"
+                      onClick={handlePrevStep}
+                      className="border-slate-600 text-slate-300"
                     >
-                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                        <SelectValue placeholder="Selecione o empreendimento" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-700 border-slate-600">
-                        {projetos?.map((p) => (
-                          <SelectItem key={p.id} value={String(p.id)} className="text-white">
-                            {p.nome} - {p.construtora}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Dados do Imóvel */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-white font-medium">Unidade</Label>
-                      <Input
-                        value={novaProposta.unidade}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, unidade: e.target.value })}
-                        placeholder="Ex: Apto 101, Torre A"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white font-medium">Tipologia</Label>
-                      <Input
-                        value={novaProposta.tipologia}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, tipologia: e.target.value })}
-                        placeholder="Ex: 2 dorms, 1 suíte"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-white font-medium">Metragem (m²)</Label>
-                      <Input
-                        type="number"
-                        value={novaProposta.metragem || ""}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, metragem: Number(e.target.value) })}
-                        placeholder="Ex: 65"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-white font-medium">Valor do Imóvel (R$)</Label>
-                      <Input
-                        type="number"
-                        value={novaProposta.valorImovel || ""}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, valorImovel: Number(e.target.value) })}
-                        placeholder="Ex: 250000"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Mensagem Personalizada */}
-                  <div className="space-y-2">
-                    <Label className="text-white font-medium">Mensagem Personalizada (opcional)</Label>
-                    <Textarea
-                      value={novaProposta.mensagemPersonalizada}
-                      onChange={(e) => setNovaProposta({ ...novaProposta, mensagemPersonalizada: e.target.value })}
-                      placeholder="Adicione uma mensagem especial para o cliente..."
-                      className="bg-slate-700 border-slate-600 text-white"
-                      rows={3}
-                    />
-                  </div>
-
-                  {/* Validade */}
-                  <div className="space-y-2">
-                    <Label className="text-white font-medium">Válido até (opcional)</Label>
-                    <Input
-                      type="date"
-                      value={novaProposta.validoAte}
-                      onChange={(e) => setNovaProposta({ ...novaProposta, validoAte: e.target.value })}
-                      className="bg-slate-700 border-slate-600 text-white"
-                    />
-                  </div>
-                </TabsContent>
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Voltar
+                    </Button>
+                  )}
+                </div>
                 
-                {/* Aba 2: Upload de Simulação */}
-                <TabsContent value="simulacao" className="space-y-6 py-4">
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-white font-medium mb-2">Upload do PDF de Simulação</h4>
-                      <p className="text-slate-400 text-sm mb-4">
-                        Faça upload do PDF de simulação de financiamento (Portal CRM ou Simulador CAIXA) 
-                        para extrair automaticamente os dados do cliente.
-                      </p>
-                    </div>
-                    
-                    <UploadSimulacao onDadosExtraidos={handleDadosSimulacao} />
-                    
-                    {dadosSimulacao && (
-                      <div className="mt-4 p-4 bg-slate-700/30 rounded-lg">
-                        <h5 className="text-white font-medium mb-3">Dados Extraídos</h5>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="text-slate-400">Renda Familiar:</span>
-                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.rendaFamiliar)}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Data Nascimento:</span>
-                            <span className="text-white ml-2">{dadosSimulacao.dataNascimento}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Valor do Imóvel:</span>
-                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorImovel)}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Financiamento:</span>
-                            <span className="text-green-400 ml-2">{formatCurrency(dadosSimulacao.valorFinanciamento)}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Prazo:</span>
-                            <span className="text-white ml-2">{dadosSimulacao.prazoMeses} meses</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">1ª Prestação:</span>
-                            <span className="text-amber-400 ml-2">{formatCurrency(dadosSimulacao.primeiraPrestacao)}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Juros Efetivos:</span>
-                            <span className="text-white ml-2">{dadosSimulacao.jurosEfetivos}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-400">Entrada:</span>
-                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorEntrada)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-                
-                {/* Aba 3: Book e Planta */}
-                <TabsContent value="book" className="space-y-6 py-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Upload do Book */}
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                          <BookOpen className="h-5 w-5 text-amber-500" />
-                          Book do Projeto
-                        </h4>
-                        <p className="text-slate-400 text-sm mb-4">
-                          Faça upload do PDF do Book do empreendimento para extrair automaticamente 
-                          as imagens de perspectiva (fachada, áreas de lazer, etc.)
-                        </p>
-                      </div>
-                      
-                      <UploadBook 
-                        onImagensExtraidas={handleImagensBook}
-                        imagensSelecionadas={imagensBook}
-                        maxImagens={4}
-                        projetoNome={projetos?.find(p => p.id === novaProposta.projectId)?.nome || "Empreendimento"}
-                      />
-                      
-                      {imagensSelecionadas.length > 0 && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                          <p className="text-green-400 text-sm">
-                            ✓ {imagensSelecionadas.length} imagem(ns) selecionada(s) para a proposta
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Upload da Planta */}
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="text-white font-medium mb-2 flex items-center gap-2">
-                          <ImageIcon className="h-5 w-5 text-amber-500" />
-                          Planta da Unidade
-                        </h4>
-                        <p className="text-slate-400 text-sm mb-4">
-                          Faça upload da imagem da planta baixa da unidade escolhida pelo cliente.
-                        </p>
-                      </div>
-                      
-                      <UploadPlanta 
-                        onPlantaUpload={handlePlantaUpload}
-                        plantaUrl={plantaUrl}
-                        label=""
-                      />
-                      
-                      {plantaUrl && (
-                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                          <p className="text-green-400 text-sm">
-                            ✓ Planta da unidade carregada
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </TabsContent>
-                
-                {/* Aba 4: Tabela de Pagamento */}
-                <TabsContent value="pagamento" className="space-y-6 py-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-white font-medium">Tabela de Pagamento</h4>
-                        <p className="text-slate-400 text-sm">
-                          Configure as parcelas e condições de pagamento da proposta
-                        </p>
-                      </div>
-                      {novaProposta.valorImovel > 0 && (
-                        <div className="text-right">
-                          <p className="text-slate-400 text-sm">Valor do Imóvel</p>
-                          <p className="text-white font-bold">{formatCurrency(novaProposta.valorImovel)}</p>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <TabelaPagamento
-                      parcelas={parcelas}
-                      onChange={handleParcelasChange}
-                      valorImovel={novaProposta.valorImovel}
-                    />
-                    
-                    {novaProposta.valorImovel > 0 && totalParcelas !== novaProposta.valorImovel && (
-                      <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                        <p className="text-amber-400 text-sm">
-                          ⚠️ O total das parcelas ({formatCurrency(totalParcelas)}) não corresponde ao valor do imóvel ({formatCurrency(novaProposta.valorImovel)}).
-                          Diferença: {formatCurrency(novaProposta.valorImovel - totalParcelas)}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <DialogFooter className="mt-6">
-                <Button 
-                  variant="outline" 
-                  onClick={() => { setShowCreateDialog(false); resetForm(); }}
-                  className="border-slate-600 text-slate-300"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  onClick={handleCreateProposta}
-                  disabled={(createProposta.isPending || updateProposta.isPending) || (!isEditing && (!novaProposta.leadId || !novaProposta.projectId)) || !novaProposta.valorImovel}
-                  className="bg-amber-500 hover:bg-amber-600"
-                >
-                  {(createProposta.isPending || updateProposta.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  {isEditing ? 'Salvar Alterações' : 'Criar Proposta'}
-                </Button>
+                <div>
+                  {currentStep < WIZARD_STEPS.length ? (
+                    <Button 
+                      onClick={handleNextStep}
+                      className="bg-amber-500 hover:bg-amber-600"
+                    >
+                      Avançar
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleCreateProposta}
+                      disabled={createProposta.isPending || updateProposta.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {(createProposta.isPending || updateProposta.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      {isEditing ? 'Salvar Alterações' : 'Criar Proposta'}
+                    </Button>
+                  )}
+                </div>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -750,61 +968,34 @@ export default function Propostas() {
                             {STATUS_LABELS[proposta.status]}
                           </Badge>
                         </div>
-                        <p className="text-sm text-slate-300 mt-1">
-                          {proposta.unidade} • {proposta.tipologia}
+                        <p className="text-slate-400 text-sm mt-1">
+                          {proposta.project?.nome || 'Projeto não definido'} • {proposta.tipologia || 'Tipologia não definida'}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-sm">
-                          <span className="text-green-400 font-medium">
+                          <span className="text-amber-500 font-semibold">
                             {formatCurrency(proposta.valorImovel)}
                           </span>
+                          <span className="text-slate-500">
+                            Criada em {format(new Date(proposta.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+                          </span>
                           {proposta.visualizacoes > 0 && (
-                            <span className="text-slate-300 flex items-center gap-1">
+                            <span className="text-slate-500 flex items-center gap-1">
                               <Eye className="h-3 w-3" />
-                              {proposta.visualizacoes} visualizações
+                              {proposta.visualizacoes} visualização(ões)
                             </span>
                           )}
-                          <span className="text-slate-400">
-                            {format(new Date(proposta.createdAt), "dd/MM/yyyy", { locale: ptBR })}
-                          </span>
                         </div>
                       </div>
                     </div>
+                    
                     <div className="flex items-center gap-2">
-                      {proposta.status === "rascunho" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => enviarProposta.mutate({ id: proposta.id })}
-                          disabled={enviarProposta.isPending}
-                          className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
-                        >
-                          <Send className="h-4 w-4 mr-1" />
-                          Enviar
-                        </Button>
-                      )}
+                      {/* Botão de Download PDF */}
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyLink(proposta.token)}
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(`/proposta/${proposta.token}`, '_blank')}
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => gerarPDF.mutate({ propostaId: proposta.id })}
                         disabled={gerarPDF.isPending}
-                        className="text-slate-400 hover:text-green-400"
-                        title="Baixar PDF"
+                        className="border-slate-600 text-slate-300 hover:text-white"
                       >
                         {gerarPDF.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -812,35 +1003,72 @@ export default function Propostas() {
                           <FileDown className="h-4 w-4" />
                         )}
                       </Button>
+                      
+                      {/* Botão de Copiar Link */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyLink(proposta.token)}
+                        className="border-slate-600 text-slate-300 hover:text-white"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Botão de Visualizar */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/proposta/${proposta.token}`, '_blank')}
+                        className="border-slate-600 text-slate-300 hover:text-white"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Botão de Editar */}
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => handleEditProposta(proposta)}
-                        className="text-slate-400 hover:text-blue-400"
+                        className="border-slate-600 text-slate-300 hover:text-white"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      
+                      {/* Botão de Enviar */}
+                      {proposta.status === 'rascunho' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => enviarProposta.mutate({ propostaId: proposta.id })}
+                          disabled={enviarProposta.isPending}
+                          className="border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
+                      {/* Botão de Excluir */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-slate-400 hover:text-red-400"
+                            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-slate-800 border-slate-700">
+                        <AlertDialogContent className="bg-slate-800 border-slate-600">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-white">Excluir Proposta</AlertDialogTitle>
                             <AlertDialogDescription className="text-slate-400">
-                              Tem certeza que deseja excluir a proposta de {proposta.nomeCliente}? Esta ação não pode ser desfeita.
+                              Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600">Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteProposta.mutate({ id: proposta.id })}
+                            <AlertDialogCancel className="border-slate-600 text-slate-300">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction 
+                              onClick={() => deleteProposta.mutate({ propostaId: proposta.id })}
                               className="bg-red-500 hover:bg-red-600"
                             >
                               Excluir
@@ -854,19 +1082,19 @@ export default function Propostas() {
               </Card>
             ))
           ) : (
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="py-12 text-center">
+            <Card className="bg-slate-800 border-slate-600">
+              <CardContent className="p-12 text-center">
                 <FileText className="h-12 w-12 mx-auto text-slate-600 mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">Nenhuma proposta criada</h3>
                 <p className="text-slate-400 mb-4">
-                  Crie propostas digitais interativas para seus clientes
+                  Crie sua primeira proposta digital para enviar aos clientes
                 </p>
                 <Button 
                   onClick={() => setShowCreateDialog(true)}
                   className="bg-amber-500 hover:bg-amber-600"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Proposta
+                  Nova Proposta
                 </Button>
               </CardContent>
             </Card>
