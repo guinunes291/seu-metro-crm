@@ -2104,3 +2104,7 @@
 - [x] Criar endpoint tRPC para geração de PDF
 - [x] Adicionar botão de download na lista de propostas
 - [ ] Testar geração completa do PDF
+
+## Bug Fix: Quantidade de Parcelas na Tabela de Pagamento
+- [ ] Corrigir exibição da quantidade de parcelas (mostrando apenas 1 dígito)
+- [ ] Garantir que o cálculo Total = Quantidade x Valor Unitário está correto

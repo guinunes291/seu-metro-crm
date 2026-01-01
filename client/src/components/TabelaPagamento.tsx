@@ -150,15 +150,15 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse" style={{ minWidth: '600px' }}>
           <thead>
             <tr className="bg-slate-700/50">
-              <th className="p-2 text-left text-sm font-semibold text-white" style={{ width: '35%' }}>Tipo de Parcela</th>
-              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '10%' }}>Qtd</th>
+              <th className="p-2 text-left text-sm font-semibold text-white" style={{ width: '25%' }}>Tipo de Parcela</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '12%' }}>Qtd</th>
               <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '20%' }}>Valor Unit.</th>
-              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '20%' }}>Total</th>
-              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '10%' }}>%</th>
-              {!readOnly && <th className="p-2" style={{ width: '5%' }}></th>}
+              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '23%' }}>Total</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '12%' }}>%</th>
+              {!readOnly && <th className="p-2" style={{ width: '8%' }}></th>}
             </tr>
           </thead>
           <tbody>
@@ -197,7 +197,7 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
                         min={1}
                         value={parcela.quantidade}
                         onChange={(e) => updateParcela(parcela.id, "quantidade", parseInt(e.target.value) || 1)}
-                        className="bg-slate-700 border-slate-600 text-white h-10 text-center font-medium"
+                        className="bg-slate-700 border-slate-600 text-white h-10 text-center font-medium w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     )}
                   </td>
@@ -211,7 +211,7 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
                         onChange={(e) => handleValueChange(parcela.id, e.target.value)}
                         onBlur={() => handleValueBlur(parcela.id)}
                         placeholder="0,00"
-                        className="bg-slate-700 border-slate-600 text-white h-10 text-right font-medium"
+                        className="bg-slate-700 border-slate-600 text-white h-10 text-right font-medium w-full"
                       />
                     )}
                   </td>

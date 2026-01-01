@@ -285,7 +285,7 @@ export default function Propostas() {
                 Nova Proposta
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-600 w-[95vw] max-w-[1800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-slate-800 border-slate-600 w-[95vw] !max-w-[900px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-white">Criar Nova Proposta</DialogTitle>
                 <DialogDescription className="text-slate-400">
