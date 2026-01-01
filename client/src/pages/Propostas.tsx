@@ -11,13 +11,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2 } from "lucide-react";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import TabelaPagamento, { ParcelaPagamento } from "@/components/TabelaPagamento";
 import UploadSimulacao, { DadosSimulacao } from "@/components/UploadSimulacao";
+import UploadBook, { ImagemExtraida } from "@/components/UploadBook";
+import UploadPlanta from "@/components/UploadPlanta";
 
 const STATUS_COLORS: Record<string, string> = {
   rascunho: "bg-slate-500",
@@ -56,6 +58,10 @@ export default function Propostas() {
   const [activeTab, setActiveTab] = useState("dados");
   const [parcelas, setParcelas] = useState<ParcelaPagamento[]>(PARCELAS_PADRAO);
   const [dadosSimulacao, setDadosSimulacao] = useState<DadosSimulacao | null>(null);
+  
+  // Estados para Book e Planta
+  const [imagensBook, setImagensBook] = useState<ImagemExtraida[]>([]);
+  const [plantaUrl, setPlantaUrl] = useState<string>("");
   
   const [novaProposta, setNovaProposta] = useState({
     leadId: 0,
@@ -151,6 +157,8 @@ export default function Propostas() {
     setSearchLead("");
     setParcelas(PARCELAS_PADRAO);
     setDadosSimulacao(null);
+    setImagensBook([]);
+    setPlantaUrl("");
     setActiveTab("dados");
   };
 
@@ -212,6 +220,14 @@ export default function Propostas() {
     }));
   };
 
+  const handleImagensBook = (imagens: ImagemExtraida[]) => {
+    setImagensBook(imagens);
+  };
+
+  const handlePlantaUpload = (url: string) => {
+    setPlantaUrl(url);
+  };
+
   const copyLink = (token: string) => {
     const url = `${window.location.origin}/proposta/${token}`;
     navigator.clipboard.writeText(url);
@@ -226,6 +242,22 @@ export default function Propostas() {
   };
 
   const totalParcelas = parcelas.reduce((acc, p) => acc + p.total, 0);
+  const imagensSelecionadas = imagensBook.filter(img => img.selecionada);
+
+  const handleCreateProposta = () => {
+    // Preparar imagens selecionadas do Book
+    const imagensUrls = imagensSelecionadas.map(img => img.url);
+    
+    // Preparar planta
+    const plantasUrls = plantaUrl ? [plantaUrl] : [];
+    
+    createProposta.mutate({
+      ...novaProposta,
+      imagensSelecionadas: imagensUrls,
+      plantasSelecionadas: plantasUrls,
+      validoAte: novaProposta.validoAte || undefined
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -251,7 +283,7 @@ export default function Propostas() {
               </DialogHeader>
               
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-slate-700/50">
+                <TabsList className="grid w-full grid-cols-4 bg-slate-700/50">
                   <TabsTrigger value="dados" className="data-[state=active]:bg-amber-500">
                     <User className="h-4 w-4 mr-2" />
                     Dados
@@ -259,6 +291,10 @@ export default function Propostas() {
                   <TabsTrigger value="simulacao" className="data-[state=active]:bg-amber-500">
                     <Upload className="h-4 w-4 mr-2" />
                     Simulação
+                  </TabsTrigger>
+                  <TabsTrigger value="book" className="data-[state=active]:bg-amber-500">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Book/Planta
                   </TabsTrigger>
                   <TabsTrigger value="pagamento" className="data-[state=active]:bg-amber-500">
                     <Table className="h-4 w-4 mr-2" />
@@ -457,7 +493,67 @@ export default function Propostas() {
                   </div>
                 </TabsContent>
                 
-                {/* Aba 3: Tabela de Pagamento */}
+                {/* Aba 3: Book e Planta */}
+                <TabsContent value="book" className="space-y-6 py-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Upload do Book */}
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                          <BookOpen className="h-5 w-5 text-amber-500" />
+                          Book do Projeto
+                        </h4>
+                        <p className="text-slate-400 text-sm mb-4">
+                          Faça upload do PDF do Book do empreendimento para extrair automaticamente 
+                          as imagens de perspectiva (fachada, áreas de lazer, etc.)
+                        </p>
+                      </div>
+                      
+                      <UploadBook 
+                        onImagensExtraidas={handleImagensBook}
+                        imagensSelecionadas={imagensBook}
+                        maxImagens={4}
+                      />
+                      
+                      {imagensSelecionadas.length > 0 && (
+                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                          <p className="text-green-400 text-sm">
+                            ✓ {imagensSelecionadas.length} imagem(ns) selecionada(s) para a proposta
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Upload da Planta */}
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-white font-medium mb-2 flex items-center gap-2">
+                          <ImageIcon className="h-5 w-5 text-amber-500" />
+                          Planta da Unidade
+                        </h4>
+                        <p className="text-slate-400 text-sm mb-4">
+                          Faça upload da imagem da planta baixa da unidade escolhida pelo cliente.
+                        </p>
+                      </div>
+                      
+                      <UploadPlanta 
+                        onPlantaUpload={handlePlantaUpload}
+                        plantaUrl={plantaUrl}
+                        label=""
+                      />
+                      
+                      {plantaUrl && (
+                        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                          <p className="text-green-400 text-sm">
+                            ✓ Planta da unidade carregada
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                {/* Aba 4: Tabela de Pagamento */}
                 <TabsContent value="pagamento" className="space-y-6 py-4">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -502,10 +598,7 @@ export default function Propostas() {
                   Cancelar
                 </Button>
                 <Button 
-                  onClick={() => createProposta.mutate({
-                    ...novaProposta,
-                    validoAte: novaProposta.validoAte || undefined
-                  })}
+                  onClick={handleCreateProposta}
                   disabled={createProposta.isPending || !novaProposta.leadId || !novaProposta.projectId || !novaProposta.valorImovel}
                   className="bg-amber-500 hover:bg-amber-600"
                 >

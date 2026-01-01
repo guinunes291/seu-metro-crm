@@ -2056,3 +2056,16 @@
 - [ ] Sistema de aceite digital com rubrica simples
 - [ ] Visualização prévia do PDF antes de enviar
 
+
+## Nova Feature: Upload de Book e Planta nas Propostas
+- [x] Criar componente UploadBook.tsx para upload de PDF do Book
+- [x] Criar componente UploadPlanta.tsx para upload de imagem da planta
+- [x] Adicionar nova aba "Book/Planta" no formulário de criação de proposta
+- [x] Implementar endpoint uploadBook no router de propostas
+- [x] Implementar endpoint uploadPlanta no router de propostas
+- [x] Implementar endpoint extrairImagensBook para análise via LLM
+- [x] Integrar uploads com criação da proposta (imagensSelecionadas, plantasSelecionadas)
+- [ ] Implementar extração real de imagens do PDF (atualmente usa placeholders)
+- [ ] Testar upload de Book PDF real
+- [ ] Testar upload de Planta real
+- [ ] Exibir imagens do Book e Planta na visualização da proposta pelo cliente

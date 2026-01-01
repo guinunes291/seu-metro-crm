@@ -3471,6 +3471,184 @@ O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do for
         await db.deleteProposta(input.id);
         return { success: true };
       }),
+    
+    // Upload de Book PDF
+    uploadBook: corretorProcedure
+      .input(z.object({
+        fileData: z.string(), // base64 data
+        fileName: z.string(),
+        contentType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        
+        // Validar tipo de arquivo
+        if (input.contentType !== 'application/pdf') {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Tipo de arquivo não permitido. Use PDF.' 
+          });
+        }
+        
+        // Converter base64 para buffer
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // Validar tamanho (máx 50MB)
+        const maxSize = 50 * 1024 * 1024;
+        if (buffer.length > maxSize) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Arquivo muito grande. Máximo permitido: 50MB.' 
+          });
+        }
+        
+        // Gerar nome único para o arquivo
+        const uniqueFileName = `propostas/books/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        
+        try {
+          const { url } = await storagePut(uniqueFileName, buffer, input.contentType);
+          return { success: true, url };
+        } catch (storageError: any) {
+          console.error('Erro no upload para S3:', storageError);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: 'Erro ao salvar o arquivo. Por favor, tente novamente.' 
+          });
+        }
+      }),
+    
+    // Upload de Planta (imagem)
+    uploadPlanta: corretorProcedure
+      .input(z.object({
+        fileData: z.string(), // base64 data
+        fileName: z.string(),
+        contentType: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        
+        // Validar tipo de arquivo
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(input.contentType)) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Tipo de arquivo não permitido. Use JPEG, PNG, GIF ou WebP.' 
+          });
+        }
+        
+        // Converter base64 para buffer
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // Validar tamanho (máx 10MB)
+        const maxSize = 10 * 1024 * 1024;
+        if (buffer.length > maxSize) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Arquivo muito grande. Máximo permitido: 10MB.' 
+          });
+        }
+        
+        // Gerar nome único para o arquivo
+        const ext = input.fileName.split('.').pop() || 'jpg';
+        const uniqueFileName = `propostas/plantas/${ctx.user.id}/${Date.now()}.${ext}`;
+        
+        try {
+          const { url } = await storagePut(uniqueFileName, buffer, input.contentType);
+          return { success: true, url };
+        } catch (storageError: any) {
+          console.error('Erro no upload para S3:', storageError);
+          throw new TRPCError({ 
+            code: 'INTERNAL_SERVER_ERROR', 
+            message: 'Erro ao salvar o arquivo. Por favor, tente novamente.' 
+          });
+        }
+      }),
+    
+    // Extrair imagens do Book PDF usando LLM
+    extrairImagensBook: corretorProcedure
+      .input(z.object({
+        pdfUrl: z.string(),
+        maxImagens: z.number().optional().default(4)
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const promptExtracao = `
+Você é um especialista em analisar PDFs de apresentação de empreendimentos imobiliários (Books).
+
+Analise o PDF anexado e identifique as melhores imagens de perspectiva do empreendimento.
+Busque por:
+1. Fachada do prédio/empreendimento
+2. Áreas de lazer (piscina, churrasqueira, playground, academia)
+3. Imagens internas de apartamentos decorados
+4. Plantas baixas
+
+Para cada imagem encontrada, retorne:
+- url: URL da imagem (se disponível no PDF) ou descrição detalhada
+- descricao: Descrição breve da imagem
+- tipo: "fachada", "lazer", "interior" ou "planta"
+
+Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicações):
+{
+  "imagens": [
+    { "url": "descrição_da_imagem_1", "descricao": "Fachada principal do empreendimento", "tipo": "fachada" },
+    { "url": "descrição_da_imagem_2", "descricao": "Área de lazer com piscina", "tipo": "lazer" }
+  ]
+}
+
+Limite: máximo ${input.maxImagens} imagens mais relevantes.
+`;
+
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: promptExtracao },
+              { 
+                role: "user", 
+                content: [
+                  {
+                    type: "file_url",
+                    file_url: {
+                      url: input.pdfUrl,
+                      mime_type: "application/pdf"
+                    }
+                  },
+                  {
+                    type: "text",
+                    text: `Analise este Book e extraia as ${input.maxImagens} melhores imagens de perspectiva.`
+                  }
+                ]
+              }
+            ]
+          });
+
+          const content = response.choices[0]?.message?.content || '';
+          
+          // Tentar extrair JSON da resposta
+          let jsonStr = content;
+          if (content.includes('```json')) {
+            jsonStr = content.split('```json')[1].split('```')[0].trim();
+          } else if (content.includes('```')) {
+            jsonStr = content.split('```')[1].split('```')[0].trim();
+          }
+          
+          const dados = JSON.parse(jsonStr);
+          
+          // Como não temos acesso direto às imagens do PDF, vamos retornar placeholders
+          // Na prática, você precisaria de uma biblioteca como pdf-lib ou pdfjs para extrair imagens
+          const imagensPlaceholder = (dados.imagens || []).map((img: any, idx: number) => ({
+            url: `https://placehold.co/600x400/1e293b/f59e0b?text=${encodeURIComponent(img.tipo || 'Imagem ' + (idx + 1))}`,
+            descricao: img.descricao || `Imagem ${idx + 1} do Book`,
+            tipo: img.tipo || 'outro'
+          }));
+          
+          return { imagens: imagensPlaceholder };
+        } catch (error: any) {
+          console.error('Erro ao extrair imagens do Book:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Erro ao processar Book: ${error.message}`
+          });
+        }
+      }),
   }),
 
   // ============================================================================
