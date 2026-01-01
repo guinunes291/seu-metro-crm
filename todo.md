@@ -2167,3 +2167,9 @@
 - [x] Criar endpoint processarBook para processar PDF e extrair imagens
 - [x] Atualizar componente UploadBook para usar extração automática
 - [x] Corrigir erro selectedProject is not defined
+
+## Bug Fix: Erro de Deploy - Dependências Nativas
+- [x] Remover dependência canvas que requer pixman-1
+- [x] Remover dependência sharp que requer bibliotecas nativas
+- [x] Remover dependência pdf2pic que requer bibliotecas nativas
+- [x] Manter bookExtractor usando apenas pdf-lib (JavaScript puro)
