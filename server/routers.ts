@@ -3517,6 +3517,62 @@ O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do for
         }
       }),
     
+    // Processar Book PDF e extrair imagens automaticamente
+    processarBook: corretorProcedure
+      .input(z.object({
+        fileData: z.string(), // base64 data
+        fileName: z.string(),
+        projetoNome: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { storagePut } = await import('./storage');
+        const { extrairImagensDoBook, selecionarMelhoresImagens } = await import('./bookExtractor');
+        
+        // Converter base64 para buffer
+        const buffer = Buffer.from(input.fileData, 'base64');
+        
+        // Validar tamanho (máx 50MB)
+        const maxSize = 50 * 1024 * 1024;
+        if (buffer.length > maxSize) {
+          throw new TRPCError({ 
+            code: 'BAD_REQUEST', 
+            message: 'Arquivo muito grande. Máximo permitido: 50MB.' 
+          });
+        }
+        
+        // Primeiro, fazer upload do PDF completo
+        const uniqueFileName = `propostas/books/${ctx.user.id}/${Date.now()}-${input.fileName}`;
+        const { url: bookUrl } = await storagePut(uniqueFileName, buffer, 'application/pdf');
+        
+        console.log(`[processarBook] Book salvo em: ${bookUrl}`);
+        
+        // Extrair imagens do PDF usando IA
+        const resultado = await extrairImagensDoBook(buffer, ctx.user.id, input.projetoNome);
+        
+        if (!resultado.sucesso) {
+          console.error('[processarBook] Erro na extração:', resultado.erro);
+          // Retornar apenas o URL do book sem imagens extraídas
+          return {
+            success: true,
+            bookUrl,
+            imagens: [],
+            totalPaginas: 0,
+            erro: resultado.erro
+          };
+        }
+        
+        // Selecionar as melhores imagens
+        const melhoresImagens = selecionarMelhoresImagens(resultado.imagens);
+        
+        return {
+          success: true,
+          bookUrl,
+          imagens: resultado.imagens,
+          melhoresImagens,
+          totalPaginas: resultado.totalPaginas
+        };
+      }),
+    
     // Upload de Planta (imagem)
     uploadPlanta: corretorProcedure
       .input(z.object({

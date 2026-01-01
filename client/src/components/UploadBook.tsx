@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { FileText, Loader2, X, Check, AlertCircle } from "lucide-react";
+import { FileText, Loader2, X, Check, AlertCircle, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -8,21 +8,27 @@ import { trpc } from "@/lib/trpc";
 
 export interface ImagemExtraida {
   url: string;
-  descricao: string;
-  tipo: "fachada" | "lazer" | "interior" | "planta" | "outro";
+  descricao?: string;
+  tipo: "fachada" | "lazer" | "planta" | "perspectiva" | "area_comum" | "outro";
   selecionada: boolean;
+  pagina?: number;
+  confianca?: number;
 }
 
 interface UploadBookProps {
   onImagensExtraidas: (imagens: ImagemExtraida[]) => void;
+  onBookUrl?: (url: string) => void;
   imagensSelecionadas?: ImagemExtraida[];
   maxImagens?: number;
+  projetoNome: string;
 }
 
 export default function UploadBook({ 
   onImagensExtraidas, 
+  onBookUrl,
   imagensSelecionadas = [],
-  maxImagens = 4 
+  maxImagens = 4,
+  projetoNome
 }: UploadBookProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -31,8 +37,8 @@ export default function UploadBook({
   const [imagensExtraidas, setImagensExtraidas] = useState<ImagemExtraida[]>(imagensSelecionadas);
   const [bookUrl, setBookUrl] = useState<string | null>(null);
 
-  const uploadBookMutation = trpc.propostas.uploadBook.useMutation();
-  const extrairImagensMutation = trpc.propostas.extrairImagensBook.useMutation();
+  // Usar o novo endpoint que processa e extrai imagens automaticamente
+  const processarBookMutation = trpc.propostas.processarBook.useMutation();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -49,12 +55,12 @@ export default function UploadBook({
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) processFile(file);
-  }, []);
+  }, [projetoNome]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) processFile(file);
-  }, []);
+  }, [projetoNome]);
 
   const processFile = async (file: File) => {
     // Validar tipo de arquivo
@@ -89,41 +95,45 @@ export default function UploadBook({
         reader.readAsDataURL(file);
       });
 
-      setProgress(30);
+      setProgress(20);
       setStatusMessage("Enviando PDF...");
 
-      // Upload do PDF via tRPC
-      const uploadResult = await uploadBookMutation.mutateAsync({
+      // Processar Book e extrair imagens via IA
+      const result = await processarBookMutation.mutateAsync({
         fileData: base64,
         fileName: file.name,
-        contentType: file.type
+        projetoNome: projetoNome || "Empreendimento"
       });
 
-      setBookUrl(uploadResult.url);
-      setProgress(50);
-      setStatusMessage("Extraindo imagens do Book...");
+      setBookUrl(result.bookUrl);
+      onBookUrl?.(result.bookUrl);
 
-      // Extrair imagens via LLM
-      const extractResult = await extrairImagensMutation.mutateAsync({
-        pdfUrl: uploadResult.url,
-        maxImagens
-      });
+      setProgress(70);
+      setStatusMessage("Processando imagens extraídas...");
 
-      setProgress(80);
-      setStatusMessage("Analisando imagens...");
+      if (result.imagens && result.imagens.length > 0) {
+        // Converter imagens para o formato do componente
+        const imagensComSelecao: ImagemExtraida[] = result.imagens.map((img: any, idx: number) => ({
+          url: img.url,
+          descricao: img.descricao || `Página ${img.pagina}`,
+          tipo: img.tipo,
+          selecionada: idx < maxImagens,
+          pagina: img.pagina,
+          confianca: img.confianca
+        }));
 
-      // Marcar as primeiras imagens como selecionadas por padrão
-      const imagensComSelecao = extractResult.imagens.map((img: any, idx: number) => ({
-        ...img,
-        selecionada: idx < maxImagens
-      }));
+        setImagensExtraidas(imagensComSelecao);
+        onImagensExtraidas(imagensComSelecao);
 
-      setImagensExtraidas(imagensComSelecao);
-      onImagensExtraidas(imagensComSelecao);
-
-      setProgress(100);
-      setStatusMessage("Extração concluída!");
-      toast.success(`${imagensComSelecao.length} imagens extraídas do Book!`);
+        setProgress(100);
+        setStatusMessage("Extração concluída!");
+        toast.success(`${imagensComSelecao.length} imagens extraídas do Book!`);
+      } else {
+        // Nenhuma imagem extraída, mas o Book foi salvo
+        setProgress(100);
+        setStatusMessage("Book salvo!");
+        toast.info("Book salvo, mas nenhuma imagem foi identificada automaticamente.");
+      }
 
     } catch (error: any) {
       console.error("Erro ao processar Book:", error);
@@ -156,6 +166,28 @@ export default function UploadBook({
 
   const selecionadasCount = imagensExtraidas.filter(img => img.selecionada).length;
 
+  const getTipoBadgeColor = (tipo: string) => {
+    switch (tipo) {
+      case "fachada": return "bg-blue-500/80";
+      case "lazer": return "bg-green-500/80";
+      case "planta": return "bg-orange-500/80";
+      case "perspectiva": return "bg-purple-500/80";
+      case "area_comum": return "bg-teal-500/80";
+      default: return "bg-slate-500/80";
+    }
+  };
+
+  const getTipoLabel = (tipo: string) => {
+    switch (tipo) {
+      case "fachada": return "Fachada";
+      case "lazer": return "Lazer";
+      case "planta": return "Planta";
+      case "perspectiva": return "Perspectiva";
+      case "area_comum": return "Área Comum";
+      default: return "Outro";
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Área de Upload */}
@@ -186,6 +218,9 @@ export default function UploadBook({
               <Loader2 className="h-12 w-12 mx-auto text-amber-500 animate-spin" />
               <p className="text-slate-300">{statusMessage}</p>
               <Progress value={progress} className="w-full max-w-xs mx-auto" />
+              <p className="text-xs text-slate-500">
+                A IA está analisando as páginas do Book para identificar fachada, lazer, planta...
+              </p>
             </div>
           ) : (
             <>
@@ -198,8 +233,14 @@ export default function UploadBook({
               <p className="text-sm text-slate-400 mb-4">
                 Arraste o PDF do Book ou clique para selecionar
               </p>
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">Fachada</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">Lazer</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">Planta</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">Perspectiva</span>
+              </div>
               <p className="text-xs text-slate-500">
-                PDF até 50MB • Serão extraídas automaticamente {maxImagens} imagens de perspectiva
+                PDF até 50MB • A IA extrairá automaticamente até {maxImagens} imagens relevantes
               </p>
             </>
           )}
@@ -236,6 +277,7 @@ export default function UploadBook({
                 setImagensExtraidas([]);
                 setBookUrl(null);
                 onImagensExtraidas([]);
+                onBookUrl?.("");
               }}
               className="text-slate-400 hover:text-white border-slate-600"
             >
@@ -258,12 +300,26 @@ export default function UploadBook({
                 onClick={() => toggleImagemSelecionada(index)}
               >
                 <CardContent className="p-0">
-                  <div className="aspect-video relative">
-                    <img 
-                      src={imagem.url} 
-                      alt={imagem.descricao}
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="aspect-video relative bg-slate-800">
+                    {/* Para PDFs, mostrar placeholder com ícone */}
+                    {imagem.url.endsWith('.pdf') ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <Image className="h-8 w-8 mb-2" />
+                        <span className="text-xs">Página {imagem.pagina}</span>
+                      </div>
+                    ) : (
+                      <img 
+                        src={imagem.url} 
+                        alt={imagem.descricao || `Imagem ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Se falhar ao carregar imagem, mostrar placeholder
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                        }}
+                      />
+                    )}
                     
                     {/* Badge de seleção */}
                     <div className={`
@@ -284,21 +340,25 @@ export default function UploadBook({
                     <div className="absolute bottom-2 left-2">
                       <span className={`
                         text-xs px-2 py-1 rounded-full
-                        ${imagem.tipo === "fachada" ? "bg-blue-500/80" :
-                          imagem.tipo === "lazer" ? "bg-green-500/80" :
-                          imagem.tipo === "interior" ? "bg-purple-500/80" :
-                          imagem.tipo === "planta" ? "bg-orange-500/80" :
-                          "bg-slate-500/80"
-                        } text-white
+                        ${getTipoBadgeColor(imagem.tipo)} text-white
                       `}>
-                        {imagem.tipo}
+                        {getTipoLabel(imagem.tipo)}
                       </span>
                     </div>
+
+                    {/* Badge de confiança */}
+                    {imagem.confianca && (
+                      <div className="absolute top-2 left-2">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-300">
+                          {imagem.confianca}%
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="p-2">
                     <p className="text-xs text-slate-300 line-clamp-2">
-                      {imagem.descricao}
+                      {imagem.descricao || `Página ${imagem.pagina}`}
                     </p>
                   </div>
                 </CardContent>

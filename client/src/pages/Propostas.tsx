@@ -630,6 +630,7 @@ export default function Propostas() {
                         onImagensExtraidas={handleImagensBook}
                         imagensSelecionadas={imagensBook}
                         maxImagens={4}
+                        projetoNome={projetos?.find(p => p.id === novaProposta.projectId)?.nome || "Empreendimento"}
                       />
                       
                       {imagensSelecionadas.length > 0 && (

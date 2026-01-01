@@ -2151,3 +2151,19 @@
 - [x] Benefícios personalizados com dados do cliente
 - [x] Cronograma atualizado (Análise 1-2h, Aprovação 2-48h, Assinatura sem prazo, Entrega)
 - [x] Termo de Aceite com botão de aceite e apenas assinatura do cliente
+
+## Feature: Extração Automática de Imagens do Book
+- [ ] Adicionar dependências para processamento de PDF (pdf-lib, sharp)
+- [ ] Criar serviço de extração de imagens do PDF
+- [ ] Integrar com IA (LLM) para classificação das imagens (fachada, lazer, planta)
+- [ ] Criar endpoint para processar Book e extrair imagens
+- [ ] Atualizar componente UploadBook para usar extração automática
+- [ ] Armazenar imagens extraídas no S3
+- [ ] Vincular imagens automaticamente com a proposta
+
+## Correções Implementadas - Extração de Imagens do Book
+- [x] Criar serviço de extração de imagens do PDF (bookExtractor.ts)
+- [x] Integrar com IA para classificação das imagens (fachada, lazer, planta, perspectiva)
+- [x] Criar endpoint processarBook para processar PDF e extrair imagens
+- [x] Atualizar componente UploadBook para usar extração automática
+- [x] Corrigir erro selectedProject is not defined
