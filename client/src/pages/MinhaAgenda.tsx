@@ -39,6 +39,16 @@ export default function MinhaAgenda() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLead, setSelectedLead] = useState<{ id: number; nome: string; telefone: string; email?: string | null } | null>(null);
   const [linkExclusivo, setLinkExclusivo] = useState(false);
+  const [tipoExpiracao, setTipoExpiracao] = useState<'15min' | '30min' | '1hora' | '24horas' | 'indeterminado'>('indeterminado');
+
+  // Opções de expiração
+  const OPCOES_EXPIRACAO = [
+    { value: '15min', label: '15 minutos', minutos: 15 },
+    { value: '30min', label: '30 minutos', minutos: 30 },
+    { value: '1hora', label: '1 hora', minutos: 60 },
+    { value: '24horas', label: '24 horas', minutos: 1440 },
+    { value: 'indeterminado', label: 'Indeterminado (sem expiração)', minutos: null },
+  ];
   
   const [novaDisponibilidade, setNovaDisponibilidade] = useState({
     diaSemana: 1,
@@ -145,12 +155,21 @@ export default function MinhaAgenda() {
       ...novoLink
     };
     
-    // Se for link exclusivo para um cliente, adicionar leadId e expiração de 15 minutos
+    // Configurar expiração baseada na opção selecionada
+    const opcaoExpiracao = OPCOES_EXPIRACAO.find(o => o.value === tipoExpiracao);
+    if (opcaoExpiracao && opcaoExpiracao.minutos) {
+      linkData.validoAte = addMinutes(new Date(), opcaoExpiracao.minutos).toISOString();
+    }
+    
+    // Se for link exclusivo para um cliente, adicionar leadId
     if (linkExclusivo && selectedLead) {
       linkData.leadId = selectedLead.id;
-      linkData.validoAte = addMinutes(new Date(), 15).toISOString();
       linkData.maxAgendamentos = 1;
       linkData.titulo = linkData.titulo || `Agendamento para ${selectedLead.nome}`;
+      // Se não tiver expiração definida, usar 15 minutos como padrão para links exclusivos
+      if (!linkData.validoAte) {
+        linkData.validoAte = addMinutes(new Date(), 15).toISOString();
+      }
     }
     
     createLink.mutate(linkData);
@@ -543,6 +562,7 @@ export default function MinhaAgenda() {
                 setSelectedLead(null);
                 setSearchTerm("");
                 setLinkExclusivo(false);
+                setTipoExpiracao('indeterminado');
               }
             }}>
               <DialogTrigger asChild>
@@ -708,6 +728,35 @@ export default function MinhaAgenda() {
                       placeholder="Mensagem que aparecerá na página de agendamento"
                       className="bg-slate-700 border-slate-600 text-white"
                     />
+                  </div>
+
+                  {/* Expiração do Link */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-300 flex items-center gap-2">
+                      <Timer className="h-4 w-4" />
+                      Expiração do Link
+                    </Label>
+                    <Select 
+                      value={tipoExpiracao}
+                      onValueChange={(v: any) => setTipoExpiracao(v)}
+                    >
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                        <SelectValue placeholder="Selecione a expiração" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        {OPCOES_EXPIRACAO.map((opcao) => (
+                          <SelectItem key={opcao.value} value={opcao.value} className="text-white">
+                            {opcao.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-slate-400">
+                      {tipoExpiracao === 'indeterminado' 
+                        ? 'O link poderá ser usado indefinidamente até ser excluído manualmente'
+                        : `O link será automaticamente desativado após ${OPCOES_EXPIRACAO.find(o => o.value === tipoExpiracao)?.label}`
+                      }
+                    </p>
                   </div>
                 </div>
                 <DialogFooter>

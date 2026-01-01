@@ -1902,3 +1902,11 @@
 - [x] Corrigir erro "Invalid time value" ao confirmar agendamento
 - [x] Verificar processamento de data/hora no backend
 - [x] Formatar data como yyyy-MM-dd antes de enviar ao backend
+
+
+## Melhoria: Links de Agendamento com Expiração Configurável (01/01/2026)
+- [x] Adicionar busca de cliente existente no modal de criação de link
+- [x] Adicionar opções de expiração: 15 min, 30 min, 1 hora, 24 horas, Indeterminado
+- [x] Implementar exclusão automática de links expirados (job a cada 1 minuto)
+- [x] Mostrar tempo restante de expiração na lista de links
+- [x] Permitir links recorrentes (sem expiração) e esporádicos (com expiração)

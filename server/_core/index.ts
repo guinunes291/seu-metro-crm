@@ -92,6 +92,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de conquistas:", err);
     });
+    
+    // Inicializar job de limpeza de links expirados
+    import("../linksCleanupJob").then(({ iniciarJobLimpezaLinks }) => {
+      iniciarJobLimpezaLinks();
+      console.log("[Job] Limpeza automática de links expirados inicializada (a cada 1 minuto)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de limpeza de links:", err);
+    });
   });
 }
 
