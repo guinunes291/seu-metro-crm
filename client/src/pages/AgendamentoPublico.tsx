@@ -64,14 +64,17 @@ export default function AgendamentoPublico() {
   };
 
   const handleSubmit = () => {
-    if (!selectedDate || !selectedSlot || !formData.nome || !formData.telefone) return;
+    if (!selectedDate || !selectedSlot || !formData.nome || !formData.telefone || !formData.email) return;
+
+    // Formatar data como yyyy-MM-dd para evitar problemas de timezone
+    const dataFormatada = format(selectedDate, 'yyyy-MM-dd');
 
     createAgendamento.mutate({
       token: token || "",
       nome: formData.nome,
       telefone: formData.telefone,
-      email: formData.email || undefined,
-      data: selectedDate.toISOString(),
+      email: formData.email,
+      data: dataFormatada,
       hora: selectedSlot,
       observacoes: formData.observacoes || undefined
     });

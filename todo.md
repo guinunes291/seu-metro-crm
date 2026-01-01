@@ -1896,3 +1896,9 @@
 - [x] Implementar ranking de agendamentos por corretor
 - [x] Adicionar filtro por corretor
 - [x] Adicionar link no menu lateral (apenas para gestores)
+
+
+## Bug: Invalid time value no Agendamento Self-Service (01/01/2026)
+- [x] Corrigir erro "Invalid time value" ao confirmar agendamento
+- [x] Verificar processamento de data/hora no backend
+- [x] Formatar data como yyyy-MM-dd antes de enviar ao backend
