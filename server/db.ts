@@ -570,9 +570,95 @@ export async function getPropertiesByProject(projectId: number) {
 // LEADS
 // ============================================================================
 
+/**
+ * Normaliza telefone removendo todos os caracteres não-numéricos
+ * Retorna os últimos 9 dígitos (número sem DDD internacional)
+ */
+function normalizarTelefone(telefone: string): string {
+  // Remove todos os caracteres não-numéricos
+  const apenasDigitos = telefone.replace(/\D/g, '');
+  
+  // Se começa com 55 (Brasil) e tem mais de 11 dígitos, remove o 55
+  if (apenasDigitos.startsWith('55') && apenasDigitos.length > 11) {
+    return apenasDigitos.slice(2);
+  }
+  
+  return apenasDigitos;
+}
+
+/**
+ * Verifica se já existe um lead com o mesmo telefone, email ou CPF
+ * Telefone é normalizado para comparar independente do formato
+ */
+export async function checkLeadDuplicado(
+  telefone?: string | null,
+  email?: string | null,
+  cpf?: string | null
+): Promise<{ isDuplicate: boolean; reason?: string; leadId?: number }> {
+  const db = await getDb();
+  if (!db) return { isDuplicate: false };
+  
+  // Verificar telefone duplicado (se fornecido e não vazio)
+  if (telefone && telefone.trim()) {
+    const telefoneNormalizado = normalizarTelefone(telefone);
+    // Pegar os últimos 9 dígitos (número do celular sem DDD)
+    const ultimosDigitos = telefoneNormalizado.slice(-9);
+    
+    if (ultimosDigitos.length >= 8) {
+      // Busca comparando os últimos 9 dígitos do telefone armazenado
+      const [existingByPhone] = await db
+        .select({ id: leads.id, nome: leads.nome, telefone: leads.telefone })
+        .from(leads)
+        .where(sql`RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), '55', ''), 9) = ${ultimosDigitos}`)
+        .limit(1);
+      
+      if (existingByPhone) {
+        return { isDuplicate: true, reason: `Já existe um lead com este telefone: ${existingByPhone.nome} (${existingByPhone.telefone})`, leadId: existingByPhone.id };
+      }
+    }
+  }
+  
+  // Verificar email duplicado (se fornecido e não vazio)
+  if (email && email.trim()) {
+    const [existingByEmail] = await db
+      .select({ id: leads.id, nome: leads.nome })
+      .from(leads)
+      .where(eq(leads.email, email.trim().toLowerCase()))
+      .limit(1);
+    
+    if (existingByEmail) {
+      return { isDuplicate: true, reason: `Já existe um lead com este email (${existingByEmail.nome})` };
+    }
+  }
+  
+  // Verificar CPF duplicado (se fornecido e não vazio)
+  if (cpf && cpf.trim()) {
+    const cpfNormalizado = cpf.replace(/\D/g, ''); // Remove não-dígitos
+    if (cpfNormalizado.length === 11) {
+      const [existingByCpf] = await db
+        .select({ id: leads.id, nome: leads.nome })
+        .from(leads)
+        .where(sql`REPLACE(REPLACE(${leads.cpf}, '.', ''), '-', '') = ${cpfNormalizado}`)
+        .limit(1);
+      
+      if (existingByCpf) {
+        return { isDuplicate: true, reason: `Já existe um lead com este CPF (${existingByCpf.nome})` };
+      }
+    }
+  }
+  
+  return { isDuplicate: false };
+}
+
 export async function createLead(lead: InsertLead) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  
+  // Validar leads duplicados por telefone, email ou CPF
+  const duplicateCheck = await checkLeadDuplicado(lead.telefone, lead.email, lead.cpf);
+  if (duplicateCheck.isDuplicate) {
+    throw new Error(`Lead duplicado: ${duplicateCheck.reason}`);
+  }
   
   const result = await db.insert(leads).values(lead);
   const insertId = Number(result[0].insertId);
@@ -1939,6 +2025,7 @@ export async function inicializarFilaDistribuicao() {
 
 /**
  * Busca a fila de distribuição ordenada por posição
+ * Filtra apenas corretores ativos no sistema (role = 'corretor' e não excluídos)
  */
 export async function getFilaDistribuicao() {
   const db = await getDb();
@@ -1957,7 +2044,8 @@ export async function getFilaDistribuicao() {
     corretorFoto: users.fotoUrl,
   })
     .from(filaDistribuicao)
-    .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
+    .innerJoin(users, eq(filaDistribuicao.corretorId, users.id))
+    .where(eq(users.role, 'corretor')) // Apenas corretores ativos no sistema
     .orderBy(filaDistribuicao.posicao);
   
   return fila;
@@ -5088,6 +5176,8 @@ export async function searchLeadByCpf(cpf: string, corretorId?: number): Promise
 
 /**
  * Buscar lead por qualquer identificador (telefone, email ou CPF)
+ * Busca parcial por telefone funciona mesmo com formatação diferente
+ * Normaliza telefone para comparar: (11) 98175-6334 = 11981756334 = +5511981756334
  */
 export async function searchLeadByIdentifier(query: string, corretorId?: number): Promise<Lead[]> {
   const db = await getDb();
@@ -5095,31 +5185,61 @@ export async function searchLeadByIdentifier(query: string, corretorId?: number)
   
   // Limpar query
   const queryLimpa = query.trim();
-  const querySemCaracteres = queryLimpa.replace(/\D/g, '');
+  // Extrair apenas dígitos para busca por telefone/CPF
+  let querySemCaracteres = queryLimpa.replace(/\D/g, '');
+  
+  // Se começa com 55 (código Brasil) e tem mais de 11 dígitos, remove o 55
+  if (querySemCaracteres.startsWith('55') && querySemCaracteres.length > 11) {
+    querySemCaracteres = querySemCaracteres.slice(2);
+  }
   
   const conditions = [];
   
-  // Se parece com telefone ou CPF (só números)
-  if (querySemCaracteres.length >= 3) {
+  // Se tem dígitos (pode ser telefone ou CPF)
+  if (querySemCaracteres.length >= 2) {
+    // Busca por telefone - normaliza removendo todos os caracteres especiais e código do país
+    // Compara os últimos dígitos para encontrar independente do formato
     conditions.push(
-      sql`REPLACE(REPLACE(REPLACE(${leads.telefone}, '-', ''), ' ', ''), '(', '') LIKE ${`%${querySemCaracteres}%`}`
+      sql`RIGHT(
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+          ${leads.telefone}, 
+          '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''
+        ), 
+        CASE WHEN LEFT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), 2) = '55' 
+             AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '')) > 11
+             THEN '55' ELSE '' END, ''
+        ), 
+        ${querySemCaracteres.length}
+      ) = ${querySemCaracteres}`
     );
+    // Busca parcial também (para digitação parcial)
+    conditions.push(
+      sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), '55', '') LIKE ${`%${querySemCaracteres}%`}`
+    );
+    // Busca por CPF
     conditions.push(
       sql`REPLACE(REPLACE(${leads.cpf}, '.', ''), '-', '') LIKE ${`%${querySemCaracteres}%`}`
     );
   }
   
-  // Se parece com email
-  if (queryLimpa.includes('@') || queryLimpa.length >= 3) {
+  // Se parece com email ou texto
+  if (queryLimpa.includes('@')) {
     conditions.push(
-      sql`${leads.email} LIKE ${`%${queryLimpa}%`}`
+      sql`LOWER(${leads.email}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
     );
   }
   
-  // Buscar também por nome
-  conditions.push(
-    sql`${leads.nome} LIKE ${`%${queryLimpa}%`}`
-  );
+  // Buscar por nome (sempre)
+  if (queryLimpa.length >= 2) {
+    conditions.push(
+      sql`LOWER(${leads.nome}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
+    );
+  }
+  
+  // Se não tem condições, retornar vazio
+  if (conditions.length === 0) {
+    return [];
+  }
   
   let baseQuery = db.select()
     .from(leads)
@@ -5134,7 +5254,7 @@ export async function searchLeadByIdentifier(query: string, corretorId?: number)
       ));
   }
   
-  return await baseQuery.limit(10);
+  return await baseQuery.limit(20);
 }
 
 // ============================================================================

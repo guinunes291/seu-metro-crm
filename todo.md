@@ -1711,3 +1711,36 @@
 - [x] Salvar interação no histórico do lead (tabela lead_history) antes de atualizar follow-up
 - [x] Corrigir incremento do contador de tentativas (mensagem corrigida para mostrar tentativa+1)
 - [x] Testar fluxo completo - funcionando corretamente
+
+
+## Correções Múltiplas (01/01/2026)
+
+### Validação de Leads Duplicados
+- [x] Implementar validação para não permitir leads com Telefone duplicado
+- [x] Implementar validação para não permitir leads com Email duplicado
+- [x] Implementar validação para não permitir leads com CPF duplicado
+- [x] Mostrar mensagem de erro clara quando lead duplicado for detectado
+
+### Roleta de Leads - Filtrar Corretores Ativos
+- [x] Modificar query da roleta para mostrar apenas corretores com status ativo (já implementado)
+- [x] Limpeza de 31 entradas órfãs da fila de distribuição
+
+### Busca de Agendamentos por Telefone
+- [x] Corrigir busca para sugerir clientes ao digitar telefone (já implementado com searchLeadByIdentifier)
+- [x] Implementar busca parcial (LIKE) para telefone (já implementado com normalização)
+
+### Botão Criar Agendamento no Card do Lead
+- [x] Adicionar botão "Criar Agendamento" no card do lead em Meus Leads (já implementado)
+- [x] Integrar com formulário de agendamentos existente (já implementado)
+- [x] Registrar agendamento no calendário de tarefas (já implementado)
+
+### Follow-up às 09:00 (Fuso SP)
+- [x] Ajustar proximaTentativa para sempre iniciar às 09:00 horário de SP (já implementado com setHours(9,0,0,0))
+- [x] Garantir que leads elegíveis apareçam às 09:00 na aba Tarefas do Dia (já implementado)
+
+### Limpar Dados de Teste
+- [x] Identificar e remover leads de teste (sistema usa prefixo _T_ para testes)
+- [x] Identificar e remover corretores de teste (sistema usa prefixo _T_ para testes)
+- [x] Identificar e remover contratos fechados de teste (sistema usa prefixo _T_ para testes)
+- [x] Identificar e remover projetos de teste (sistema usa prefixo _T_ para testes)
+- [x] Limpeza de 31 entradas órfãs da fila de distribuição (01/01/2026)

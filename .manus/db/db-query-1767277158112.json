@@ -1,0 +1,610 @@
+{
+  "query": "SELECT id, nome, telefone, status FROM leads WHERE \n  nome LIKE 'Lead Rank%' OR \n  nome LIKE 'Lead Projeto%' OR \n  nome LIKE 'Lead Convertido%' OR \n  nome LIKE '%Teste%' OR\n  nome LIKE 'Lead C%'\nORDER BY nome LIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, telefone, status FROM leads WHERE \n  nome LIKE 'Lead Rank%' OR \n  nome LIKE 'Lead Projeto%' OR \n  nome LIKE 'Lead Convertido%' OR \n  nome LIKE '%Teste%' OR\n  nome LIKE 'Lead C%'\nORDER BY nome LIMIT 100;",
+  "rows": [
+    {
+      "id": "480376",
+      "nome": "Lead C1 0",
+      "telefone": "11995000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480023",
+      "nome": "Lead C1 0",
+      "telefone": "11995000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480235",
+      "nome": "Lead C1 0",
+      "telefone": "11995000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480024",
+      "nome": "Lead C1 1",
+      "telefone": "11995111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480377",
+      "nome": "Lead C1 1",
+      "telefone": "11995111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480236",
+      "nome": "Lead C1 1",
+      "telefone": "11995111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480237",
+      "nome": "Lead C1 2",
+      "telefone": "11995222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480025",
+      "nome": "Lead C1 2",
+      "telefone": "11995222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480378",
+      "nome": "Lead C1 2",
+      "telefone": "11995222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480238",
+      "nome": "Lead C1 3",
+      "telefone": "11995333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480026",
+      "nome": "Lead C1 3",
+      "telefone": "11995333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480379",
+      "nome": "Lead C1 3",
+      "telefone": "11995333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480380",
+      "nome": "Lead C1 4",
+      "telefone": "11995444444",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480240",
+      "nome": "Lead C1 4",
+      "telefone": "11995444444",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480028",
+      "nome": "Lead C1 4",
+      "telefone": "11995444444",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480381",
+      "nome": "Lead C1 5",
+      "telefone": "11995555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480241",
+      "nome": "Lead C1 5",
+      "telefone": "11995555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480030",
+      "nome": "Lead C1 5",
+      "telefone": "11995555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480382",
+      "nome": "Lead C1 6",
+      "telefone": "11995666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480033",
+      "nome": "Lead C1 6",
+      "telefone": "11995666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480242",
+      "nome": "Lead C1 6",
+      "telefone": "11995666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480383",
+      "nome": "Lead C1 7",
+      "telefone": "11995777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480035",
+      "nome": "Lead C1 7",
+      "telefone": "11995777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480243",
+      "nome": "Lead C1 7",
+      "telefone": "11995777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480245",
+      "nome": "Lead C1 8",
+      "telefone": "11995888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480384",
+      "nome": "Lead C1 8",
+      "telefone": "11995888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480037",
+      "nome": "Lead C1 8",
+      "telefone": "11995888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480246",
+      "nome": "Lead C1 9",
+      "telefone": "11995999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480039",
+      "nome": "Lead C1 9",
+      "telefone": "11995999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480385",
+      "nome": "Lead C1 9",
+      "telefone": "11995999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480247",
+      "nome": "Lead C2 0",
+      "telefone": "11994000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480386",
+      "nome": "Lead C2 0",
+      "telefone": "11994000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480041",
+      "nome": "Lead C2 0",
+      "telefone": "11994000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480248",
+      "nome": "Lead C2 1",
+      "telefone": "11994111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480044",
+      "nome": "Lead C2 1",
+      "telefone": "11994111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480387",
+      "nome": "Lead C2 1",
+      "telefone": "11994111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480388",
+      "nome": "Lead C2 2",
+      "telefone": "11994222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480249",
+      "nome": "Lead C2 2",
+      "telefone": "11994222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480046",
+      "nome": "Lead C2 2",
+      "telefone": "11994222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480390",
+      "nome": "Lead C2 3",
+      "telefone": "11994333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480250",
+      "nome": "Lead C2 3",
+      "telefone": "11994333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480048",
+      "nome": "Lead C2 3",
+      "telefone": "11994333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480049",
+      "nome": "Lead C2 4",
+      "telefone": "11994444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480251",
+      "nome": "Lead C2 4",
+      "telefone": "11994444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480391",
+      "nome": "Lead C2 4",
+      "telefone": "11994444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480393",
+      "nome": "Lead C2 5",
+      "telefone": "11994555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480253",
+      "nome": "Lead C2 5",
+      "telefone": "11994555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480050",
+      "nome": "Lead C2 5",
+      "telefone": "11994555555",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480255",
+      "nome": "Lead C2 6",
+      "telefone": "11994666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480052",
+      "nome": "Lead C2 6",
+      "telefone": "11994666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480394",
+      "nome": "Lead C2 6",
+      "telefone": "11994666666",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480395",
+      "nome": "Lead C2 7",
+      "telefone": "11994777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480054",
+      "nome": "Lead C2 7",
+      "telefone": "11994777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480257",
+      "nome": "Lead C2 7",
+      "telefone": "11994777777",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480056",
+      "nome": "Lead C2 8",
+      "telefone": "11994888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480396",
+      "nome": "Lead C2 8",
+      "telefone": "11994888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480260",
+      "nome": "Lead C2 8",
+      "telefone": "11994888888",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480397",
+      "nome": "Lead C2 9",
+      "telefone": "11994999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480262",
+      "nome": "Lead C2 9",
+      "telefone": "11994999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480058",
+      "nome": "Lead C2 9",
+      "telefone": "11994999999",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480361",
+      "nome": "Lead Convertido",
+      "telefone": "11999333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480015",
+      "nome": "Lead Convertido",
+      "telefone": "11999333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480217",
+      "nome": "Lead Convertido",
+      "telefone": "11999333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480002",
+      "nome": "Lead Convertido 0",
+      "telefone": "11999000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480348",
+      "nome": "Lead Convertido 0",
+      "telefone": "11999000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480203",
+      "nome": "Lead Convertido 0",
+      "telefone": "11999000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480349",
+      "nome": "Lead Convertido 1",
+      "telefone": "11999111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480204",
+      "nome": "Lead Convertido 1",
+      "telefone": "11999111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480003",
+      "nome": "Lead Convertido 1",
+      "telefone": "11999111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480205",
+      "nome": "Lead Convertido 2",
+      "telefone": "11999222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480004",
+      "nome": "Lead Convertido 2",
+      "telefone": "11999222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480350",
+      "nome": "Lead Convertido 2",
+      "telefone": "11999222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480362",
+      "nome": "Lead Projeto 0",
+      "telefone": "11996000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480016",
+      "nome": "Lead Projeto 0",
+      "telefone": "11996000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480219",
+      "nome": "Lead Projeto 0",
+      "telefone": "11996000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480017",
+      "nome": "Lead Projeto 1",
+      "telefone": "11996111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480363",
+      "nome": "Lead Projeto 1",
+      "telefone": "11996111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480220",
+      "nome": "Lead Projeto 1",
+      "telefone": "11996111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480221",
+      "nome": "Lead Projeto 2",
+      "telefone": "11996222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480019",
+      "nome": "Lead Projeto 2",
+      "telefone": "11996222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480364",
+      "nome": "Lead Projeto 2",
+      "telefone": "11996222222",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480365",
+      "nome": "Lead Projeto 3",
+      "telefone": "11996333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480020",
+      "nome": "Lead Projeto 3",
+      "telefone": "11996333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480222",
+      "nome": "Lead Projeto 3",
+      "telefone": "11996333333",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480366",
+      "nome": "Lead Projeto 4",
+      "telefone": "11996444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480223",
+      "nome": "Lead Projeto 4",
+      "telefone": "11996444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480021",
+      "nome": "Lead Projeto 4",
+      "telefone": "11996444444",
+      "status": "em_atendimento"
+    },
+    {
+      "id": "480074",
+      "nome": "Lead Rank C0 0",
+      "telefone": "11990000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480412",
+      "nome": "Lead Rank C0 0",
+      "telefone": "11990000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480277",
+      "nome": "Lead Rank C0 0",
+      "telefone": "11990000000",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480076",
+      "nome": "Lead Rank C0 1",
+      "telefone": "11990111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480414",
+      "nome": "Lead Rank C0 1",
+      "telefone": "11990111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480278",
+      "nome": "Lead Rank C0 1",
+      "telefone": "11990111111",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480279",
+      "nome": "Lead Rank C0 2",
+      "telefone": "11990222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480416",
+      "nome": "Lead Rank C0 2",
+      "telefone": "11990222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480078",
+      "nome": "Lead Rank C0 2",
+      "telefone": "11990222222",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480417",
+      "nome": "Lead Rank C0 3",
+      "telefone": "11990333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480280",
+      "nome": "Lead Rank C0 3",
+      "telefone": "11990333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480079",
+      "nome": "Lead Rank C0 3",
+      "telefone": "11990333333",
+      "status": "contrato_fechado"
+    },
+    {
+      "id": "480080",
+      "nome": "Lead Rank C0 4",
+      "telefone": "11990444444",
+      "status": "contrato_fechado"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\tstatus\n480376\tLead C1 0\t11995000000\tcontrato_fechado\n480023\tLead C1 0\t11995000000\tcontrato_fechado\n480235\tLead C1 0\t11995000000\tcontrato_fechado\n480024\tLead C1 1\t11995111111\tcontrato_fechado\n480377\tLead C1 1\t11995111111\tcontrato_fechado\n480236\tLead C1 1\t11995111111\tcontrato_fechado\n480237\tLead C1 2\t11995222222\tcontrato_fechado\n480025\tLead C1 2\t11995222222\tcontrato_fechado\n480378\tLead C1 2\t11995222222\tcontrato_fechado\n480238\tLead C1 3\t11995333333\tcontrato_fechado\n480026\tLead C1 3\t11995333333\tcontrato_fechado\n480379\tLead C1 3\t11995333333\tcontrato_fechado\n480380\tLead C1 4\t11995444444\tcontrato_fechado\n480240\tLead C1 4\t11995444444\tcontrato_fechado\n480028\tLead C1 4\t11995444444\tcontrato_fechado\n480381\tLead C1 5\t11995555555\tem_atendimento\n480241\tLead C1 5\t11995555555\tem_atendimento\n480030\tLead C1 5\t11995555555\tem_atendimento\n480382\tLead C1 6\t11995666666\tem_atendimento\n480033\tLead C1 6\t11995666666\tem_atendimento\n480242\tLead C1 6\t11995666666\tem_atendimento\n480383\tLead C1 7\t11995777777\tem_atendimento\n480035\tLead C1 7\t11995777777\tem_atendimento\n480243\tLead C1 7\t11995777777\tem_atendimento\n480245\tLead C1 8\t11995888888\tem_atendimento\n480384\tLead C1 8\t11995888888\tem_atendimento\n480037\tLead C1 8\t11995888888\tem_atendimento\n480246\tLead C1 9\t11995999999\tem_atendimento\n480039\tLead C1 9\t11995999999\tem_atendimento\n480385\tLead C1 9\t11995999999\tem_atendimento\n480247\tLead C2 0\t11994000000\tcontrato_fechado\n480386\tLead C2 0\t11994000000\tcontrato_fechado\n480041\tLead C2 0\t11994000000\tcontrato_fechado\n480248\tLead C2 1\t11994111111\tcontrato_fechado\n480044\tLead C2 1\t11994111111\tcontrato_fechado\n480387\tLead C2 1\t11994111111\tcontrato_fechado\n480388\tLead C2 2\t11994222222\tcontrato_fechado\n480249\tLead C2 2\t11994222222\tcontrato_fechado\n480046\tLead C2 2\t11994222222\tcontrato_fechado\n480390\tLead C2 3\t11994333333\tem_atendimento\n480250\tLead C2 3\t11994333333\tem_atendimento\n480048\tLead C2 3\t11994333333\tem_atendimento\n480049\tLead C2 4\t11994444444\tem_atendimento\n480251\tLead C2 4\t11994444444\tem_atendimento\n480391\tLead C2 4\t11994444444\tem_atendimento\n480393\tLead C2 5\t11994555555\tem_atendimento\n480253\tLead C2 5\t11994555555\tem_atendimento\n480050\tLead C2 5\t11994555555\tem_atendimento\n480255\tLead C2 6\t11994666666\tem_atendimento\n480052\tLead C2 6\t11994666666\tem_atendimento\n480394\tLead C2 6\t11994666666\tem_atendimento\n480395\tLead C2 7\t11994777777\tem_atendimento\n480054\tLead C2 7\t11994777777\tem_atendimento\n480257\tLead C2 7\t11994777777\tem_atendimento\n480056\tLead C2 8\t11994888888\tem_atendimento\n480396\tLead C2 8\t11994888888\tem_atendimento\n480260\tLead C2 8\t11994888888\tem_atendimento\n480397\tLead C2 9\t11994999999\tem_atendimento\n480262\tLead C2 9\t11994999999\tem_atendimento\n480058\tLead C2 9\t11994999999\tem_atendimento\n480361\tLead Convertido\t11999333333\tcontrato_fechado\n480015\tLead Convertido\t11999333333\tcontrato_fechado\n480217\tLead Convertido\t11999333333\tcontrato_fechado\n480002\tLead Convertido 0\t11999000000\tcontrato_fechado\n480348\tLead Convertido 0\t11999000000\tcontrato_fechado\n480203\tLead Convertido 0\t11999000000\tcontrato_fechado\n480349\tLead Convertido 1\t11999111111\tcontrato_fechado\n480204\tLead Convertido 1\t11999111111\tcontrato_fechado\n480003\tLead Convertido 1\t11999111111\tcontrato_fechado\n480205\tLead Convertido 2\t11999222222\tcontrato_fechado\n480004\tLead Convertido 2\t11999222222\tcontrato_fechado\n480350\tLead Convertido 2\t11999222222\tcontrato_fechado\n480362\tLead Projeto 0\t11996000000\tcontrato_fechado\n480016\tLead Projeto 0\t11996000000\tcontrato_fechado\n480219\tLead Projeto 0\t11996000000\tcontrato_fechado\n480017\tLead Projeto 1\t11996111111\tcontrato_fechado\n480363\tLead Projeto 1\t11996111111\tcontrato_fechado\n480220\tLead Projeto 1\t11996111111\tcontrato_fechado\n480221\tLead Projeto 2\t11996222222\tem_atendimento\n480019\tLead Projeto 2\t11996222222\tem_atendimento\n480364\tLead Projeto 2\t11996222222\tem_atendimento\n480365\tLead Projeto 3\t11996333333\tem_atendimento\n480020\tLead Projeto 3\t11996333333\tem_atendimento\n480222\tLead Projeto 3\t11996333333\tem_atendimento\n480366\tLead Projeto 4\t11996444444\tem_atendimento\n480223\tLead Projeto 4\t11996444444\tem_atendimento\n480021\tLead Projeto 4\t11996444444\tem_atendimento\n480074\tLead Rank C0 0\t11990000000\tcontrato_fechado\n480412\tLead Rank C0 0\t11990000000\tcontrato_fechado\n480277\tLead Rank C0 0\t11990000000\tcontrato_fechado\n480076\tLead Rank C0 1\t11990111111\tcontrato_fechado\n480414\tLead Rank C0 1\t11990111111\tcontrato_fechado\n480278\tLead Rank C0 1\t11990111111\tcontrato_fechado\n480279\tLead Rank C0 2\t11990222222\tcontrato_fechado\n480416\tLead Rank C0 2\t11990222222\tcontrato_fechado\n480078\tLead Rank C0 2\t11990222222\tcontrato_fechado\n480417\tLead Rank C0 3\t11990333333\tcontrato_fechado\n480280\tLead Rank C0 3\t11990333333\tcontrato_fechado\n480079\tLead Rank C0 3\t11990333333\tcontrato_fechado\n480080\tLead Rank C0 4\t11990444444\tcontrato_fechado\n",
+  "stderr": "",
+  "execution_time_ms": 102
+}

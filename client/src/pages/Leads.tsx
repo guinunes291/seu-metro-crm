@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
-  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle
+  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -115,6 +115,64 @@ export default function Leads() {
   const [contactTypeDialog, setContactTypeDialog] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<{leadId: number, newStatus: string, currentStatus: string} | null>(null);
   const [selectedContactType, setSelectedContactType] = useState<'ligacao' | 'whatsapp' | ''>('');
+
+  // Estado para o dialog de agendamento
+  const [agendamentoDialog, setAgendamentoDialog] = useState(false);
+  const [agendamentoForm, setAgendamentoForm] = useState({
+    projectId: "",
+    projetoCustom: "",
+    construtora: "",
+    dataAgendamento: "",
+    horaAgendamento: "",
+    observacoes: "",
+    useCustomProject: false,
+  });
+  
+  // Mutation para criar agendamento
+  const createAgendamentoMutation = trpc.agendamentos.create.useMutation({
+    onSuccess: () => {
+      toast.success("Agendamento criado com sucesso!");
+      setAgendamentoDialog(false);
+      setAgendamentoForm({
+        projectId: "",
+        projetoCustom: "",
+        construtora: "",
+        dataAgendamento: "",
+        horaAgendamento: "",
+        observacoes: "",
+        useCustomProject: false,
+      });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao criar agendamento");
+    },
+  });
+  
+  const handleCreateAgendamento = () => {
+    if (!selectedLead) {
+      toast.error("Selecione um lead");
+      return;
+    }
+    if (!agendamentoForm.dataAgendamento || !agendamentoForm.horaAgendamento) {
+      toast.error("Preencha a data e hora do agendamento");
+      return;
+    }
+    if (!agendamentoForm.useCustomProject && !agendamentoForm.projectId) {
+      toast.error("Selecione um projeto ou digite manualmente");
+      return;
+    }
+    
+    createAgendamentoMutation.mutate({
+      leadId: selectedLead.id,
+      projectId: agendamentoForm.useCustomProject ? undefined : parseInt(agendamentoForm.projectId),
+      projetoCustom: agendamentoForm.useCustomProject ? agendamentoForm.projetoCustom : undefined,
+      construtora: agendamentoForm.construtora || undefined,
+      dataAgendamento: agendamentoForm.dataAgendamento,
+      horaAgendamento: agendamentoForm.horaAgendamento,
+      observacoes: agendamentoForm.observacoes || undefined,
+    });
+  };
 
   // Estado para o dialog de novo lead
   const [newLeadDialog, setNewLeadDialog] = useState(false);
@@ -614,6 +672,27 @@ export default function Leads() {
                             >
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Registrar
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                // Preencher projeto do lead se existir
+                                if (lead.projectId) {
+                                  setAgendamentoForm(prev => ({
+                                    ...prev,
+                                    projectId: lead.projectId?.toString() || "",
+                                    useCustomProject: false,
+                                  }));
+                                }
+                                setAgendamentoDialog(true);
+                              }}
+                            >
+                              <CalendarPlus className="h-4 w-4 mr-1" />
+                              Agendar
                             </Button>
                             
                             <Button
@@ -1236,6 +1315,127 @@ export default function Leads() {
                   </>
                 ) : (
                   'Confirmar e Atualizar Status'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Dialog de Agendamento */}
+        <Dialog open={agendamentoDialog} onOpenChange={setAgendamentoDialog}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Criar Agendamento</DialogTitle>
+              <DialogDescription>
+                Agende uma visita para {selectedLead?.nome}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* Projeto */}
+              <div className="space-y-2">
+                <Label>Projeto / Empreendimento</Label>
+                <Select
+                  value={agendamentoForm.useCustomProject ? "custom" : agendamentoForm.projectId}
+                  onValueChange={(value) => {
+                    if (value === "custom") {
+                      setAgendamentoForm(prev => ({ ...prev, useCustomProject: true, projectId: "" }));
+                    } else {
+                      const projeto = projects?.find(p => p.id.toString() === value);
+                      setAgendamentoForm(prev => ({
+                        ...prev,
+                        useCustomProject: false,
+                        projectId: value,
+                        construtora: projeto?.construtora || "",
+                      }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um projeto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects?.map((projeto: any) => (
+                      <SelectItem key={projeto.id} value={projeto.id.toString()}>
+                        {projeto.nome}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Digitar manualmente...</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {agendamentoForm.useCustomProject && (
+                <div className="space-y-2">
+                  <Label>Nome do Projeto</Label>
+                  <Input
+                    placeholder="Digite o nome do projeto"
+                    value={agendamentoForm.projetoCustom}
+                    onChange={(e) => setAgendamentoForm(prev => ({ ...prev, projetoCustom: e.target.value }))}
+                  />
+                </div>
+              )}
+              
+              {/* Construtora */}
+              <div className="space-y-2">
+                <Label>Construtora (opcional)</Label>
+                <Input
+                  placeholder="Nome da construtora"
+                  value={agendamentoForm.construtora}
+                  onChange={(e) => setAgendamentoForm(prev => ({ ...prev, construtora: e.target.value }))}
+                />
+              </div>
+              
+              {/* Data e Hora */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={agendamentoForm.dataAgendamento}
+                    onChange={(e) => setAgendamentoForm(prev => ({ ...prev, dataAgendamento: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hora</Label>
+                  <Input
+                    type="time"
+                    value={agendamentoForm.horaAgendamento}
+                    onChange={(e) => setAgendamentoForm(prev => ({ ...prev, horaAgendamento: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              {/* Observações */}
+              <div className="space-y-2">
+                <Label>Observações (opcional)</Label>
+                <Textarea
+                  placeholder="Observações sobre o agendamento..."
+                  value={agendamentoForm.observacoes}
+                  onChange={(e) => setAgendamentoForm(prev => ({ ...prev, observacoes: e.target.value }))}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAgendamentoDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleCreateAgendamento}
+                disabled={createAgendamentoMutation.isPending}
+                className="gap-2"
+              >
+                {createAgendamentoMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <CalendarPlus className="h-4 w-4" />
+                    Criar Agendamento
+                  </>
                 )}
               </Button>
             </DialogFooter>
