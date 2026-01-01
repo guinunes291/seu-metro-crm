@@ -3649,6 +3649,102 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           });
         }
       }),
+    
+    // Gerar PDF da proposta
+    gerarPDF: corretorProcedure
+      .input(z.object({
+        propostaId: z.number()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Buscar dados completos da proposta
+        const proposta = await db.getPropostaById(input.propostaId);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        
+        // Verificar se o corretor tem acesso à proposta
+        if (proposta.corretorId !== ctx.user.id && ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão para acessar esta proposta' });
+        }
+        
+        // Buscar dados do projeto
+        const projeto = await db.getProjectById(proposta.projectId);
+        if (!projeto) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Projeto não encontrado' });
+        }
+        
+        // Buscar dados do corretor
+        const corretor = await db.getUserById(proposta.corretorId);
+        
+        // Importar gerador de PDF
+        const { gerarHTMLProposta } = await import('./pdfGenerator');
+        type DadosProposta = import('./pdfGenerator').DadosProposta;
+        
+        // Preparar dados para o PDF
+        const dadosPDF: DadosProposta = {
+          id: proposta.id,
+          token: proposta.token,
+          nomeCliente: proposta.nomeCliente,
+          emailCliente: proposta.emailCliente || undefined,
+          telefoneCliente: proposta.telefoneCliente || undefined,
+          unidade: proposta.unidade || undefined,
+          tipologia: proposta.tipologia || undefined,
+          metragem: proposta.metragem || undefined,
+          valorImovel: proposta.valorImovel,
+          valorEntrada: proposta.valorEntrada || undefined,
+          valorFinanciamento: proposta.valorFinanciamento || undefined,
+          parcelas: proposta.parcelas || undefined,
+          valorParcela: proposta.valorParcela || undefined,
+          taxaJuros: proposta.taxaJuros || undefined,
+          desconto: proposta.desconto || undefined,
+          motivoDesconto: proposta.motivoDesconto || undefined,
+          mensagemPersonalizada: proposta.mensagemPersonalizada || undefined,
+          imagensSelecionadas: proposta.imagensSelecionadas ? JSON.parse(proposta.imagensSelecionadas) : undefined,
+          plantasSelecionadas: proposta.plantasSelecionadas ? JSON.parse(proposta.plantasSelecionadas) : undefined,
+          validoAte: proposta.validoAte || undefined,
+          projeto: {
+            nome: projeto.nome,
+            construtora: projeto.construtora || undefined,
+            endereco: projeto.endereco || undefined,
+            bairro: projeto.bairro || undefined,
+            cidade: projeto.cidade,
+            estado: projeto.estado,
+            descricao: projeto.descricao || undefined,
+            tipo: projeto.tipo,
+            imagemPrincipal: projeto.imagemPrincipal || undefined,
+            logoUrl: projeto.logoUrl || undefined,
+            zona: projeto.zona || undefined,
+            enquadramento: projeto.enquadramento || undefined
+          },
+          corretor: {
+            name: corretor?.name || undefined,
+            email: corretor?.email || undefined,
+            telefone: corretor?.telefone || undefined,
+            fotoUrl: corretor?.fotoUrl || undefined,
+            creci: corretor?.creci || undefined
+          },
+          createdAt: proposta.createdAt
+        };
+        
+        // Gerar HTML
+        const html = gerarHTMLProposta(dadosPDF);
+        
+        // Converter HTML para PDF usando o serviço interno
+        // Por enquanto, vamos retornar o HTML para preview
+        // Em produção, usar puppeteer ou similar para gerar PDF
+        
+        // Salvar HTML no S3 como arquivo temporário
+        const htmlFileName = `propostas/pdf/${proposta.id}-${Date.now()}.html`;
+        const { url: htmlUrl } = await storagePut(htmlFileName, Buffer.from(html), 'text/html');
+        
+        return {
+          success: true,
+          htmlUrl,
+          propostaId: proposta.id,
+          nomeCliente: proposta.nomeCliente,
+          projeto: projeto.nome
+        };
+      }),
   }),
 
   // ============================================================================

@@ -2069,3 +2069,38 @@
 - [ ] Testar upload de Book PDF real
 - [ ] Testar upload de Planta real
 - [ ] Exibir imagens do Book e Planta na visualização da proposta pelo cliente
+
+## Nova Feature: Geração de PDF Profissional da Proposta
+- [ ] Criar componente de geração de PDF com as 11 seções
+- [ ] Implementar Seção 1: Capa (logo, nome do cliente, empreendimento, data)
+- [ ] Implementar Seção 2: Resumo Executivo (dados principais da proposta)
+- [ ] Implementar Seção 3: Apresentação do Empreendimento (descrição, diferenciais)
+- [ ] Implementar Seção 4: Localização com Google Maps (mapa estático)
+- [ ] Implementar Seção 5: Planta da Unidade (imagem da planta)
+- [ ] Implementar Seção 6: Tabela de Pagamento (parcelas detalhadas)
+- [ ] Implementar Seção 7: Simulação de Financiamento (dados extraídos do PDF)
+- [ ] Implementar Seção 8: Benefícios (vantagens do empreendimento)
+- [ ] Implementar Seção 9: Documentação Necessária (lista de documentos)
+- [ ] Implementar Seção 10: Cronograma (etapas do processo)
+- [ ] Implementar Seção 11: Termo de Aceite (assinatura digital)
+- [ ] Criar endpoint de geração e download do PDF
+- [ ] Integrar botão de download na página de propostas
+- [ ] Testar geração do PDF completo
+
+## Feature: Geração de PDF Profissional da Proposta
+- [x] Criar serviço de geração de PDF (server/pdfGenerator.ts)
+- [x] Implementar 11 seções do PDF:
+  - [x] 1. Capa com logo e dados do empreendimento
+  - [x] 2. Resumo Executivo
+  - [x] 3. Apresentação do Empreendimento
+  - [x] 4. Localização com Google Maps
+  - [x] 5. Planta da Unidade
+  - [x] 6. Tabela de Pagamento
+  - [x] 7. Simulação de Financiamento
+  - [x] 8. Benefícios
+  - [x] 9. Documentação Necessária
+  - [x] 10. Cronograma
+  - [x] 11. Termo de Aceite
+- [x] Criar endpoint tRPC para geração de PDF
+- [x] Adicionar botão de download na lista de propostas
+- [ ] Testar geração completa do PDF

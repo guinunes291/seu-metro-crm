@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen } from "lucide-react";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen, FileDown } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -123,6 +123,17 @@ export default function Propostas() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao excluir proposta");
+    }
+  });
+
+  const gerarPDF = trpc.propostas.gerarPDF.useMutation({
+    onSuccess: (data) => {
+      // Abrir o HTML gerado em nova aba para impressão/download como PDF
+      window.open(data.htmlUrl, '_blank');
+      toast.success("PDF gerado com sucesso! Use Ctrl+P para salvar como PDF.");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao gerar PDF");
     }
   });
 
@@ -679,6 +690,20 @@ export default function Propostas() {
                         className="text-slate-400 hover:text-white"
                       >
                         <ExternalLink className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => gerarPDF.mutate({ propostaId: proposta.id })}
+                        disabled={gerarPDF.isPending}
+                        className="text-slate-400 hover:text-green-400"
+                        title="Baixar PDF"
+                      >
+                        {gerarPDF.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <FileDown className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button
                         variant="ghost"
