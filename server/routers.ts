@@ -11,6 +11,7 @@ import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./goog
 import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
 import { invokeLLM } from "./_core/llm";
+import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -3021,6 +3022,39 @@ export const appRouter = router({
         // Desativar link se for exclusivo (com leadId)
         if (link.leadId) {
           await db.desativarLinkAgendamento(link.id);
+        }
+        
+        // Enviar confirmação via WhatsApp (se Evolution API estiver configurada)
+        if (isEvolutionApiConfigured()) {
+          try {
+            // Buscar dados do corretor
+            const corretor = await db.getUserById(link.corretorId);
+            // Buscar dados do projeto se houver
+            const projeto = link.projectId ? await db.getProjectById(link.projectId) : null;
+            
+            // Formatar data para exibição
+            const dataFormatadaExibicao = new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR', {
+              weekday: 'long',
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            });
+            
+            await enviarConfirmacaoAgendamento({
+              telefoneCliente: input.telefone,
+              nomeCliente: input.nome,
+              nomeCorretor: corretor?.name || 'Corretor',
+              data: dataFormatadaExibicao,
+              hora: input.hora,
+              projeto: projeto?.nome,
+              endereco: projeto?.endereco
+            });
+            
+            console.log('[Agendamento] Confirmação enviada via WhatsApp para:', input.telefone);
+          } catch (whatsappError) {
+            // Não falhar o agendamento se o WhatsApp falhar
+            console.error('[Agendamento] Erro ao enviar WhatsApp:', whatsappError);
+          }
         }
         
         return { success: true, agendamento, isNovoLead };

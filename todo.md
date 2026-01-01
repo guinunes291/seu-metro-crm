@@ -2222,3 +2222,22 @@
 - [x] Remover campo de assinatura do cliente
 - [x] Remover mapa da seção Localização, deixar apenas endereço escrito
 - [x] Reduzir espaçamento em branco entre seções
+
+
+## Confirmação de Autoagendamento
+- [ ] Enviar confirmação via WhatsApp após agendamento
+- [ ] Enviar confirmação via email após agendamento
+- [ ] Incluir detalhes do agendamento (data, hora, corretor, projeto)
+
+
+## Integração WhatsApp via Evolution API
+- [x] Criar guia de configuração da Evolution API no Render
+- [x] Criar módulo de integração evolutionApi.ts
+- [x] Implementar função de envio de mensagem de texto
+- [x] Implementar função de envio de mídia (imagens, documentos)
+- [x] Criar templates de mensagem de confirmação de agendamento
+- [x] Integrar envio automático no endpoint de autoagendamento
+- [ ] Configurar variáveis de ambiente (EVOLUTION_API_URL, EVOLUTION_API_KEY, EVOLUTION_INSTANCE_NAME)
+- [ ] Testar envio de confirmação após agendamento
+- [ ] Implementar envio de lembrete de agendamento (24h antes)
+- [ ] Implementar envio de confirmação via Email (pendente SMTP)
