@@ -1,18 +1,18 @@
 /**
  * Gerador de PDF Profissional para Propostas Imobiliárias
  * 
- * Este módulo gera um PDF completo com 11 seções:
- * 1. Capa
+ * Este módulo gera um PDF completo com 10 seções:
+ * 1. Capa (Logo Seu Metro Quadrado)
  * 2. Resumo Executivo
- * 3. Apresentação do Empreendimento
+ * 3. Apresentação do Empreendimento (com imagens do Book)
  * 4. Localização com Google Maps
  * 5. Planta da Unidade
  * 6. Tabela de Pagamento
  * 7. Simulação de Financiamento
- * 8. Benefícios
+ * 8. Benefícios (personalizados com dados do cliente)
  * 9. Documentação Necessária
- * 10. Cronograma
- * 11. Termo de Aceite
+ * 10. Cronograma (atualizado)
+ * 11. Termo de Aceite (apenas assinatura do cliente + botão aceite)
  */
 
 import { format } from 'date-fns';
@@ -32,7 +32,7 @@ export interface DadosProposta {
   tipologia?: string;
   metragem?: number;
   
-  // Valores (em centavos no banco, converter para reais)
+  // Valores (em reais)
   valorImovel: number;
   valorEntrada?: number;
   valorFinanciamento?: number;
@@ -64,6 +64,8 @@ export interface DadosProposta {
     logoUrl?: string;
     zona?: string;
     enquadramento?: string;
+    brindes?: string; // Ex: "Piso laminado nos quartos"
+    documentacaoGratuita?: boolean;
   };
   
   // Dados do corretor
@@ -91,13 +93,14 @@ export interface DadosProposta {
     prazoMeses?: number;
     primeiraPrestacao?: number;
     jurosEfetivos?: string;
+    subsidio?: number;
+    fgts?: number;
   };
   
   createdAt: Date;
 }
 
 // Função auxiliar para formatar moeda
-// NOTA: Os valores já estão em reais, não em centavos
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -110,6 +113,16 @@ function formatDate(date: Date): string {
   return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 }
 
+// Logo da Seu Metro Quadrado em SVG
+const LOGO_SEU_METRO_QUADRADO = `
+<svg width="180" height="60" viewBox="0 0 180 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="10" width="40" height="40" rx="4" fill="#f59e0b"/>
+  <text x="15" y="38" fill="white" font-family="Inter, sans-serif" font-size="20" font-weight="700">m²</text>
+  <text x="55" y="30" fill="white" font-family="Inter, sans-serif" font-size="14" font-weight="600">SEU METRO</text>
+  <text x="55" y="46" fill="#f59e0b" font-family="Inter, sans-serif" font-size="14" font-weight="600">QUADRADO</text>
+</svg>
+`;
+
 // Gerar HTML para o PDF
 export function gerarHTMLProposta(dados: DadosProposta): string {
   const dataAtual = formatDate(new Date());
@@ -117,6 +130,9 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
   
   // Calcular total da tabela de pagamento
   const totalPagamento = dados.tabelaPagamento?.reduce((acc, p) => acc + p.total, 0) || 0;
+  
+  // Gerar benefícios personalizados com base nos dados do cliente e projeto
+  const beneficiosPersonalizados = gerarBeneficiosPersonalizados(dados);
   
   return `
 <!DOCTYPE html>
@@ -137,7 +153,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 11pt;
-      line-height: 1.6;
+      line-height: 1.5;
       color: #1e293b;
       background: #fff;
     }
@@ -145,7 +161,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 20mm;
+      padding: 15mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -160,26 +176,24 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      min-height: calc(297mm - 40mm);
+      min-height: calc(297mm - 30mm);
       text-align: center;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       color: #fff;
-      padding: 30mm;
-      margin: -20mm;
+      padding: 25mm;
+      margin: -15mm;
     }
     
     .capa-header {
-      margin-bottom: 40px;
+      margin-bottom: 30px;
     }
     
     .capa-logo {
-      width: 120px;
-      height: auto;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     
     .capa-empresa {
-      font-size: 14pt;
+      font-size: 12pt;
       font-weight: 300;
       color: #f59e0b;
       text-transform: uppercase;
@@ -194,23 +208,23 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     }
     
     .capa-titulo {
-      font-size: 32pt;
+      font-size: 28pt;
       font-weight: 700;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       color: #f59e0b;
     }
     
     .capa-subtitulo {
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: 300;
-      margin-bottom: 40px;
+      margin-bottom: 30px;
       color: #94a3b8;
     }
     
     .capa-cliente {
-      font-size: 16pt;
+      font-size: 14pt;
       font-weight: 500;
-      padding: 20px 40px;
+      padding: 15px 30px;
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid rgba(245, 158, 11, 0.3);
       border-radius: 8px;
@@ -219,36 +233,36 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     }
     
     .capa-footer {
-      margin-top: 40px;
+      margin-top: 30px;
     }
     
     .capa-data {
-      font-size: 11pt;
+      font-size: 10pt;
       color: #64748b;
     }
     
     .capa-validade {
       font-size: 10pt;
       color: #f59e0b;
-      margin-top: 10px;
+      margin-top: 8px;
     }
     
     /* ===== SEÇÕES ===== */
     .secao {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
     
     .secao-header {
       display: flex;
       align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
       border-bottom: 2px solid #f59e0b;
     }
     
     .secao-numero {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       background: #f59e0b;
       color: #fff;
       border-radius: 50%;
@@ -256,79 +270,82 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 14pt;
-      margin-right: 15px;
+      font-size: 12pt;
+      margin-right: 12px;
+      flex-shrink: 0;
     }
     
     .secao-titulo {
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: 600;
       color: #0f172a;
     }
     
     .secao-conteudo {
-      padding-left: 55px;
+      padding-left: 44px;
     }
     
     /* ===== RESUMO EXECUTIVO ===== */
     .resumo-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
+      gap: 12px;
     }
     
     .resumo-item {
       background: #f8fafc;
-      padding: 15px 20px;
-      border-radius: 8px;
-      border-left: 4px solid #f59e0b;
+      padding: 12px 15px;
+      border-radius: 6px;
+      border-left: 3px solid #f59e0b;
     }
     
     .resumo-label {
-      font-size: 9pt;
+      font-size: 8pt;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
     
     .resumo-valor {
-      font-size: 14pt;
+      font-size: 12pt;
       font-weight: 600;
       color: #0f172a;
     }
     
     .resumo-valor.destaque {
       color: #059669;
-      font-size: 18pt;
+      font-size: 16pt;
     }
     
     /* ===== APRESENTAÇÃO ===== */
-    .apresentacao-imagem {
+    .apresentacao-imagem-principal {
       width: 100%;
-      max-height: 200px;
+      max-height: 180px;
       object-fit: cover;
       border-radius: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     
     .apresentacao-descricao {
       text-align: justify;
       color: #475569;
+      font-size: 10pt;
+      margin-bottom: 10px;
     }
     
     .apresentacao-badges {
       display: flex;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 8px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
     
     .badge {
-      padding: 5px 12px;
+      padding: 4px 10px;
       background: #f1f5f9;
       border-radius: 20px;
-      font-size: 9pt;
+      font-size: 8pt;
       color: #475569;
     }
     
@@ -337,13 +354,44 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       color: #92400e;
     }
     
+    /* ===== GALERIA DE IMAGENS DO BOOK ===== */
+    .galeria {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    
+    .galeria-item {
+      border-radius: 6px;
+      overflow: hidden;
+      aspect-ratio: 16/10;
+      background: #f1f5f9;
+    }
+    
+    .galeria-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .galeria-item.placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f59e0b;
+      font-weight: 600;
+      font-size: 14pt;
+      background: #0f172a;
+    }
+    
     /* ===== LOCALIZAÇÃO ===== */
     .mapa-container {
       width: 100%;
-      height: 250px;
+      height: 200px;
       background: #e2e8f0;
       border-radius: 8px;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       overflow: hidden;
     }
     
@@ -355,17 +403,19 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     .endereco-completo {
       background: #f8fafc;
-      padding: 15px 20px;
-      border-radius: 8px;
+      padding: 12px 15px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       gap: 10px;
+      font-size: 10pt;
     }
     
     .endereco-icon {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       color: #f59e0b;
+      flex-shrink: 0;
     }
     
     /* ===== PLANTA ===== */
@@ -375,14 +425,14 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     .planta-imagem {
       max-width: 100%;
-      max-height: 350px;
+      max-height: 280px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .planta-legenda {
-      margin-top: 15px;
-      font-size: 10pt;
+      margin-top: 10px;
+      font-size: 9pt;
       color: #64748b;
     }
     
@@ -390,29 +440,30 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .tabela-pagamento {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+      font-size: 10pt;
     }
     
     .tabela-pagamento th {
       background: #0f172a;
       color: #fff;
-      padding: 12px 15px;
+      padding: 10px 12px;
       text-align: left;
       font-weight: 500;
-      font-size: 10pt;
+      font-size: 9pt;
     }
     
     .tabela-pagamento th:first-child {
-      border-radius: 8px 0 0 0;
+      border-radius: 6px 0 0 0;
     }
     
     .tabela-pagamento th:last-child {
-      border-radius: 0 8px 0 0;
+      border-radius: 0 6px 0 0;
       text-align: right;
     }
     
     .tabela-pagamento td {
-      padding: 12px 15px;
+      padding: 10px 12px;
       border-bottom: 1px solid #e2e8f0;
     }
     
@@ -438,50 +489,50 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .simulacao-box {
       background: linear-gradient(135deg, #059669 0%, #047857 100%);
       color: #fff;
-      padding: 25px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 15px;
     }
     
     .simulacao-titulo {
-      font-size: 12pt;
+      font-size: 10pt;
       font-weight: 300;
-      margin-bottom: 10px;
+      margin-bottom: 5px;
       opacity: 0.9;
     }
     
     .simulacao-valor {
-      font-size: 28pt;
+      font-size: 24pt;
       font-weight: 700;
     }
     
     .simulacao-detalhe {
-      font-size: 10pt;
+      font-size: 9pt;
       opacity: 0.8;
-      margin-top: 5px;
+      margin-top: 3px;
     }
     
     .simulacao-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
+      gap: 10px;
     }
     
     .simulacao-item {
       background: #f8fafc;
-      padding: 15px;
-      border-radius: 8px;
+      padding: 12px;
+      border-radius: 6px;
       text-align: center;
     }
     
     .simulacao-item-label {
-      font-size: 9pt;
+      font-size: 8pt;
       color: #64748b;
-      margin-bottom: 5px;
+      margin-bottom: 3px;
     }
     
     .simulacao-item-valor {
-      font-size: 14pt;
+      font-size: 12pt;
       font-weight: 600;
       color: #0f172a;
     }
@@ -494,16 +545,16 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .beneficios-lista li {
       display: flex;
       align-items: flex-start;
-      gap: 15px;
-      margin-bottom: 15px;
-      padding: 15px;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 12px;
       background: #f8fafc;
-      border-radius: 8px;
+      border-radius: 6px;
     }
     
     .beneficio-icon {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       background: #dcfce7;
       border-radius: 50%;
       display: flex;
@@ -511,6 +562,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       justify-content: center;
       color: #059669;
       flex-shrink: 0;
+      font-size: 12px;
     }
     
     .beneficio-texto {
@@ -520,11 +572,12 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .beneficio-titulo {
       font-weight: 600;
       color: #0f172a;
-      margin-bottom: 3px;
+      font-size: 10pt;
+      margin-bottom: 2px;
     }
     
     .beneficio-descricao {
-      font-size: 10pt;
+      font-size: 9pt;
       color: #64748b;
     }
     
@@ -532,36 +585,37 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .docs-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 8px;
     }
     
     .doc-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 15px;
+      gap: 8px;
+      padding: 8px 12px;
       background: #f8fafc;
-      border-radius: 6px;
-      font-size: 10pt;
+      border-radius: 4px;
+      font-size: 9pt;
     }
     
     .doc-check {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border: 2px solid #d1d5db;
       border-radius: 3px;
+      flex-shrink: 0;
     }
     
     /* ===== CRONOGRAMA ===== */
     .cronograma {
       position: relative;
-      padding-left: 30px;
+      padding-left: 25px;
     }
     
     .cronograma::before {
       content: '';
       position: absolute;
-      left: 10px;
+      left: 8px;
       top: 0;
       bottom: 0;
       width: 2px;
@@ -570,69 +624,92 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     .cronograma-item {
       position: relative;
-      margin-bottom: 20px;
-      padding-left: 20px;
+      margin-bottom: 15px;
+      padding-left: 15px;
     }
     
     .cronograma-item::before {
       content: '';
       position: absolute;
-      left: -24px;
-      top: 5px;
-      width: 12px;
-      height: 12px;
+      left: -20px;
+      top: 4px;
+      width: 10px;
+      height: 10px;
       background: #f59e0b;
       border-radius: 50%;
-      border: 3px solid #fff;
+      border: 2px solid #fff;
       box-shadow: 0 0 0 2px #f59e0b;
     }
     
     .cronograma-etapa {
       font-weight: 600;
       color: #0f172a;
-      margin-bottom: 3px;
+      font-size: 10pt;
+      margin-bottom: 2px;
     }
     
     .cronograma-prazo {
-      font-size: 10pt;
+      font-size: 9pt;
       color: #64748b;
     }
     
     /* ===== TERMO DE ACEITE ===== */
     .termo-box {
       background: #f8fafc;
-      padding: 25px;
-      border-radius: 12px;
+      padding: 20px;
+      border-radius: 10px;
       border: 1px solid #e2e8f0;
     }
     
     .termo-texto {
-      font-size: 10pt;
+      font-size: 9pt;
       color: #475569;
       text-align: justify;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .termo-aceite-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 30px;
+      background: #059669;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 12pt;
+      margin: 20px auto;
+      max-width: 300px;
+    }
+    
+    .termo-aceite-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #fff;
+      border-radius: 4px;
     }
     
     .termo-assinatura {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 40px;
-      margin-top: 40px;
+      margin-top: 30px;
+      text-align: center;
     }
     
     .assinatura-campo {
-      text-align: center;
+      max-width: 300px;
+      margin: 0 auto;
     }
     
     .assinatura-linha {
       border-top: 1px solid #0f172a;
-      padding-top: 10px;
-      margin-top: 60px;
+      padding-top: 8px;
+      margin-top: 50px;
     }
     
     .assinatura-nome {
       font-weight: 600;
       color: #0f172a;
+      font-size: 11pt;
     }
     
     .assinatura-cargo {
@@ -642,25 +719,25 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     /* ===== RODAPÉ ===== */
     .rodape {
-      margin-top: 30px;
-      padding-top: 20px;
+      margin-top: 20px;
+      padding-top: 15px;
       border-top: 1px solid #e2e8f0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 9pt;
+      font-size: 8pt;
       color: #64748b;
     }
     
     .rodape-corretor {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
     
     .corretor-foto {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       object-fit: cover;
     }
@@ -672,26 +749,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .corretor-nome {
       font-weight: 600;
       color: #0f172a;
-    }
-    
-    /* ===== GALERIA DE IMAGENS ===== */
-    .galeria {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 20px;
-    }
-    
-    .galeria-item {
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 16/9;
-    }
-    
-    .galeria-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      font-size: 9pt;
     }
     
     @media print {
@@ -702,15 +760,15 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       
       .page {
         margin: 0;
-        padding: 15mm;
+        padding: 12mm;
         width: 100%;
         min-height: auto;
         page-break-after: always;
       }
       
       .capa {
-        margin: -15mm;
-        padding: 25mm;
+        margin: -12mm;
+        padding: 20mm;
       }
     }
   </style>
@@ -720,8 +778,9 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
   <div class="page">
     <div class="capa">
       <div class="capa-header">
-        ${dados.projeto.logoUrl ? `<img src="${dados.projeto.logoUrl}" alt="Logo" class="capa-logo">` : ''}
-        <div class="capa-empresa">Seu Metro Quadrado</div>
+        <div class="capa-logo">
+          ${LOGO_SEU_METRO_QUADRADO}
+        </div>
       </div>
       
       <div class="capa-content">
@@ -740,8 +799,9 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     </div>
   </div>
   
-  <!-- PÁGINA 2: RESUMO EXECUTIVO -->
+  <!-- PÁGINA 2: RESUMO E APRESENTAÇÃO -->
   <div class="page">
+    <!-- SEÇÃO 1: RESUMO EXECUTIVO -->
     <div class="secao">
       <div class="secao-header">
         <div class="secao-numero">1</div>
@@ -784,8 +844,8 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         </div>
         
         ${dados.mensagemPersonalizada ? `
-        <div style="margin-top: 25px; padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-          <p style="font-style: italic; color: #92400e;">"${dados.mensagemPersonalizada}"</p>
+        <div style="margin-top: 15px; padding: 12px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
+          <p style="font-style: italic; color: #92400e; font-size: 10pt;">"${dados.mensagemPersonalizada}"</p>
         </div>
         ` : ''}
       </div>
@@ -798,8 +858,10 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         <h2 class="secao-titulo">Apresentação do Empreendimento</h2>
       </div>
       <div class="secao-conteudo">
-        ${dados.projeto.imagemPrincipal || (dados.imagensSelecionadas && dados.imagensSelecionadas[0]) ? `
-        <img src="${dados.projeto.imagemPrincipal || dados.imagensSelecionadas![0]}" alt="${dados.projeto.nome}" class="apresentacao-imagem">
+        ${dados.imagensSelecionadas && dados.imagensSelecionadas[0] ? `
+        <img src="${dados.imagensSelecionadas[0]}" alt="${dados.projeto.nome}" class="apresentacao-imagem-principal">
+        ` : dados.projeto.imagemPrincipal ? `
+        <img src="${dados.projeto.imagemPrincipal}" alt="${dados.projeto.nome}" class="apresentacao-imagem-principal">
         ` : ''}
         
         <p class="apresentacao-descricao">
@@ -813,6 +875,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
           ${dados.projeto.construtora ? `<span class="badge">${dados.projeto.construtora}</span>` : ''}
         </div>
         
+        <!-- Galeria de imagens do Book -->
         ${dados.imagensSelecionadas && dados.imagensSelecionadas.length > 1 ? `
         <div class="galeria">
           ${dados.imagensSelecionadas.slice(1, 5).map(img => `
@@ -821,7 +884,14 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
             </div>
           `).join('')}
         </div>
-        ` : ''}
+        ` : `
+        <div class="galeria">
+          <div class="galeria-item placeholder">Fachada</div>
+          <div class="galeria-item placeholder">Lazer</div>
+          <div class="galeria-item placeholder">Área Comum</div>
+          <div class="galeria-item placeholder">Perspectiva</div>
+        </div>
+        `}
       </div>
     </div>
   </div>
@@ -837,7 +907,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       <div class="secao-conteudo">
         <div class="mapa-container">
           ${dados.projeto.endereco ? `
-          <img src="https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade + ', ' + dados.projeto.estado)}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade)}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" alt="Mapa">
+          <img src="https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade + ', ' + dados.projeto.estado)}&zoom=15&size=800x400&maptype=roadmap&markers=color:orange%7Csize:mid%7C${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade)}&style=feature:poi%7Cvisibility:simplified&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" alt="Mapa da localização">
           ` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #64748b;">Mapa não disponível</div>'}
         </div>
         
@@ -866,7 +936,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
           <img src="${dados.plantasSelecionadas[0]}" alt="Planta da unidade" class="planta-imagem">
           <p class="planta-legenda">${dados.tipologia || 'Planta ilustrativa'} - ${dados.metragem ? dados.metragem + ' m²' : ''}</p>
           ` : `
-          <div style="padding: 60px; background: #f8fafc; border-radius: 8px; color: #64748b;">
+          <div style="padding: 40px; background: #f8fafc; border-radius: 8px; color: #64748b;">
             <p>Planta da unidade será disponibilizada em breve.</p>
           </div>
           `}
@@ -924,9 +994,9 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         </table>
         
         ${dados.desconto ? `
-        <div style="background: #dcfce7; padding: 15px 20px; border-radius: 8px; margin-top: 15px;">
-          <strong style="color: #059669;">Desconto aplicado: ${formatCurrency(dados.desconto)}</strong>
-          ${dados.motivoDesconto ? `<br><span style="font-size: 10pt; color: #047857;">${dados.motivoDesconto}</span>` : ''}
+        <div style="background: #dcfce7; padding: 12px 15px; border-radius: 6px; margin-top: 10px;">
+          <strong style="color: #059669; font-size: 10pt;">Desconto aplicado: ${formatCurrency(dados.desconto)}</strong>
+          ${dados.motivoDesconto ? `<br><span style="font-size: 9pt; color: #047857;">${dados.motivoDesconto}</span>` : ''}
         </div>
         ` : ''}
       </div>
@@ -968,7 +1038,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
           ` : ''}
         </div>
         
-        <p style="margin-top: 20px; font-size: 9pt; color: #64748b; text-align: center;">
+        <p style="margin-top: 15px; font-size: 8pt; color: #64748b; text-align: center;">
           * Valores sujeitos à análise de crédito e aprovação pela instituição financeira.
         </p>
       </div>
@@ -985,41 +1055,15 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       </div>
       <div class="secao-conteudo">
         <ul class="beneficios-lista">
+          ${beneficiosPersonalizados.map(b => `
           <li>
             <div class="beneficio-icon">✓</div>
             <div class="beneficio-texto">
-              <div class="beneficio-titulo">Subsídio do Governo</div>
-              <div class="beneficio-descricao">Desconto de até R$ 55.000 no valor do imóvel através do programa habitacional.</div>
+              <div class="beneficio-titulo">${b.titulo}</div>
+              <div class="beneficio-descricao">${b.descricao}</div>
             </div>
           </li>
-          <li>
-            <div class="beneficio-icon">✓</div>
-            <div class="beneficio-texto">
-              <div class="beneficio-titulo">Taxa de Juros Reduzida</div>
-              <div class="beneficio-descricao">Taxas a partir de 4% a.a., as menores do mercado para financiamento imobiliário.</div>
-            </div>
-          </li>
-          <li>
-            <div class="beneficio-icon">✓</div>
-            <div class="beneficio-texto">
-              <div class="beneficio-titulo">Use seu FGTS</div>
-              <div class="beneficio-descricao">Utilize o saldo do FGTS para entrada ou amortização do financiamento.</div>
-            </div>
-          </li>
-          <li>
-            <div class="beneficio-icon">✓</div>
-            <div class="beneficio-texto">
-              <div class="beneficio-titulo">Parcelas que Cabem no Bolso</div>
-              <div class="beneficio-descricao">Parcelas de até 30% da renda familiar, com prazo de até 35 anos.</div>
-            </div>
-          </li>
-          <li>
-            <div class="beneficio-icon">✓</div>
-            <div class="beneficio-texto">
-              <div class="beneficio-titulo">Localização Privilegiada</div>
-              <div class="beneficio-descricao">Empreendimento próximo a transporte público, comércio e serviços essenciais.</div>
-            </div>
-          </li>
+          `).join('')}
         </ul>
       </div>
     </div>
@@ -1041,7 +1085,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
           <div class="doc-item"><div class="doc-check"></div>Declaração de IR (se houver)</div>
           <div class="doc-item"><div class="doc-check"></div>Certidão de Nascimento dos Filhos</div>
         </div>
-        <p style="margin-top: 15px; font-size: 9pt; color: #64748b;">
+        <p style="margin-top: 10px; font-size: 8pt; color: #64748b;">
           * Documentação adicional pode ser solicitada conforme análise de crédito.
         </p>
       </div>
@@ -1060,22 +1104,18 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         <div class="cronograma">
           <div class="cronograma-item">
             <div class="cronograma-etapa">1. Análise de Documentação</div>
-            <div class="cronograma-prazo">Prazo: 3 a 5 dias úteis</div>
+            <div class="cronograma-prazo">Prazo: 1 a 2 horas</div>
           </div>
           <div class="cronograma-item">
-            <div class="cronograma-etapa">2. Simulação e Aprovação de Crédito</div>
-            <div class="cronograma-prazo">Prazo: 5 a 10 dias úteis</div>
+            <div class="cronograma-etapa">2. Aprovação de Crédito</div>
+            <div class="cronograma-prazo">Prazo: 2h a 48h</div>
           </div>
           <div class="cronograma-item">
             <div class="cronograma-etapa">3. Assinatura do Contrato</div>
-            <div class="cronograma-prazo">Prazo: 3 a 5 dias úteis após aprovação</div>
+            <div class="cronograma-prazo"></div>
           </div>
           <div class="cronograma-item">
-            <div class="cronograma-etapa">4. Registro em Cartório</div>
-            <div class="cronograma-prazo">Prazo: 15 a 30 dias</div>
-          </div>
-          <div class="cronograma-item">
-            <div class="cronograma-etapa">5. Entrega das Chaves</div>
+            <div class="cronograma-etapa">4. Entrega das Chaves</div>
             <div class="cronograma-prazo">Conforme cronograma da obra</div>
           </div>
         </div>
@@ -1101,17 +1141,18 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
             Esta proposta tem validade até <strong>${validadeFormatada}</strong>, após a qual os valores e condições poderão ser revisados.
           </p>
           
+          <!-- Botão de Aceite -->
+          <div class="termo-aceite-btn">
+            <div class="termo-aceite-checkbox"></div>
+            Li e aceito os termos desta proposta
+          </div>
+          
+          <!-- Apenas assinatura do cliente -->
           <div class="termo-assinatura">
             <div class="assinatura-campo">
               <div class="assinatura-linha">
                 <div class="assinatura-nome">${dados.nomeCliente}</div>
                 <div class="assinatura-cargo">Cliente</div>
-              </div>
-            </div>
-            <div class="assinatura-campo">
-              <div class="assinatura-linha">
-                <div class="assinatura-nome">${dados.corretor.name || 'Corretor'}</div>
-                <div class="assinatura-cargo">Corretor${dados.corretor.creci ? ` - CRECI ${dados.corretor.creci}` : ''}</div>
               </div>
             </div>
           </div>
@@ -1136,4 +1177,87 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
 </body>
 </html>
 `;
+}
+
+// Função para gerar benefícios personalizados com base nos dados do cliente e projeto
+function gerarBeneficiosPersonalizados(dados: DadosProposta): { titulo: string; descricao: string }[] {
+  const beneficios: { titulo: string; descricao: string }[] = [];
+  
+  // Benefício de Subsídio (se MCMV)
+  if (dados.projeto.tipo === 'mcmv') {
+    const subsidioValor = dados.simulacao?.subsidio || 55000;
+    beneficios.push({
+      titulo: 'Subsídio do Governo',
+      descricao: `Desconto de até ${formatCurrency(subsidioValor)} no valor do imóvel através do programa Minha Casa Minha Vida.`
+    });
+  }
+  
+  // Benefício de Taxa de Juros
+  if (dados.taxaJuros) {
+    beneficios.push({
+      titulo: 'Taxa de Juros Reduzida',
+      descricao: `Taxa de ${dados.taxaJuros}, uma das menores do mercado para financiamento imobiliário.`
+    });
+  } else {
+    beneficios.push({
+      titulo: 'Taxa de Juros Reduzida',
+      descricao: 'Taxas a partir de 4% a.a., as menores do mercado para financiamento imobiliário.'
+    });
+  }
+  
+  // Benefício de FGTS
+  if (dados.simulacao?.fgts && dados.simulacao.fgts > 0) {
+    beneficios.push({
+      titulo: 'FGTS Utilizado',
+      descricao: `Você pode utilizar ${formatCurrency(dados.simulacao.fgts)} do seu FGTS para entrada ou amortização.`
+    });
+  } else {
+    beneficios.push({
+      titulo: 'Use seu FGTS',
+      descricao: 'Utilize o saldo do FGTS para entrada ou amortização do financiamento.'
+    });
+  }
+  
+  // Benefício de Parcelas (personalizado com dados do cliente)
+  if (dados.valorParcela && dados.simulacao?.rendaFamiliar) {
+    const percentualRenda = ((dados.valorParcela / dados.simulacao.rendaFamiliar) * 100).toFixed(0);
+    beneficios.push({
+      titulo: 'Parcelas que Cabem no Bolso',
+      descricao: `Parcela de ${formatCurrency(dados.valorParcela)} representa apenas ${percentualRenda}% da sua renda familiar.`
+    });
+  } else if (dados.valorParcela) {
+    beneficios.push({
+      titulo: 'Parcelas que Cabem no Bolso',
+      descricao: `Parcela inicial de ${formatCurrency(dados.valorParcela)}, com prazo de até 35 anos.`
+    });
+  } else {
+    beneficios.push({
+      titulo: 'Parcelas que Cabem no Bolso',
+      descricao: 'Parcelas de até 30% da renda familiar, com prazo de até 35 anos.'
+    });
+  }
+  
+  // Benefício de Brinde (se houver no projeto)
+  if (dados.projeto.brindes) {
+    beneficios.push({
+      titulo: 'Brinde Especial',
+      descricao: `Ganhe ${dados.projeto.brindes} na compra do seu imóvel!`
+    });
+  }
+  
+  // Benefício de Documentação Gratuita (se houver)
+  if (dados.projeto.documentacaoGratuita) {
+    beneficios.push({
+      titulo: 'Documentação Gratuita',
+      descricao: 'Toda a documentação do imóvel é por nossa conta, sem custos adicionais para você.'
+    });
+  }
+  
+  // Benefício de Localização
+  beneficios.push({
+    titulo: 'Localização Privilegiada',
+    descricao: `Empreendimento localizado em ${dados.projeto.bairro || dados.projeto.cidade}, próximo a transporte público, comércio e serviços.`
+  });
+  
+  return beneficios.slice(0, 6); // Limitar a 6 benefícios para caber na página
 }

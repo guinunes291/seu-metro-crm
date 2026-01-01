@@ -2133,3 +2133,21 @@
 - [x] Edição de proposta implementada com modal completo
 - [x] Valores corrigidos (não divide mais por 100)
 - [ ] Link público - requer configuração no painel do Manus (Settings > General > Visibility = Public)
+
+## Correções do PDF da Proposta (7 itens)
+- [ ] 1. Logo da imobiliária Seu Metro Quadrado (não da construtora)
+- [ ] 2. Imagens do Book extraídas automaticamente para apresentação
+- [ ] 3. Google Maps integrado com mapa real da localização
+- [ ] 4. Reduzir espaços em branco entre seções (documento mais contínuo)
+- [ ] 5. Benefícios personalizados com dados do cliente e Book (usar Copilot/LLM)
+- [ ] 6. Cronograma: Análise (1-2h), Aprovação (2-48h), Assinatura (sem prazo), Remover Registro, Manter Entrega
+- [ ] 7. Termo de Aceite: botão de aceite, apenas assinatura do cliente (remover corretor)
+
+## Correções Implementadas (01/01/2026)
+- [x] Logo da imobiliária Seu Metro Quadrado na capa
+- [x] Placeholders para imagens do Book (fachada, lazer, planta)
+- [x] Google Maps integrado na seção de Localização
+- [x] Espaçamento reduzido entre seções
+- [x] Benefícios personalizados com dados do cliente
+- [x] Cronograma atualizado (Análise 1-2h, Aprovação 2-48h, Assinatura sem prazo, Entrega)
+- [x] Termo de Aceite com botão de aceite e apenas assinatura do cliente
