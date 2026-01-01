@@ -66,6 +66,8 @@ type Lead = {
   email: string | null;
   cpf: string | null;
   status: string;
+  projectId: number | null;
+  projectName?: string;
 };
 
 type Agendamento = {
@@ -256,79 +258,120 @@ export default function Agendamentos() {
                 {/* Busca de Lead */}
                 <div className="space-y-2">
                   <Label>Cliente (buscar por telefone, email, CPF ou nome)</Label>
-                  <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
-                    <PopoverTrigger asChild>
+                  {selectedLead ? (
+                    <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
+                      <User className="h-4 w-4 text-primary" />
+                      <div className="flex-1">
+                        <span className="font-medium">{selectedLead.nome}</span>
+                        <span className="text-muted-foreground ml-2">({selectedLead.telefone})</span>
+                      </div>
                       <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-start text-left font-normal"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedLead(null);
+                          setSearchQuery("");
+                        }}
                       >
-                        {selectedLead ? (
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>{selectedLead.nome}</span>
-                            <span className="text-muted-foreground">({selectedLead.telefone})</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Search className="h-4 w-4" />
-                            <span>Buscar cliente...</span>
-                          </div>
-                        )}
+                        <XCircle className="h-4 w-4" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
-                        <CommandInput
-                          placeholder="Digite telefone, email, CPF ou nome..."
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          {isSearching && (
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Digite telefone, email, CPF ou nome..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                      {/* Lista de resultados */}
+                      {searchQuery.length >= 3 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-[300px] overflow-auto">
+                          {isSearching ? (
                             <div className="p-4 text-center">
                               <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                              <span className="text-sm text-muted-foreground">Buscando...</span>
                             </div>
-                          )}
-                          {searchQuery.length < 3 && (
-                            <CommandEmpty>Digite pelo menos 3 caracteres para buscar</CommandEmpty>
-                          )}
-                          {searchQuery.length >= 3 && !isSearching && (!searchResults || searchResults.length === 0) && (
-                            <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                          )}
-                          {searchResults && searchResults.length > 0 && (
-                            <CommandGroup heading="Resultados">
-                              {searchResults.map((lead: Lead) => (
-                                <CommandItem
-                                  key={lead.id}
-                                  value={lead.id.toString()}
-                                  onSelect={() => {
-                                    setSelectedLead(lead);
-                                    setIsSearchOpen(false);
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{lead.nome}</span>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <Phone className="h-3 w-3" />
-                                      {lead.telefone}
-                                      {lead.email && (
-                                        <>
-                                          <span>•</span>
-                                          {lead.email}
-                                        </>
-                                      )}
+                          ) : searchResults && searchResults.length > 0 ? (
+                            <div className="py-1">
+                              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b">
+                                {searchResults.length} resultado(s) encontrado(s)
+                              </div>
+                              {searchResults.map((lead: Lead) => {
+                                const projetoLead = projetos?.find((p: Project) => p.id === lead.projectId);
+                                return (
+                                  <div
+                                    key={lead.id}
+                                    className="px-4 py-3 hover:bg-accent cursor-pointer border-b last:border-b-0 transition-colors"
+                                    onClick={() => {
+                                      setSelectedLead(lead);
+                                      setSearchQuery("");
+                                      // Preencher projeto automaticamente se o lead tiver um
+                                      if (lead.projectId) {
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          projectId: lead.projectId?.toString() || "",
+                                          construtora: projetoLead?.construtora || ""
+                                        }));
+                                        setUseCustomProject(false);
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                        <User className="h-5 w-5 text-primary" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-semibold text-foreground">{lead.nome}</div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                          <Phone className="h-3 w-3 flex-shrink-0" />
+                                          <span>{lead.telefone}</span>
+                                        </div>
+                                        {lead.email && (
+                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <span className="text-xs">✉️</span>
+                                            <span className="truncate">{lead.email}</span>
+                                          </div>
+                                        )}
+                                        {projetoLead && (
+                                          <div className="flex items-center gap-2 text-sm mt-1">
+                                            <Building2 className="h-3 w-3 text-blue-500 flex-shrink-0" />
+                                            <span className="text-blue-600 font-medium truncate">
+                                              {projetoLead.nome}
+                                            </span>
+                                          </div>
+                                        )}
+                                        {lead.cpf && (
+                                          <div className="text-xs text-muted-foreground mt-1">CPF: {lead.cpf}</div>
+                                        )}
+                                      </div>
+                                      <Badge variant="outline" className="flex-shrink-0 text-xs">
+                                        {lead.status === 'novo' ? 'Novo' : 
+                                         lead.status === 'em_atendimento' ? 'Em Atendimento' :
+                                         lead.status === 'agendado' ? 'Agendado' :
+                                         lead.status === 'aguardando_atendimento' ? 'Aguardando' :
+                                         lead.status}
+                                      </Badge>
                                     </div>
                                   </div>
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              Nenhum cliente encontrado
+                            </div>
                           )}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                        </div>
+                      )}
+                      {searchQuery.length > 0 && searchQuery.length < 3 && (
+                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-center text-sm text-muted-foreground">
+                          Digite pelo menos 3 caracteres para buscar
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Projeto */}

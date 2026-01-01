@@ -1744,3 +1744,21 @@
 - [x] Identificar e remover contratos fechados de teste (sistema usa prefixo _T_ para testes)
 - [x] Identificar e remover projetos de teste (sistema usa prefixo _T_ para testes)
 - [x] Limpeza de 31 entradas órfãs da fila de distribuição (01/01/2026)
+
+
+## Correção Busca de Agendamentos e Melhorias (01/01/2026)
+
+### Busca de Leads para Agendamento
+- [x] Corrigir busca para exibir cards de leads como sugestões
+- [x] Mostrar nome, telefone, email, status e projeto de interesse nos resultados
+- [x] Permitir seleção do lead clicando no card
+- [x] Busca funciona por telefone, email, CPF ou nome
+- [x] Preencher projeto automaticamente ao selecionar lead
+
+### Atualização Automática ao Criar Agendamento
+- [x] Alterar status do lead para "Agendado" automaticamente (já implementado)
+- [x] Adicionar agendamento às Tarefas do Dia na data correta (atualiza proximoFollowup)
+- [x] Integrar com calendário de agendamentos (já implementado)
+
+### 25 Implementações Úteis
+- [x] Documentar lista de melhorias para gestores e corretores (docs/25-implementacoes-uteis.md)

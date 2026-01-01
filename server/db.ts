@@ -4765,8 +4765,22 @@ export async function createAgendamento(data: {
   const statusAtualIdx = statusOrdem.indexOf(lead?.status || 'novo');
   const agendadoIdx = statusOrdem.indexOf('agendado');
   
+  // Criar data/hora completa do agendamento para o proximoFollowup
+  const dataHoraAgendamento = new Date(data.dataAgendamento);
+  const [hora, minuto] = data.horaAgendamento.split(':').map(Number);
+  dataHoraAgendamento.setHours(hora || 9, minuto || 0, 0, 0);
+  
   if (statusAtualIdx < agendadoIdx) {
-    await updateLead(data.leadId, { status: 'agendado' });
+    // Atualizar status e proximoFollowup para aparecer em Tarefas do Dia
+    await updateLead(data.leadId, { 
+      status: 'agendado',
+      proximoFollowup: dataHoraAgendamento
+    });
+  } else {
+    // Apenas atualizar proximoFollowup para aparecer em Tarefas do Dia
+    await updateLead(data.leadId, { 
+      proximoFollowup: dataHoraAgendamento
+    });
   }
   
   // Retornar o agendamento criado
