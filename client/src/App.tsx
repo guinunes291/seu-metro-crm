@@ -38,6 +38,11 @@ import Agendamentos from "@/pages/Agendamentos";
 import AprovarProjetos from "@/pages/AprovarProjetos";
 import Conquistas from "@/pages/Conquistas";
 import GoogleSheetsSync from "@/pages/GoogleSheetsSync";
+import MinhaAgenda from "@/pages/MinhaAgenda";
+import Propostas from "@/pages/Propostas";
+import AgendamentoPublico from "@/pages/AgendamentoPublico";
+import ChatbotPublico from "@/pages/ChatbotPublico";
+import PropostaPublica from "@/pages/PropostaPublica";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -76,6 +81,13 @@ function Router() {
       <Route path="/historico-presenca" component={HistoricoPresenca} />
       <Route path="/conquistas" component={Conquistas} />
       <Route path="/google-sheets-sync" component={GoogleSheetsSync} />
+      <Route path="/minha-agenda" component={MinhaAgenda} />
+      <Route path="/propostas" component={Propostas} />
+      
+      {/* Rotas Públicas */}
+      <Route path="/agendar/:token" component={AgendamentoPublico} />
+      <Route path="/chatbot" component={ChatbotPublico} />
+      <Route path="/proposta/:token" component={PropostaPublica} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

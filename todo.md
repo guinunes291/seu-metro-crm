@@ -1762,3 +1762,74 @@
 
 ### 25 Implementações Úteis
 - [x] Documentar lista de melhorias para gestores e corretores (docs/25-implementacoes-uteis.md)
+
+
+## Novas Funcionalidades (01/01/2026)
+
+### Tarefas do Dia - Agendamentos
+- [x] Mostrar agendamentos 24h antes do dia/horário
+- [x] Mostrar agendamentos no dia do agendamento
+- [x] Ajustar lógica de busca de leads agendados
+
+### Agendamento Self-Service
+- [x] Criar tabela de disponibilidade do corretor (horários de trabalho)
+- [x] Criar tabela de bloqueios de agenda (férias, compromissos)
+- [x] Criar tabela de links de agendamento self-service
+- [ ] Criar página pública de agendamento self-service
+- [ ] Integrar com agenda do corretor para verificar disponibilidade
+- [ ] Gerar link personalizado por corretor
+- [ ] Permitir cliente escolher data/hora disponível
+- [ ] Criar agendamento automaticamente ao confirmar
+
+### Chatbot de Pré-Qualificação 24/7
+- [ ] Criar interface de chat para visitantes
+- [ ] Implementar fluxo de coleta de informações básicas
+- [ ] Criar base de perguntas frequentes
+- [ ] Integrar com IA para respostas inteligentes
+- [ ] Permitir agendamento de retorno
+- [ ] Criar lead automaticamente com dados coletados
+
+### Propostas Digitais Interativas
+- [ ] Criar template de proposta com layout Seu Metro Quadrado
+- [ ] Incluir logo e cores da marca
+- [ ] Permitir adicionar fotos do empreendimento
+- [ ] Incluir plantas e vídeos
+- [ ] Adicionar simulação de financiamento
+- [ ] Implementar editor para corretor personalizar
+- [ ] Gerar PDF interativo
+- [ ] Adicionar botão de aceite digital
+
+
+## Novas Funcionalidades Implementadas (01/01/2026)
+
+### Tarefas do Dia - Agendamentos 24h antes
+- [x] Ajustar função getLeadsAgendadosHoje para mostrar agendamentos 24h antes
+- [x] Mostrar agendamentos no dia do agendamento
+- [x] Atualizar proximoFollowup do lead ao criar agendamento
+
+### Agendamento Self-Service pelo Cliente
+- [x] Criar tabela de disponibilidade do corretor (corretorDisponibilidade)
+- [x] Criar tabela de bloqueios de agenda (corretorBloqueios)
+- [x] Criar tabela de links de agendamento (linksAgendamento)
+- [x] Implementar página pública de agendamento (/agendar/:token)
+- [x] Integrar com agenda do corretor para verificar disponibilidade
+- [x] Criar página de configuração de agenda (/minha-agenda)
+- [x] Implementar criação de links personalizados por corretor/projeto
+
+### Chatbot de Pré-Qualificação 24/7
+- [x] Criar tabela de conversas do chatbot (chatbotConversas)
+- [x] Implementar interface do chatbot público (/chatbot)
+- [x] Integrar com LLM para respostas inteligentes
+- [x] Coletar informações básicas do lead (nome, telefone, email)
+- [x] Responder dúvidas frequentes sobre imóveis
+- [x] Agendar retorno automático
+
+### Propostas Digitais Interativas
+- [x] Criar tabela de propostas (propostas)
+- [x] Implementar página de criação/edição de propostas (/propostas)
+- [x] Criar página pública de visualização de proposta (/proposta/:token)
+- [x] Incluir dados do imóvel, valores e simulação de financiamento
+- [x] Implementar calculadora de financiamento
+- [x] Botão de aceite digital com assinatura
+- [x] Registro de visualizações e aceites
+- [x] Layout com identidade visual da Seu Metro Quadrado

@@ -33,7 +33,8 @@ import {
   BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, 
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
-  UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon
+  UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
+  FileText, MessageCircle, Link2
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -64,6 +65,8 @@ const menuGroups = [
       { icon: Users, label: "Meus Leads", path: "/leads" },
       { icon: Kanban, label: "Kanban", path: "/kanban" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
+      { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda", roles: ["corretor"] },
+      { icon: FileText, label: "Propostas", path: "/propostas" },
       { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor", roles: ["gestor", "admin"] },
       { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
     ],

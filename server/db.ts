@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, gte, lte, inArray, notInArray, gt } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, inArray, notInArray, gt, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -24,7 +24,13 @@ import {
   configuracaoPontuacao, InsertConfiguracaoPontuacao, ConfiguracaoPontuacao,
   alertasProdutividade, InsertAlertaProdutividade, AlertaProdutividade,
   tiposConquista, TipoConquista, InsertTipoConquista,
-  conquistas, Conquista, InsertConquista
+  conquistas, Conquista, InsertConquista,
+  disponibilidadeCorretor, InsertDisponibilidadeCorretor, DisponibilidadeCorretor,
+  bloqueiosAgenda, InsertBloqueioAgenda, BloqueioAgenda,
+  linksAgendamento, InsertLinkAgendamento, LinkAgendamento,
+  conversasChatbot, InsertConversaChatbot, ConversaChatbot,
+  faqChatbot, InsertFaqChatbot, FaqChatbot,
+  propostas, InsertProposta, Proposta
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -3132,23 +3138,44 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     .orderBy(followUps.proximaTentativa);
 }
 
-// Buscar leads agendados para hoje (para a aba Tarefas do Dia)
+// Buscar leads agendados para Tarefas do Dia
+// Mostra agendamentos: 24h antes do horário E no dia do agendamento
 export async function getLeadsAgendadosHoje(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
+  const agora = new Date();
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
-  const amanha = new Date(hoje);
-  amanha.setDate(amanha.getDate() + 1);
   
+  // Fim do dia de hoje (23:59:59)
+  const fimDeHoje = new Date(hoje);
+  fimDeHoje.setHours(23, 59, 59, 999);
+  
+  // 24h a partir de agora (para mostrar agendamentos das próximas 24h)
+  const em24h = new Date(agora);
+  em24h.setHours(em24h.getHours() + 24);
+  
+  // Buscar leads agendados que:
+  // 1. São para hoje (qualquer horário)
+  // 2. OU são para as próximas 24h (inclui amanhã se for menos de 24h)
   return await db.select()
     .from(leads)
     .where(and(
       eq(leads.corretorId, corretorId),
       eq(leads.status, "agendado"),
-      gte(leads.proximoFollowup, hoje),
-      lte(leads.proximoFollowup, amanha)
+      or(
+        // Agendamentos de hoje
+        and(
+          gte(leads.proximoFollowup, hoje),
+          lte(leads.proximoFollowup, fimDeHoje)
+        ),
+        // Agendamentos nas próximas 24h (inclui amanhã se estiver dentro de 24h)
+        and(
+          gte(leads.proximoFollowup, agora),
+          lte(leads.proximoFollowup, em24h)
+        )
+      )
     ))
     .orderBy(leads.proximoFollowup);
 }
@@ -5658,4 +5685,625 @@ export async function getAllLeadsForSync(): Promise<{
     campanha: lead.campanha,
     faixaRenda: lead.faixaRenda,
   }));
+}
+
+
+// ============================================================================
+// DISPONIBILIDADE DO CORRETOR (AGENDA)
+// ============================================================================
+
+/**
+ * Buscar disponibilidade do corretor
+ */
+export async function getDisponibilidadeCorretor(corretorId: number): Promise<DisponibilidadeCorretor[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(disponibilidadeCorretor)
+    .where(and(
+      eq(disponibilidadeCorretor.corretorId, corretorId),
+      eq(disponibilidadeCorretor.ativo, true)
+    ))
+    .orderBy(disponibilidadeCorretor.diaSemana);
+}
+
+/**
+ * Criar ou atualizar disponibilidade do corretor
+ */
+export async function upsertDisponibilidadeCorretor(data: InsertDisponibilidadeCorretor): Promise<DisponibilidadeCorretor | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Verificar se já existe para este dia
+  const existing = await db.select()
+    .from(disponibilidadeCorretor)
+    .where(and(
+      eq(disponibilidadeCorretor.corretorId, data.corretorId),
+      eq(disponibilidadeCorretor.diaSemana, data.diaSemana)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) {
+    // Atualizar
+    await db.update(disponibilidadeCorretor)
+      .set({
+        horaInicio: data.horaInicio,
+        horaFim: data.horaFim,
+        intervaloInicio: data.intervaloInicio,
+        intervaloFim: data.intervaloFim,
+        duracaoSlot: data.duracaoSlot,
+        ativo: data.ativo ?? true
+      })
+      .where(eq(disponibilidadeCorretor.id, existing[0].id));
+    
+    const updated = await db.select().from(disponibilidadeCorretor).where(eq(disponibilidadeCorretor.id, existing[0].id)).limit(1);
+    return updated[0] || null;
+  } else {
+    // Inserir
+    const result = await db.insert(disponibilidadeCorretor).values(data);
+    const inserted = await db.select().from(disponibilidadeCorretor).where(eq(disponibilidadeCorretor.id, result[0].insertId)).limit(1);
+    return inserted[0] || null;
+  }
+}
+
+/**
+ * Deletar disponibilidade
+ */
+export async function deleteDisponibilidadeCorretor(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.delete(disponibilidadeCorretor).where(eq(disponibilidadeCorretor.id, id));
+  return true;
+}
+
+// ============================================================================
+// BLOQUEIOS DE AGENDA
+// ============================================================================
+
+/**
+ * Buscar bloqueios de agenda do corretor
+ */
+export async function getBloqueiosAgenda(corretorId: number, dataInicio?: Date, dataFim?: Date): Promise<BloqueioAgenda[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(bloqueiosAgenda.corretorId, corretorId)];
+  
+  if (dataInicio) {
+    conditions.push(gte(bloqueiosAgenda.dataFim, dataInicio));
+  }
+  if (dataFim) {
+    conditions.push(lte(bloqueiosAgenda.dataInicio, dataFim));
+  }
+  
+  return await db.select()
+    .from(bloqueiosAgenda)
+    .where(and(...conditions))
+    .orderBy(bloqueiosAgenda.dataInicio);
+}
+
+/**
+ * Criar bloqueio de agenda
+ */
+export async function createBloqueioAgenda(data: InsertBloqueioAgenda): Promise<BloqueioAgenda | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(bloqueiosAgenda).values(data);
+  const inserted = await db.select().from(bloqueiosAgenda).where(eq(bloqueiosAgenda.id, result[0].insertId)).limit(1);
+  return inserted[0] || null;
+}
+
+/**
+ * Deletar bloqueio de agenda
+ */
+export async function deleteBloqueioAgenda(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.delete(bloqueiosAgenda).where(eq(bloqueiosAgenda.id, id));
+  return true;
+}
+
+// ============================================================================
+// LINKS DE AGENDAMENTO SELF-SERVICE
+// ============================================================================
+
+/**
+ * Criar link de agendamento
+ */
+export async function createLinkAgendamento(data: InsertLinkAgendamento): Promise<LinkAgendamento | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Gerar token único
+  const token = crypto.randomUUID().replace(/-/g, '');
+  
+  const result = await db.insert(linksAgendamento).values({
+    ...data,
+    token
+  });
+  
+  const inserted = await db.select().from(linksAgendamento).where(eq(linksAgendamento.id, result[0].insertId)).limit(1);
+  return inserted[0] || null;
+}
+
+/**
+ * Buscar link por token
+ */
+export async function getLinkAgendamentoByToken(token: string): Promise<LinkAgendamento | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(linksAgendamento)
+    .where(and(
+      eq(linksAgendamento.token, token),
+      eq(linksAgendamento.ativo, true)
+    ))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+/**
+ * Buscar links do corretor
+ */
+export async function getLinksAgendamentoCorretor(corretorId: number): Promise<LinkAgendamento[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(linksAgendamento)
+    .where(eq(linksAgendamento.corretorId, corretorId))
+    .orderBy(desc(linksAgendamento.createdAt));
+}
+
+/**
+ * Incrementar contador de agendamentos do link
+ */
+export async function incrementarAgendamentosLink(linkId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(linksAgendamento)
+    .set({
+      agendamentosRealizados: sql`${linksAgendamento.agendamentosRealizados} + 1`
+    })
+    .where(eq(linksAgendamento.id, linkId));
+}
+
+/**
+ * Buscar slots disponíveis para agendamento
+ */
+export async function getSlotsDisponiveis(corretorId: number, data: Date): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const diaSemana = data.getDay(); // 0 = domingo, 1 = segunda, etc.
+  
+  // Buscar disponibilidade do corretor para este dia
+  const disponibilidade = await db.select()
+    .from(disponibilidadeCorretor)
+    .where(and(
+      eq(disponibilidadeCorretor.corretorId, corretorId),
+      eq(disponibilidadeCorretor.diaSemana, diaSemana),
+      eq(disponibilidadeCorretor.ativo, true)
+    ))
+    .limit(1);
+  
+  if (disponibilidade.length === 0) {
+    return []; // Corretor não trabalha neste dia
+  }
+  
+  const config = disponibilidade[0];
+  const slots: string[] = [];
+  
+  // Gerar slots baseado no horário de trabalho
+  const [horaInicio, minInicio] = config.horaInicio.split(':').map(Number);
+  const [horaFim, minFim] = config.horaFim.split(':').map(Number);
+  const duracaoSlot = config.duracaoSlot || 60;
+  
+  let horaAtual = horaInicio;
+  let minAtual = minInicio;
+  
+  while (horaAtual < horaFim || (horaAtual === horaFim && minAtual < minFim)) {
+    const slot = `${String(horaAtual).padStart(2, '0')}:${String(minAtual).padStart(2, '0')}`;
+    
+    // Verificar se está no intervalo de almoço
+    if (config.intervaloInicio && config.intervaloFim) {
+      const [intInicio, intMinInicio] = config.intervaloInicio.split(':').map(Number);
+      const [intFim, intMinFim] = config.intervaloFim.split(':').map(Number);
+      
+      const slotMinutos = horaAtual * 60 + minAtual;
+      const intervaloInicioMin = intInicio * 60 + intMinInicio;
+      const intervaloFimMin = intFim * 60 + intMinFim;
+      
+      if (slotMinutos >= intervaloInicioMin && slotMinutos < intervaloFimMin) {
+        // Pular para o fim do intervalo
+        horaAtual = intFim;
+        minAtual = intMinFim;
+        continue;
+      }
+    }
+    
+    slots.push(slot);
+    
+    // Avançar para o próximo slot
+    minAtual += duracaoSlot;
+    while (minAtual >= 60) {
+      minAtual -= 60;
+      horaAtual++;
+    }
+  }
+  
+  // Remover slots já ocupados por agendamentos
+  const inicioData = new Date(data);
+  inicioData.setHours(0, 0, 0, 0);
+  const fimData = new Date(data);
+  fimData.setHours(23, 59, 59, 999);
+  
+  const agendamentosExistentes = await db.select({ horaAgendamento: agendamentos.horaAgendamento })
+    .from(agendamentos)
+    .where(and(
+      eq(agendamentos.corretorId, corretorId),
+      gte(agendamentos.dataAgendamento, inicioData),
+      lte(agendamentos.dataAgendamento, fimData),
+      inArray(agendamentos.status, ['pendente', 'confirmado'])
+    ));
+  
+  const horariosOcupados = new Set(agendamentosExistentes.map(a => a.horaAgendamento));
+  
+  // Verificar bloqueios
+  const bloqueios = await getBloqueiosAgenda(corretorId, inicioData, fimData);
+  
+  return slots.filter(slot => {
+    // Verificar se não está ocupado
+    if (horariosOcupados.has(slot)) return false;
+    
+    // Verificar se não está em um bloqueio
+    const [h, m] = slot.split(':').map(Number);
+    const slotDate = new Date(data);
+    slotDate.setHours(h, m, 0, 0);
+    
+    for (const bloqueio of bloqueios) {
+      if (bloqueio.diaInteiro) return false;
+      if (slotDate >= bloqueio.dataInicio && slotDate < bloqueio.dataFim) return false;
+    }
+    
+    return true;
+  });
+}
+
+// ============================================================================
+// CHATBOT DE PRÉ-QUALIFICAÇÃO
+// ============================================================================
+
+/**
+ * Criar sessão de chatbot
+ */
+export async function createConversaChatbot(data: Partial<InsertConversaChatbot>): Promise<ConversaChatbot | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const sessionId = crypto.randomUUID().replace(/-/g, '');
+  
+  const result = await db.insert(conversasChatbot).values({
+    sessionId,
+    historico: JSON.stringify([]),
+    ...data
+  });
+  
+  const inserted = await db.select().from(conversasChatbot).where(eq(conversasChatbot.id, result[0].insertId)).limit(1);
+  return inserted[0] || null;
+}
+
+/**
+ * Buscar conversa por sessionId
+ */
+export async function getConversaChatbotBySession(sessionId: string): Promise<ConversaChatbot | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(conversasChatbot)
+    .where(eq(conversasChatbot.sessionId, sessionId))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+/**
+ * Atualizar conversa do chatbot
+ */
+export async function updateConversaChatbot(sessionId: string, data: Partial<InsertConversaChatbot>): Promise<ConversaChatbot | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(conversasChatbot)
+    .set(data)
+    .where(eq(conversasChatbot.sessionId, sessionId));
+  
+  return await getConversaChatbotBySession(sessionId);
+}
+
+/**
+ * Adicionar mensagem ao histórico
+ */
+export async function addMensagemChatbot(sessionId: string, role: 'bot' | 'user', message: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const conversa = await getConversaChatbotBySession(sessionId);
+  if (!conversa) return;
+  
+  const historico = conversa.historico ? JSON.parse(conversa.historico) : [];
+  historico.push({
+    role,
+    message,
+    timestamp: new Date().toISOString()
+  });
+  
+  await db.update(conversasChatbot)
+    .set({ historico: JSON.stringify(historico) })
+    .where(eq(conversasChatbot.sessionId, sessionId));
+}
+
+/**
+ * Buscar FAQs do chatbot
+ */
+export async function getFaqsChatbot(categoria?: string, projectId?: number): Promise<FaqChatbot[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [eq(faqChatbot.ativo, true)];
+  
+  if (categoria) {
+    conditions.push(eq(faqChatbot.categoria, categoria as any));
+  }
+  if (projectId) {
+    conditions.push(or(
+      eq(faqChatbot.projectId, projectId),
+      sql`${faqChatbot.projectId} IS NULL`
+    )!);
+  }
+  
+  return await db.select()
+    .from(faqChatbot)
+    .where(and(...conditions))
+    .orderBy(desc(faqChatbot.prioridade));
+}
+
+/**
+ * Criar FAQ
+ */
+export async function createFaqChatbot(data: InsertFaqChatbot): Promise<FaqChatbot | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(faqChatbot).values(data);
+  const inserted = await db.select().from(faqChatbot).where(eq(faqChatbot.id, result[0].insertId)).limit(1);
+  return inserted[0] || null;
+}
+
+/**
+ * Converter conversa em lead
+ */
+export async function converterConversaEmLead(sessionId: string, corretorId?: number): Promise<Lead | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const conversa = await getConversaChatbotBySession(sessionId);
+  if (!conversa || !conversa.nome || !conversa.telefone) return null;
+  
+  // Criar lead
+  const lead = await createLead({
+    nome: conversa.nome,
+    telefone: conversa.telefone,
+    email: conversa.email || undefined,
+    projectId: conversa.projectId || undefined,
+    origem: 'chatbot',
+    faixaRenda: conversa.rendaFamiliar || undefined,
+    observacoes: `Lead gerado pelo chatbot. Prazo de compra: ${conversa.prazoCompra || 'não informado'}`,
+    corretorId: corretorId
+  });
+  
+  if (lead) {
+    // Atualizar conversa com o lead criado
+    await db.update(conversasChatbot)
+      .set({
+        status: 'convertido_lead',
+        leadId: lead.id,
+        corretorId: corretorId
+      })
+      .where(eq(conversasChatbot.sessionId, sessionId));
+  }
+  
+  return lead;
+}
+
+// ============================================================================
+// PROPOSTAS DIGITAIS
+// ============================================================================
+
+/**
+ * Criar proposta
+ */
+export async function createProposta(data: InsertProposta): Promise<Proposta | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Gerar token único
+  const token = crypto.randomUUID().replace(/-/g, '');
+  
+  const result = await db.insert(propostas).values({
+    ...data,
+    token
+  });
+  
+  const inserted = await db.select().from(propostas).where(eq(propostas.id, result[0].insertId)).limit(1);
+  return inserted[0] || null;
+}
+
+/**
+ * Buscar proposta por ID
+ */
+export async function getPropostaById(id: number): Promise<Proposta | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(propostas)
+    .where(eq(propostas.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+/**
+ * Buscar proposta por token
+ */
+export async function getPropostaByToken(token: string): Promise<Proposta | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(propostas)
+    .where(eq(propostas.token, token))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
+/**
+ * Buscar propostas do corretor
+ */
+export async function getPropostasCorretor(corretorId: number): Promise<Proposta[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(propostas)
+    .where(eq(propostas.corretorId, corretorId))
+    .orderBy(desc(propostas.createdAt));
+}
+
+/**
+ * Buscar propostas do lead
+ */
+export async function getPropostasLead(leadId: number): Promise<Proposta[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select()
+    .from(propostas)
+    .where(eq(propostas.leadId, leadId))
+    .orderBy(desc(propostas.createdAt));
+}
+
+/**
+ * Atualizar proposta
+ */
+export async function updateProposta(id: number, data: Partial<InsertProposta>): Promise<Proposta | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(propostas)
+    .set(data)
+    .where(eq(propostas.id, id));
+  
+  return await getPropostaById(id);
+}
+
+/**
+ * Registrar visualização da proposta
+ */
+export async function registrarVisualizacaoProposta(token: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  const proposta = await getPropostaByToken(token);
+  if (!proposta) return;
+  
+  const updates: Partial<Proposta> = {
+    visualizacoes: (proposta.visualizacoes || 0) + 1,
+    ultimaVisualizacao: new Date()
+  };
+  
+  if (!proposta.primeiraVisualizacao) {
+    updates.primeiraVisualizacao = new Date();
+  }
+  
+  if (proposta.status === 'enviada') {
+    updates.status = 'visualizada';
+  }
+  
+  await db.update(propostas)
+    .set(updates)
+    .where(eq(propostas.token, token));
+}
+
+/**
+ * Registrar aceite da proposta
+ */
+export async function registrarAceiteProposta(token: string, ip: string, assinatura?: string): Promise<Proposta | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(propostas)
+    .set({
+      status: 'aceita',
+      aceiteEm: new Date(),
+      ipAceite: ip,
+      assinaturaDigital: assinatura
+    })
+    .where(eq(propostas.token, token));
+  
+  return await getPropostaByToken(token);
+}
+
+/**
+ * Buscar todas as propostas (para gestores)
+ */
+export async function getAllPropostas(filtros?: {
+  corretorId?: number;
+  projectId?: number;
+  status?: string;
+  dataInicio?: Date;
+  dataFim?: Date;
+}): Promise<Proposta[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions = [];
+  
+  if (filtros?.corretorId) {
+    conditions.push(eq(propostas.corretorId, filtros.corretorId));
+  }
+  if (filtros?.projectId) {
+    conditions.push(eq(propostas.projectId, filtros.projectId));
+  }
+  if (filtros?.status) {
+    conditions.push(eq(propostas.status, filtros.status as any));
+  }
+  if (filtros?.dataInicio) {
+    conditions.push(gte(propostas.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(propostas.createdAt, filtros.dataFim));
+  }
+  
+  if (conditions.length === 0) {
+    return await db.select()
+      .from(propostas)
+      .orderBy(desc(propostas.createdAt))
+      .limit(100);
+  }
+  
+  return await db.select()
+    .from(propostas)
+    .where(and(...conditions))
+    .orderBy(desc(propostas.createdAt));
 }

@@ -1091,3 +1091,336 @@ export const resumoPresencaDiaria = mysqlTable("resumo_presenca_diaria", {
 
 export type ResumoPresencaDiaria = typeof resumoPresencaDiaria.$inferSelect;
 export type InsertResumoPresencaDiaria = typeof resumoPresencaDiaria.$inferInsert;
+
+
+// ============================================================================
+// TABELA DE DISPONIBILIDADE DO CORRETOR (AGENDA)
+// ============================================================================
+
+/**
+ * Configuração de horários de trabalho do corretor
+ * Define os dias e horários em que o corretor está disponível para agendamentos
+ */
+export const disponibilidadeCorretor = mysqlTable("disponibilidade_corretor", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamento
+  corretorId: int("corretorId").notNull(),
+  
+  // Dia da semana (0 = domingo, 1 = segunda, ..., 6 = sábado)
+  diaSemana: int("diaSemana").notNull(),
+  
+  // Horários de trabalho
+  horaInicio: varchar("horaInicio", { length: 5 }).notNull(), // "09:00"
+  horaFim: varchar("horaFim", { length: 5 }).notNull(), // "18:00"
+  
+  // Intervalo de almoço (opcional)
+  intervaloInicio: varchar("intervaloInicio", { length: 5 }), // "12:00"
+  intervaloFim: varchar("intervaloFim", { length: 5 }), // "13:00"
+  
+  // Duração padrão de cada slot de agendamento (em minutos)
+  duracaoSlot: int("duracaoSlot").default(60).notNull(),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("disponibilidade_corretor_idx").on(table.corretorId),
+  diaIdx: index("disponibilidade_dia_idx").on(table.diaSemana),
+}));
+
+export type DisponibilidadeCorretor = typeof disponibilidadeCorretor.$inferSelect;
+export type InsertDisponibilidadeCorretor = typeof disponibilidadeCorretor.$inferInsert;
+
+// ============================================================================
+// TABELA DE BLOQUEIOS DE AGENDA
+// ============================================================================
+
+/**
+ * Bloqueios específicos na agenda do corretor
+ * Para férias, compromissos pessoais, reuniões, etc.
+ */
+export const bloqueiosAgenda = mysqlTable("bloqueios_agenda", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamento
+  corretorId: int("corretorId").notNull(),
+  
+  // Período do bloqueio
+  dataInicio: timestamp("dataInicio").notNull(),
+  dataFim: timestamp("dataFim").notNull(),
+  
+  // Tipo de bloqueio
+  tipo: mysqlEnum("tipo", [
+    "ferias",
+    "folga",
+    "reuniao",
+    "compromisso_pessoal",
+    "treinamento",
+    "outro"
+  ]).default("outro").notNull(),
+  
+  // Descrição
+  motivo: varchar("motivo", { length: 255 }),
+  
+  // Se bloqueia o dia inteiro ou apenas um período
+  diaInteiro: boolean("diaInteiro").default(false).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("bloqueios_corretor_idx").on(table.corretorId),
+  dataInicioIdx: index("bloqueios_data_inicio_idx").on(table.dataInicio),
+  dataFimIdx: index("bloqueios_data_fim_idx").on(table.dataFim),
+}));
+
+export type BloqueioAgenda = typeof bloqueiosAgenda.$inferSelect;
+export type InsertBloqueioAgenda = typeof bloqueiosAgenda.$inferInsert;
+
+// ============================================================================
+// TABELA DE LINKS DE AGENDAMENTO SELF-SERVICE
+// ============================================================================
+
+/**
+ * Links únicos para agendamento self-service
+ * Permite que clientes agendem visitas diretamente
+ */
+export const linksAgendamento = mysqlTable("links_agendamento", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamentos
+  corretorId: int("corretorId").notNull(),
+  leadId: int("leadId"), // Opcional - pode ser um link genérico
+  projectId: int("projectId"), // Opcional - pode ser específico para um projeto
+  
+  // Token único para o link
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  
+  // Configurações do link
+  titulo: varchar("titulo", { length: 255 }), // Ex: "Agende sua visita ao Residencial XYZ"
+  mensagemBoasVindas: text("mensagemBoasVindas"),
+  
+  // Validade do link
+  validoAte: timestamp("validoAte"), // Null = sem expiração
+  maxAgendamentos: int("maxAgendamentos"), // Null = ilimitado
+  agendamentosRealizados: int("agendamentosRealizados").default(0).notNull(),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("links_corretor_idx").on(table.corretorId),
+  tokenIdx: index("links_token_idx").on(table.token),
+}));
+
+export type LinkAgendamento = typeof linksAgendamento.$inferSelect;
+export type InsertLinkAgendamento = typeof linksAgendamento.$inferInsert;
+
+// ============================================================================
+// TABELA DE CONVERSAS DO CHATBOT
+// ============================================================================
+
+/**
+ * Registro de conversas do chatbot de pré-qualificação
+ */
+export const conversasChatbot = mysqlTable("conversas_chatbot", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identificador único da sessão
+  sessionId: varchar("sessionId", { length: 64 }).notNull().unique(),
+  
+  // Dados coletados do visitante
+  nome: varchar("nome", { length: 255 }),
+  telefone: varchar("telefone", { length: 20 }),
+  email: varchar("email", { length: 320 }),
+  
+  // Interesse
+  projectId: int("projectId"), // Projeto de interesse
+  tipoImovel: varchar("tipoImovel", { length: 100 }),
+  faixaPreco: varchar("faixaPreco", { length: 100 }),
+  regiao: varchar("regiao", { length: 100 }),
+  
+  // Qualificação
+  temRenda: boolean("temRenda"),
+  rendaFamiliar: varchar("rendaFamiliar", { length: 100 }),
+  temEntrada: boolean("temEntrada"),
+  valorEntrada: varchar("valorEntrada", { length: 100 }),
+  prazoCompra: varchar("prazoCompra", { length: 100 }), // "imediato", "3_meses", "6_meses", "1_ano"
+  
+  // Status da conversa
+  status: mysqlEnum("status", [
+    "em_andamento",
+    "qualificado",
+    "nao_qualificado",
+    "agendamento_solicitado",
+    "convertido_lead",
+    "abandonado"
+  ]).default("em_andamento").notNull(),
+  
+  // Se foi convertido em lead
+  leadId: int("leadId"),
+  corretorId: int("corretorId"), // Corretor atribuído
+  
+  // Histórico de mensagens (JSON)
+  historico: text("historico"), // [{role: "bot"|"user", message: string, timestamp: string}]
+  
+  // Agendamento de retorno
+  agendamentoRetorno: timestamp("agendamentoRetorno"),
+  
+  // Origem
+  origem: varchar("origem", { length: 100 }), // URL de onde veio
+  dispositivo: varchar("dispositivo", { length: 50 }), // mobile, desktop
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  sessionIdx: index("conversas_session_idx").on(table.sessionId),
+  statusIdx: index("conversas_status_idx").on(table.status),
+  leadIdx: index("conversas_lead_idx").on(table.leadId),
+}));
+
+export type ConversaChatbot = typeof conversasChatbot.$inferSelect;
+export type InsertConversaChatbot = typeof conversasChatbot.$inferInsert;
+
+// ============================================================================
+// TABELA DE PERGUNTAS FREQUENTES (FAQ) DO CHATBOT
+// ============================================================================
+
+/**
+ * Base de conhecimento para o chatbot responder perguntas frequentes
+ */
+export const faqChatbot = mysqlTable("faq_chatbot", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Pergunta e resposta
+  pergunta: text("pergunta").notNull(),
+  resposta: text("resposta").notNull(),
+  
+  // Palavras-chave para matching
+  palavrasChave: text("palavrasChave"), // JSON array de palavras-chave
+  
+  // Categoria
+  categoria: mysqlEnum("categoria", [
+    "financiamento",
+    "documentacao",
+    "visita",
+    "preco",
+    "localizacao",
+    "empreendimento",
+    "empresa",
+    "geral"
+  ]).default("geral").notNull(),
+  
+  // Projeto específico (opcional)
+  projectId: int("projectId"),
+  
+  // Ordem de prioridade
+  prioridade: int("prioridade").default(0).notNull(),
+  
+  // Status
+  ativo: boolean("ativo").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  categoriaIdx: index("faq_categoria_idx").on(table.categoria),
+  projectIdx: index("faq_project_idx").on(table.projectId),
+}));
+
+export type FaqChatbot = typeof faqChatbot.$inferSelect;
+export type InsertFaqChatbot = typeof faqChatbot.$inferInsert;
+
+// ============================================================================
+// TABELA DE PROPOSTAS DIGITAIS
+// ============================================================================
+
+/**
+ * Propostas digitais interativas geradas para clientes
+ */
+export const propostas = mysqlTable("propostas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Relacionamentos
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  projectId: int("projectId").notNull(),
+  
+  // Token único para acesso
+  token: varchar("token", { length: 64 }).notNull().unique(),
+  
+  // Dados do cliente na proposta
+  nomeCliente: varchar("nomeCliente", { length: 255 }).notNull(),
+  emailCliente: varchar("emailCliente", { length: 320 }),
+  telefoneCliente: varchar("telefoneCliente", { length: 20 }),
+  
+  // Dados do imóvel
+  unidade: varchar("unidade", { length: 50 }), // Ex: "Apto 101, Torre A"
+  tipologia: varchar("tipologia", { length: 100 }), // Ex: "2 dormitórios, 1 suíte"
+  metragem: int("metragem"), // m²
+  
+  // Valores
+  valorImovel: int("valorImovel").notNull(), // em centavos
+  valorEntrada: int("valorEntrada"), // em centavos
+  valorFinanciamento: int("valorFinanciamento"), // em centavos
+  parcelas: int("parcelas"),
+  valorParcela: int("valorParcela"), // em centavos
+  taxaJuros: varchar("taxaJuros", { length: 20 }), // Ex: "9.5% a.a."
+  
+  // Condições especiais
+  desconto: int("desconto"), // em centavos
+  motivoDesconto: varchar("motivoDesconto", { length: 255 }),
+  
+  // Conteúdo personalizado
+  mensagemPersonalizada: text("mensagemPersonalizada"),
+  
+  // Imagens selecionadas (JSON array de URLs)
+  imagensSelecionadas: text("imagensSelecionadas"),
+  
+  // Plantas selecionadas (JSON array de URLs)
+  plantasSelecionadas: text("plantasSelecionadas"),
+  
+  // Vídeos (JSON array de URLs)
+  videos: text("videos"),
+  
+  // Validade da proposta
+  validoAte: timestamp("validoAte"),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "rascunho",
+    "enviada",
+    "visualizada",
+    "aceita",
+    "recusada",
+    "expirada"
+  ]).default("rascunho").notNull(),
+  
+  // Tracking
+  visualizacoes: int("visualizacoes").default(0).notNull(),
+  primeiraVisualizacao: timestamp("primeiraVisualizacao"),
+  ultimaVisualizacao: timestamp("ultimaVisualizacao"),
+  
+  // Aceite digital
+  aceiteEm: timestamp("aceiteEm"),
+  ipAceite: varchar("ipAceite", { length: 45 }),
+  assinaturaDigital: text("assinaturaDigital"), // Base64 da assinatura
+  
+  // URL do PDF gerado
+  pdfUrl: text("pdfUrl"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  leadIdx: index("propostas_lead_idx").on(table.leadId),
+  corretorIdx: index("propostas_corretor_idx").on(table.corretorId),
+  projectIdx: index("propostas_project_idx").on(table.projectId),
+  tokenIdx: index("propostas_token_idx").on(table.token),
+  statusIdx: index("propostas_status_idx").on(table.status),
+}));
+
+export type Proposta = typeof propostas.$inferSelect;
+export type InsertProposta = typeof propostas.$inferInsert;

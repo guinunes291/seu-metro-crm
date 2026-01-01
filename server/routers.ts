@@ -2707,5 +2707,541 @@ export const appRouter = router({
         };
       }),
   }),
+
+  // ============================================================================
+  // AGENDA DO CORRETOR (DISPONIBILIDADE)
+  // ============================================================================
+  
+  agenda: router({
+    // Buscar disponibilidade do corretor
+    getDisponibilidade: corretorProcedure
+      .input(z.object({ corretorId: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const corretorId = input?.corretorId || ctx.user.id;
+        return await db.getDisponibilidadeCorretor(corretorId);
+      }),
+    
+    // Salvar disponibilidade
+    saveDisponibilidade: corretorProcedure
+      .input(z.object({
+        diaSemana: z.number().min(0).max(6),
+        horaInicio: z.string(),
+        horaFim: z.string(),
+        intervaloInicio: z.string().optional(),
+        intervaloFim: z.string().optional(),
+        duracaoSlot: z.number().default(60),
+        ativo: z.boolean().default(true)
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.upsertDisponibilidadeCorretor({
+          corretorId: ctx.user.id,
+          ...input
+        });
+      }),
+    
+    // Deletar disponibilidade
+    deleteDisponibilidade: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteDisponibilidadeCorretor(input.id);
+      }),
+    
+    // Buscar bloqueios
+    getBloqueios: corretorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional()
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const corretorId = input?.corretorId || ctx.user.id;
+        return await db.getBloqueiosAgenda(
+          corretorId,
+          input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          input?.dataFim ? new Date(input.dataFim) : undefined
+        );
+      }),
+    
+    // Criar bloqueio
+    createBloqueio: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+        tipo: z.enum(['ferias', 'folga', 'reuniao', 'compromisso_pessoal', 'treinamento', 'outro']),
+        motivo: z.string().optional(),
+        diaInteiro: z.boolean().default(false)
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.createBloqueioAgenda({
+          corretorId: ctx.user.id,
+          dataInicio: new Date(input.dataInicio),
+          dataFim: new Date(input.dataFim),
+          tipo: input.tipo,
+          motivo: input.motivo,
+          diaInteiro: input.diaInteiro
+        });
+      }),
+    
+    // Deletar bloqueio
+    deleteBloqueio: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteBloqueioAgenda(input.id);
+      }),
+    
+    // Buscar slots disponíveis
+    getSlotsDisponiveis: publicProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        data: z.string()
+      }))
+      .query(async ({ input }) => {
+        return await db.getSlotsDisponiveis(input.corretorId, new Date(input.data));
+      }),
+  }),
+
+  // ============================================================================
+  // LINKS DE AGENDAMENTO SELF-SERVICE
+  // ============================================================================
+  
+  linksAgendamento: router({
+    // Criar link
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number().optional(),
+        projectId: z.number().optional(),
+        titulo: z.string().optional(),
+        mensagemBoasVindas: z.string().optional(),
+        validoAte: z.string().optional(),
+        maxAgendamentos: z.number().optional()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.createLinkAgendamento({
+          corretorId: ctx.user.id,
+          leadId: input.leadId,
+          projectId: input.projectId,
+          titulo: input.titulo,
+          mensagemBoasVindas: input.mensagemBoasVindas,
+          validoAte: input.validoAte ? new Date(input.validoAte) : undefined,
+          maxAgendamentos: input.maxAgendamentos,
+          token: '' // Será gerado no db
+        });
+      }),
+    
+    // Listar links do corretor
+    list: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getLinksAgendamentoCorretor(ctx.user.id);
+      }),
+    
+    // Buscar link por token (público)
+    getByToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const link = await db.getLinkAgendamentoByToken(input.token);
+        if (!link) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Link não encontrado ou expirado' });
+        }
+        
+        // Verificar validade
+        if (link.validoAte && new Date(link.validoAte) < new Date()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Link expirado' });
+        }
+        
+        // Verificar limite de agendamentos
+        if (link.maxAgendamentos && link.agendamentosRealizados >= link.maxAgendamentos) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Limite de agendamentos atingido' });
+        }
+        
+        // Buscar dados do corretor e projeto
+        const corretor = await db.getUserById(link.corretorId);
+        const projeto = link.projectId ? await db.getProjectById(link.projectId) : null;
+        
+        return {
+          ...link,
+          corretor: corretor ? { id: corretor.id, name: corretor.name, fotoUrl: corretor.fotoUrl } : null,
+          projeto: projeto ? { id: projeto.id, nome: projeto.nome, construtora: projeto.construtora } : null
+        };
+      }),
+    
+    // Criar agendamento via link (público)
+    agendar: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        nome: z.string(),
+        telefone: z.string(),
+        email: z.string().optional(),
+        data: z.string(),
+        hora: z.string(),
+        observacoes: z.string().optional()
+      }))
+      .mutation(async ({ input }) => {
+        const link = await db.getLinkAgendamentoByToken(input.token);
+        if (!link) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Link não encontrado' });
+        }
+        
+        // Verificar se o slot ainda está disponível
+        const slots = await db.getSlotsDisponiveis(link.corretorId, new Date(input.data));
+        if (!slots.includes(input.hora)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Horário não disponível' });
+        }
+        
+        // Criar ou buscar lead
+        let lead = await db.searchLeadByTelefone(input.telefone);
+        let leadId: number;
+        
+        if (lead && lead.length > 0) {
+          leadId = lead[0].id;
+        } else {
+          const novoLead = await db.createLead({
+            nome: input.nome,
+            telefone: input.telefone,
+            email: input.email,
+            projectId: link.projectId || undefined,
+            corretorId: link.corretorId,
+            origem: 'agendamento_self_service'
+          });
+          if (!novoLead) {
+            throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar lead' });
+          }
+          leadId = novoLead.id;
+        }
+        
+        // Criar agendamento
+        const agendamento = await db.createAgendamento({
+          leadId,
+          corretorId: link.corretorId,
+          projectId: link.projectId || undefined,
+          dataAgendamento: new Date(input.data),
+          horaAgendamento: input.hora,
+          observacoes: input.observacoes
+        });
+        
+        // Incrementar contador do link
+        await db.incrementarAgendamentosLink(link.id);
+        
+        return { success: true, agendamento };
+      }),
+  }),
+
+  // ============================================================================
+  // CHATBOT DE PRÉ-QUALIFICAÇÃO
+  // ============================================================================
+  
+  chatbot: router({
+    // Iniciar conversa
+    iniciar: publicProcedure
+      .input(z.object({
+        origem: z.string().optional(),
+        dispositivo: z.string().optional(),
+        projectId: z.number().optional()
+      }).optional())
+      .mutation(async ({ input }) => {
+        const conversa = await db.createConversaChatbot({
+          origem: input?.origem,
+          dispositivo: input?.dispositivo,
+          projectId: input?.projectId
+        });
+        
+        if (!conversa) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao iniciar conversa' });
+        }
+        
+        // Adicionar mensagem de boas-vindas
+        await db.addMensagemChatbot(conversa.sessionId, 'bot', 
+          'Olá! Bem-vindo à Seu Metro Quadrado! \ud83c\udfe0\n\nSou o assistente virtual e estou aqui para ajudá-lo a encontrar o imóvel ideal.\n\nPara começar, qual é o seu nome?'
+        );
+        
+        return conversa;
+      }),
+    
+    // Buscar conversa
+    getBySession: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getConversaChatbotBySession(input.sessionId);
+      }),
+    
+    // Enviar mensagem
+    enviarMensagem: publicProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        mensagem: z.string()
+      }))
+      .mutation(async ({ input }) => {
+        const conversa = await db.getConversaChatbotBySession(input.sessionId);
+        if (!conversa) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Conversa não encontrada' });
+        }
+        
+        // Registrar mensagem do usuário
+        await db.addMensagemChatbot(input.sessionId, 'user', input.mensagem);
+        
+        // Processar resposta baseado no estado da conversa
+        let resposta = '';
+        const updates: Record<string, any> = {};
+        
+        if (!conversa.nome) {
+          updates.nome = input.mensagem;
+          resposta = `Prazer em conhecê-lo, ${input.mensagem}! \ud83d\ude0a\n\nAgora, por favor, me informe seu telefone com DDD para que possamos entrar em contato:`;
+        } else if (!conversa.telefone) {
+          updates.telefone = input.mensagem.replace(/\D/g, '');
+          resposta = 'Perfeito! E qual é o seu e-mail? (ou digite "pular" para continuar)';
+        } else if (!conversa.email && input.mensagem.toLowerCase() !== 'pular') {
+          if (input.mensagem.includes('@')) {
+            updates.email = input.mensagem;
+          }
+          resposta = 'Qual região de São Paulo você tem interesse?\n\n1. Zona Norte\n2. Zona Sul\n3. Zona Leste\n4. Zona Oeste\n5. Centro\n6. Ainda não decidi';
+        } else if (!conversa.regiao) {
+          const regioes: Record<string, string> = {
+            '1': 'Zona Norte', '2': 'Zona Sul', '3': 'Zona Leste',
+            '4': 'Zona Oeste', '5': 'Centro', '6': 'Indefinida'
+          };
+          updates.regiao = regioes[input.mensagem] || input.mensagem;
+          resposta = 'Qual é a sua faixa de renda familiar mensal?\n\n1. Até R$ 2.640\n2. R$ 2.640 a R$ 4.400\n3. R$ 4.400 a R$ 8.000\n4. Acima de R$ 8.000';
+        } else if (!conversa.rendaFamiliar) {
+          const rendas: Record<string, string> = {
+            '1': 'Até R$ 2.640', '2': 'R$ 2.640 a R$ 4.400',
+            '3': 'R$ 4.400 a R$ 8.000', '4': 'Acima de R$ 8.000'
+          };
+          updates.rendaFamiliar = rendas[input.mensagem] || input.mensagem;
+          resposta = 'Você possui valor para entrada?\n\n1. Sim\n2. Não\n3. Estou juntando';
+        } else if (conversa.temEntrada === null) {
+          updates.temEntrada = input.mensagem === '1';
+          resposta = 'Qual é o seu prazo para comprar?\n\n1. Imediato (até 30 dias)\n2. 1 a 3 meses\n3. 3 a 6 meses\n4. Mais de 6 meses';
+        } else if (!conversa.prazoCompra) {
+          const prazos: Record<string, string> = {
+            '1': 'imediato', '2': '1_3_meses', '3': '3_6_meses', '4': 'mais_6_meses'
+          };
+          updates.prazoCompra = prazos[input.mensagem] || input.mensagem;
+          updates.status = 'qualificado';
+          resposta = 'Ótimo! Coletei todas as informações necessárias. \ud83c\udf89\n\nUm de nossos corretores especializados entrará em contato em breve para apresentar as melhores opções para você!\n\nDeseja agendar uma visita agora mesmo?\n\n1. Sim, quero agendar\n2. Prefiro aguardar o contato';
+        } else if (conversa.status === 'qualificado') {
+          if (input.mensagem === '1') {
+            updates.status = 'agendamento_solicitado';
+            resposta = 'Perfeito! Em breve você receberá um link para escolher o melhor horário para sua visita. Obrigado pelo interesse! \ud83c\udfe0';
+          } else {
+            resposta = 'Sem problemas! Nossa equipe entrará em contato em breve. Obrigado pelo interesse na Seu Metro Quadrado! \ud83c\udfe0';
+          }
+        }
+        
+        // Atualizar conversa
+        if (Object.keys(updates).length > 0) {
+          await db.updateConversaChatbot(input.sessionId, updates);
+        }
+        
+        // Registrar resposta do bot
+        if (resposta) {
+          await db.addMensagemChatbot(input.sessionId, 'bot', resposta);
+        }
+        
+        return { resposta, conversa: await db.getConversaChatbotBySession(input.sessionId) };
+      }),
+    
+    // Buscar FAQs
+    getFaqs: publicProcedure
+      .input(z.object({
+        categoria: z.string().optional(),
+        projectId: z.number().optional()
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getFaqsChatbot(input?.categoria, input?.projectId);
+      }),
+    
+    // Converter em lead (gestor)
+    converterEmLead: gestorProcedure
+      .input(z.object({
+        sessionId: z.string(),
+        corretorId: z.number().optional()
+      }))
+      .mutation(async ({ input }) => {
+        return await db.converterConversaEmLead(input.sessionId, input.corretorId);
+      }),
+  }),
+
+  // ============================================================================
+  // PROPOSTAS DIGITAIS
+  // ============================================================================
+  
+  propostas: router({
+    // Criar proposta
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        projectId: z.number(),
+        nomeCliente: z.string(),
+        emailCliente: z.string().optional(),
+        telefoneCliente: z.string().optional(),
+        unidade: z.string().optional(),
+        tipologia: z.string().optional(),
+        metragem: z.number().optional(),
+        valorImovel: z.number(),
+        valorEntrada: z.number().optional(),
+        valorFinanciamento: z.number().optional(),
+        parcelas: z.number().optional(),
+        valorParcela: z.number().optional(),
+        taxaJuros: z.string().optional(),
+        desconto: z.number().optional(),
+        motivoDesconto: z.string().optional(),
+        mensagemPersonalizada: z.string().optional(),
+        imagensSelecionadas: z.array(z.string()).optional(),
+        plantasSelecionadas: z.array(z.string()).optional(),
+        videos: z.array(z.string()).optional(),
+        validoAte: z.string().optional()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.createProposta({
+          ...input,
+          corretorId: ctx.user.id,
+          imagensSelecionadas: input.imagensSelecionadas ? JSON.stringify(input.imagensSelecionadas) : undefined,
+          plantasSelecionadas: input.plantasSelecionadas ? JSON.stringify(input.plantasSelecionadas) : undefined,
+          videos: input.videos ? JSON.stringify(input.videos) : undefined,
+          validoAte: input.validoAte ? new Date(input.validoAte) : undefined,
+          token: '' // Será gerado no db
+        });
+      }),
+    
+    // Listar propostas do corretor
+    list: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getPropostasCorretor(ctx.user.id);
+      }),
+    
+    // Listar todas (gestor)
+    listAll: gestorProcedure
+      .input(z.object({
+        corretorId: z.number().optional(),
+        projectId: z.number().optional(),
+        status: z.string().optional(),
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional()
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAllPropostas({
+          corretorId: input?.corretorId,
+          projectId: input?.projectId,
+          status: input?.status,
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined
+        });
+      }),
+    
+    // Buscar por ID
+    getById: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const proposta = await db.getPropostaById(input.id);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        // Verificar permissão
+        if (ctx.user.role === 'corretor' && proposta.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão' });
+        }
+        return proposta;
+      }),
+    
+    // Buscar por token (público - para cliente visualizar)
+    getByToken: publicProcedure
+      .input(z.object({ token: z.string() }))
+      .query(async ({ input }) => {
+        const proposta = await db.getPropostaByToken(input.token);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        
+        // Registrar visualização
+        await db.registrarVisualizacaoProposta(input.token);
+        
+        // Buscar dados do projeto e corretor
+        const projeto = await db.getProjectById(proposta.projectId);
+        const corretor = await db.getUserById(proposta.corretorId);
+        
+        return {
+          ...proposta,
+          projeto,
+          corretor: corretor ? { name: corretor.name, telefone: corretor.telefone, email: corretor.email, fotoUrl: corretor.fotoUrl } : null
+        };
+      }),
+    
+    // Atualizar proposta
+    update: corretorProcedure
+      .input(z.object({
+        id: z.number(),
+        data: z.object({
+          nomeCliente: z.string().optional(),
+          emailCliente: z.string().optional(),
+          telefoneCliente: z.string().optional(),
+          unidade: z.string().optional(),
+          tipologia: z.string().optional(),
+          metragem: z.number().optional(),
+          valorImovel: z.number().optional(),
+          valorEntrada: z.number().optional(),
+          valorFinanciamento: z.number().optional(),
+          parcelas: z.number().optional(),
+          valorParcela: z.number().optional(),
+          taxaJuros: z.string().optional(),
+          desconto: z.number().optional(),
+          motivoDesconto: z.string().optional(),
+          mensagemPersonalizada: z.string().optional(),
+          imagensSelecionadas: z.array(z.string()).optional(),
+          plantasSelecionadas: z.array(z.string()).optional(),
+          videos: z.array(z.string()).optional(),
+          validoAte: z.string().optional(),
+          status: z.enum(['rascunho', 'enviada', 'visualizada', 'aceita', 'recusada', 'expirada']).optional()
+        })
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const proposta = await db.getPropostaById(input.id);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        if (ctx.user.role === 'corretor' && proposta.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão' });
+        }
+        
+        return await db.updateProposta(input.id, {
+          ...input.data,
+          imagensSelecionadas: input.data.imagensSelecionadas ? JSON.stringify(input.data.imagensSelecionadas) : undefined,
+          plantasSelecionadas: input.data.plantasSelecionadas ? JSON.stringify(input.data.plantasSelecionadas) : undefined,
+          videos: input.data.videos ? JSON.stringify(input.data.videos) : undefined,
+          validoAte: input.data.validoAte ? new Date(input.data.validoAte) : undefined
+        });
+      }),
+    
+    // Enviar proposta (mudar status para enviada)
+    enviar: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const proposta = await db.getPropostaById(input.id);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        if (ctx.user.role === 'corretor' && proposta.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão' });
+        }
+        
+        return await db.updateProposta(input.id, { status: 'enviada' });
+      }),
+    
+    // Aceitar proposta (cliente)
+    aceitar: publicProcedure
+      .input(z.object({
+        token: z.string(),
+        assinatura: z.string().optional()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const ip = ctx.req.headers['x-forwarded-for'] as string || ctx.req.socket.remoteAddress || '';
+        return await db.registrarAceiteProposta(input.token, ip, input.assinatura);
+      }),
+    
+    // Buscar propostas do lead
+    getByLead: corretorProcedure
+      .input(z.object({ leadId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getPropostasLead(input.leadId);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
