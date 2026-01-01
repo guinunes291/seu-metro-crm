@@ -2206,3 +2206,10 @@
 - [x] Indicador visual de progresso entre etapas (checkmarks verdes)
 - [ ] Corrigir erro de upload do Book PDF (timeout após 3 minutos)
 - [ ] Implementar upload direto para S3 ao invés de base64 para arquivos grandes
+
+
+## Bug Crítico: Botão Criar Proposta não funciona (01/01/2026)
+- [ ] Investigar por que o botão "Criar Proposta" não está criando propostas
+- [ ] Verificar logs do console e erros de rede
+- [ ] Corrigir a função handleCreateProposta
+- [ ] Testar criação de proposta após correção

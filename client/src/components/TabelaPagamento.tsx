@@ -72,6 +72,7 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
   };
 
   const updateParcela = (id: string, field: keyof ParcelaPagamento, value: any) => {
+    console.log('updateParcela chamado:', { id, field, value });
     const novasParcelas = localParcelas.map(p => {
       if (p.id !== id) return p;
       
@@ -91,6 +92,7 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
       return updated;
     });
     
+    console.log('Chamando onChange com parcelas:', novasParcelas);
     setLocalParcelas(novasParcelas);
     onChange(novasParcelas);
   };
