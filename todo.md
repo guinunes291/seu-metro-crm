@@ -1921,3 +1921,19 @@
 - [x] Adicionar botão de exclusão de links já criados na página Minha Agenda
 - [x] Criar mutation delete no backend
 - [x] Adicionar confirmação antes de excluir
+
+
+## Correção: Busca de Clientes em Todas as Funcionalidades (01/01/2026)
+- [x] Identificar todas as páginas com busca de clientes
+- [x] Corrigir busca na página Minha Agenda (Links de Agendamento) - parâmetro corrigido para 'query'
+- [x] Verificar e corrigir busca na página de Agendamentos - já estava correto
+- [x] Verificar e corrigir busca na página de Propostas - parâmetro corrigido para 'query'
+- [x] Verificar outras páginas com busca de clientes
+- [x] Garantir que cards de sugestões apareçam corretamente
+
+
+## Melhoria: Busca Flexível de Clientes (01/01/2026)
+- [x] Busca por telefone deve funcionar com qualquer formato: (11) 98175-6334, 11981756334, +5511981756334
+- [x] Busca por email deve ser case-insensitive
+- [x] Busca por CPF deve funcionar com ou sem formatação: 123.456.789-00 ou 12345678900
+- [x] Busca por nome deve ser case-insensitive e parcial

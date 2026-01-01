@@ -81,7 +81,7 @@ export default function MinhaAgenda() {
   
   // Busca de leads
   const { data: leadsEncontrados, isLoading: loadingSearch } = trpc.searchLeads.byIdentifier.useQuery(
-    { identifier: searchTerm },
+    { query: searchTerm },
     { enabled: searchTerm.length >= 3 }
   );
 

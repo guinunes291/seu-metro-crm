@@ -5183,9 +5183,12 @@ export async function searchLeadByCpf(cpf: string, corretorId?: number): Promise
 }
 
 /**
- * Buscar lead por qualquer identificador (telefone, email ou CPF)
- * Busca parcial por telefone funciona mesmo com formatação diferente
- * Normaliza telefone para comparar: (11) 98175-6334 = 11981756334 = +5511981756334
+ * Buscar lead por qualquer identificador (telefone, email, CPF ou nome)
+ * Busca flexível que funciona independente do formato de digitação:
+ * - Telefone: (11) 98175-6334 = 11981756334 = +5511981756334
+ * - Email: case-insensitive
+ * - CPF: com ou sem formatação
+ * - Nome: case-insensitive e parcial
  */
 export async function searchLeadByIdentifier(query: string, corretorId?: number): Promise<Lead[]> {
   const db = await getDb();
@@ -5193,6 +5196,8 @@ export async function searchLeadByIdentifier(query: string, corretorId?: number)
   
   // Limpar query
   const queryLimpa = query.trim();
+  if (queryLimpa.length < 2) return [];
+  
   // Extrair apenas dígitos para busca por telefone/CPF
   let querySemCaracteres = queryLimpa.replace(/\D/g, '');
   
@@ -5203,56 +5208,39 @@ export async function searchLeadByIdentifier(query: string, corretorId?: number)
   
   const conditions = [];
   
-  // Se tem dígitos (pode ser telefone ou CPF)
+  // Busca por telefone (se tem pelo menos 2 dígitos)
   if (querySemCaracteres.length >= 2) {
-    // Busca por telefone - normaliza removendo todos os caracteres especiais e código do país
-    // Compara os últimos dígitos para encontrar independente do formato
+    // Busca simples por telefone normalizado - LIKE é mais confiável
     conditions.push(
-      sql`RIGHT(
-        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
-          ${leads.telefone}, 
-          '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''
-        ), 
-        CASE WHEN LEFT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), 2) = '55' 
-             AND LENGTH(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', '')) > 11
-             THEN '55' ELSE '' END, ''
-        ), 
-        ${querySemCaracteres.length}
-      ) = ${querySemCaracteres}`
+      sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        ${leads.telefone}, 
+        '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), 'p:', ''), '55', '') 
+        LIKE ${`%${querySemCaracteres}%`}`
     );
-    // Busca parcial também (para digitação parcial)
-    conditions.push(
-      sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), '55', '') LIKE ${`%${querySemCaracteres}%`}`
-    );
-    // Busca por CPF
+    
+    // Busca por CPF normalizado
     conditions.push(
       sql`REPLACE(REPLACE(${leads.cpf}, '.', ''), '-', '') LIKE ${`%${querySemCaracteres}%`}`
     );
   }
   
-  // Se parece com email ou texto
-  if (queryLimpa.includes('@')) {
-    conditions.push(
-      sql`LOWER(${leads.email}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
-    );
-  }
+  // Busca por email (case-insensitive)
+  // Funciona com ou sem @
+  conditions.push(
+    sql`LOWER(${leads.email}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
+  );
   
-  // Buscar por nome (sempre)
-  if (queryLimpa.length >= 2) {
-    conditions.push(
-      sql`LOWER(${leads.nome}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
-    );
-  }
+  // Buscar por nome (case-insensitive e parcial)
+  conditions.push(
+    sql`LOWER(${leads.nome}) LIKE ${`%${queryLimpa.toLowerCase()}%`}`
+  );
   
-  // Se não tem condições, retornar vazio
-  if (conditions.length === 0) {
-    return [];
-  }
-  
+  // Construir query base
   let baseQuery = db.select()
     .from(leads)
     .where(sql`(${sql.join(conditions, sql` OR `)})`);
   
+  // Se é corretor, filtrar apenas seus leads
   if (corretorId) {
     baseQuery = db.select()
       .from(leads)
@@ -5262,7 +5250,10 @@ export async function searchLeadByIdentifier(query: string, corretorId?: number)
       ));
   }
   
-  return await baseQuery.limit(20);
+  // Ordenar por relevância (nome primeiro, depois telefone)
+  return await baseQuery
+    .orderBy(leads.nome)
+    .limit(20);
 }
 
 // ============================================================================

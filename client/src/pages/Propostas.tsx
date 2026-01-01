@@ -65,7 +65,7 @@ export default function Propostas() {
   const { data: propostas, isLoading } = trpc.propostas.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
   const { data: leadsSearch } = trpc.searchLeads.byIdentifier.useQuery(
-    { identifier: searchLead },
+    { query: searchLead },
     { enabled: searchLead.length >= 3 }
   );
 
