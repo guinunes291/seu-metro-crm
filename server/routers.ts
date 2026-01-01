@@ -3246,15 +3246,20 @@ export const appRouter = router({
     
     // Buscar por token (público - para cliente visualizar)
     getByToken: publicProcedure
-      .input(z.object({ token: z.string() }))
+      .input(z.object({ 
+        token: z.string(),
+        visitorId: z.string().optional() // ID único do visitante (gerado no frontend)
+      }))
       .query(async ({ input }) => {
         const proposta = await db.getPropostaByToken(input.token);
         if (!proposta) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
         }
         
-        // Registrar visualização
-        await db.registrarVisualizacaoProposta(input.token);
+        // Registrar visualização apenas se tiver visitorId (evita contagem duplicada)
+        if (input.visitorId) {
+          await db.registrarVisualizacaoProposta(input.token, input.visitorId);
+        }
         
         // Buscar dados do projeto e corretor
         const projeto = await db.getProjectById(proposta.projectId);
@@ -3374,18 +3379,18 @@ O PDF pode ser de dois formatos:
 
 Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicações):
 {
-  "rendaFamiliar": 800000,
+  "rendaFamiliar": 8000,
   "dataNascimento": "11/09/1969",
-  "valorImovel": 35000000,
-  "valorFinanciamento": 26921265,
+  "valorImovel": 350000,
+  "valorFinanciamento": 269212.65,
   "prazoMeses": 254,
-  "primeiraPrestacao": 239999,
+  "primeiraPrestacao": 2399.99,
   "jurosEfetivos": "7,93% a.a.",
-  "valorEntrada": 8078735,
+  "valorEntrada": 80787.35,
   "origemPdf": "portal_crm"
 }
 
-NOTA: Todos os valores monetários devem ser em centavos (multiplicar por 100).
+NOTA: Todos os valores monetários devem ser em REAIS (não centavos). Exemplo: R$ 350.000,00 = 350000.
 O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do formato identificado.
 `;
 
@@ -3448,6 +3453,23 @@ O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do for
             message: `Erro ao processar PDF: ${error.message}`
           });
         }
+      }),
+    
+    // Excluir proposta
+    delete: corretorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const proposta = await db.getPropostaById(input.id);
+        if (!proposta) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Proposta não encontrada' });
+        }
+        if (ctx.user.role === 'corretor' && proposta.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão para excluir esta proposta' });
+        }
+        
+        // Excluir a proposta
+        await db.deleteProposta(input.id);
+        return { success: true };
       }),
   }),
 

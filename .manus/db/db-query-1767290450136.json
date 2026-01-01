@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, valorImovel, valorEntrada, valorFinanciamento, valorParcela FROM propostas LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, valorImovel, valorEntrada, valorFinanciamento, valorParcela FROM propostas LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "valorImovel": "45000000",
+      "valorEntrada": "8078735",
+      "valorFinanciamento": "26921265",
+      "valorParcela": "239999"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvalorImovel\tvalorEntrada\tvalorFinanciamento\tvalorParcela\n1\t45000000\t8078735\t26921265\t239999\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

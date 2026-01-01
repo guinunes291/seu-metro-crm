@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table } from "lucide-react";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -106,6 +107,16 @@ export default function Propostas() {
     onSuccess: () => {
       utils.propostas.list.invalidate();
       toast.success("Proposta enviada!");
+    }
+  });
+
+  const deleteProposta = trpc.propostas.delete.useMutation({
+    onSuccess: () => {
+      utils.propostas.list.invalidate();
+      toast.success("Proposta excluída com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao excluir proposta");
     }
   });
 
@@ -211,7 +222,7 @@ export default function Propostas() {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    }).format(value / 100);
+    }).format(value);
   };
 
   const totalParcelas = parcelas.reduce((acc, p) => acc + p.total, 0);
@@ -231,7 +242,7 @@ export default function Propostas() {
                 Nova Proposta
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-slate-800 border-slate-600 w-[95vw] max-w-[1800px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-white">Criar Nova Proposta</DialogTitle>
                 <DialogDescription className="text-slate-400">
@@ -259,7 +270,7 @@ export default function Propostas() {
                 <TabsContent value="dados" className="space-y-6 py-4">
                   {/* Busca de Lead */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Cliente</Label>
+                    <Label className="text-white font-medium">Cliente</Label>
                     {selectedLead ? (
                       <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
                         <div>
@@ -304,7 +315,7 @@ export default function Propostas() {
 
                   {/* Projeto */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Empreendimento</Label>
+                    <Label className="text-white font-medium">Empreendimento</Label>
                     <Select 
                       value={novaProposta.projectId ? String(novaProposta.projectId) : ""}
                       onValueChange={(v) => setNovaProposta({ ...novaProposta, projectId: Number(v) })}
@@ -325,7 +336,7 @@ export default function Propostas() {
                   {/* Dados do Imóvel */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Unidade</Label>
+                      <Label className="text-white font-medium">Unidade</Label>
                       <Input
                         value={novaProposta.unidade}
                         onChange={(e) => setNovaProposta({ ...novaProposta, unidade: e.target.value })}
@@ -334,7 +345,7 @@ export default function Propostas() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Tipologia</Label>
+                      <Label className="text-white font-medium">Tipologia</Label>
                       <Input
                         value={novaProposta.tipologia}
                         onChange={(e) => setNovaProposta({ ...novaProposta, tipologia: e.target.value })}
@@ -346,7 +357,7 @@ export default function Propostas() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Metragem (m²)</Label>
+                      <Label className="text-white font-medium">Metragem (m²)</Label>
                       <Input
                         type="number"
                         value={novaProposta.metragem || ""}
@@ -356,11 +367,11 @@ export default function Propostas() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Valor do Imóvel (R$)</Label>
+                      <Label className="text-white font-medium">Valor do Imóvel (R$)</Label>
                       <Input
                         type="number"
-                        value={novaProposta.valorImovel / 100 || ""}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, valorImovel: Number(e.target.value) * 100 })}
+                        value={novaProposta.valorImovel || ""}
+                        onChange={(e) => setNovaProposta({ ...novaProposta, valorImovel: Number(e.target.value) })}
                         placeholder="Ex: 250000"
                         className="bg-slate-700 border-slate-600 text-white"
                       />
@@ -369,7 +380,7 @@ export default function Propostas() {
 
                   {/* Mensagem Personalizada */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Mensagem Personalizada (opcional)</Label>
+                    <Label className="text-white font-medium">Mensagem Personalizada (opcional)</Label>
                     <Textarea
                       value={novaProposta.mensagemPersonalizada}
                       onChange={(e) => setNovaProposta({ ...novaProposta, mensagemPersonalizada: e.target.value })}
@@ -381,7 +392,7 @@ export default function Propostas() {
 
                   {/* Validade */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Válido até (opcional)</Label>
+                    <Label className="text-white font-medium">Válido até (opcional)</Label>
                     <Input
                       type="date"
                       value={novaProposta.validoAte}
@@ -514,7 +525,7 @@ export default function Propostas() {
             </div>
           ) : propostas && propostas.length > 0 ? (
             propostas.map((proposta) => (
-              <Card key={proposta.id} className="bg-slate-800/50 border-slate-700">
+              <Card key={proposta.id} className="bg-slate-800 border-slate-600 shadow-lg hover:border-slate-500 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4">
@@ -523,12 +534,12 @@ export default function Propostas() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-white">{proposta.nomeCliente}</h3>
+                          <h3 className="font-semibold text-white text-lg">{proposta.nomeCliente}</h3>
                           <Badge className={`${STATUS_COLORS[proposta.status]} text-white`}>
                             {STATUS_LABELS[proposta.status]}
                           </Badge>
                         </div>
-                        <p className="text-sm text-slate-400 mt-1">
+                        <p className="text-sm text-slate-300 mt-1">
                           {proposta.unidade} • {proposta.tipologia}
                         </p>
                         <div className="flex items-center gap-4 mt-2 text-sm">
@@ -536,12 +547,12 @@ export default function Propostas() {
                             {formatCurrency(proposta.valorImovel)}
                           </span>
                           {proposta.visualizacoes > 0 && (
-                            <span className="text-slate-400 flex items-center gap-1">
+                            <span className="text-slate-300 flex items-center gap-1">
                               <Eye className="h-3 w-3" />
                               {proposta.visualizacoes} visualizações
                             </span>
                           )}
-                          <span className="text-slate-500">
+                          <span className="text-slate-400">
                             {format(new Date(proposta.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                           </span>
                         </div>
@@ -576,6 +587,42 @@ export default function Propostas() {
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toast.info("Função de edição em desenvolvimento")}
+                        className="text-slate-400 hover:text-blue-400"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-slate-400 hover:text-red-400"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-slate-800 border-slate-700">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-white">Excluir Proposta</AlertDialogTitle>
+                            <AlertDialogDescription className="text-slate-400">
+                              Tem certeza que deseja excluir a proposta de {proposta.nomeCliente}? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-slate-700 text-white border-slate-600 hover:bg-slate-600">Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteProposta.mutate({ id: proposta.id })}
+                              className="bg-red-500 hover:bg-red-600"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </CardContent>

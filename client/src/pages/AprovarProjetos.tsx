@@ -147,10 +147,10 @@ export default function AprovarProjetos() {
                         <p className="text-xs text-muted-foreground">Valor</p>
                         <p className="font-medium">
                           {suggestion.valorMinimo && suggestion.valorMaximo
-                            ? `R$ ${(suggestion.valorMinimo / 100).toLocaleString('pt-BR')} - R$ ${(suggestion.valorMaximo / 100).toLocaleString('pt-BR')}`
+                            ? `R$ ${suggestion.valorMinimo.toLocaleString('pt-BR')} - R$ ${suggestion.valorMaximo.toLocaleString('pt-BR')}`
                             : suggestion.valorMinimo
-                            ? `A partir de R$ ${(suggestion.valorMinimo / 100).toLocaleString('pt-BR')}`
-                            : `Até R$ ${(suggestion.valorMaximo / 100).toLocaleString('pt-BR')}`}
+                            ? `A partir de R$ ${suggestion.valorMinimo.toLocaleString('pt-BR')}`
+                            : `Até R$ ${suggestion.valorMaximo.toLocaleString('pt-BR')}`}
                         </p>
                       </div>
                     )}
@@ -248,7 +248,7 @@ export default function AprovarProjetos() {
                     <p className="text-sm text-muted-foreground">Valor Mínimo</p>
                     <p className="font-medium">
                       {selectedSuggestion.valorMinimo 
-                        ? `R$ ${(selectedSuggestion.valorMinimo / 100).toLocaleString('pt-BR')}`
+                        ? `R$ ${selectedSuggestion.valorMinimo.toLocaleString('pt-BR')}`
                         : "-"}
                     </p>
                   </div>
@@ -256,7 +256,7 @@ export default function AprovarProjetos() {
                     <p className="text-sm text-muted-foreground">Valor Máximo</p>
                     <p className="font-medium">
                       {selectedSuggestion.valorMaximo 
-                        ? `R$ ${(selectedSuggestion.valorMaximo / 100).toLocaleString('pt-BR')}`
+                        ? `R$ ${selectedSuggestion.valorMaximo.toLocaleString('pt-BR')}`
                         : "-"}
                     </p>
                   </div>

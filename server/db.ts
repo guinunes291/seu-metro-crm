@@ -30,7 +30,8 @@ import {
   linksAgendamento, InsertLinkAgendamento, LinkAgendamento,
   conversasChatbot, InsertConversaChatbot, ConversaChatbot,
   faqChatbot, InsertFaqChatbot, FaqChatbot,
-  propostas, InsertProposta, Proposta
+  propostas, InsertProposta, Proposta,
+  propostasVisitantes, InsertPropostaVisitante, PropostaVisitante
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -6177,15 +6178,41 @@ export async function updateProposta(id: number, data: Partial<InsertProposta>):
 }
 
 /**
- * Registrar visualização da proposta
+ * Registrar visualização da proposta (apenas visitantes únicos)
  */
-export async function registrarVisualizacaoProposta(token: string): Promise<void> {
+export async function registrarVisualizacaoProposta(token: string, visitorId: string, ip?: string, userAgent?: string): Promise<boolean> {
   const db = await getDb();
-  if (!db) return;
+  if (!db) return false;
   
   const proposta = await getPropostaByToken(token);
-  if (!proposta) return;
+  if (!proposta) return false;
   
+  // Verificar se este visitante já visualizou esta proposta
+  const visitanteExistente = await db.select()
+    .from(propostasVisitantes)
+    .where(and(
+      eq(propostasVisitantes.propostaId, proposta.id),
+      eq(propostasVisitantes.visitorId, visitorId)
+    ))
+    .limit(1);
+  
+  // Se já visitou, apenas atualizar ultima visualização sem incrementar contador
+  if (visitanteExistente.length > 0) {
+    await db.update(propostas)
+      .set({ ultimaVisualizacao: new Date() })
+      .where(eq(propostas.token, token));
+    return false; // Não é nova visualização
+  }
+  
+  // Registrar novo visitante
+  await db.insert(propostasVisitantes).values({
+    propostaId: proposta.id,
+    visitorId,
+    ip,
+    userAgent
+  });
+  
+  // Incrementar contador de visualizações únicas
   const updates: Partial<Proposta> = {
     visualizacoes: (proposta.visualizacoes || 0) + 1,
     ultimaVisualizacao: new Date()
@@ -6202,6 +6229,8 @@ export async function registrarVisualizacaoProposta(token: string): Promise<void
   await db.update(propostas)
     .set(updates)
     .where(eq(propostas.token, token));
+  
+  return true; // Nova visualização registrada
 }
 
 /**
@@ -6267,6 +6296,22 @@ export async function getAllPropostas(filtros?: {
     .orderBy(desc(propostas.createdAt));
 }
 
+
+/**
+ * Excluir proposta
+ */
+export async function deleteProposta(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Primeiro excluir visitantes da proposta
+  await db.delete(propostasVisitantes)
+    .where(eq(propostasVisitantes.propostaId, id));
+  
+  // Depois excluir a proposta
+  await db.delete(propostas)
+    .where(eq(propostas.id, id));
+}
 
 /**
  * Desativar link de agendamento (após uso ou expiração)

@@ -25,7 +25,7 @@ function parseValor(valorStr: string): number | undefined {
     .trim();
   
   const valor = parseFloat(cleanValue);
-  return isNaN(valor) ? undefined : Math.round(valor * 100); // Converte para centavos
+  return isNaN(valor) ? undefined : valor; // Mantém valor em reais
 }
 
 function parseMetragem(metragemStr: string): { min?: number; max?: number } {

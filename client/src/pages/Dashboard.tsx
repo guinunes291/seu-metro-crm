@@ -114,7 +114,7 @@ function formatCurrency(value: number): string {
     currency: 'BRL',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value / 100); // Valores estão em centavos
+  }).format(value); // Valores em reais
 }
 
 function formatDateShort(dateStr: string): string {

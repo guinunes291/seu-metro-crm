@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, GripVertical } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export interface ParcelaPagamento {
   id: string;
@@ -35,28 +35,39 @@ interface TabelaPagamentoProps {
 
 export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, readOnly = false }: TabelaPagamentoProps) {
   const [localParcelas, setLocalParcelas] = useState<ParcelaPagamento[]>(parcelas);
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setLocalParcelas(parcelas);
+    // Inicializar valores de input
+    const newInputValues: Record<string, string> = {};
+    parcelas.forEach(p => {
+      newInputValues[p.id] = p.valorUnitario > 0 ? formatNumber(p.valorUnitario) : '';
+    });
+    setInputValues(newInputValues);
   }, [parcelas]);
 
   const addParcela = () => {
     const novaParcela: ParcelaPagamento = {
       id: `parcela-${Date.now()}`,
       tipo: "outras",
-      nome: "",
+      nome: "Outras",
       quantidade: 1,
       valorUnitario: 0,
       total: 0,
     };
     const novasParcelas = [...localParcelas, novaParcela];
     setLocalParcelas(novasParcelas);
+    setInputValues(prev => ({ ...prev, [novaParcela.id]: '' }));
     onChange(novasParcelas);
   };
 
   const removeParcela = (id: string) => {
     const novasParcelas = localParcelas.filter(p => p.id !== id);
     setLocalParcelas(novasParcelas);
+    const newInputValues = { ...inputValues };
+    delete newInputValues[id];
+    setInputValues(newInputValues);
     onChange(novasParcelas);
   };
 
@@ -66,15 +77,13 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
       
       const updated = { ...p, [field]: value };
       
-      // Recalcular total quando quantidade ou valor unitário mudar
       if (field === "quantidade" || field === "valorUnitario") {
         updated.total = updated.quantidade * updated.valorUnitario;
       }
       
-      // Se mudar o tipo, atualizar o nome automaticamente
       if (field === "tipo") {
         const tipoInfo = TIPOS_PARCELA.find(t => t.value === value);
-        if (tipoInfo && !p.nome) {
+        if (tipoInfo) {
           updated.nome = tipoInfo.label;
         }
       }
@@ -86,21 +95,57 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
     onChange(novasParcelas);
   };
 
-  const totalGeral = localParcelas.reduce((acc, p) => acc + p.total, 0);
+  // Formatar número para exibição (com separadores de milhar e decimais)
+  const formatNumber = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  };
 
-  const formatCurrency = (value: number) => {
+  // Formatar como moeda
+  const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
-    }).format(value / 100);
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   };
 
-  const parseCurrency = (value: string): number => {
-    // Remove tudo exceto números e vírgula/ponto
-    const cleaned = value.replace(/[^\d,.-]/g, '').replace(',', '.');
+  // Converter string digitada para número
+  const parseInputToNumber = (value: string): number => {
+    if (!value || value.trim() === '') return 0;
+    // Remove pontos de milhar e substitui vírgula por ponto
+    const cleaned = value.replace(/\./g, '').replace(',', '.');
     const parsed = parseFloat(cleaned);
-    return isNaN(parsed) ? 0 : Math.round(parsed * 100);
+    return isNaN(parsed) ? 0 : parsed;
   };
+
+  // Handler para mudança de valor no input
+  const handleValueChange = (id: string, rawValue: string) => {
+    // Permitir apenas números, vírgula e ponto
+    const sanitized = rawValue.replace(/[^\d.,]/g, '');
+    setInputValues(prev => ({ ...prev, [id]: sanitized }));
+  };
+
+  // Handler para quando o input perde foco
+  const handleValueBlur = (id: string) => {
+    const rawValue = inputValues[id] || '';
+    const numValue = parseInputToNumber(rawValue);
+    
+    // Atualizar o valor formatado no input
+    setInputValues(prev => ({ 
+      ...prev, 
+      [id]: numValue > 0 ? formatNumber(numValue) : '' 
+    }));
+    
+    // Atualizar a parcela
+    updateParcela(id, "valorUnitario", numValue);
+  };
+
+  const totalGeral = localParcelas.reduce((acc, p) => acc + p.total, 0);
+  const percentualTotal = valorImovel > 0 ? (totalGeral / valorImovel) * 100 : 0;
 
   return (
     <div className="space-y-4">
@@ -108,39 +153,34 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-slate-700/50">
-              <th className="p-3 text-left text-sm font-medium text-slate-300 w-8"></th>
-              <th className="p-3 text-left text-sm font-medium text-slate-300">Tipo</th>
-              <th className="p-3 text-left text-sm font-medium text-slate-300">Nome da Parcela</th>
-              <th className="p-3 text-center text-sm font-medium text-slate-300 w-24">Qtd</th>
-              <th className="p-3 text-right text-sm font-medium text-slate-300 w-36">Valor Unit.</th>
-              <th className="p-3 text-right text-sm font-medium text-slate-300 w-36">Total</th>
-              <th className="p-3 text-center text-sm font-medium text-slate-300 w-16">%</th>
-              {!readOnly && <th className="p-3 w-12"></th>}
+              <th className="p-2 text-left text-sm font-semibold text-white" style={{ width: '35%' }}>Tipo de Parcela</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '10%' }}>Qtd</th>
+              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '20%' }}>Valor Unit.</th>
+              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '20%' }}>Total</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '10%' }}>%</th>
+              {!readOnly && <th className="p-2" style={{ width: '5%' }}></th>}
             </tr>
           </thead>
           <tbody>
-            {localParcelas.map((parcela, index) => {
+            {localParcelas.map((parcela) => {
               const percentual = valorImovel > 0 ? (parcela.total / valorImovel) * 100 : 0;
               
               return (
                 <tr key={parcela.id} className="border-b border-slate-700/50 hover:bg-slate-700/30">
-                  <td className="p-2 text-center">
-                    <GripVertical className="h-4 w-4 text-slate-500 cursor-grab" />
-                  </td>
                   <td className="p-2">
                     {readOnly ? (
-                      <span className="text-white">{TIPOS_PARCELA.find(t => t.value === parcela.tipo)?.label || parcela.tipo}</span>
+                      <span className="text-white font-medium">{TIPOS_PARCELA.find(t => t.value === parcela.tipo)?.label || parcela.tipo}</span>
                     ) : (
                       <Select
                         value={parcela.tipo}
                         onValueChange={(v) => updateParcela(parcela.id, "tipo", v)}
                       >
-                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white h-9">
+                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white h-10 font-medium">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-700 border-slate-600">
                           {TIPOS_PARCELA.map(tipo => (
-                            <SelectItem key={tipo.value} value={tipo.value} className="text-white">
+                            <SelectItem key={tipo.value} value={tipo.value} className="text-white font-medium">
                               {tipo.label}
                             </SelectItem>
                           ))}
@@ -150,52 +190,41 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
                   </td>
                   <td className="p-2">
                     {readOnly ? (
-                      <span className="text-white">{parcela.nome}</span>
-                    ) : (
-                      <Input
-                        value={parcela.nome}
-                        onChange={(e) => updateParcela(parcela.id, "nome", e.target.value)}
-                        placeholder="Nome personalizado"
-                        className="bg-slate-700 border-slate-600 text-white h-9"
-                      />
-                    )}
-                  </td>
-                  <td className="p-2">
-                    {readOnly ? (
-                      <span className="text-white text-center block">{parcela.quantidade}</span>
+                      <span className="text-white font-medium text-center block">{parcela.quantidade}</span>
                     ) : (
                       <Input
                         type="number"
                         min={1}
                         value={parcela.quantidade}
                         onChange={(e) => updateParcela(parcela.id, "quantidade", parseInt(e.target.value) || 1)}
-                        className="bg-slate-700 border-slate-600 text-white h-9 text-center"
+                        className="bg-slate-700 border-slate-600 text-white h-10 text-center font-medium"
                       />
                     )}
                   </td>
                   <td className="p-2">
                     {readOnly ? (
-                      <span className="text-white text-right block">{formatCurrency(parcela.valorUnitario)}</span>
+                      <span className="text-white font-medium text-right block">{formatCurrency(parcela.valorUnitario)}</span>
                     ) : (
                       <Input
                         type="text"
-                        value={parcela.valorUnitario ? formatCurrency(parcela.valorUnitario).replace('R$', '').trim() : ''}
-                        onChange={(e) => updateParcela(parcela.id, "valorUnitario", parseCurrency(e.target.value))}
+                        value={inputValues[parcela.id] || ''}
+                        onChange={(e) => handleValueChange(parcela.id, e.target.value)}
+                        onBlur={() => handleValueBlur(parcela.id)}
                         placeholder="0,00"
-                        className="bg-slate-700 border-slate-600 text-white h-9 text-right"
+                        className="bg-slate-700 border-slate-600 text-white h-10 text-right font-medium"
                       />
                     )}
                   </td>
                   <td className="p-2 text-right">
-                    <span className="text-white font-medium">{formatCurrency(parcela.total)}</span>
+                    <span className="text-white font-bold text-base">{formatCurrency(parcela.total)}</span>
                   </td>
                   <td className="p-2 text-center">
-                    <span className={`text-sm ${percentual > 0 ? 'text-amber-400' : 'text-slate-500'}`}>
+                    <span className={`text-sm font-bold ${percentual > 0 ? 'text-amber-400' : 'text-slate-400'}`}>
                       {percentual.toFixed(1)}%
                     </span>
                   </td>
                   {!readOnly && (
-                    <td className="p-2">
+                    <td className="p-2 text-center">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -211,24 +240,24 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
             })}
           </tbody>
           <tfoot>
-            <tr className="bg-slate-700/30 font-medium">
-              <td colSpan={5} className="p-3 text-right text-white">
+            <tr className="bg-slate-700/50 font-bold">
+              <td colSpan={3} className="p-3 text-right text-white text-lg">
                 TOTAL APURADO:
               </td>
               <td className="p-3 text-right text-green-400 font-bold text-lg">
                 {formatCurrency(totalGeral)}
               </td>
-              <td className="p-3 text-center text-amber-400">
-                {valorImovel > 0 ? ((totalGeral / valorImovel) * 100).toFixed(1) : '0.0'}%
+              <td className="p-3 text-center text-amber-400 font-bold">
+                {percentualTotal.toFixed(1)}%
               </td>
               {!readOnly && <td></td>}
             </tr>
-            {valorImovel > 0 && totalGeral !== valorImovel && (
+            {valorImovel > 0 && Math.abs(totalGeral - valorImovel) > 0.01 && (
               <tr className="bg-red-500/10">
-                <td colSpan={5} className="p-3 text-right text-slate-300">
+                <td colSpan={3} className="p-3 text-right text-white font-medium">
                   Diferença:
                 </td>
-                <td className="p-3 text-right text-red-400 font-medium">
+                <td className="p-3 text-right text-red-400 font-bold">
                   {formatCurrency(valorImovel - totalGeral)}
                 </td>
                 <td colSpan={readOnly ? 1 : 2}></td>
@@ -243,7 +272,7 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
           type="button"
           variant="outline"
           onClick={addParcela}
-          className="w-full border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-500"
+          className="w-full border-dashed border-slate-500 text-white hover:text-white hover:border-slate-400 hover:bg-slate-700/50"
         >
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Parcela

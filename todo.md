@@ -2005,3 +2005,54 @@
 - [ ] Primeira prestação
 - [ ] Juros efetivos
 - [ ] Valor de entrada
+
+
+## Bugs e Melhorias: Página de Propostas (01/01/2026)
+
+### Bugs
+- [ ] Visualizações duplicadas ao trocar abas - contar apenas 1 visualização por pessoa
+- [ ] Input de valores mostra números errados ao digitar
+- [ ] Coluna de percentuais está toda zerada (não calcula)
+
+### Melhorias
+- [ ] Adicionar botão de editar proposta após criação
+- [ ] Adicionar botão de excluir proposta
+- [ ] Aumentar largura do modal/formulário para melhor visualização
+- [ ] Melhorar cor da fonte (texto apagado/baixo contraste)
+
+
+## Sistema Completo de Propostas - PDF Profissional (01/01/2026)
+
+### Bugs Pendentes
+- [ ] Corrigir input de valores na tabela de pagamento (números aparecem errados)
+- [ ] Corrigir cálculo de percentuais na tabela (está zerado)
+- [ ] Aumentar largura do modal de proposta
+- [ ] Melhorar cor da fonte (está apagada)
+- [ ] Corrigir contagem de visualizações (1 por pessoa única)
+- [ ] Adicionar botões de editar e excluir propostas
+
+### Uploads e Extração
+- [ ] Upload de Book do Projeto (PDF)
+- [ ] Extração automática de 3-4 imagens de perspectiva do Book via LLM
+- [ ] Upload de Planta da Unidade (imagem)
+- [ ] Usar Book do projeto se já existir no sistema
+
+### Seções do PDF da Proposta
+- [ ] 1. Capa Personalizada (logo, cliente, empreendimento, data, foto destaque)
+- [ ] 2. Resumo Executivo (unidade, tipologia, metragem, valor)
+- [ ] 3. Apresentação do Empreendimento (descrição, diferenciais, previsão entrega, botão Book)
+- [ ] 4. Localização e Entorno (endereço, Google Maps, distâncias POIs, descrição bairro via Copilot)
+- [ ] 5. Planta da Unidade (imagem upload)
+- [ ] 6. Tabela de Pagamento Detalhada (parcelas, datas, percentuais, total, reajustes)
+- [ ] 7. Simulação de Financiamento (dados do simulador Caixa/Banco)
+- [ ] 8. Benefícios e Condições Especiais (descontos, bônus, brindes)
+- [ ] 9. Documentação Necessária (lista documentos, checklist)
+- [ ] 10. Cronograma de Próximos Passos (análise crédito, reserva, ato, contrato, obra, chaves)
+- [ ] 11. Termo de Aceite e Assinatura (resumo, rubrica digital, data/hora, declaração)
+
+### Funcionalidades Adicionais
+- [ ] Integração Google Maps com pin do endereço
+- [ ] Copilot para gerar descrição do bairro automaticamente
+- [ ] Sistema de aceite digital com rubrica simples
+- [ ] Visualização prévia do PDF antes de enviar
+

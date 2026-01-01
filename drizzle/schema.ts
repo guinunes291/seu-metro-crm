@@ -1431,3 +1431,20 @@ export const propostas = mysqlTable("propostas", {
 
 export type Proposta = typeof propostas.$inferSelect;
 export type InsertProposta = typeof propostas.$inferInsert;
+
+// Tabela para rastrear visitantes únicos de propostas
+export const propostasVisitantes = mysqlTable("propostas_visitantes", {
+  id: int("id").primaryKey().autoincrement(),
+  propostaId: int("propostaId").notNull(),
+  visitorId: varchar("visitorId", { length: 64 }).notNull(), // Hash do IP + User-Agent ou cookie
+  ip: varchar("ip", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  propostaIdx: index("propostas_visitantes_proposta_idx").on(table.propostaId),
+  visitorIdx: index("propostas_visitantes_visitor_idx").on(table.visitorId),
+  uniqueVisitor: index("propostas_visitantes_unique").on(table.propostaId, table.visitorId),
+}));
+
+export type PropostaVisitante = typeof propostasVisitantes.$inferSelect;
+export type InsertPropostaVisitante = typeof propostasVisitantes.$inferInsert;

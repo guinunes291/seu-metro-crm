@@ -335,8 +335,8 @@ export function formatCatalogContext(projectsList: CatalogProject[]): string {
   let context = `\n📦 CATÁLOGO DE EMPREENDIMENTOS DA SEU METRO QUADRADO (${projectsList.length} projetos ativos):\n\n`;
   
   projectsList.forEach((p, i) => {
-    const valorMin = p.valorMinimo ? `R$ ${(p.valorMinimo / 100).toLocaleString('pt-BR')}` : 'N/I';
-    const valorMax = p.valorMaximo ? `R$ ${(p.valorMaximo / 100).toLocaleString('pt-BR')}` : 'N/I';
+    const valorMin = p.valorMinimo ? `R$ ${p.valorMinimo.toLocaleString('pt-BR')}` : 'N/I';
+    const valorMax = p.valorMaximo ? `R$ ${p.valorMaximo.toLocaleString('pt-BR')}` : 'N/I';
     
     context += `${i + 1}. ${p.nome}\n`;
     context += `   • Construtora: ${p.construtora || 'N/I'}\n`;
