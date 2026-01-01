@@ -1695,3 +1695,19 @@
 - [x] Implementar sincronização completa (1.407 leads exportados)
 - [x] Implementar sincronização automática de novos leads (via createLead no db.ts)
 - [x] Testar conexão e sincronização com planilha real
+
+
+## Bug Fix: Fluxo de Follow-up na Aba Tarefas do Dia (01/01/2026)
+- [ ] Corrigir contador mostrando 0/5 ao invés de 1/5 após clicar em "Não respondeu"
+- [ ] Abrir modal "Registrar Interação" ao clicar em "Não Respondeu" ou "Respondeu"
+- [ ] Garantir que o registro de interação seja salvo no histórico do lead
+- [ ] Após registro, lead sai de Tarefas do Dia e vai para Meus Leads com contador correto
+
+
+## Bug Fix: Fluxo de Follow-up na Aba Tarefas do Dia (01/01/2026)
+- [x] Investigar porque contador mostra 0/5 ao invés de 1/5 após "Não Respondeu"
+- [x] Modificar botões "Não Respondeu" e "Respondeu" para abrir modal de registro
+- [x] Implementar modal de "Registrar Interação" na página TarefasDoDia
+- [x] Salvar interação no histórico do lead (tabela lead_history) antes de atualizar follow-up
+- [x] Corrigir incremento do contador de tentativas (mensagem corrigida para mostrar tentativa+1)
+- [x] Testar fluxo completo - funcionando corretamente

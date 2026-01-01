@@ -74,10 +74,27 @@ const prioridadeColors: Record<Prioridade, string> = {
   alta: "bg-red-100 text-red-800",
 };
 
+// Tipos para o modal de registro de interação
+type TipoContato = "whatsapp" | "ligacao" | "email" | "sms" | "visita" | "outro";
+type ResultadoContato = "contato_realizado" | "nao_atendeu" | "agendamento" | "visita_realizada" | "proposta_enviada" | "recusou" | "outro";
+
 export default function TarefasDoDia() {
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
   const [showRegistrarTentativa, setShowRegistrarTentativa] = useState<number | null>(null);
   const [showConcluirTarefa, setShowConcluirTarefa] = useState<number | null>(null);
+  
+  // Estado para o modal de registro de interação (ao clicar em Não Respondeu/Respondeu)
+  const [showRegistrarInteracao, setShowRegistrarInteracao] = useState<{
+    followUpId: number;
+    leadId: number;
+    leadNome: string;
+    tipoResultado: "nao_atendeu" | "respondeu";
+  } | null>(null);
+  const [interacaoForm, setInteracaoForm] = useState({
+    tipoContato: "whatsapp" as TipoContato,
+    resultado: "contato_realizado" as ResultadoContato,
+    observacoes: "",
+  });
   
   // Form states
   const [novaTarefa, setNovaTarefa] = useState({
@@ -129,11 +146,30 @@ export default function TarefasDoDia() {
     onSuccess: (data) => {
       toast.success(data.mensagem);
       setShowRegistrarTentativa(null);
+      setShowRegistrarInteracao(null);
       setObservacaoTentativa("");
+      setInteracaoForm({ tipoContato: "whatsapp", resultado: "contato_realizado", observacoes: "" });
       refetch();
     },
     onError: (error) => {
       toast.error(`Erro ao registrar tentativa: ${error.message}`);
+    },
+  });
+
+  // Mutation para adicionar interação ao histórico do lead
+  const addInteractionMutation = trpc.leads.addInteraction.useMutation({
+    onSuccess: () => {
+      // Após salvar a interação, registrar a tentativa de follow-up
+      if (showRegistrarInteracao) {
+        registrarTentativaMutation.mutate({
+          followUpId: showRegistrarInteracao.followUpId,
+          resultado: showRegistrarInteracao.tipoResultado,
+          observacao: interacaoForm.observacoes || undefined,
+        });
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro ao registrar interação: ${error.message}`);
     },
   });
 
@@ -158,6 +194,19 @@ export default function TarefasDoDia() {
     concluirTarefaMutation.mutate({
       id: showConcluirTarefa,
       observacoes: observacaoConclusao || undefined,
+    });
+  };
+
+  // Handler para salvar interação e registrar tentativa de follow-up
+  const handleSalvarInteracao = () => {
+    if (!showRegistrarInteracao) return;
+    
+    // Primeiro salva a interação no histórico do lead
+    addInteractionMutation.mutate({
+      leadId: showRegistrarInteracao.leadId,
+      tipo: interacaoForm.tipoContato,
+      resultado: interacaoForm.resultado,
+      observacoes: interacaoForm.observacoes || undefined,
     });
   };
 
@@ -314,14 +363,20 @@ export default function TarefasDoDia() {
                         size="sm" 
                         variant="destructive"
                         onClick={() => {
-                          registrarTentativaMutation.mutate({
-                            followUpId: followUp.id,
+                          setInteracaoForm({
+                            tipoContato: "whatsapp",
                             resultado: "nao_atendeu",
-                            observacao: "Cliente não respondeu"
+                            observacoes: "",
+                          });
+                          setShowRegistrarInteracao({
+                            followUpId: followUp.id,
+                            leadId: followUp.leadId,
+                            leadNome: followUp.leadNome,
+                            tipoResultado: "nao_atendeu",
                           });
                         }}
                         className="whitespace-nowrap"
-                        disabled={registrarTentativaMutation.isPending}
+                        disabled={registrarTentativaMutation.isPending || addInteractionMutation.isPending}
                       >
                         <XCircle className="h-4 w-4 mr-1" />
                         Não Respondeu
@@ -331,13 +386,19 @@ export default function TarefasDoDia() {
                         variant="default"
                         className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
                         onClick={() => {
-                          registrarTentativaMutation.mutate({
+                          setInteracaoForm({
+                            tipoContato: "whatsapp",
+                            resultado: "contato_realizado",
+                            observacoes: "",
+                          });
+                          setShowRegistrarInteracao({
                             followUpId: followUp.id,
-                            resultado: "respondeu",
-                            observacao: "Cliente respondeu"
+                            leadId: followUp.leadId,
+                            leadNome: followUp.leadNome,
+                            tipoResultado: "respondeu",
                           });
                         }}
-                        disabled={registrarTentativaMutation.isPending}
+                        disabled={registrarTentativaMutation.isPending || addInteractionMutation.isPending}
                       >
                         <CheckCircle2 className="h-4 w-4 mr-1" />
                         Respondeu
@@ -652,6 +713,85 @@ export default function TarefasDoDia() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog: Registrar Interação (ao clicar em Não Respondeu/Respondeu) */}
+      <Dialog open={showRegistrarInteracao !== null} onOpenChange={() => setShowRegistrarInteracao(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar Interação</DialogTitle>
+            <DialogDescription>
+              Adicione um registro de contato com o lead {showRegistrarInteracao?.leadNome}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Tipo de Contato</label>
+              <Select
+                value={interacaoForm.tipoContato}
+                onValueChange={(value: TipoContato) => setInteracaoForm({ ...interacaoForm, tipoContato: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="ligacao">Ligação</SelectItem>
+                  <SelectItem value="email">E-mail</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="visita">Visita</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Resultado</label>
+              <Select
+                value={interacaoForm.resultado}
+                onValueChange={(value: ResultadoContato) => setInteracaoForm({ ...interacaoForm, resultado: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="contato_realizado">Contato Realizado</SelectItem>
+                  <SelectItem value="nao_atendeu">Não Atendeu</SelectItem>
+                  <SelectItem value="agendamento">Agendamento</SelectItem>
+                  <SelectItem value="visita_realizada">Visita Realizada</SelectItem>
+                  <SelectItem value="proposta_enviada">Proposta Enviada</SelectItem>
+                  <SelectItem value="recusou">Recusou</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid gap-2">
+              <label className="text-sm font-medium">Observações</label>
+              <Textarea
+                value={interacaoForm.observacoes}
+                onChange={(e) => setInteracaoForm({ ...interacaoForm, observacoes: e.target.value })}
+                rows={4}
+                placeholder="Descreva o que foi conversado..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRegistrarInteracao(null)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleSalvarInteracao} 
+              disabled={addInteractionMutation.isPending || registrarTentativaMutation.isPending}
+            >
+              {(addInteractionMutation.isPending || registrarTentativaMutation.isPending) ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</>
+              ) : (
+                "Salvar Interação"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

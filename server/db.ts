@@ -2890,9 +2890,11 @@ export async function registrarTentativaFollowUp(
   proximaTentativa.setDate(proximaTentativa.getDate() + 1);
   proximaTentativa.setHours(9, 0, 0, 0); // Agendar para 9h do próximo dia
   
+  const novaTentativa = atual.tentativaAtual + 1;
+  
   await db.update(followUps)
     .set({
-      tentativaAtual: atual.tentativaAtual + 1,
+      tentativaAtual: novaTentativa,
       proximaTentativa,
       ultimaTentativa: agora,
       historicoTentativas: JSON.stringify(historico),
@@ -2900,10 +2902,19 @@ export async function registrarTentativaFollowUp(
     })
     .where(eq(followUps.id, followUpId));
   
+  // Atualizar contador de dias consecutivos no lead também
+  await db.update(leads)
+    .set({
+      diasFollowupConsecutivos: novaTentativa,
+      updatedAt: agora
+    })
+    .where(eq(leads.id, atual.leadId));
+  
   return { 
     status: "agendado", 
-    mensagem: `Tentativa ${atual.tentativaAtual} registrada. Próxima tentativa: ${proximaTentativa.toLocaleDateString('pt-BR')}`,
-    proximaTentativa
+    mensagem: `Tentativa ${atual.tentativaAtual + 1} registrada. Próxima tentativa: ${proximaTentativa.toLocaleDateString('pt-BR')}`,
+    proximaTentativa,
+    novaTentativa: atual.tentativaAtual + 1
   };
 }
 
