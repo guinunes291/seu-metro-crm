@@ -1961,3 +1961,47 @@
 - [x] Corrigir bug de timezone na geração de slots (usar getUTCDay)
 - [x] Adicionar mensagem diferenciada para links exclusivos ("Confirme seus dados...")
 - [x] Testar fluxo completo de agendamento com dados pré-preenchidos
+
+
+## Nova Feature: Página de Propostas com Upload de PDF e Tabela de Pagamento (01/01/2026)
+
+- [x] Criar componente TabelaPagamento.tsx editável
+- [x] Criar componente UploadSimulacao.tsx com drag-and-drop
+- [x] Implementar endpoint extrairDadosPdf no backend usando LLM
+- [x] Integrar componentes na página de Propostas
+- [x] Suporte a dois formatos de PDF: Portal CRM e Simulador CAIXA
+- [x] Pré-preencher tabela de pagamento com dados extraídos
+
+## Nova Feature: Pré-preenchimento de Dados em Links Exclusivos (01/01/2026)
+
+- [x] Backend: Modificar endpoint getByToken para retornar dados do lead
+- [x] Frontend: Pré-preencher formulário com dados do lead quando disponíveis
+- [x] Backend: Atualizar dados do lead automaticamente se cliente alterar informações
+- [x] Corrigir bug de timezone na geração de slots (usar getUTCDay)
+- [x] Adicionar mensagem diferenciada para links exclusivos
+
+## Correções Anteriores
+
+### Pré-preenchropostas com Tabela Editável e Upload de PDF (01/01/2026)
+
+### Tabela Editável de Pagamento
+- [ ] Criar componente de tabela editável com colunas: Nome da Parcela, Qtd, Valor, Total
+- [ ] Tipos de parcela: Financiamento, FGTS, Subsídio, Entrada, Mensais, Anuais, Outras, Parcela Adimplência
+- [ ] Cálculo automático de totais e percentuais
+- [ ] Incluir tabela no PDF final da proposta
+
+### Upload de PDF de Simulação
+- [ ] Remover calculadora de financiamento existente
+- [ ] Adicionar botão de upload de PDF
+- [ ] Implementar extração de dados via LLM (GPT)
+- [ ] Suportar dois modelos de PDF: Portal CRM e Simulador CAIXA
+
+### Campos a Extrair do PDF
+- [ ] Renda bruta familiar
+- [ ] Data de nascimento
+- [ ] Valor do imóvel
+- [ ] Valor do financiamento
+- [ ] Prazo (meses)
+- [ ] Primeira prestação
+- [ ] Juros efetivos
+- [ ] Valor de entrada

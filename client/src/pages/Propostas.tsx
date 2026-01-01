@@ -10,10 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import TabelaPagamento, { ParcelaPagamento } from "@/components/TabelaPagamento";
+import UploadSimulacao, { DadosSimulacao } from "@/components/UploadSimulacao";
 
 const STATUS_COLORS: Record<string, string> = {
   rascunho: "bg-slate-500",
@@ -33,12 +36,25 @@ const STATUS_LABELS: Record<string, string> = {
   expirada: "Expirada"
 };
 
+// Parcelas padrão para inicializar a tabela
+const PARCELAS_PADRAO: ParcelaPagamento[] = [
+  { id: "1", tipo: "financiamento", nome: "Financiamento", quantidade: 1, valorUnitario: 0, total: 0 },
+  { id: "2", tipo: "fgts", nome: "FGTS", quantidade: 1, valorUnitario: 0, total: 0 },
+  { id: "3", tipo: "subsidio", nome: "Subsídio", quantidade: 1, valorUnitario: 0, total: 0 },
+  { id: "4", tipo: "entrada", nome: "Entrada", quantidade: 1, valorUnitario: 0, total: 0 },
+  { id: "5", tipo: "mensais", nome: "Mensais", quantidade: 36, valorUnitario: 0, total: 0 },
+  { id: "6", tipo: "anuais", nome: "Anuais", quantidade: 3, valorUnitario: 0, total: 0 },
+];
+
 export default function Propostas() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchLead, setSearchLead] = useState("");
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("dados");
+  const [parcelas, setParcelas] = useState<ParcelaPagamento[]>(PARCELAS_PADRAO);
+  const [dadosSimulacao, setDadosSimulacao] = useState<DadosSimulacao | null>(null);
   
   const [novaProposta, setNovaProposta] = useState({
     leadId: 0,
@@ -58,7 +74,14 @@ export default function Propostas() {
     desconto: 0,
     motivoDesconto: "",
     mensagemPersonalizada: "",
-    validoAte: ""
+    validoAte: "",
+    // Novos campos do PDF
+    rendaFamiliar: 0,
+    dataNascimento: "",
+    prazoMeses: 0,
+    primeiraPrestacao: 0,
+    jurosEfetivos: "",
+    tabelaPagamento: ""
   });
 
   // Queries
@@ -105,10 +128,19 @@ export default function Propostas() {
       desconto: 0,
       motivoDesconto: "",
       mensagemPersonalizada: "",
-      validoAte: ""
+      validoAte: "",
+      rendaFamiliar: 0,
+      dataNascimento: "",
+      prazoMeses: 0,
+      primeiraPrestacao: 0,
+      jurosEfetivos: "",
+      tabelaPagamento: ""
     });
     setSelectedLead(null);
     setSearchLead("");
+    setParcelas(PARCELAS_PADRAO);
+    setDadosSimulacao(null);
+    setActiveTab("dados");
   };
 
   const handleSelectLead = (lead: any) => {
@@ -124,17 +156,49 @@ export default function Propostas() {
     setSearchLead("");
   };
 
-  const calcularFinanciamento = () => {
-    const valorFinanciamento = novaProposta.valorImovel - novaProposta.valorEntrada - novaProposta.desconto;
-    const taxaMensal = 0.0079; // ~9.5% a.a.
-    const parcelas = novaProposta.parcelas || 360;
-    const valorParcela = valorFinanciamento * (taxaMensal * Math.pow(1 + taxaMensal, parcelas)) / (Math.pow(1 + taxaMensal, parcelas) - 1);
+  const handleDadosSimulacao = (dados: DadosSimulacao) => {
+    setDadosSimulacao(dados);
     
-    setNovaProposta({
-      ...novaProposta,
-      valorFinanciamento,
-      valorParcela: Math.round(valorParcela)
-    });
+    // Atualizar campos da proposta com dados extraídos
+    setNovaProposta(prev => ({
+      ...prev,
+      valorImovel: dados.valorImovel,
+      valorEntrada: dados.valorEntrada,
+      valorFinanciamento: dados.valorFinanciamento,
+      valorParcela: dados.primeiraPrestacao,
+      taxaJuros: dados.jurosEfetivos,
+      parcelas: dados.prazoMeses,
+      rendaFamiliar: dados.rendaFamiliar,
+      dataNascimento: dados.dataNascimento,
+      prazoMeses: dados.prazoMeses,
+      primeiraPrestacao: dados.primeiraPrestacao,
+      jurosEfetivos: dados.jurosEfetivos
+    }));
+    
+    // Atualizar tabela de pagamento com valores do financiamento
+    const novasParcelas = [...parcelas];
+    const idxFinanciamento = novasParcelas.findIndex(p => p.tipo === "financiamento");
+    if (idxFinanciamento >= 0) {
+      novasParcelas[idxFinanciamento].valorUnitario = dados.valorFinanciamento;
+      novasParcelas[idxFinanciamento].total = dados.valorFinanciamento;
+    }
+    const idxEntrada = novasParcelas.findIndex(p => p.tipo === "entrada");
+    if (idxEntrada >= 0) {
+      novasParcelas[idxEntrada].valorUnitario = dados.valorEntrada;
+      novasParcelas[idxEntrada].total = dados.valorEntrada;
+    }
+    setParcelas(novasParcelas);
+    
+    toast.success("Dados da simulação aplicados à proposta!");
+  };
+
+  const handleParcelasChange = (novasParcelas: ParcelaPagamento[]) => {
+    setParcelas(novasParcelas);
+    // Salvar tabela como JSON para incluir na proposta
+    setNovaProposta(prev => ({
+      ...prev,
+      tabelaPagamento: JSON.stringify(novasParcelas)
+    }));
   };
 
   const copyLink = (token: string) => {
@@ -149,6 +213,8 @@ export default function Propostas() {
       currency: 'BRL'
     }).format(value / 100);
   };
+
+  const totalParcelas = parcelas.reduce((acc, p) => acc + p.total, 0);
 
   return (
     <DashboardLayout>
@@ -165,7 +231,7 @@ export default function Propostas() {
                 Nova Proposta
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-slate-800 border-slate-700 max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-white">Criar Nova Proposta</DialogTitle>
                 <DialogDescription className="text-slate-400">
@@ -173,113 +239,122 @@ export default function Propostas() {
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-6 py-4">
-                {/* Busca de Lead */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Cliente</Label>
-                  {selectedLead ? (
-                    <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-white">{selectedLead.nome}</p>
-                        <p className="text-sm text-slate-400">{selectedLead.telefone}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setSelectedLead(null)}
-                        className="text-slate-400"
-                      >
-                        Alterar
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        value={searchLead}
-                        onChange={(e) => setSearchLead(e.target.value)}
-                        placeholder="Buscar por nome, telefone ou email..."
-                        className="pl-10 bg-slate-700 border-slate-600 text-white"
-                      />
-                      {leadsSearch && leadsSearch.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                          {leadsSearch.map((lead) => (
-                            <button
-                              key={lead.id}
-                              onClick={() => handleSelectLead(lead)}
-                              className="w-full p-3 text-left hover:bg-slate-600 border-b border-slate-600 last:border-0"
-                            >
-                              <p className="font-medium text-white">{lead.nome}</p>
-                              <p className="text-sm text-slate-400">{lead.telefone} • {lead.email}</p>
-                            </button>
-                          ))}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-slate-700/50">
+                  <TabsTrigger value="dados" className="data-[state=active]:bg-amber-500">
+                    <User className="h-4 w-4 mr-2" />
+                    Dados
+                  </TabsTrigger>
+                  <TabsTrigger value="simulacao" className="data-[state=active]:bg-amber-500">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Simulação
+                  </TabsTrigger>
+                  <TabsTrigger value="pagamento" className="data-[state=active]:bg-amber-500">
+                    <Table className="h-4 w-4 mr-2" />
+                    Pagamento
+                  </TabsTrigger>
+                </TabsList>
+                
+                {/* Aba 1: Dados do Cliente e Imóvel */}
+                <TabsContent value="dados" className="space-y-6 py-4">
+                  {/* Busca de Lead */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Cliente</Label>
+                    {selectedLead ? (
+                      <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                        <div>
+                          <p className="font-medium text-white">{selectedLead.nome}</p>
+                          <p className="text-sm text-slate-400">{selectedLead.telefone}</p>
                         </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Projeto */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Empreendimento</Label>
-                  <Select 
-                    value={novaProposta.projectId ? String(novaProposta.projectId) : ""}
-                    onValueChange={(v) => setNovaProposta({ ...novaProposta, projectId: Number(v) })}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Selecione o empreendimento" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      {projetos?.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)} className="text-white">
-                          {p.nome} - {p.construtora}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Dados do Imóvel */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-300">Unidade</Label>
-                    <Input
-                      value={novaProposta.unidade}
-                      onChange={(e) => setNovaProposta({ ...novaProposta, unidade: e.target.value })}
-                      placeholder="Ex: Apto 101, Torre A"
-                      className="bg-slate-700 border-slate-600 text-white"
-                    />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedLead(null)}
+                          className="text-slate-400"
+                        >
+                          Alterar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          value={searchLead}
+                          onChange={(e) => setSearchLead(e.target.value)}
+                          placeholder="Buscar por nome, telefone ou email..."
+                          className="pl-10 bg-slate-700 border-slate-600 text-white"
+                        />
+                        {leadsSearch && leadsSearch.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {leadsSearch.map((lead) => (
+                              <button
+                                key={lead.id}
+                                onClick={() => handleSelectLead(lead)}
+                                className="w-full p-3 text-left hover:bg-slate-600 border-b border-slate-600 last:border-0"
+                              >
+                                <p className="font-medium text-white">{lead.nome}</p>
+                                <p className="text-sm text-slate-400">{lead.telefone} • {lead.email}</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Projeto */}
                   <div className="space-y-2">
-                    <Label className="text-slate-300">Tipologia</Label>
-                    <Input
-                      value={novaProposta.tipologia}
-                      onChange={(e) => setNovaProposta({ ...novaProposta, tipologia: e.target.value })}
-                      placeholder="Ex: 2 dorms, 1 suíte"
-                      className="bg-slate-700 border-slate-600 text-white"
-                    />
+                    <Label className="text-slate-300">Empreendimento</Label>
+                    <Select 
+                      value={novaProposta.projectId ? String(novaProposta.projectId) : ""}
+                      onValueChange={(v) => setNovaProposta({ ...novaProposta, projectId: Number(v) })}
+                    >
+                      <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                        <SelectValue placeholder="Selecione o empreendimento" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-700 border-slate-600">
+                        {projetos?.map((p) => (
+                          <SelectItem key={p.id} value={String(p.id)} className="text-white">
+                            {p.nome} - {p.construtora}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Metragem (m²)</Label>
-                  <Input
-                    type="number"
-                    value={novaProposta.metragem || ""}
-                    onChange={(e) => setNovaProposta({ ...novaProposta, metragem: Number(e.target.value) })}
-                    placeholder="Ex: 65"
-                    className="bg-slate-700 border-slate-600 text-white"
-                  />
-                </div>
-
-                {/* Valores */}
-                <div className="space-y-4 p-4 bg-slate-700/30 rounded-lg">
-                  <h4 className="font-medium text-white flex items-center gap-2">
-                    <DollarSign className="h-4 w-4 text-amber-500" />
-                    Valores
-                  </h4>
-                  
+                  {/* Dados do Imóvel */}
                   <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Unidade</Label>
+                      <Input
+                        value={novaProposta.unidade}
+                        onChange={(e) => setNovaProposta({ ...novaProposta, unidade: e.target.value })}
+                        placeholder="Ex: Apto 101, Torre A"
+                        className="bg-slate-700 border-slate-600 text-white"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Tipologia</Label>
+                      <Input
+                        value={novaProposta.tipologia}
+                        onChange={(e) => setNovaProposta({ ...novaProposta, tipologia: e.target.value })}
+                        placeholder="Ex: 2 dorms, 1 suíte"
+                        className="bg-slate-700 border-slate-600 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Metragem (m²)</Label>
+                      <Input
+                        type="number"
+                        value={novaProposta.metragem || ""}
+                        onChange={(e) => setNovaProposta({ ...novaProposta, metragem: Number(e.target.value) })}
+                        placeholder="Ex: 65"
+                        className="bg-slate-700 border-slate-600 text-white"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label className="text-slate-300">Valor do Imóvel (R$)</Label>
                       <Input
@@ -290,97 +365,124 @@ export default function Propostas() {
                         className="bg-slate-700 border-slate-600 text-white"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Entrada (R$)</Label>
-                      <Input
-                        type="number"
-                        value={novaProposta.valorEntrada / 100 || ""}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, valorEntrada: Number(e.target.value) * 100 })}
-                        placeholder="Ex: 25000"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Desconto (R$)</Label>
-                      <Input
-                        type="number"
-                        value={novaProposta.desconto / 100 || ""}
-                        onChange={(e) => setNovaProposta({ ...novaProposta, desconto: Number(e.target.value) * 100 })}
-                        placeholder="Ex: 5000"
-                        className="bg-slate-700 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-300">Parcelas</Label>
-                      <Select 
-                        value={String(novaProposta.parcelas)}
-                        onValueChange={(v) => setNovaProposta({ ...novaProposta, parcelas: Number(v) })}
-                      >
-                        <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-slate-700 border-slate-600">
-                          <SelectItem value="180" className="text-white">180 meses (15 anos)</SelectItem>
-                          <SelectItem value="240" className="text-white">240 meses (20 anos)</SelectItem>
-                          <SelectItem value="300" className="text-white">300 meses (25 anos)</SelectItem>
-                          <SelectItem value="360" className="text-white">360 meses (30 anos)</SelectItem>
-                          <SelectItem value="420" className="text-white">420 meses (35 anos)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {/* Mensagem Personalizada */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Mensagem Personalizada (opcional)</Label>
+                    <Textarea
+                      value={novaProposta.mensagemPersonalizada}
+                      onChange={(e) => setNovaProposta({ ...novaProposta, mensagemPersonalizada: e.target.value })}
+                      placeholder="Adicione uma mensagem especial para o cliente..."
+                      className="bg-slate-700 border-slate-600 text-white"
+                      rows={3}
+                    />
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={calcularFinanciamento}
-                    className="w-full border-slate-600 text-slate-300"
-                  >
-                    Calcular Financiamento
-                  </Button>
-
-                  {novaProposta.valorFinanciamento > 0 && (
-                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Valor Financiado:</span>
-                        <span className="text-white font-medium">{formatCurrency(novaProposta.valorFinanciamento)}</span>
-                      </div>
-                      <div className="flex justify-between text-sm mt-1">
-                        <span className="text-slate-400">Parcela Estimada:</span>
-                        <span className="text-green-400 font-medium">{formatCurrency(novaProposta.valorParcela)}</span>
-                      </div>
+                  {/* Validade */}
+                  <div className="space-y-2">
+                    <Label className="text-slate-300">Válido até (opcional)</Label>
+                    <Input
+                      type="date"
+                      value={novaProposta.validoAte}
+                      onChange={(e) => setNovaProposta({ ...novaProposta, validoAte: e.target.value })}
+                      className="bg-slate-700 border-slate-600 text-white"
+                    />
+                  </div>
+                </TabsContent>
+                
+                {/* Aba 2: Upload de Simulação */}
+                <TabsContent value="simulacao" className="space-y-6 py-4">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-white font-medium mb-2">Upload do PDF de Simulação</h4>
+                      <p className="text-slate-400 text-sm mb-4">
+                        Faça upload do PDF de simulação de financiamento (Portal CRM ou Simulador CAIXA) 
+                        para extrair automaticamente os dados do cliente.
+                      </p>
                     </div>
-                  )}
-                </div>
+                    
+                    <UploadSimulacao onDadosExtraidos={handleDadosSimulacao} />
+                    
+                    {dadosSimulacao && (
+                      <div className="mt-4 p-4 bg-slate-700/30 rounded-lg">
+                        <h5 className="text-white font-medium mb-3">Dados Extraídos</h5>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-slate-400">Renda Familiar:</span>
+                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.rendaFamiliar)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Data Nascimento:</span>
+                            <span className="text-white ml-2">{dadosSimulacao.dataNascimento}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Valor do Imóvel:</span>
+                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorImovel)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Financiamento:</span>
+                            <span className="text-green-400 ml-2">{formatCurrency(dadosSimulacao.valorFinanciamento)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Prazo:</span>
+                            <span className="text-white ml-2">{dadosSimulacao.prazoMeses} meses</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">1ª Prestação:</span>
+                            <span className="text-amber-400 ml-2">{formatCurrency(dadosSimulacao.primeiraPrestacao)}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Juros Efetivos:</span>
+                            <span className="text-white ml-2">{dadosSimulacao.jurosEfetivos}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400">Entrada:</span>
+                            <span className="text-white ml-2">{formatCurrency(dadosSimulacao.valorEntrada)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                {/* Aba 3: Tabela de Pagamento */}
+                <TabsContent value="pagamento" className="space-y-6 py-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-white font-medium">Tabela de Pagamento</h4>
+                        <p className="text-slate-400 text-sm">
+                          Configure as parcelas e condições de pagamento da proposta
+                        </p>
+                      </div>
+                      {novaProposta.valorImovel > 0 && (
+                        <div className="text-right">
+                          <p className="text-slate-400 text-sm">Valor do Imóvel</p>
+                          <p className="text-white font-bold">{formatCurrency(novaProposta.valorImovel)}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <TabelaPagamento
+                      parcelas={parcelas}
+                      onChange={handleParcelasChange}
+                      valorImovel={novaProposta.valorImovel}
+                    />
+                    
+                    {novaProposta.valorImovel > 0 && totalParcelas !== novaProposta.valorImovel && (
+                      <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                        <p className="text-amber-400 text-sm">
+                          ⚠️ O total das parcelas ({formatCurrency(totalParcelas)}) não corresponde ao valor do imóvel ({formatCurrency(novaProposta.valorImovel)}).
+                          Diferença: {formatCurrency(novaProposta.valorImovel - totalParcelas)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              </Tabs>
 
-                {/* Mensagem Personalizada */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Mensagem Personalizada (opcional)</Label>
-                  <Textarea
-                    value={novaProposta.mensagemPersonalizada}
-                    onChange={(e) => setNovaProposta({ ...novaProposta, mensagemPersonalizada: e.target.value })}
-                    placeholder="Adicione uma mensagem especial para o cliente..."
-                    className="bg-slate-700 border-slate-600 text-white"
-                    rows={3}
-                  />
-                </div>
-
-                {/* Validade */}
-                <div className="space-y-2">
-                  <Label className="text-slate-300">Válido até (opcional)</Label>
-                  <Input
-                    type="date"
-                    value={novaProposta.validoAte}
-                    onChange={(e) => setNovaProposta({ ...novaProposta, validoAte: e.target.value })}
-                    className="bg-slate-700 border-slate-600 text-white"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
+              <DialogFooter className="mt-6">
                 <Button 
                   variant="outline" 
                   onClick={() => { setShowCreateDialog(false); resetForm(); }}

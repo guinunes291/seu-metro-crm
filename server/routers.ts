@@ -10,6 +10,7 @@ import * as sheetsImport from "./sheetsImport";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
+import { invokeLLM } from "./_core/llm";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -3342,6 +3343,111 @@ export const appRouter = router({
       .input(z.object({ leadId: z.number() }))
       .query(async ({ input }) => {
         return await db.getPropostasLead(input.leadId);
+      }),
+    
+    // Extrair dados do PDF de simulação usando LLM
+    extrairDadosPdf: corretorProcedure
+      .input(z.object({
+        pdfBase64: z.string(),
+        nomeArquivo: z.string()
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          // Converter PDF base64 para texto usando o LLM com capacidade de leitura de PDF
+          const promptExtracao = `
+Você é um especialista em extrair dados de PDFs de simulação de financiamento imobiliário.
+
+Analise o conteúdo do PDF anexado e extraia os seguintes dados:
+
+1. **Renda Familiar** (valor em reais)
+2. **Data de Nascimento** do participante de maior idade (formato DD/MM/AAAA)
+3. **Valor do Imóvel** (valor em reais)
+4. **Valor do Financiamento** (valor em reais)
+5. **Prazo** em meses
+6. **Primeira Prestação** (valor em reais)
+7. **Juros Efetivos** (percentual anual, ex: "7,93% a.a.")
+8. **Valor de Entrada** (valor em reais)
+
+O PDF pode ser de dois formatos:
+- **Portal CRM (Caixa)**: Campos como "Renda Familiar", "Valor de Financiamento", "Primeira Prestação", "Juros Efetivos"
+- **Simulador Habitacional CAIXA**: Campos como "Renda bruta familiar", "Valor do financiamento", "1ª Prestação", "Juros Efetivos"
+
+Retorne APENAS um JSON válido no seguinte formato (sem markdown, sem explicações):
+{
+  "rendaFamiliar": 800000,
+  "dataNascimento": "11/09/1969",
+  "valorImovel": 35000000,
+  "valorFinanciamento": 26921265,
+  "prazoMeses": 254,
+  "primeiraPrestacao": 239999,
+  "jurosEfetivos": "7,93% a.a.",
+  "valorEntrada": 8078735,
+  "origemPdf": "portal_crm"
+}
+
+NOTA: Todos os valores monetários devem ser em centavos (multiplicar por 100).
+O campo "origemPdf" deve ser "portal_crm" ou "simulador_caixa" dependendo do formato identificado.
+`;
+
+          const response = await invokeLLM({
+            messages: [
+              { role: "system", content: promptExtracao },
+              { 
+                role: "user", 
+                content: [
+                  {
+                    type: "file_url",
+                    file_url: {
+                      url: `data:application/pdf;base64,${input.pdfBase64}`,
+                      mime_type: "application/pdf"
+                    }
+                  },
+                  {
+                    type: "text",
+                    text: `Extraia os dados do PDF de simulação: ${input.nomeArquivo}`
+                  }
+                ]
+              }
+            ]
+          });
+
+          const content = response.choices[0]?.message?.content || '';
+          
+          // Tentar extrair JSON da resposta
+          let jsonStr = content;
+          
+          // Remover possíveis marcadores de código
+          if (content.includes('```json')) {
+            jsonStr = content.split('```json')[1].split('```')[0].trim();
+          } else if (content.includes('```')) {
+            jsonStr = content.split('```')[1].split('```')[0].trim();
+          }
+          
+          const dados = JSON.parse(jsonStr);
+          
+          // Validar campos obrigatórios
+          if (!dados.valorImovel || !dados.valorFinanciamento) {
+            throw new Error('Não foi possível extrair os dados obrigatórios do PDF');
+          }
+          
+          return {
+            rendaFamiliar: dados.rendaFamiliar || 0,
+            dataNascimento: dados.dataNascimento || '',
+            valorImovel: dados.valorImovel || 0,
+            valorFinanciamento: dados.valorFinanciamento || 0,
+            prazoMeses: dados.prazoMeses || 0,
+            primeiraPrestacao: dados.primeiraPrestacao || 0,
+            jurosEfetivos: dados.jurosEfetivos || '',
+            valorEntrada: dados.valorEntrada || 0,
+            origemPdf: dados.origemPdf || 'desconhecido'
+          };
+        } catch (error: any) {
+          console.error('Erro ao extrair dados do PDF:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: `Erro ao processar PDF: ${error.message}`
+          });
+        }
       }),
   }),
 
