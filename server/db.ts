@@ -5840,7 +5840,8 @@ export async function getSlotsDisponiveis(corretorId: number, data: Date): Promi
   const db = await getDb();
   if (!db) return [];
   
-  const diaSemana = data.getDay(); // 0 = domingo, 1 = segunda, etc.
+  // Usar getUTCDay() para consistência com datas enviadas via toISOString()
+  const diaSemana = data.getUTCDay(); // 0 = domingo, 1 = segunda, etc.
   
   // Buscar disponibilidade do corretor para este dia
   const disponibilidade = await db.select()

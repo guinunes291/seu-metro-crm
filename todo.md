@@ -1937,3 +1937,27 @@
 - [x] Busca por email deve ser case-insensitive
 - [x] Busca por CPF deve funcionar com ou sem formatação: 123.456.789-00 ou 12345678900
 - [x] Busca por nome deve ser case-insensitive e parcial
+
+
+## Bug: Datas Divergentes no Calendário Geral (01/01/2026)
+- [ ] Agendamento aparecendo no dia errado (01/01 em vez de 02/01)
+- [ ] Verificar como a data está sendo salva no banco
+- [ ] Corrigir exibição no Calendário Geral do gestor
+
+
+## Nova Feature: Pré-preenchimento de Dados em Links de Agendamento Exclusivos
+- [ ] Modificar backend para incluir leadId no link de agendamento quando cliente for buscado
+- [ ] Criar endpoint para buscar dados do lead pelo leadId no link
+- [ ] Modificar página pública de agendamento para pré-preencher dados do cliente
+- [ ] Implementar atualização automática de dados alterados pelo cliente
+- [ ] Testar fluxo completo com cliente existente
+- [ ] Testar fluxo com link genérico (sem cliente vinculado)
+
+
+## Nova Feature: Pré-preenchimento de Dados em Links de Agendamento Exclusivos
+- [x] Backend: Modificar endpoint getByToken para retornar dados do lead
+- [x] Frontend: Pré-preencher formulário com dados do lead quando disponíveis
+- [x] Backend: Atualizar dados do lead automaticamente se cliente alterar informações
+- [x] Corrigir bug de timezone na geração de slots (usar getUTCDay)
+- [x] Adicionar mensagem diferenciada para links exclusivos ("Confirme seus dados...")
+- [x] Testar fluxo completo de agendamento com dados pré-preenchidos

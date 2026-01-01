@@ -22,6 +22,9 @@ export default function AgendamentoPublico() {
     email: "",
     observacoes: ""
   });
+  
+  // Flag para indicar se os dados foram pré-preenchidos (link exclusivo com cliente)
+  const [dadosPrePreenchidos, setDadosPrePreenchidos] = useState(false);
 
   // Buscar dados do link
   const { data: linkData, isLoading: loadingLink, error: linkError } = trpc.linksAgendamento.getByToken.useQuery(
@@ -44,6 +47,19 @@ export default function AgendamentoPublico() {
       setStep("confirmado");
     }
   });
+
+  // Pré-preencher dados do lead quando disponíveis (link exclusivo)
+  useEffect(() => {
+    if (linkData?.lead && !dadosPrePreenchidos) {
+      setFormData({
+        nome: linkData.lead.nome || "",
+        telefone: linkData.lead.telefone || "",
+        email: linkData.lead.email || "",
+        observacoes: ""
+      });
+      setDadosPrePreenchidos(true);
+    }
+  }, [linkData?.lead, dadosPrePreenchidos]);
 
   // Datas desabilitadas (passadas)
   const disabledDays = (date: Date) => {
@@ -325,7 +341,10 @@ export default function AgendamentoPublico() {
                   Seus Dados
                 </CardTitle>
                 <CardDescription className="text-slate-400">
-                  Preencha seus dados para confirmar o agendamento
+                  {dadosPrePreenchidos 
+                    ? "Confirme seus dados abaixo. Caso precise atualizar alguma informação, basta editar."
+                    : "Preencha seus dados para confirmar o agendamento"
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">

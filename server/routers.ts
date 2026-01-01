@@ -2873,10 +2873,25 @@ export const appRouter = router({
         const corretor = await db.getUserById(link.corretorId);
         const projeto = link.projectId ? await db.getProjectById(link.projectId) : null;
         
+        // Buscar dados do lead se houver leadId (para pré-preenchimento)
+        let lead = null;
+        if (link.leadId) {
+          const leadData = await db.getLeadById(link.leadId);
+          if (leadData) {
+            lead = {
+              id: leadData.id,
+              nome: leadData.nome,
+              telefone: leadData.telefone,
+              email: leadData.email
+            };
+          }
+        }
+        
         return {
           ...link,
           corretor: corretor ? { id: corretor.id, name: corretor.name, fotoUrl: corretor.fotoUrl } : null,
-          projeto: projeto ? { id: projeto.id, nome: projeto.nome, construtora: projeto.construtora } : null
+          projeto: projeto ? { id: projeto.id, nome: projeto.nome, construtora: projeto.construtora } : null,
+          lead
         };
       }),
     
@@ -2912,9 +2927,25 @@ export const appRouter = router({
         let leadId: number;
         let isNovoLead = false;
         
-        // Se o link já tem um lead associado, usar esse lead
+        // Se o link já tem um lead associado, usar esse lead e atualizar dados se necessário
         if (link.leadId) {
           leadId = link.leadId;
+          
+          // Buscar dados atuais do lead para comparar
+          const leadAtual = await db.getLeadById(leadId);
+          if (leadAtual) {
+            // Verificar se houve alteração nos dados e atualizar automaticamente
+            const dadosAlterados: Record<string, any> = {};
+            if (input.nome !== leadAtual.nome) dadosAlterados.nome = input.nome;
+            if (input.telefone !== leadAtual.telefone) dadosAlterados.telefone = input.telefone;
+            if (input.email !== leadAtual.email) dadosAlterados.email = input.email;
+            
+            // Se houver alterações, atualizar o lead
+            if (Object.keys(dadosAlterados).length > 0) {
+              await db.updateLead(leadId, dadosAlterados);
+              console.log(`[Agendamento] Lead ${leadId} atualizado com novos dados:`, dadosAlterados);
+            }
+          }
         } else {
           // Buscar lead existente pelo telefone
           const leadExistente = await db.searchLeadByTelefone(input.telefone);
