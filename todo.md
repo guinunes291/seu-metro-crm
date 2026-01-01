@@ -2108,3 +2108,15 @@
 ## Bug Fix: Quantidade de Parcelas na Tabela de Pagamento
 - [ ] Corrigir exibição da quantidade de parcelas (mostrando apenas 1 dígito)
 - [ ] Garantir que o cálculo Total = Quantidade x Valor Unitário está correto
+
+## Bug Crítico: Valores Incorretos na Página Pública da Proposta
+- [ ] Corrigir valor do imóvel (350.000 aparecendo como 3.500)
+- [ ] Corrigir valores de entrada, financiamento e parcela
+- [ ] Investigar se valores estão sendo divididos por 100
+- [ ] Adicionar seções faltantes (Book, Planta, Tabela de Pagamento completa)
+- [ ] Testar proposta com valores reais
+
+## Bug Fix: Erros na Proposta
+- [x] Corrigir erro "storagePut is not defined" no download de PDF
+- [ ] Verificar valores na página pública da proposta
+- [ ] Corrigir autenticação na página pública (deveria ser pública)

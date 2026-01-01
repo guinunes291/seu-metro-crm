@@ -3676,8 +3676,9 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         // Buscar dados do corretor
         const corretor = await db.getUserById(proposta.corretorId);
         
-        // Importar gerador de PDF
+        // Importar gerador de PDF e storage
         const { gerarHTMLProposta } = await import('./pdfGenerator');
+        const { storagePut } = await import('./storage');
         type DadosProposta = import('./pdfGenerator').DadosProposta;
         
         // Preparar dados para o PDF
