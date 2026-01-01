@@ -2868,9 +2868,9 @@ export const appRouter = router({
     agendar: publicProcedure
       .input(z.object({
         token: z.string(),
-        nome: z.string(),
-        telefone: z.string(),
-        email: z.string().optional(),
+        nome: z.string().min(2, 'Nome é obrigatório'),
+        telefone: z.string().min(10, 'Telefone é obrigatório'),
+        email: z.string().email('E-mail inválido').min(1, 'E-mail é obrigatório'),
         data: z.string(),
         hora: z.string(),
         observacoes: z.string().optional()
@@ -2878,7 +2878,12 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const link = await db.getLinkAgendamentoByToken(input.token);
         if (!link) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Link não encontrado' });
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Link não encontrado ou expirado' });
+        }
+        
+        // Verificar se o link expirou (15 minutos para links com leadId)
+        if (link.validoAte && new Date(link.validoAte) < new Date()) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Link expirado. Solicite um novo link ao corretor.' });
         }
         
         // Verificar se o slot ainda está disponível
@@ -2888,25 +2893,50 @@ export const appRouter = router({
         }
         
         // Criar ou buscar lead
-        let lead = await db.searchLeadByTelefone(input.telefone);
         let leadId: number;
+        let isNovoLead = false;
         
-        if (lead && lead.length > 0) {
-          leadId = lead[0].id;
+        // Se o link já tem um lead associado, usar esse lead
+        if (link.leadId) {
+          leadId = link.leadId;
         } else {
-          const novoLead = await db.createLead({
-            nome: input.nome,
-            telefone: input.telefone,
-            email: input.email,
-            projectId: link.projectId || undefined,
-            corretorId: link.corretorId,
-            origem: 'agendamento_self_service'
-          });
-          if (!novoLead) {
-            throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar lead' });
+          // Buscar lead existente pelo telefone
+          const leadExistente = await db.searchLeadByTelefone(input.telefone);
+          
+          if (leadExistente && leadExistente.length > 0) {
+            leadId = leadExistente[0].id;
+            // Atualizar dados do lead se necessário
+            await db.updateLead(leadId, {
+              nome: input.nome,
+              email: input.email,
+              corretorId: link.corretorId,
+              projectId: link.projectId || undefined
+            });
+          } else {
+            // Criar novo lead
+            const novoLead = await db.createLead({
+              nome: input.nome,
+              telefone: input.telefone,
+              email: input.email,
+              projectId: link.projectId || undefined,
+              corretorId: link.corretorId,
+              origem: 'agendamento_self_service',
+              status: 'agendado',
+              dataDistribuicao: new Date()
+            });
+            if (!novoLead) {
+              throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar lead' });
+            }
+            leadId = novoLead.id;
+            isNovoLead = true;
           }
-          leadId = novoLead.id;
         }
+        
+        // Atualizar status do lead para "agendado" se ainda não estiver
+        await db.updateLead(leadId, { 
+          status: 'agendado',
+          proximoFollowup: new Date(`${input.data}T${input.hora}:00`)
+        });
         
         // Criar agendamento
         const agendamento = await db.createAgendamento({
@@ -2918,10 +2948,24 @@ export const appRouter = router({
           observacoes: input.observacoes
         });
         
+        // Registrar atividade no histórico do lead
+        await db.createLeadHistory({
+          leadId,
+          corretorId: link.corretorId,
+          tipo: 'outro',
+          resultado: 'agendamento',
+          observacoes: `Cliente agendado via Link de AutoAgendamento para ${input.data} às ${input.hora}${input.observacoes ? '. Obs: ' + input.observacoes : ''}`
+        });
+        
         // Incrementar contador do link
         await db.incrementarAgendamentosLink(link.id);
         
-        return { success: true, agendamento };
+        // Desativar link se for exclusivo (com leadId)
+        if (link.leadId) {
+          await db.desativarLinkAgendamento(link.id);
+        }
+        
+        return { success: true, agendamento, isNovoLead };
       }),
   }),
 
@@ -3243,5 +3287,128 @@ export const appRouter = router({
         return await db.getPropostasLead(input.leadId);
       }),
   }),
+
+  // ============================================================================
+  // INTEGRAÇÃO GOOGLE CALENDAR
+  // ============================================================================
+  
+  googleCalendar: router({
+    // Verificar status da integração
+    getStatus: corretorProcedure
+      .query(async ({ ctx }) => {
+        const user = await db.getUserById(ctx.user.id);
+        return {
+          enabled: user?.googleCalendarEnabled || false,
+          calendarId: user?.googleCalendarId || null,
+          hasRefreshToken: !!user?.googleRefreshToken
+        };
+      }),
+    
+    // Salvar configuração do Google Calendar
+    saveConfig: corretorProcedure
+      .input(z.object({
+        calendarId: z.string(),
+        refreshToken: z.string().optional(),
+        enabled: z.boolean()
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateUser(ctx.user.id, {
+          googleCalendarId: input.calendarId,
+          googleRefreshToken: input.refreshToken,
+          googleCalendarEnabled: input.enabled
+        });
+        return { success: true };
+      }),
+    
+    // Desabilitar integração
+    disable: corretorProcedure
+      .mutation(async ({ ctx }) => {
+        await db.updateUser(ctx.user.id, {
+          googleCalendarEnabled: false
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // VISÃO CONSOLIDADA DE AGENDAMENTOS (GESTOR)
+  // ============================================================================
+  
+  agendamentosGestor: router({
+    // Listar todos os agendamentos de todos os corretores
+    listAll: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorId: z.number().optional(),
+        status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']).optional()
+      }).optional())
+      .query(async ({ input }) => {
+        return await db.getAllAgendamentos(input);
+      }),
+    
+    // Estatísticas de agendamentos
+    getStats: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional()
+      }).optional())
+      .query(async ({ input }) => {
+        const agendamentos = await db.getAllAgendamentos(input);
+        
+        const total = agendamentos.length;
+        const porStatus = {
+          pendente: agendamentos.filter(a => a.status === 'pendente').length,
+          confirmado: agendamentos.filter(a => a.status === 'confirmado').length,
+          realizado: agendamentos.filter(a => a.status === 'realizado').length,
+          cancelado: agendamentos.filter(a => a.status === 'cancelado').length,
+          reagendado: agendamentos.filter(a => a.status === 'reagendado').length
+        };
+        
+        // Agrupar por corretor
+        const porCorretor: Record<number, { nome: string; total: number; realizados: number }> = {};
+        for (const a of agendamentos) {
+          if (!a.corretorId) continue;
+          if (!porCorretor[a.corretorId]) {
+            porCorretor[a.corretorId] = { nome: a.corretorNome || 'Desconhecido', total: 0, realizados: 0 };
+          }
+          porCorretor[a.corretorId].total++;
+          if (a.status === 'realizado') porCorretor[a.corretorId].realizados++;
+        }
+        
+        return {
+          total,
+          porStatus,
+          porCorretor: Object.values(porCorretor)
+        };
+      }),
+    
+    // Calendário consolidado (para o gestor ver todos os agendamentos)
+    getCalendario: gestorProcedure
+      .input(z.object({
+        mes: z.number().min(1).max(12),
+        ano: z.number()
+      }))
+      .query(async ({ input }) => {
+        const dataInicio = new Date(input.ano, input.mes - 1, 1);
+        const dataFim = new Date(input.ano, input.mes, 0, 23, 59, 59);
+        
+        const agendamentos = await db.getAllAgendamentos({
+          dataInicio: dataInicio.toISOString(),
+          dataFim: dataFim.toISOString()
+        });
+        
+        // Agrupar por dia
+        const porDia: Record<string, typeof agendamentos> = {};
+        for (const a of agendamentos) {
+          const dia = new Date(a.dataAgendamento).toISOString().split('T')[0];
+          if (!porDia[dia]) porDia[dia] = [];
+          porDia[dia].push(a);
+        }
+        
+        return porDia;
+      }),
+  }),
+
 });
 export type AppRouter = typeof appRouter;

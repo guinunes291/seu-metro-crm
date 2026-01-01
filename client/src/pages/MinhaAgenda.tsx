@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -9,8 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Clock, Link2, Plus, Trash2, Copy, ExternalLink, CalendarOff, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Calendar, Clock, Link2, Plus, Trash2, Copy, ExternalLink, CalendarOff, Loader2, MessageCircle, Search, User, Phone, Mail, Timer } from "lucide-react";
+import { format, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -34,6 +34,11 @@ export default function MinhaAgenda() {
   const [showAddDisponibilidade, setShowAddDisponibilidade] = useState(false);
   const [showAddBloqueio, setShowAddBloqueio] = useState(false);
   const [showCreateLink, setShowCreateLink] = useState(false);
+  
+  // Estados para busca de cliente
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedLead, setSelectedLead] = useState<{ id: number; nome: string; telefone: string; email?: string | null } | null>(null);
+  const [linkExclusivo, setLinkExclusivo] = useState(false);
   
   const [novaDisponibilidade, setNovaDisponibilidade] = useState({
     diaSemana: 1,
@@ -63,6 +68,12 @@ export default function MinhaAgenda() {
   const { data: bloqueios, isLoading: loadingBloq } = trpc.agenda.getBloqueios.useQuery();
   const { data: links, isLoading: loadingLinks } = trpc.linksAgendamento.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
+  
+  // Busca de leads
+  const { data: leadsEncontrados, isLoading: loadingSearch } = trpc.searchLeads.byIdentifier.useQuery(
+    { identifier: searchTerm },
+    { enabled: searchTerm.length >= 3 }
+  );
 
   // Mutations
   const saveDisponibilidade = trpc.agenda.saveDisponibilidade.useMutation({
@@ -97,11 +108,21 @@ export default function MinhaAgenda() {
   });
 
   const createLink = trpc.linksAgendamento.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       utils.linksAgendamento.list.invalidate();
       setShowCreateLink(false);
       setNovoLink({ titulo: "", mensagemBoasVindas: "", projectId: undefined });
+      setSelectedLead(null);
+      setSearchTerm("");
+      setLinkExclusivo(false);
       toast.success("Link criado!");
+      
+      // Copiar link automaticamente
+      if (data?.token) {
+        const url = `${window.location.origin}/agendar/${data.token}`;
+        navigator.clipboard.writeText(url);
+        toast.success("Link copiado para a área de transferência!");
+      }
     }
   });
 
@@ -110,6 +131,49 @@ export default function MinhaAgenda() {
     navigator.clipboard.writeText(url);
     toast.success("Link copiado!");
   };
+
+  const shareWhatsApp = (token: string, titulo?: string | null) => {
+    const url = `${window.location.origin}/agendar/${token}`;
+    const mensagem = encodeURIComponent(
+      `Olá! 👋\n\nAgende sua visita através do link abaixo:\n\n${titulo || 'Agendamento de Visita'}\n${url}\n\nEstou à disposição para qualquer dúvida!`
+    );
+    window.open(`https://wa.me/?text=${mensagem}`, '_blank');
+  };
+
+  const handleCreateLink = () => {
+    const linkData: any = {
+      ...novoLink
+    };
+    
+    // Se for link exclusivo para um cliente, adicionar leadId e expiração de 15 minutos
+    if (linkExclusivo && selectedLead) {
+      linkData.leadId = selectedLead.id;
+      linkData.validoAte = addMinutes(new Date(), 15).toISOString();
+      linkData.maxAgendamentos = 1;
+      linkData.titulo = linkData.titulo || `Agendamento para ${selectedLead.nome}`;
+    }
+    
+    createLink.mutate(linkData);
+  };
+
+  // Calcular tempo restante para links com expiração
+  const getTempoRestante = (validoAte: Date | string | null) => {
+    if (!validoAte) return null;
+    const agora = new Date();
+    const expiracao = new Date(validoAte);
+    const diff = expiracao.getTime() - agora.getTime();
+    if (diff <= 0) return "Expirado";
+    const minutos = Math.floor(diff / 60000);
+    const segundos = Math.floor((diff % 60000) / 1000);
+    return `${minutos}:${String(segundos).padStart(2, '0')}`;
+  };
+
+  // Atualizar tempo restante a cada segundo
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <DashboardLayout>
@@ -284,12 +348,12 @@ export default function MinhaAgenda() {
                         {DIAS_SEMANA.find(d => d.value === disp.diaSemana)?.label}
                       </div>
                       <div className="flex items-center gap-2 text-slate-300">
-                        <Clock className="h-4 w-4 text-amber-500" />
+                        <Clock className="h-4 w-4" />
                         {disp.horaInicio} - {disp.horaFim}
                       </div>
                       {disp.intervaloInicio && disp.intervaloFim && (
                         <div className="text-sm text-slate-400">
-                          (Intervalo: {disp.intervaloInicio} - {disp.intervaloFim})
+                          (intervalo: {disp.intervaloInicio} - {disp.intervaloFim})
                         </div>
                       )}
                     </div>
@@ -308,13 +372,13 @@ export default function MinhaAgenda() {
               <div className="text-center py-8 text-slate-400">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>Nenhuma disponibilidade configurada</p>
-                <p className="text-sm">Adicione seus horários de trabalho para habilitar agendamentos</p>
+                <p className="text-sm">Adicione seus horários de trabalho para receber agendamentos</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Bloqueios */}
+        {/* Bloqueios de Agenda */}
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -323,12 +387,12 @@ export default function MinhaAgenda() {
                 Bloqueios de Agenda
               </CardTitle>
               <CardDescription className="text-slate-400">
-                Férias, folgas e compromissos que bloqueiam agendamentos
+                Defina férias, folgas ou compromissos que bloqueiam agendamentos
               </CardDescription>
             </div>
             <Dialog open={showAddBloqueio} onOpenChange={setShowAddBloqueio}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="border-slate-600 text-slate-300">
+                <Button variant="outline" className="border-red-500/50 text-red-400 hover:bg-red-500/10">
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Bloqueio
                 </Button>
@@ -473,14 +537,21 @@ export default function MinhaAgenda() {
                 Compartilhe links para clientes agendarem visitas diretamente
               </CardDescription>
             </div>
-            <Dialog open={showCreateLink} onOpenChange={setShowCreateLink}>
+            <Dialog open={showCreateLink} onOpenChange={(open) => {
+              setShowCreateLink(open);
+              if (!open) {
+                setSelectedLead(null);
+                setSearchTerm("");
+                setLinkExclusivo(false);
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button className="bg-green-600 hover:bg-green-700">
                   <Plus className="h-4 w-4 mr-2" />
                   Criar Link
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-slate-800 border-slate-700">
+              <DialogContent className="bg-slate-800 border-slate-700 max-w-lg">
                 <DialogHeader>
                   <DialogTitle className="text-white">Criar Link de Agendamento</DialogTitle>
                   <DialogDescription className="text-slate-400">
@@ -488,6 +559,119 @@ export default function MinhaAgenda() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
+                  {/* Opção de Link Exclusivo */}
+                  <div className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-lg">
+                    <Switch
+                      checked={linkExclusivo}
+                      onCheckedChange={(v) => {
+                        setLinkExclusivo(v);
+                        if (!v) setSelectedLead(null);
+                      }}
+                    />
+                    <div>
+                      <Label className="text-white">Link exclusivo para um cliente</Label>
+                      <p className="text-xs text-slate-400">O link expira em 15 minutos e só pode ser usado uma vez</p>
+                    </div>
+                  </div>
+
+                  {/* Busca de Cliente (se link exclusivo) */}
+                  {linkExclusivo && (
+                    <div className="space-y-2">
+                      <Label className="text-slate-300">Buscar Cliente (opcional)</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="Buscar por nome, telefone ou email..."
+                          className="bg-slate-700 border-slate-600 text-white pl-10"
+                        />
+                      </div>
+                      
+                      {/* Resultados da busca */}
+                      {searchTerm.length >= 3 && (
+                        <div className="max-h-48 overflow-y-auto space-y-1">
+                          {loadingSearch ? (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                            </div>
+                          ) : leadsEncontrados && leadsEncontrados.length > 0 ? (
+                            leadsEncontrados.map((lead) => (
+                              <button
+                                key={lead.id}
+                                onClick={() => {
+                                  setSelectedLead(lead);
+                                  setSearchTerm("");
+                                }}
+                                className={`w-full p-3 rounded-lg text-left transition-colors ${
+                                  selectedLead?.id === lead.id 
+                                    ? 'bg-green-600/20 border border-green-500' 
+                                    : 'bg-slate-700/50 hover:bg-slate-700'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="h-10 w-10 rounded-full bg-slate-600 flex items-center justify-center">
+                                    <User className="h-5 w-5 text-slate-300" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-white truncate">{lead.nome}</div>
+                                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                                      <span className="flex items-center gap-1">
+                                        <Phone className="h-3 w-3" />
+                                        {lead.telefone}
+                                      </span>
+                                      {lead.email && (
+                                        <span className="flex items-center gap-1 truncate">
+                                          <Mail className="h-3 w-3" />
+                                          {lead.email}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <p className="text-center py-4 text-slate-400 text-sm">
+                              Nenhum cliente encontrado
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Cliente selecionado */}
+                      {selectedLead && (
+                        <div className="p-3 bg-green-600/20 border border-green-500 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-green-600/30 flex items-center justify-center">
+                                <User className="h-5 w-5 text-green-400" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-white">{selectedLead.nome}</div>
+                                <div className="text-xs text-slate-400">{selectedLead.telefone}</div>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSelectedLead(null)}
+                              className="text-slate-400 hover:text-white"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {!selectedLead && (
+                        <p className="text-xs text-slate-400">
+                          Se não selecionar um cliente, o link será genérico e o cliente precisará preencher seus dados
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label className="text-slate-300">Título (opcional)</Label>
                     <Input
@@ -535,7 +719,7 @@ export default function MinhaAgenda() {
                     Cancelar
                   </Button>
                   <Button 
-                    onClick={() => createLink.mutate(novoLink)}
+                    onClick={handleCreateLink}
                     disabled={createLink.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
@@ -553,36 +737,74 @@ export default function MinhaAgenda() {
               </div>
             ) : links && links.length > 0 ? (
               <div className="space-y-2">
-                {links.map((link) => (
-                  <div key={link.id} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="font-medium text-white">
-                        {link.titulo || "Link de Agendamento"}
+                {links.filter(l => l.ativo).map((link) => {
+                  const tempoRestante = getTempoRestante(link.validoAte);
+                  const expirado = tempoRestante === "Expirado";
+                  
+                  return (
+                    <div key={link.id} className={`flex items-center justify-between p-3 rounded-lg ${expirado ? 'bg-slate-700/30 opacity-60' : 'bg-slate-700/50'}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-white">
+                            {link.titulo || "Link de Agendamento"}
+                          </span>
+                          {link.leadId && (
+                            <span className="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400">
+                              Exclusivo
+                            </span>
+                          )}
+                          {tempoRestante && !expirado && (
+                            <span className="px-2 py-0.5 text-xs rounded bg-amber-500/20 text-amber-400 flex items-center gap-1">
+                              <Timer className="h-3 w-3" />
+                              {tempoRestante}
+                            </span>
+                          )}
+                          {expirado && (
+                            <span className="px-2 py-0.5 text-xs rounded bg-red-500/20 text-red-400">
+                              Expirado
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-slate-400">
+                          {link.agendamentosRealizados} agendamentos realizados
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-400">
-                        {link.agendamentosRealizados} agendamentos realizados
+                      <div className="flex items-center gap-2">
+                        {!expirado && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => shareWhatsApp(link.token, link.titulo)}
+                              className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                              title="Compartilhar via WhatsApp"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => copyLink(link.token)}
+                              className="text-slate-300 hover:text-white"
+                              title="Copiar link"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(`/agendar/${link.token}`, '_blank')}
+                              className="text-slate-300 hover:text-white"
+                              title="Abrir link"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyLink(link.token)}
-                        className="text-slate-300 hover:text-white"
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => window.open(`/agendar/${link.token}`, '_blank')}
-                        className="text-slate-300 hover:text-white"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-slate-400">

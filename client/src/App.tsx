@@ -43,6 +43,7 @@ import Propostas from "@/pages/Propostas";
 import AgendamentoPublico from "@/pages/AgendamentoPublico";
 import ChatbotPublico from "@/pages/ChatbotPublico";
 import PropostaPublica from "@/pages/PropostaPublica";
+import CalendarioGestor from "@/pages/CalendarioGestor";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/agendar/:token" component={AgendamentoPublico} />
       <Route path="/chatbot" component={ChatbotPublico} />
       <Route path="/proposta/:token" component={PropostaPublica} />
+      <Route path="/calendario-gestor" component={CalendarioGestor} />
 
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />

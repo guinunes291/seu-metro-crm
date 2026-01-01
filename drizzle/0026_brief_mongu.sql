@@ -1,0 +1,1 @@
+ALTER TABLE `leads` MODIFY COLUMN `origem` enum('facebook','google_sheets','site','indicacao','captacao_corretor','whatsapp','telefone','plantao','agendamento_self_service','chatbot','outro') DEFAULT 'outro';

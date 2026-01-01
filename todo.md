@@ -1833,3 +1833,66 @@
 - [x] Botão de aceite digital com assinatura
 - [x] Registro de visualizações e aceites
 - [x] Layout com identidade visual da Seu Metro Quadrado
+
+
+## Melhorias no Agendamento Self-Service (01/01/2026)
+
+### Bug Fix: Erro de Inserção de Lead
+- [ ] Corrigir erro "Failed query: insert into leads" no agendamento público
+- [ ] Garantir que todos os campos obrigatórios sejam preenchidos corretamente
+
+### Integração Google Calendar
+- [ ] Configurar OAuth do Google Calendar
+- [ ] Sincronizar agenda do corretor com Google Calendar
+- [ ] Criar evento no Google Calendar ao confirmar agendamento
+- [ ] Sincronizar agenda do gestor para visualizar todos os agendamentos
+
+### Compartilhamento via WhatsApp
+- [ ] Adicionar botão de compartilhamento via WhatsApp na página de links
+- [ ] Gerar mensagem pré-formatada com link de agendamento
+
+### Busca de Cliente Existente
+- [ ] Implementar busca de cliente na criação de link
+- [ ] Criar link exclusivo para cliente selecionado
+- [ ] Implementar expiração de link em 15 minutos
+- [ ] Remover links expirados automaticamente
+
+### Cadastro Automático de Lead
+- [ ] Tornar Nome, Telefone e E-mail obrigatórios no formulário público
+- [ ] Criar lead automaticamente ao confirmar agendamento
+- [ ] Atribuir lead ao corretor que gerou o link
+- [ ] Definir status como "agendado"
+- [ ] Registrar atividade "Cliente agendado via Link de AutoAgendamento"
+- [ ] Atualizar calendário/agenda do corretor
+
+
+## Melhorias no Agendamento Self-Service (01/01/2026)
+### Correção de Erro de Inserção
+- [x] Adicionar origem 'agendamento_self_service' ao enum de origens
+- [x] Corrigir erro de inserção de lead no agendamento público
+
+### Links de Agendamento com Expiração
+- [x] Implementar busca de cliente existente para link exclusivo
+- [x] Adicionar expiração de 15 minutos nos links
+- [x] Tornar Nome, Telefone e E-mail obrigatórios no cadastro
+- [x] Criar lead automaticamente após confirmação
+- [x] Atribuir lead ao corretor que gerou o link
+- [x] Definir status como "agendado"
+- [x] Registrar atividade "Cliente agendado via Link de AutoAgendamento"
+
+### Integração Google Calendar
+- [x] Criar módulo de integração com Google Calendar (server/googleCalendar.ts)
+- [x] Adicionar campos de Google Calendar na tabela de usuários
+- [x] Criar rotas de configuração do Google Calendar
+- [x] Sincronizar agenda do corretor com Google Calendar
+
+### Botão de Compartilhamento via WhatsApp
+- [x] Adicionar botão de compartilhamento via WhatsApp na página MinhaAgenda
+- [x] Gerar mensagem personalizada com link de agendamento
+
+### Calendário Consolidado para Gestores
+- [x] Criar página /calendario-gestor para visão consolidada
+- [x] Implementar estatísticas de agendamentos por status
+- [x] Implementar ranking de agendamentos por corretor
+- [x] Adicionar filtro por corretor
+- [x] Adicionar link no menu lateral (apenas para gestores)

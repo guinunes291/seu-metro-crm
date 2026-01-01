@@ -352,13 +352,14 @@ export default function AgendamentoPublico() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-slate-300">E-mail (opcional)</Label>
+                  <Label className="text-slate-300">E-mail *</Label>
                   <Input
                     type="email"
                     placeholder="seu@email.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="bg-slate-700 border-slate-600 text-white"
+                    required
                   />
                 </div>
 
@@ -384,7 +385,7 @@ export default function AgendamentoPublico() {
                   <Button 
                     className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
                     onClick={handleSubmit}
-                    disabled={!formData.nome || !formData.telefone || createAgendamento.isPending}
+                    disabled={!formData.nome || !formData.telefone || !formData.email || createAgendamento.isPending}
                   >
                     {createAgendamento.isPending ? (
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />

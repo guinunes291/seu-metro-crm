@@ -4872,39 +4872,6 @@ export async function getAgendamentosLead(leadId: number): Promise<Agendamento[]
 }
 
 /**
- * Buscar todos os agendamentos (para gestor)
- */
-export async function getAllAgendamentos(filtros?: {
-  dataInicio?: Date;
-  dataFim?: Date;
-  corretorId?: number;
-  status?: string;
-}): Promise<Agendamento[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const conditions = [];
-  
-  if (filtros?.dataInicio) {
-    conditions.push(gte(agendamentos.dataAgendamento, filtros.dataInicio));
-  }
-  if (filtros?.dataFim) {
-    conditions.push(lte(agendamentos.dataAgendamento, filtros.dataFim));
-  }
-  if (filtros?.corretorId) {
-    conditions.push(eq(agendamentos.corretorId, filtros.corretorId));
-  }
-  if (filtros?.status) {
-    conditions.push(eq(agendamentos.status, filtros.status as any));
-  }
-  
-  return await db.select()
-    .from(agendamentos)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(agendamentos.dataAgendamento));
-}
-
-/**
  * Atualizar status de um agendamento
  */
 export async function updateAgendamentoStatus(
@@ -6306,4 +6273,95 @@ export async function getAllPropostas(filtros?: {
     .from(propostas)
     .where(and(...conditions))
     .orderBy(desc(propostas.createdAt));
+}
+
+
+/**
+ * Desativar link de agendamento (após uso ou expiração)
+ */
+export async function desativarLinkAgendamento(linkId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(linksAgendamento)
+    .set({ ativo: false })
+    .where(eq(linksAgendamento.id, linkId));
+}
+
+
+/**
+ * Buscar todos os agendamentos (para gestor)
+ */
+export async function getAllAgendamentos(filters?: {
+  dataInicio?: string;
+  dataFim?: string;
+  corretorId?: number;
+  status?: string;
+}): Promise<Array<{
+  id: number;
+  leadId: number;
+  leadNome: string;
+  leadTelefone: string;
+  corretorId: number | null;
+  corretorNome: string | null;
+  projectId: number | null;
+  projetoNome: string | null;
+  dataAgendamento: Date;
+  horaAgendamento: string;
+  status: string;
+  observacoes: string | null;
+  createdAt: Date;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db
+    .select({
+      id: agendamentos.id,
+      leadId: agendamentos.leadId,
+      leadNome: leads.nome,
+      leadTelefone: leads.telefone,
+      corretorId: agendamentos.corretorId,
+      corretorNome: users.name,
+      projectId: agendamentos.projectId,
+      projetoNome: projects.nome,
+      dataAgendamento: agendamentos.dataAgendamento,
+      horaAgendamento: agendamentos.horaAgendamento,
+      status: agendamentos.status,
+      observacoes: agendamentos.observacoes,
+      createdAt: agendamentos.createdAt
+    })
+    .from(agendamentos)
+    .leftJoin(leads, eq(agendamentos.leadId, leads.id))
+    .leftJoin(users, eq(agendamentos.corretorId, users.id))
+    .leftJoin(projects, eq(agendamentos.projectId, projects.id));
+  
+  const conditions: any[] = [];
+  
+  if (filters?.dataInicio) {
+    conditions.push(gte(agendamentos.dataAgendamento, new Date(filters.dataInicio)));
+  }
+  if (filters?.dataFim) {
+    conditions.push(lte(agendamentos.dataAgendamento, new Date(filters.dataFim)));
+  }
+  if (filters?.corretorId) {
+    conditions.push(eq(agendamentos.corretorId, filters.corretorId));
+  }
+  if (filters?.status) {
+    conditions.push(eq(agendamentos.status, filters.status as any));
+  }
+  
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+  
+  const result = await query.orderBy(desc(agendamentos.dataAgendamento));
+  
+  return result.map(r => ({
+    ...r,
+    leadNome: r.leadNome || 'Desconhecido',
+    leadTelefone: r.leadTelefone || '',
+    corretorNome: r.corretorNome || null,
+    projetoNome: r.projetoNome || null
+  }));
 }

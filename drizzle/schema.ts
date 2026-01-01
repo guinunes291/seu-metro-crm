@@ -47,6 +47,11 @@ export const users = mysqlTable("users", {
   estado: varchar("estado", { length: 2 }),
   cep: varchar("cep", { length: 9 }), // 00000-000
   
+  // Integração Google Calendar
+  googleCalendarId: varchar("googleCalendarId", { length: 255 }), // ID do calendário do Google
+  googleRefreshToken: text("googleRefreshToken"), // Refresh token para renovar acesso
+  googleCalendarEnabled: boolean("googleCalendarEnabled").default(false).notNull(),
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -196,6 +201,8 @@ export const leads = mysqlTable("leads", {
     "whatsapp",           // Contato via WhatsApp
     "telefone",           // Ligação telefônica
     "plantao",            // Plantão de vendas
+    "agendamento_self_service", // Agendamento via link self-service
+    "chatbot",            // Chatbot de pré-qualificação
     "outro"               // Outras origens
   ]).default("outro"), // Canal de captação
   projectId: int("projectId"), // Projeto de interesse
