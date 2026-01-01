@@ -2241,3 +2241,11 @@
 - [ ] Testar envio de confirmação após agendamento
 - [ ] Implementar envio de lembrete de agendamento (24h antes)
 - [ ] Implementar envio de confirmação via Email (pendente SMTP)
+
+## Integração Webhook Zapier para WhatsApp
+- [x] Criar módulo zapierWebhook.ts com função de envio de webhook
+- [x] Definir estrutura JSON padrão para eventos de agendamento
+- [x] Integrar envio de webhook no endpoint de autoagendamento
+- [ ] Criar página de configuração para URL do webhook Zapier
+- [x] Adicionar variável de ambiente ZAPIER_WEBHOOK_URL
+- [x] Testar envio de webhook para o Zapier (10 testes passando)

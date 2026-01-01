@@ -12,6 +12,7 @@ import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
+import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -3024,22 +3025,69 @@ export const appRouter = router({
           await db.desativarLinkAgendamento(link.id);
         }
         
+        // Buscar dados do corretor e projeto para notificações
+        const corretor = await db.getUserById(link.corretorId);
+        const projeto = link.projectId ? await db.getProjectById(link.projectId) : null;
+        
+        // Formatar data para exibição
+        const dataFormatadaExibicao = new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric'
+        });
+        
+        // Enviar webhook para Zapier (para WhatsApp via Zapier)
+        const zapierWebhookUrl = process.env.ZAPIER_WEBHOOK_URL;
+        if (zapierWebhookUrl) {
+          try {
+            const payload = criarPayloadAgendamento({
+              cliente: {
+                nome: input.nome,
+                telefone: input.telefone,
+                email: input.email
+              },
+              agendamento: {
+                id: agendamento.id,
+                data: input.data,
+                hora: input.hora,
+                projeto: projeto?.nome,
+                construtora: projeto?.construtora,
+                endereco: projeto?.endereco,
+                observacoes: input.observacoes
+              },
+              corretor: {
+                id: link.corretorId,
+                nome: corretor?.name || 'Corretor',
+                telefone: corretor?.telefone,
+                email: corretor?.email
+              }
+            });
+            
+            // Adicionar mensagem formatada para WhatsApp no payload
+            const mensagemWhatsApp = gerarMensagemConfirmacao({
+              nomeCliente: input.nome,
+              data: input.data,
+              hora: input.hora,
+              projeto: projeto?.nome,
+              endereco: projeto?.endereco,
+              nomeCorretor: corretor?.name || 'Corretor'
+            });
+            
+            // Adicionar mensagem ao payload
+            (payload as any).mensagemWhatsApp = mensagemWhatsApp;
+            
+            await enviarWebhookZapier(zapierWebhookUrl, payload);
+            console.log('[Agendamento] Webhook enviado para Zapier:', input.telefone);
+          } catch (zapierError) {
+            // Não falhar o agendamento se o webhook falhar
+            console.error('[Agendamento] Erro ao enviar webhook Zapier:', zapierError);
+          }
+        }
+        
         // Enviar confirmação via WhatsApp (se Evolution API estiver configurada)
         if (isEvolutionApiConfigured()) {
           try {
-            // Buscar dados do corretor
-            const corretor = await db.getUserById(link.corretorId);
-            // Buscar dados do projeto se houver
-            const projeto = link.projectId ? await db.getProjectById(link.projectId) : null;
-            
-            // Formatar data para exibição
-            const dataFormatadaExibicao = new Date(ano, mes - 1, dia).toLocaleDateString('pt-BR', {
-              weekday: 'long',
-              day: '2-digit',
-              month: 'long',
-              year: 'numeric'
-            });
-            
             await enviarConfirmacaoAgendamento({
               telefoneCliente: input.telefone,
               nomeCliente: input.nome,
