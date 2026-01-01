@@ -2213,3 +2213,12 @@
 - [ ] Verificar logs do console e erros de rede
 - [ ] Corrigir a função handleCreateProposta
 - [ ] Testar criação de proposta após correção
+
+
+## Atualização do PDF da Proposta
+- [x] Trocar logo pelo novo (logo-full.png), maior e centralizado
+- [x] Renomear "Termo de Aceite" para "Termo de Ciência"
+- [x] Remover botão de aceite do PDF
+- [x] Remover campo de assinatura do cliente
+- [x] Remover mapa da seção Localização, deixar apenas endereço escrito
+- [x] Reduzir espaçamento em branco entre seções

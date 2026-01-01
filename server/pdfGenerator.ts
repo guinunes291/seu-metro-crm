@@ -113,15 +113,8 @@ function formatDate(date: Date): string {
   return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 }
 
-// Logo da Seu Metro Quadrado em SVG
-const LOGO_SEU_METRO_QUADRADO = `
-<svg width="180" height="60" viewBox="0 0 180 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="5" y="10" width="40" height="40" rx="4" fill="#f59e0b"/>
-  <text x="15" y="38" fill="white" font-family="Inter, sans-serif" font-size="20" font-weight="700">m²</text>
-  <text x="55" y="30" fill="white" font-family="Inter, sans-serif" font-size="14" font-weight="600">SEU METRO</text>
-  <text x="55" y="46" fill="#f59e0b" font-family="Inter, sans-serif" font-size="14" font-weight="600">QUADRADO</text>
-</svg>
-`;
+// Logo da Seu Metro Quadrado - URL da imagem
+const LOGO_SEU_METRO_QUADRADO_URL = '/logo-full.png';
 
 // Gerar HTML para o PDF
 export function gerarHTMLProposta(dados: DadosProposta): string {
@@ -192,6 +185,12 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       margin-bottom: 15px;
     }
     
+    .capa-logo img {
+      width: 320px;
+      height: auto;
+      max-width: 100%;
+    }
+    
     .capa-empresa {
       font-size: 12pt;
       font-weight: 300;
@@ -249,14 +248,14 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     /* ===== SEÇÕES ===== */
     .secao {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
     
     .secao-header {
       display: flex;
       align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
       border-bottom: 2px solid #f59e0b;
     }
     
@@ -386,20 +385,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     }
     
     /* ===== LOCALIZAÇÃO ===== */
-    .mapa-container {
-      width: 100%;
-      height: 200px;
-      background: #e2e8f0;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      overflow: hidden;
-    }
-    
-    .mapa-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    /* Mapa removido - apenas endereço escrito */
     
     .endereco-completo {
       background: #f8fafc;
@@ -779,7 +765,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     <div class="capa">
       <div class="capa-header">
         <div class="capa-logo">
-          ${LOGO_SEU_METRO_QUADRADO}
+          <img src="${LOGO_SEU_METRO_QUADRADO_URL}" alt="Seu Metro Quadrado">
         </div>
       </div>
       
@@ -905,12 +891,6 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         <h2 class="secao-titulo">Localização</h2>
       </div>
       <div class="secao-conteudo">
-        <div class="mapa-container">
-          ${dados.projeto.endereco ? `
-          <img src="https://maps.googleapis.com/maps/api/staticmap?center=${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade + ', ' + dados.projeto.estado)}&zoom=15&size=800x400&maptype=roadmap&markers=color:orange%7Csize:mid%7C${encodeURIComponent(dados.projeto.endereco + ', ' + dados.projeto.cidade)}&style=feature:poi%7Cvisibility:simplified&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8" alt="Mapa da localização">
-          ` : '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #64748b;">Mapa não disponível</div>'}
-        </div>
-        
         <div class="endereco-completo">
           <svg class="endereco-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -1122,11 +1102,11 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       </div>
     </div>
     
-    <!-- SEÇÃO 10: TERMO DE ACEITE -->
+    <!-- SEÇÃO 10: TERMO DE CIÊNCIA -->
     <div class="secao">
       <div class="secao-header">
         <div class="secao-numero">10</div>
-        <h2 class="secao-titulo">Termo de Aceite</h2>
+        <h2 class="secao-titulo">Termo de Ciência</h2>
       </div>
       <div class="secao-conteudo">
         <div class="termo-box">
@@ -1135,27 +1115,10 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
             ${dados.unidade ? `unidade ${dados.unidade} do ` : 'no '}empreendimento <strong>${dados.projeto.nome}</strong>, 
             no valor de <strong>${formatCurrency(dados.valorImovel)}</strong>.
             <br><br>
-            Declaro estar ciente de todas as condições apresentadas, incluindo valores, prazos e documentação necessária. 
-            Manifesto meu interesse em dar continuidade ao processo de aquisição do imóvel nas condições aqui estabelecidas.
+            Declaro estar ciente de todas as condições apresentadas, incluindo valores, prazos e documentação necessária.
             <br><br>
             Esta proposta tem validade até <strong>${validadeFormatada}</strong>, após a qual os valores e condições poderão ser revisados.
           </p>
-          
-          <!-- Botão de Aceite -->
-          <div class="termo-aceite-btn">
-            <div class="termo-aceite-checkbox"></div>
-            Li e aceito os termos desta proposta
-          </div>
-          
-          <!-- Apenas assinatura do cliente -->
-          <div class="termo-assinatura">
-            <div class="assinatura-campo">
-              <div class="assinatura-linha">
-                <div class="assinatura-nome">${dados.nomeCliente}</div>
-                <div class="assinatura-cargo">Cliente</div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
