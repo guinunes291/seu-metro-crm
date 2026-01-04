@@ -1,0 +1,25 @@
+{
+  "query": "SELECT nome, valorMinimo, valorMaximo FROM projects WHERE nome IN ('Residencial Vista Norte', 'Torres do Horizonte', 'Jardim das Acácias') LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT nome, valorMinimo, valorMaximo FROM projects WHERE nome IN ('Residencial Vista Norte', 'Torres do Horizonte', 'Jardim das Acácias') LIMIT 3;",
+  "rows": [
+    {
+      "nome": "Residencial Vista Norte",
+      "valorMinimo": "18900000",
+      "valorMaximo": "25000000"
+    },
+    {
+      "nome": "Jardim das Acácias",
+      "valorMinimo": "21000000",
+      "valorMaximo": "28000000"
+    },
+    {
+      "nome": "Torres do Horizonte",
+      "valorMinimo": "35000000",
+      "valorMaximo": "45000000"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome\tvalorMinimo\tvalorMaximo\nResidencial Vista Norte\t18900000\t25000000\nJardim das Acácias\t21000000\t28000000\nTorres do Horizonte\t35000000\t45000000\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

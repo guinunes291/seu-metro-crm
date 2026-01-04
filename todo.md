@@ -2249,3 +2249,16 @@
 - [ ] Criar página de configuração para URL do webhook Zapier
 - [x] Adicionar variável de ambiente ZAPIER_WEBHOOK_URL
 - [x] Testar envio de webhook para o Zapier (10 testes passando)
+
+
+## Limpeza de Dados
+- [x] Remover leads de teste do banco de dados
+- [x] Remover leads com status contrato fechado (são testes)
+- [x] Alterar status de leads agendados para aguardando atendimento
+
+## Limpeza de Agendamentos e Correção de Valores
+- [x] Remover todos os agendamentos do sistema
+- [x] Corrigir exibição de valores dos projetos (converter centavos para reais)
+
+## Correção de Logo na Proposta
+- [x] Corrigir exibição do logo na proposta comercial
