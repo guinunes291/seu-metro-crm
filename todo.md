@@ -2262,3 +2262,7 @@
 
 ## Correção de Logo na Proposta
 - [x] Corrigir exibição do logo na proposta comercial
+
+## Upload e Configuração do Logo
+- [x] Fazer upload do logo para S3
+- [x] Configurar logo diretamente no código da proposta

@@ -122,25 +122,13 @@ export default function PropostaPublica() {
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {import.meta.env.VITE_APP_LOGO ? (
-                <img 
-                  src={import.meta.env.VITE_APP_LOGO} 
-                  alt="Logo" 
-                  className="h-16 w-auto object-contain"
-                  onError={(e) => {
-                    // Fallback para ícone se a imagem falhar
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const fallback = target.nextElementSibling as HTMLElement;
-                    if (fallback) fallback.style.display = 'flex';
-                  }}
-                />
-              ) : null}
-              <div className="w-12 h-12 bg-amber-500 rounded-lg items-center justify-center" style={{ display: import.meta.env.VITE_APP_LOGO ? 'none' : 'flex' }}>
-                <Home className="h-6 w-6 text-white" />
-              </div>
+              <img 
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663032188321/GbWwMKwbYWojThOs.png" 
+                alt="Seu Metro Quadrado" 
+                className="h-16 w-auto object-contain"
+              />
               <div>
-                <h1 className="text-xl font-bold">{import.meta.env.VITE_APP_TITLE || 'Seu Metro Quadrado'}</h1>
+                <h1 className="text-xl font-bold">Seu Metro Quadrado</h1>
                 <p className="text-sm text-slate-400">Proposta Comercial</p>
               </div>
             </div>
