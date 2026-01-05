@@ -2266,3 +2266,9 @@
 ## Upload e Configuração do Logo
 - [x] Fazer upload do logo para S3
 - [x] Configurar logo diretamente no código da proposta
+
+## Marca D'água em PDF
+- [ ] Implementar marca d'água com logo ao exportar propostas em PDF
+
+## Melhorar Contraste na Proposta
+- [x] Ajustar cores dos textos para melhor legibilidade

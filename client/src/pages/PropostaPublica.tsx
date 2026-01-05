@@ -157,52 +157,52 @@ export default function PropostaPublica() {
         </Card>
 
         {/* Dados do Empreendimento */}
-        <Card>
+        <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <Building2 className="h-5 w-5 text-amber-500" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Building2 className="h-5 w-5 text-amber-400" />
               {proposta.projeto?.nome}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 text-slate-600">
-                <MapPin className="h-5 w-5 text-slate-400" />
+              <div className="flex items-center gap-3 text-slate-200">
+                <MapPin className="h-5 w-5 text-amber-400" />
                 <span>{proposta.projeto?.endereco || proposta.projeto?.bairro}</span>
               </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <Building2 className="h-5 w-5 text-slate-400" />
+              <div className="flex items-center gap-3 text-slate-200">
+                <Building2 className="h-5 w-5 text-amber-400" />
                 <span>{proposta.projeto?.construtora}</span>
               </div>
             </div>
             
             {proposta.projeto?.descricao && (
-              <p className="text-slate-600 text-sm">{proposta.projeto.descricao}</p>
+              <p className="text-slate-300 text-sm">{proposta.projeto.descricao}</p>
             )}
           </CardContent>
         </Card>
 
         {/* Dados da Unidade */}
-        <Card>
+        <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <FileText className="h-5 w-5 text-amber-500" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <FileText className="h-5 w-5 text-amber-400" />
               Detalhes da Unidade
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500 mb-1">Unidade</p>
-                <p className="text-xl font-bold text-slate-900">{proposta.unidade || "-"}</p>
+              <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                <p className="text-sm text-amber-400 mb-1">Unidade</p>
+                <p className="text-xl font-bold text-white">{proposta.unidade || "-"}</p>
               </div>
-              <div className="text-center p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500 mb-1">Tipologia</p>
-                <p className="text-xl font-bold text-slate-900">{proposta.tipologia || "-"}</p>
+              <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                <p className="text-sm text-amber-400 mb-1">Tipologia</p>
+                <p className="text-xl font-bold text-white">{proposta.tipologia || "-"}</p>
               </div>
-              <div className="text-center p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-500 mb-1">Área</p>
-                <p className="text-xl font-bold text-slate-900">{proposta.metragem ? `${proposta.metragem}m²` : "-"}</p>
+              <div className="text-center p-4 bg-slate-700/50 rounded-lg border border-slate-600">
+                <p className="text-sm text-amber-400 mb-1">Área</p>
+                <p className="text-xl font-bold text-white">{proposta.metragem ? `${proposta.metragem}m²` : "-"}</p>
               </div>
             </div>
           </CardContent>
