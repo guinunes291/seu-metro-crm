@@ -1391,6 +1391,9 @@ export const propostas = mysqlTable("propostas", {
   // Conteúdo personalizado
   mensagemPersonalizada: text("mensagemPersonalizada"),
   
+  // Tabela de pagamento (JSON array de parcelas)
+  tabelaPagamento: text("tabelaPagamento"),
+  
   // Imagens selecionadas (JSON array de URLs)
   imagensSelecionadas: text("imagensSelecionadas"),
   

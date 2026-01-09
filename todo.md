@@ -2320,3 +2320,10 @@
 - [x] Tabela de pagamento não está sendo salva quando corretor edita
 - [x] Corrigir persistência da tabela de pagamento no banco de dados
 - [x] Testar edição e geração de PDF com tabela atualizada
+
+## Bug CRÍTICO: Tabela de Pagamento Ainda Não Atualiza no PDF
+- [x] Verificar se tabelaPagamento está sendo salva no banco de dados (coluna não existia!)
+- [x] Adicionar coluna tabelaPagamento no schema do Drizzle
+- [x] Executar migração do banco de dados
+- [x] Verificar se tabelaPagamento está sendo lida ao gerar PDF (já estava implementado)
+- [x] Testar edição → salvamento → geração de PDF (pronto para teste do usuário)
