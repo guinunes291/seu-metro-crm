@@ -2415,3 +2415,16 @@
 - [x] Investigar erro de JavaScript no botão
 - [x] Corrigir inicialização do estado dos corretores selecionados
 - [x] Testar abertura do modal de criar webhook
+
+## Bug: Faixa de renda e projeto não aparecem nos leads do webhook
+- [ ] Investigar mapeamento de campos do Facebook Ads
+- [ ] Verificar se form_id está sendo usado para mapear projeto
+- [ ] Adicionar logs para debug do processamento
+- [ ] Corrigir captura e salvamento dos campos
+
+## Feature: Interface de mapeamento form_id → projeto
+- [x] Criar modal de configuração de mapeamento
+- [x] Adicionar botão "Configurar Mapeamento" em cada webhook
+- [x] Implementar formulário dinâmico para adicionar/remover mapeamentos
+- [x] Salvar mapeamento via trpc.webhook.updateFormIdMapping
+- [ ] Testar mapeamento com leads reais

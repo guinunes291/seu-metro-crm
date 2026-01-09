@@ -32,6 +32,9 @@ export default function Roleta() {
   const { user } = useAuth();
   const [novoWebhookOpen, setNovoWebhookOpen] = useState(false);
   const [novoWebhook, setNovoWebhook] = useState({ nome: "", fonte: "facebook" as const, projectIdPadrao: "" });
+  const [mapeamentoOpen, setMapeamentoOpen] = useState(false);
+  const [webhookSelecionado, setWebhookSelecionado] = useState<number | null>(null);
+  const [mapeamentos, setMapeamentos] = useState<Array<{ formId: string; projectId: string }>>([]);
   
   // Queries
   const { data: fila, refetch: refetchFila, isLoading: loadingFila } = trpc.fila.list.useQuery();
@@ -89,6 +92,63 @@ export default function Roleta() {
       toast.success("Webhook excluído!");
     },
   });
+  
+  const updateFormIdMapping = trpc.webhook.updateFormIdMapping.useMutation({
+    onSuccess: () => {
+      refetchWebhooks();
+      setMapeamentoOpen(false);
+      toast.success("Mapeamento atualizado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
+  // Funções auxiliares
+  const abrirMapeamento = (webhookId: number) => {
+    const webhook = webhooks?.find(w => w.id === webhookId);
+    if (webhook && webhook.formIdMapping) {
+      try {
+        const mapping = JSON.parse(webhook.formIdMapping);
+        const mappingArray = Object.entries(mapping).map(([formId, projectId]) => ({
+          formId,
+          projectId: String(projectId),
+        }));
+        setMapeamentos(mappingArray);
+      } catch (e) {
+        setMapeamentos([]);
+      }
+    } else {
+      setMapeamentos([]);
+    }
+    setWebhookSelecionado(webhookId);
+    setMapeamentoOpen(true);
+  };
+  
+  const adicionarMapeamento = () => {
+    setMapeamentos([...mapeamentos, { formId: '', projectId: '' }]);
+  };
+  
+  const removerMapeamento = (index: number) => {
+    setMapeamentos(mapeamentos.filter((_, i) => i !== index));
+  };
+  
+  const salvarMapeamento = () => {
+    if (!webhookSelecionado) return;
+    
+    // Converter array para objeto { formId: projectId }
+    const mappingObject: Record<string, number> = {};
+    for (const m of mapeamentos) {
+      if (m.formId && m.projectId) {
+        mappingObject[m.formId] = Number(m.projectId);
+      }
+    }
+    
+    updateFormIdMapping.mutate({
+      webhookId: webhookSelecionado,
+      formIdMapping: mappingObject,
+    });
+  };
   
   // Verificar permissão
   if (user?.role !== 'gestor' && user?.role !== 'admin') {
@@ -448,6 +508,14 @@ export default function Roleta() {
                     </div>
                     
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => abrirMapeamento(webhook.id)}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Mapear Form IDs
+                      </Button>
                       <Switch
                         checked={webhook.ativo}
                         onCheckedChange={(checked) => {
@@ -544,6 +612,94 @@ export default function Roleta() {
         </CardContent>
       </Card>
       </div>
+      
+      {/* Modal de Mapeamento de Form IDs */}
+      <Dialog open={mapeamentoOpen} onOpenChange={setMapeamentoOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Mapear Form IDs para Projetos</DialogTitle>
+            <DialogDescription>
+              Configure qual projeto cada formulário do Facebook deve usar. Deixe em branco para usar o projeto padrão do webhook.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {mapeamentos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum mapeamento configurado. Clique em "Adicionar Mapeamento" para começar.
+              </div>
+            ) : (
+              mapeamentos.map((mapeamento, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <Label htmlFor={`formId-${index}`}>Form ID</Label>
+                    <Input
+                      id={`formId-${index}`}
+                      placeholder="Ex: 123456789"
+                      value={mapeamento.formId}
+                      onChange={(e) => {
+                        const newMapeamentos = [...mapeamentos];
+                        newMapeamentos[index].formId = e.target.value;
+                        setMapeamentos(newMapeamentos);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <Label htmlFor={`projectId-${index}`}>Projeto</Label>
+                    <Select
+                      value={mapeamento.projectId}
+                      onValueChange={(value) => {
+                        const newMapeamentos = [...mapeamentos];
+                        newMapeamentos[index].projectId = value;
+                        setMapeamentos(newMapeamentos);
+                      }}
+                    >
+                      <SelectTrigger id={`projectId-${index}`}>
+                        <SelectValue placeholder="Selecione um projeto" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projetos?.map((projeto) => (
+                          <SelectItem key={projeto.id} value={String(projeto.id)}>
+                            {projeto.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removerMapeamento(index)}
+                    className="mt-6"
+                  >
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  </Button>
+                </div>
+              ))
+            )}
+            
+            <Button
+              variant="outline"
+              onClick={adicionarMapeamento}
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar Mapeamento
+            </Button>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMapeamentoOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={salvarMapeamento} disabled={updateFormIdMapping.isPending}>
+              {updateFormIdMapping.isPending ? 'Salvando...' : 'Salvar Mapeamento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

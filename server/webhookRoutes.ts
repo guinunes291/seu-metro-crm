@@ -33,6 +33,8 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
     }
     
     console.log('[Webhook Facebook] Dados do lead recebidos:', JSON.stringify(data, null, 2));
+    console.log('[Webhook Facebook] form_id:', data.form_id);
+    console.log('[Webhook Facebook] field_data:', JSON.stringify(data.field_data, null, 2));
     
     // Extrair dados do field_data
     let nome = '';
@@ -211,7 +213,18 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     // Se não encontrou mapeamento, usar projeto padrão
     if (!projectId && webhook?.projectIdPadrao) {
       projectId = webhook.projectIdPadrao;
+      console.log('[Webhook Facebook] Usando projeto padrão:', projectId);
     }
+    
+    console.log('[Webhook Facebook] Dados finais antes de processar:', {
+      nome,
+      email,
+      telefone,
+      faixaRenda,
+      formId,
+      projectId,
+      webhookToken: token
+    });
     
     // Processar lead via roleta
     const resultado = await db.processarLeadWebhook(token, {
