@@ -468,14 +468,14 @@ export default function ProjetoFoco() {
             <div className="space-y-2">
               <Label htmlFor="webhook-projeto">Projeto Padrão (opcional)</Label>
               <Select 
-                value={webhookProjeto?.toString() || ""} 
-                onValueChange={(v) => setWebhookProjeto(v ? Number(v) : undefined)}
+                value={webhookProjeto?.toString() || "_none"} 
+                onValueChange={(v) => setWebhookProjeto(v === "_none" ? undefined : Number(v))}
               >
                 <SelectTrigger id="webhook-projeto">
                   <SelectValue placeholder="Selecione um projeto" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  <SelectItem value="_none">Nenhum</SelectItem>
                   {projetos?.map((projeto) => (
                     <SelectItem key={projeto.id} value={projeto.id.toString()}>
                       {projeto.nome}
