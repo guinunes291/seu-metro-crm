@@ -114,7 +114,8 @@ function formatDate(date: Date): string {
 }
 
 // Logo da Seu Metro Quadrado - URL da imagem
-const LOGO_SEU_METRO_QUADRADO_URL = '/logo-full.png';
+// Usar logo do ambiente ou fallback para logo padrão
+const LOGO_SEU_METRO_QUADRADO_URL = process.env.VITE_APP_LOGO || 'https://d2xsxph8kpxj0f.cloudfront.net/310419663032188321/gjgL2sFxYNbZjhUM6i4tZH/logo-seu-metro-quadrado.png';
 
 // Gerar HTML para o PDF
 export function gerarHTMLProposta(dados: DadosProposta): string {

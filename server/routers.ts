@@ -4005,6 +4005,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           mensagemPersonalizada: proposta.mensagemPersonalizada || undefined,
           imagensSelecionadas: proposta.imagensSelecionadas ? JSON.parse(proposta.imagensSelecionadas) : undefined,
           plantasSelecionadas: proposta.plantasSelecionadas ? JSON.parse(proposta.plantasSelecionadas) : undefined,
+          tabelaPagamento: proposta.tabelaPagamento ? JSON.parse(proposta.tabelaPagamento) : undefined,
           validoAte: proposta.validoAte || undefined,
           projeto: {
             nome: projeto.nome,
