@@ -96,3 +96,21 @@ export function formatarDataHoraBR(data: Date): string {
     minute: '2-digit',
   });
 }
+
+/**
+ * Converte filtros de data (dataInicio/dataFim) do frontend para o fuso de São Paulo
+ * Usado em queries de relatórios e dashboards
+ * 
+ * @param dataInicioISO String ISO opcional (YYYY-MM-DD)
+ * @param dataFimISO String ISO opcional (YYYY-MM-DD)
+ * @returns Objeto com dataInicio e dataFim no fuso de SP, ou undefined se não fornecido
+ */
+export function converterFiltrosData(dataInicioISO?: string, dataFimISO?: string): {
+  dataInicio?: Date;
+  dataFim?: Date;
+} {
+  return {
+    dataInicio: dataInicioISO ? inicioDoDia(parsearDataISO(dataInicioISO)) : undefined,
+    dataFim: dataFimISO ? fimDoDia(parsearDataISO(dataFimISO)) : undefined,
+  };
+}

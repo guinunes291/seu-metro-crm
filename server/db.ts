@@ -223,12 +223,16 @@ export async function updateLimiteDiarioWebhook(userId: number, limite: number) 
     .where(eq(users.id, userId));
 }
 
-export async function countLeadsRecebidosHoje(corretorId: number, dataInicio: Date) {
+export async function countLeadsRecebidosHoje(corretorId: number, dataInicio?: Date) {
   const db = await getDb();
   if (!db) return 0;
   
-  const dataFim = new Date(dataInicio);
-  dataFim.setHours(23, 59, 59, 999);
+  // Importar funções de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje, inicioDoDia, fimDoDia } = await import('./timezone');
+  
+  // Se não passar data, usar hoje no fuso de São Paulo
+  const dataInicioSP = dataInicio ? inicioDoDia(dataInicio) : inicioDoDiaHoje();
+  const dataFimSP = dataInicio ? fimDoDia(dataInicio) : fimDoDiaHoje();
   
   const result = await db
     .select({ count: sql<number>`COUNT(*)` })
@@ -236,8 +240,8 @@ export async function countLeadsRecebidosHoje(corretorId: number, dataInicio: Da
     .where(
       and(
         eq(leads.corretorId, corretorId),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim)
+        gte(leads.createdAt, dataInicioSP),
+        lte(leads.createdAt, dataFimSP)
       )
     );
   
@@ -248,12 +252,16 @@ export async function countLeadsRecebidosHoje(corretorId: number, dataInicio: Da
  * Conta leads recebidos via webhook (facebook, site, etc.) hoje
  * Exclui leads de captação própria do corretor
  */
-export async function countLeadsWebhookRecebidosHoje(corretorId: number, dataInicio: Date) {
+export async function countLeadsWebhookRecebidosHoje(corretorId: number, dataInicio?: Date) {
   const db = await getDb();
   if (!db) return 0;
   
-  const dataFim = new Date(dataInicio);
-  dataFim.setHours(23, 59, 59, 999);
+  // Importar funções de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje, inicioDoDia, fimDoDia } = await import('./timezone');
+  
+  // Se não passar data, usar hoje no fuso de São Paulo
+  const dataInicioSP = dataInicio ? inicioDoDia(dataInicio) : inicioDoDiaHoje();
+  const dataFimSP = dataInicio ? fimDoDia(dataInicio) : fimDoDiaHoje();
   
   // Origens consideradas como webhook (não inclui captacao_corretor)
   const origensWebhook = ['facebook', 'google_sheets', 'site', 'whatsapp', 'telefone', 'plantao', 'agendamento_self_service', 'chatbot', 'outro'];
@@ -264,8 +272,8 @@ export async function countLeadsWebhookRecebidosHoje(corretorId: number, dataIni
     .where(
       and(
         eq(leads.corretorId, corretorId),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim),
+        gte(leads.createdAt, dataInicioSP),
+        lte(leads.createdAt, dataFimSP),
         sql`${leads.origem} IN (${sql.join(origensWebhook.map(o => sql`${o}`), sql`, `)})`
       )
     );
@@ -2194,10 +2202,6 @@ export async function getProximoCorretorFila(): Promise<number | null> {
     .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
     .orderBy(filaDistribuicao.posicao);
   
-  // Obter início do dia de hoje
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  
   // Encontrar o primeiro corretor disponível
   for (const item of fila) {
     // Verificar se está ativo na roleta
@@ -2206,8 +2210,8 @@ export async function getProximoCorretorFila(): Promise<number | null> {
     // Verificar se está presente
     if (item.corretorStatus !== 'presente') continue;
     
-    // Contar leads recebidos via webhook hoje (origem facebook, site, etc.)
-    const leadsWebhookHoje = await countLeadsWebhookRecebidosHoje(item.corretorId, hoje);
+    // Contar leads recebidos via webhook hoje (função já usa fuso de SP)
+    const leadsWebhookHoje = await countLeadsWebhookRecebidosHoje(item.corretorId);
     
     // Verificar se não atingiu o limite diário de webhook
     const limiteWebhook = item.limiteDiarioWebhook || 10;

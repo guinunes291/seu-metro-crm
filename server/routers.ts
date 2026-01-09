@@ -751,8 +751,8 @@ export const appRouter = router({
         dataFim: z.string().optional(),
       }))
       .query(async ({ input }) => {
-        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        const { converterFiltrosData } = await import('./timezone');
+        const { dataInicio, dataFim } = converterFiltrosData(input.dataInicio, input.dataFim);
         
         if (input.corretorId) {
           return await presenca.buscarHistoricoPresenca(input.corretorId, dataInicio, dataFim);
@@ -770,8 +770,8 @@ export const appRouter = router({
         dataFim: z.string().optional(),
       }))
       .query(async ({ input }) => {
-        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        const { converterFiltrosData } = await import('./timezone');
+        const { dataInicio, dataFim } = converterFiltrosData(input.dataInicio, input.dataFim);
         
         return await presenca.buscarResumoPresenca(input.corretorId, dataInicio, dataFim);
       }),
@@ -784,8 +784,8 @@ export const appRouter = router({
         dataFim: z.string().optional(),
       }))
       .query(async ({ input }) => {
-        const dataInicio = input.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input.dataFim ? new Date(input.dataFim) : undefined;
+        const { converterFiltrosData } = await import('./timezone');
+        const { dataInicio, dataFim } = converterFiltrosData(input.dataInicio, input.dataFim);
         
         return await presenca.buscarParesEntradaSaida(input.corretorId, dataInicio, dataFim);
       }),

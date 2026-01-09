@@ -492,14 +492,10 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
 
   const corretoresElegiveis: number[] = [];
 
-  // Obter início do dia de hoje para verificar limite diário
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
   for (const corretor of corretoresPresentes) {
     // Verificar limite diário de distribuição automática
     const limiteDiario = corretor.limiteDiarioLeads || 50;
-    const leadsRecebidosHoje = await countLeadsRecebidosHoje(corretor.id, hoje);
+    const leadsRecebidosHoje = await countLeadsRecebidosHoje(corretor.id);
     
     if (leadsRecebidosHoje >= limiteDiario) {
       // Corretor já atingiu o limite diário de distribuição automática
