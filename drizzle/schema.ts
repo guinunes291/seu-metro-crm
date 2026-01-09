@@ -645,6 +645,9 @@ export const webhookConfig = mysqlTable("webhook_config", {
   nome: varchar("nome", { length: 100 }).notNull(),
   fonte: mysqlEnum("fonte", ["facebook", "instagram", "google", "rdstation", "outro"]).default("facebook").notNull(),
   
+  // Tipo de fila (geral ou foco)
+  tipoFila: mysqlEnum("tipoFila", ["geral", "foco"]).default("geral").notNull(),
+  
   // Projeto padrão para leads recebidos
   projectIdPadrao: int("projectIdPadrao"),
   
@@ -1511,7 +1514,7 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
   projetoId: int("projetoId"), // NULL = nenhum projeto foco ativo
   
   // Corretores na fila do projeto foco (JSON array de IDs)
-  corretoresIds: json("corretoresIds").$type<number[]>(),
+  corretoresIds: json("corretoresIds").$type<number[]>().notNull(),
   
   // Posição atual na fila foco (para round-robin)
   posicaoAtual: int("posicaoAtual").default(0).notNull(),

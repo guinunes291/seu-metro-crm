@@ -2384,3 +2384,23 @@
 - [x] Remover verificação de limites diários no webhook foco
 - [x] Atualizar página Projeto Foco com URL do novo webhook
 - [x] Testar distribuição via webhook foco
+
+## Redesign: Fila Foco como Roleta Independente
+- [x] Adicionar campo 'tipoFila' (geral/foco) na tabela webhook_config
+- [x] Criar procedures para listar/criar/editar/excluir webhooks da Fila Foco
+- [ ] Redesenhar página Fila Foco com lista de corretores (similar à Roleta)
+- [ ] Adicionar botão "Novo Webhook" na página Fila Foco
+- [ ] Implementar modal de criação de webhook exclusivo da Fila Foco
+- [ ] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
+- [ ] Remover dependência de projeto - Fila Foco independente
+- [ ] Testar criação e distribuição via webhooks da Fila Foco
+
+## Status Final: Fila Foco Redesenhada
+- [x] Adicionar campo 'tipoFila' (geral/foco) na tabela webhook_config
+- [x] Criar procedures para listar/criar/editar/excluir webhooks da Fila Foco
+- [x] Redesenhar página Fila Foco com lista de corretores (similar à Roleta)
+- [x] Adicionar botão "Novo Webhook" na página Fila Foco
+- [x] Implementar modal de criação de webhook exclusivo da Fila Foco
+- [x] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
+- [x] Remover dependência de projeto - Fila Foco independente
+- [x] Testar criação e distribuição via webhooks da Fila Foco

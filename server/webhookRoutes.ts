@@ -347,6 +347,25 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
       telefone = 'Não informado';
     }
     
+    // Buscar webhook config para mapear form_id para projeto
+    const webhook = await db.getWebhookConfigByToken(token);
+    let projectId: number | undefined;
+    
+    if (webhook && formId && webhook.formIdMapping) {
+      try {
+        const mapping = JSON.parse(webhook.formIdMapping);
+        projectId = mapping[formId];
+        console.log('[Webhook Foco] Form ID mapeado para projeto:', { formId, projectId });
+      } catch (e) {
+        console.error('[Webhook Foco] Erro ao parsear formIdMapping:', e);
+      }
+    }
+    
+    // Se não encontrou mapeamento, usar projeto padrão
+    if (!projectId && webhook?.projectIdPadrao) {
+      projectId = webhook.projectIdPadrao;
+    }
+    
     // Processar lead via Fila Foco (SEM LIMITES)
     const resultado = await db.processarLeadWebhookFoco(token, {
       nome,
@@ -354,6 +373,7 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
       telefone,
       origem: 'facebook',
       faixaRenda: faixaRenda || undefined,
+      projectId: projectId,
     });
     
     console.log('[Webhook Foco] Lead processado:', resultado);

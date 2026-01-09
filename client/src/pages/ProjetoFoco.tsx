@@ -3,10 +3,20 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Target, Users, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Target, Users, Zap, Loader2, Plus, Copy, Trash2, Power, PowerOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -14,8 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { toast } from "sonner";
 
 export default function ProjetoFoco() {
   const { user } = useAuth();
@@ -23,29 +31,25 @@ export default function ProjetoFoco() {
   const utils = trpc.useUtils();
   
   // Estados
-  const [projetoSelecionado, setProjetoSelecionado] = useState<number | null>(null);
   const [corretoresSelecionados, setCorretoresSelecionados] = useState<number[]>([]);
-  const [observacoes, setObservacoes] = useState("");
+  const [showWebhookDialog, setShowWebhookDialog] = useState(false);
+  const [webhookNome, setWebhookNome] = useState("");
+  const [webhookFonte, setWebhookFonte] = useState<"facebook" | "instagram" | "google" | "rdstation" | "outro">("facebook");
+  const [webhookProjeto, setWebhookProjeto] = useState<number | undefined>();
   
   // Queries
   const { data: config, isLoading: loadingConfig } = trpc.fila.getProjetoFoco.useQuery();
-  const { data: projetos, isLoading: loadingProjetos } = trpc.projects.list.useQuery();
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretor.list.useQuery();
+  const { data: webhooks, isLoading: loadingWebhooks } = trpc.webhook.list.useQuery();
+  const { data: projetos } = trpc.projects.list.useQuery();
+  
+  // Filtrar apenas webhooks da Fila Foco
+  const webhooksFoco = webhooks?.filter(w => w.tipoFila === 'foco') || [];
   
   // Mutations
   const setProjetoFoco = trpc.fila.setProjetoFoco.useMutation({
     onSuccess: () => {
-      toast.success("Projeto foco configurado com sucesso!");
-      utils.fila.getProjetoFoco.invalidate();
-    },
-    onError: (error) => {
-      toast.error(`Erro ao configurar projeto foco: ${error.message}`);
-    },
-  });
-  
-  const toggleAtivo = trpc.fila.toggleProjetoFoco.useMutation({
-    onSuccess: () => {
-      toast.success(config?.ativo ? "Projeto foco desativado" : "Projeto foco ativado");
+      toast.success("Corretores da Fila Foco atualizados!");
       utils.fila.getProjetoFoco.invalidate();
     },
     onError: (error) => {
@@ -53,12 +57,44 @@ export default function ProjetoFoco() {
     },
   });
   
-  // Inicializar estados quando config carregar
+  const createWebhook = trpc.webhook.create.useMutation({
+    onSuccess: () => {
+      toast.success("Webhook criado com sucesso!");
+      utils.webhook.list.invalidate();
+      setShowWebhookDialog(false);
+      setWebhookNome("");
+      setWebhookFonte("facebook");
+      setWebhookProjeto(undefined);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar webhook: ${error.message}`);
+    },
+  });
+  
+  const toggleWebhook = trpc.webhook.toggle.useMutation({
+    onSuccess: () => {
+      toast.success("Status do webhook atualizado!");
+      utils.webhook.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
+  const deleteWebhook = trpc.webhook.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Webhook excluído!");
+      utils.webhook.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
+  
+  // Inicializar corretores selecionados quando config carregar
   useState(() => {
-    if (config) {
-      setProjetoSelecionado(config.projetoId);
-      setCorretoresSelecionados(config.corretoresIds || []);
-      setObservacoes(config.observacoes || "");
+    if (config && config.corretoresIds) {
+      setCorretoresSelecionados(config.corretoresIds);
     }
   });
   
@@ -70,33 +106,37 @@ export default function ProjetoFoco() {
     );
   };
   
-  const handleSalvar = () => {
-    if (!projetoSelecionado) {
-      toast.error("Selecione um projeto foco");
-      return;
-    }
-    
+  const handleSalvarCorretores = () => {
     if (corretoresSelecionados.length === 0) {
       toast.error("Selecione pelo menos um corretor");
       return;
     }
     
     setProjetoFoco.mutate({
-      projetoId: projetoSelecionado,
+      projetoId: null, // Não precisa mais de projeto
       corretoresIds: corretoresSelecionados,
-      observacoes,
+      observacoes: "",
     });
   };
   
-  const handleDesativar = () => {
-    setProjetoFoco.mutate({
-      projetoId: null,
-      corretoresIds: [],
-      observacoes: "",
+  const handleCriarWebhook = () => {
+    if (!webhookNome.trim()) {
+      toast.error("Digite um nome para o webhook");
+      return;
+    }
+    
+    createWebhook.mutate({
+      nome: webhookNome,
+      fonte: webhookFonte,
+      projectIdPadrao: webhookProjeto,
+      tipoFila: 'foco',
     });
-    setProjetoSelecionado(null);
-    setCorretoresSelecionados([]);
-    setObservacoes("");
+  };
+  
+  const handleCopyWebhookUrl = (token: string) => {
+    const url = `${window.location.origin}/api/webhook/facebook-foco/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("URL copiada!");
   };
   
   if (!isGestor) {
@@ -109,7 +149,12 @@ export default function ProjetoFoco() {
     );
   }
   
-  const isLoading = loadingConfig || loadingProjetos || loadingCorretores;
+  const isLoading = loadingConfig || loadingCorretores || loadingWebhooks;
+  
+  // Contar corretores presentes na fila
+  const corretoresPresentes = corretores?.filter(c => 
+    corretoresSelecionados.includes(c.id) && c.status === 'presente'
+  ).length || 0;
   
   return (
     <DashboardLayout>
@@ -119,262 +164,250 @@ export default function ProjetoFoco() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Target className="h-8 w-8 text-primary" />
-              Projeto Foco do Mês
+              Fila Foco
             </h1>
             <p className="text-muted-foreground mt-2">
-              Configure um projeto prioritário com distribuição dedicada via webhook
+              Distribua leads prioritários sem limites diários para corretores selecionados
             </p>
           </div>
-          
-          {config && config.projetoId && (
-            <div className="flex items-center gap-2">
-              <Button
-                variant={config.ativo ? "destructive" : "default"}
-                onClick={() => toggleAtivo.mutate({ ativo: !config.ativo })}
-                disabled={toggleAtivo.isPending}
-              >
-                {toggleAtivo.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : config.ativo ? (
-                  <>
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Desativar
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Ativar
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
         </div>
         
         {/* Cards de Status */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Status</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {config?.ativo ? (
-                  <span className="text-green-500">Ativo</span>
-                ) : (
-                  <span className="text-muted-foreground">Inativo</span>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {config?.ativo ? "Distribuição prioritária ativa" : "Usando fila geral"}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Projeto Foco</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {config?.projeto?.nome || "Nenhum"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Projeto prioritário configurado
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Corretores</CardTitle>
+              <CardTitle className="text-sm font-medium">Corretores na Fila</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
+              <div className="text-2xl font-bold">{corretoresSelecionados.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {corretoresPresentes} presentes agora
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Webhooks Ativos</CardTitle>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
               <div className="text-2xl font-bold">
-                {config?.corretoresIds?.length || 0}
+                {webhooksFoco.filter(w => w.ativo).length}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Na fila do projeto foco
+                de {webhooksFoco.length} configurados
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Leads Hoje</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                distribuídos automaticamente
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total via Webhook</CardTitle>
+              <Zap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {webhooksFoco.reduce((acc, w) => acc + (w.leadsRecebidos || 0), 0)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                leads recebidos
               </p>
             </CardContent>
           </Card>
         </div>
         
-        {/* Configuração */}
+        {/* Fila de Corretores */}
         <Card>
-          <CardHeader>
-            <CardTitle>Configuração</CardTitle>
-            <CardDescription>
-              Selecione o projeto foco e os corretores que receberão leads deste projeto
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Fila de Corretores
+              </CardTitle>
+              <CardDescription>
+                Ordem de distribuição dos leads. O primeiro da fila recebe o próximo lead.
+              </CardDescription>
+            </div>
+            <Button
+              onClick={handleSalvarCorretores}
+              disabled={setProjetoFoco.isPending || corretoresSelecionados.length === 0}
+            >
+              {setProjetoFoco.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar Fila"
+              )}
+            </Button>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <>
-                {/* Seleção de Projeto */}
-                <div className="space-y-2">
-                  <Label>Projeto Foco</Label>
-                  <Select
-                    value={projetoSelecionado?.toString() || ""}
-                    onValueChange={(value) => setProjetoSelecionado(Number(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um projeto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projetos?.map((projeto) => (
-                        <SelectItem key={projeto.id} value={projeto.id.toString()}>
-                          {projeto.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-sm text-muted-foreground">
-                    Leads deste projeto serão distribuídos prioritariamente para os corretores selecionados
-                  </p>
-                </div>
-                
-                {/* Seleção de Corretores */}
-                <div className="space-y-2">
-                  <Label>Corretores da Fila Foco</Label>
-                  <div className="border rounded-lg p-4 space-y-3 max-h-[400px] overflow-y-auto">
-                    {corretores?.map((corretor) => (
-                      <div
-                        key={corretor.id}
-                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                      >
-                        <Checkbox
-                          id={`corretor-${corretor.id}`}
-                          checked={corretoresSelecionados.includes(corretor.id)}
-                          onCheckedChange={() => handleToggleCorretor(corretor.id)}
-                        />
-                        <label
-                          htmlFor={`corretor-${corretor.id}`}
-                          className="flex-1 cursor-pointer"
-                        >
-                          <div className="font-medium">{corretor.name}</div>
-                          <div className="text-sm text-muted-foreground">{corretor.email}</div>
-                        </label>
-                        <div>
-                          {corretor.status === "presente" ? (
-                            <span className="text-xs bg-green-500/10 text-green-500 px-2 py-1 rounded">
-                              Presente
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-gray-500/10 text-gray-500 px-2 py-1 rounded">
-                              Ausente
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Corretores selecionados receberão leads do projeto foco <strong>sem limite diário</strong>
-                  </p>
-                </div>
-                
-                {/* Observações */}
-                <div className="space-y-2">
-                  <Label>Observações (opcional)</Label>
-                  <Textarea
-                    value={observacoes}
-                    onChange={(e) => setObservacoes(e.target.value)}
-                    placeholder="Adicione observações sobre esta configuração..."
-                    rows={3}
-                  />
-                </div>
-                
-                {/* Botões */}
-                <div className="flex gap-3">
-                  <Button
-                    onClick={handleSalvar}
-                    disabled={setProjetoFoco.isPending}
-                    className="flex-1"
-                  >
-                    {setProjetoFoco.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Salvar Configuração
-                      </>
-                    )}
-                  </Button>
+              <div className="space-y-3">
+                {corretores?.map((corretor, index) => {
+                  const isSelected = corretoresSelecionados.includes(corretor.id);
+                  const posicao = corretoresSelecionados.indexOf(corretor.id) + 1;
                   
-                  {config?.projetoId && (
-                    <Button
-                      variant="outline"
-                      onClick={handleDesativar}
-                      disabled={setProjetoFoco.isPending}
+                  return (
+                    <div
+                      key={corretor.id}
+                      className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                        isSelected ? 'bg-accent border-primary' : 'hover:bg-accent/50'
+                      }`}
                     >
-                      Limpar Configuração
-                    </Button>
-                  )}
-                </div>
-              </>
+                      {isSelected && (
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold">
+                          {posicao}
+                        </div>
+                      )}
+                      
+                      <Checkbox
+                        id={`corretor-${corretor.id}`}
+                        checked={isSelected}
+                        onCheckedChange={() => handleToggleCorretor(corretor.id)}
+                      />
+                      
+                      <div className="flex-1">
+                        <div className="font-medium">{corretor.name}</div>
+                        <div className="text-sm text-muted-foreground">{corretor.email}</div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <div className="text-sm text-muted-foreground">
+                          Máx/dia: <span className="font-medium">{corretor.limiteDiarioWebhook || 10}</span>
+                        </div>
+                        
+                        {corretor.status === "presente" ? (
+                          <span className="text-xs bg-green-500/10 text-green-500 px-3 py-1 rounded-full font-medium">
+                            Presente
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-gray-500/10 text-gray-500 px-3 py-1 rounded-full font-medium">
+                            Ausente
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
         
-        {/* URL do Webhook Exclusivo */}
-        {config && config.ativo && config.projetoId && (
-          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
-            <CardHeader>
-              <CardTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Webhook Exclusivo da Fila Foco
+        {/* Integrações (Webhooks) */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Integrações (Webhooks)
               </CardTitle>
-              <CardDescription className="text-amber-800 dark:text-amber-200">
-                Use este webhook para enviar leads APENAS para os corretores da Fila Foco (sem limites diários)
+              <CardDescription>
+                Configure webhooks para receber leads automaticamente do Facebook Ads e outras fontes.
               </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-amber-900 dark:text-amber-100">URL do Webhook Foco</Label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={`${window.location.origin}/api/webhook/facebook-foco/[SEU_TOKEN]`}
-                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-950 border border-amber-300 dark:border-amber-800 rounded-md text-sm font-mono"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/api/webhook/facebook-foco/[SEU_TOKEN]`);
-                      toast.success("URL copiada!");
-                    }}
-                  >
-                    Copiar
-                  </Button>
+            </div>
+            <Button onClick={() => setShowWebhookDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Webhook
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {webhooksFoco.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum webhook configurado. Clique em "Novo Webhook" para criar.
+              </div>
+            ) : (
+              webhooksFoco.map((webhook) => (
+                <div
+                  key={webhook.id}
+                  className="border rounded-lg p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${webhook.ativo ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <div>
+                        <div className="font-medium">{webhook.nome}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {webhook.leadsRecebidos || 0} leads recebidos
+                          {webhook.ultimoLeadRecebido && (
+                            <> · Último: {new Date(webhook.ultimoLeadRecebido).toLocaleString('pt-BR')}</>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleWebhook.mutate({ webhookId: webhook.id, ativo: !webhook.ativo })}
+                        disabled={toggleWebhook.isPending}
+                      >
+                        {webhook.ativo ? (
+                          <PowerOff className="h-4 w-4" />
+                        ) : (
+                          <Power className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteWebhook.mutate({ webhookId: webhook.id })}
+                        disabled={deleteWebhook.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">URL do Webhook:</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${window.location.origin}/api/webhook/facebook-foco/${webhook.webhookToken}`}
+                        className="flex-1 px-3 py-2 bg-muted border rounded-md text-sm font-mono"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyWebhookUrl(webhook.webhookToken)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Use esta URL no Facebook Ads Manager para enviar leads automaticamente.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  Substitua [SEU_TOKEN] pelo token do webhook configurado na página de Integrações
-                </p>
-              </div>
-              
-              <div className="bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg p-4 space-y-2 text-sm text-amber-900 dark:text-amber-100">
-                <p className="font-semibold">Diferenças entre os webhooks:</p>
-                <ul className="space-y-1 ml-4 list-disc">
-                  <li><strong>Webhook Geral:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook/:token</code> - Distribui para todos os corretores com limites diários</li>
-                  <li><strong>Webhook Foco:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook-foco/:token</code> - Distribui APENAS para corretores da Fila Foco SEM limites</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              ))
+            )}
+          </CardContent>
+        </Card>
         
         {/* Informações */}
         <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900">
@@ -383,17 +416,93 @@ export default function ProjetoFoco() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
             <p>
-              <strong>Webhook Exclusivo:</strong> Configure o webhook <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook-foco/:token</code> no Facebook Ads para enviar leads APENAS para os corretores da Fila Foco, sem limite diário.
+              <strong>Fila Foco:</strong> Leads recebidos via webhooks configurados nesta página são distribuídos APENAS para os corretores selecionados, <strong>sem limite diário</strong>.
             </p>
             <p>
-              <strong>Webhook Geral:</strong> O webhook <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook/:token</code> continua funcionando normalmente para outros projetos, com limites diários configurados.
+              <strong>Distribuição Round-Robin:</strong> O primeiro corretor presente na fila recebe o lead e vai para o final da fila.
             </p>
             <p>
-              <strong>Importante:</strong> Leads enviados via webhook foco são distribuídos APENAS para corretores presentes na Fila Foco. Se nenhum corretor estiver disponível, o lead NÃO será distribuído.
+              <strong>Webhooks Exclusivos:</strong> Cada webhook criado aqui usa o endpoint <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook-foco/:token</code> e distribui apenas para esta fila.
             </p>
           </CardContent>
         </Card>
       </div>
+      
+      {/* Dialog de Criar Webhook */}
+      <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Webhook</DialogTitle>
+            <DialogDescription>
+              Configure um webhook para receber leads automaticamente da Fila Foco
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="webhook-nome">Nome do Webhook</Label>
+              <Input
+                id="webhook-nome"
+                placeholder="Ex: Campanha Rio Branco"
+                value={webhookNome}
+                onChange={(e) => setWebhookNome(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="webhook-fonte">Fonte</Label>
+              <Select value={webhookFonte} onValueChange={(v: any) => setWebhookFonte(v)}>
+                <SelectTrigger id="webhook-fonte">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="google">Google</SelectItem>
+                  <SelectItem value="rdstation">RD Station</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="webhook-projeto">Projeto Padrão (opcional)</Label>
+              <Select 
+                value={webhookProjeto?.toString() || ""} 
+                onValueChange={(v) => setWebhookProjeto(v ? Number(v) : undefined)}
+              >
+                <SelectTrigger id="webhook-projeto">
+                  <SelectValue placeholder="Selecione um projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {projetos?.map((projeto) => (
+                    <SelectItem key={projeto.id} value={projeto.id.toString()}>
+                      {projeto.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWebhookDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCriarWebhook} disabled={createWebhook.isPending}>
+              {createWebhook.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                "Criar Webhook"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

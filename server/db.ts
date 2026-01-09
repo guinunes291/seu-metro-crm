@@ -2353,6 +2353,7 @@ export async function createWebhookConfig(config: {
   nome: string;
   fonte?: 'facebook' | 'instagram' | 'google' | 'rdstation' | 'outro';
   projectIdPadrao?: number;
+  tipoFila?: 'geral' | 'foco';
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2365,6 +2366,7 @@ export async function createWebhookConfig(config: {
     nome: config.nome,
     fonte: config.fonte || 'facebook',
     projectIdPadrao: config.projectIdPadrao,
+    tipoFila: config.tipoFila || 'geral',
   });
   
   return {
@@ -2504,31 +2506,29 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
   telefone: string;
   origem?: string;
   faixaRenda?: string;
+  projectId?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Verificar se o webhook é válido
+  // Verificar se o webhook é válido e do tipo 'foco'
   const webhook = await getWebhookConfigByToken(webhookToken);
   
   if (!webhook || !webhook.ativo) {
     throw new Error("Webhook inválido ou inativo");
   }
   
-  // Buscar configuração do projeto foco
-  const config = await getConfiguracaoProjetoFoco();
-  
-  if (!config || !config.ativo || !config.projetoId) {
-    throw new Error("Projeto Foco não configurado ou inativo");
+  if (webhook.tipoFila !== 'foco') {
+    throw new Error("Este webhook não é da Fila Foco");
   }
   
-  // Criar o lead com o projeto foco
+  // Criar o lead (usar projectId do input, do webhook ou deixar null)
   const leadCriado = await createLead({
     nome: dadosLead.nome,
     email: dadosLead.email,
     telefone: dadosLead.telefone,
     origem: dadosLead.origem || webhook.fonte,
-    projectId: config.projetoId,
+    projectId: dadosLead.projectId || webhook.projectIdPadrao || undefined,
     status: 'novo',
     faixaRenda: dadosLead.faixaRenda,
   });

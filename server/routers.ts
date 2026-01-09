@@ -1751,6 +1751,7 @@ export const appRouter = router({
         nome: z.string().min(3),
         fonte: z.enum(['facebook', 'instagram', 'google', 'rdstation', 'outro']).default('facebook'),
         projectIdPadrao: z.number().optional(),
+        tipoFila: z.enum(['geral', 'foco']).default('geral'),
       }))
       .mutation(async ({ input }) => {
         return await db.createWebhookConfig(input);

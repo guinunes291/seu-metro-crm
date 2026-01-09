@@ -1,0 +1,1 @@
+ALTER TABLE `webhook_config` ADD `tipoFila` enum('geral','foco') DEFAULT 'geral' NOT NULL;
