@@ -1682,6 +1682,17 @@ export const appRouter = router({
         await db.deleteWebhookConfig(input.webhookId);
         return { success: true };
       }),
+    
+    // Atualizar mapeamento de Form IDs para projetos
+    updateFormIdMapping: gestorProcedure
+      .input(z.object({
+        webhookId: z.number(),
+        formIdMapping: z.record(z.string(), z.number()), // { "form_id": projectId }
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateWebhookFormIdMapping(input.webhookId, input.formIdMapping);
+        return { success: true };
+      }),
   }),
   
   // ============================================================================
@@ -4161,6 +4172,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         return porDia;
       }),
   }),
+
+
 
 });
 export type AppRouter = typeof appRouter;

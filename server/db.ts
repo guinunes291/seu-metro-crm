@@ -2297,6 +2297,15 @@ export async function deleteWebhookConfig(webhookId: number) {
     .where(eq(webhookConfig.id, webhookId));
 }
 
+export async function updateWebhookFormIdMapping(webhookId: number, formIdMapping: Record<string, number>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(webhookConfig)
+    .set({ formIdMapping: JSON.stringify(formIdMapping) })
+    .where(eq(webhookConfig.id, webhookId));
+}
+
 /**
  * Processa um lead recebido via webhook
  * Cria o lead e distribui automaticamente pela roleta

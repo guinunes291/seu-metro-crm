@@ -52,6 +52,10 @@ export const users = mysqlTable("users", {
   googleRefreshToken: text("googleRefreshToken"), // Refresh token para renovar acesso
   googleCalendarEnabled: boolean("googleCalendarEnabled").default(false).notNull(),
   
+  // Sistema de Indicação
+  codigoIndicacao: varchar("codigoIndicacao", { length: 20 }).unique(), // Código único para indicação
+  indicadoPorId: int("indicadoPorId"), // ID do usuário que indicou
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -639,6 +643,9 @@ export const webhookConfig = mysqlTable("webhook_config", {
   
   // Projeto padrão para leads recebidos
   projectIdPadrao: int("projectIdPadrao"),
+  
+  // Mapeamento de form_id do Facebook para projeto
+  formIdMapping: text("formIdMapping"), // JSON: { "form_id_123": project_id_1, "form_id_456": project_id_2 }
   
   // Status
   ativo: boolean("ativo").default(true).notNull(),
@@ -1448,3 +1455,40 @@ export const propostasVisitantes = mysqlTable("propostas_visitantes", {
 
 export type PropostaVisitante = typeof propostasVisitantes.$inferSelect;
 export type InsertPropostaVisitante = typeof propostasVisitantes.$inferInsert;
+
+// ============================================================================
+// TABELA DE INDICAÇÕES
+// ============================================================================
+
+export const indicacoes = mysqlTable("indicacoes", {
+  id: int("id").primaryKey().autoincrement(),
+  indicadorId: int("indicadorId").notNull(), // ID do usuário que indicou
+  indicadoId: int("indicadoId").notNull(), // ID do usuário indicado
+  codigoUsado: varchar("codigoUsado", { length: 20 }).notNull(), // Código de indicação usado
+  
+  // Status da indicação
+  status: mysqlEnum("status", [
+    "pendente",      // Usuário se cadastrou mas ainda não completou onboarding
+    "confirmada",    // Usuário completou cadastro e está ativo
+    "bonus_pago",    // Bônus foi pago ao indicador
+    "cancelada"      // Indicação cancelada (usuário inativo)
+  ]).default("pendente").notNull(),
+  
+  // Valor do bônus
+  valorBonus: int("valorBonus").default(50000).notNull(), // R$ 500,00 em centavos
+  dataPagamento: timestamp("dataPagamento"),
+  
+  // Tracking
+  ip: varchar("ip", { length: 45 }),
+  userAgent: text("userAgent"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  indicadorIdx: index("indicacoes_indicador_idx").on(table.indicadorId),
+  indicadoIdx: index("indicacoes_indicado_idx").on(table.indicadoId),
+  statusIdx: index("indicacoes_status_idx").on(table.status),
+}));
+
+export type Indicacao = typeof indicacoes.$inferSelect;
+export type InsertIndicacao = typeof indicacoes.$inferInsert;

@@ -10,6 +10,8 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
   nome: string;
   email: string;
   telefone: string;
+  faixaRenda?: string;
+  formId?: string;
 } | null> {
   const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
   
@@ -36,6 +38,9 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
     let nome = '';
     let email = '';
     let telefone = '';
+    let faixaRenda = '';
+    let formId = '';
+    let formName = '';
     
     if (data.field_data) {
       for (const field of data.field_data) {
@@ -51,11 +56,19 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
         } else if (fieldName === 'phone_number' || fieldName === 'telefone' || 
                    fieldName === 'phone' || fieldName === 'celular' || fieldName === 'whatsapp') {
           telefone = value;
+        } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+                   fieldName === 'renda' || fieldName === 'income') {
+          faixaRenda = value;
         }
       }
     }
     
-    return { nome, email, telefone };
+    // Capturar form_id se disponível
+    if (data.form_id) {
+      formId = data.form_id;
+    }
+    
+    return { nome, email, telefone, faixaRenda, formId };
     
   } catch (error) {
     console.error('[Webhook Facebook] Erro na requisição:', error);
@@ -97,6 +110,9 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     let nome = '';
     let email = '';
     let telefone = '';
+    let faixaRenda = '';
+    let formId = '';
+    let formName = '';
     
     // Verificar se é o formato de notificação do Facebook (com leadgen_id)
     if (body.entry && body.entry[0]?.changes) {
@@ -105,6 +121,11 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
       // Formato de notificação do Facebook Lead Ads
       if (change?.field === 'leadgen' && change?.value?.leadgen_id) {
         const leadgenId = change.value.leadgen_id;
+        
+        // Capturar form_id da notificação
+        if (change.value.form_id) {
+          formId = change.value.form_id;
+        }
         console.log('[Webhook Facebook] Leadgen ID recebido:', leadgenId);
         
         // Buscar dados completos do lead via Graph API
@@ -114,6 +135,8 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
           nome = leadData.nome;
           email = leadData.email;
           telefone = leadData.telefone;
+          faixaRenda = leadData.faixaRenda || '';
+          formId = leadData.formId || '';
         } else {
           console.log('[Webhook Facebook] Não foi possível buscar dados do lead');
           return res.status(200).json({
@@ -136,6 +159,8 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
             email = value;
           } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
             telefone = value;
+          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || fieldName === 'renda') {
+            faixaRenda = value;
           }
         }
       }
@@ -169,12 +194,33 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
       telefone = 'Não informado';
     }
     
+    // Buscar webhook config para mapear form_id para projeto
+    const webhook = await db.getWebhookConfigByToken(token);
+    let projectId: number | undefined;
+    
+    if (webhook && formId && webhook.formIdMapping) {
+      try {
+        const mapping = JSON.parse(webhook.formIdMapping);
+        projectId = mapping[formId];
+        console.log('[Webhook Facebook] Form ID mapeado para projeto:', { formId, projectId });
+      } catch (e) {
+        console.error('[Webhook Facebook] Erro ao parsear formIdMapping:', e);
+      }
+    }
+    
+    // Se não encontrou mapeamento, usar projeto padrão
+    if (!projectId && webhook?.projectIdPadrao) {
+      projectId = webhook.projectIdPadrao;
+    }
+    
     // Processar lead via roleta
     const resultado = await db.processarLeadWebhook(token, {
       nome,
       email,
       telefone,
       origem: 'facebook',
+      faixaRenda: faixaRenda || undefined,
+      projectId: projectId,
     });
     
     console.log('[Webhook Facebook] Lead processado:', resultado);

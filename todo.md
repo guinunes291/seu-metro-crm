@@ -2272,3 +2272,17 @@
 
 ## Melhorar Contraste na Proposta
 - [x] Ajustar cores dos textos para melhor legibilidade
+
+## Sistema de Indicação
+- [ ] Criar tabela de indicações no banco de dados
+- [ ] Gerar código único de indicação para cada usuário
+- [ ] Criar link de cadastro com código de indicação
+- [ ] Registrar indicações quando novo usuário se cadastrar
+- [ ] Criar dashboard para visualizar indicações e bônus
+- [ ] Implementar cálculo de bônus (R$ 500 por indicação)
+
+## Webhook Facebook - Campos Adicionais
+- [x] Ajustar webhook para capturar faixa de renda do formulário
+- [x] Capturar form_id e mapear para projeto de interesse
+- [x] Exibir faixa de renda e projeto na visualização do lead
+- [x] Criar interface de configuração para mapear Form IDs para projetos
