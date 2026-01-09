@@ -2370,3 +2370,17 @@
 - [x] Criar procedures backend para configurar projeto foco
 - [x] Modificar lógica do webhook para suportar duas filas
 - [x] Criar página de configuração do Projeto Foco do Mês
+
+## Simplificação: Webhook Exclusivo para Fila Foco
+- [ ] Criar endpoint /api/webhook/facebook-foco/:token
+- [ ] Modificar lógica para distribuir apenas para corretores da Fila Foco
+- [ ] Remover verificação de limites diários no webhook foco
+- [ ] Atualizar página Projeto Foco com URL do novo webhook
+- [ ] Testar distribuição via webhook foco
+
+## Simplificação: Webhook Exclusivo para Fila Foco - CONCLUÍDO
+- [x] Criar endpoint /api/webhook/facebook-foco/:token
+- [x] Modificar lógica para distribuir apenas para corretores da Fila Foco
+- [x] Remover verificação de limites diários no webhook foco
+- [x] Atualizar página Projeto Foco com URL do novo webhook
+- [x] Testar distribuição via webhook foco

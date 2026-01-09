@@ -248,6 +248,176 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
 });
 
 /**
+ * Webhook EXCLUSIVO para Fila Foco (SEM LIMITES DIÁRIOS)
+ * 
+ * Endpoint: POST /api/webhook/facebook-foco/:token
+ * 
+ * Este webhook distribui leads APENAS para corretores da Fila Foco configurada
+ * em "Gestão → Projeto Foco do Mês". Não há limite diário de leads.
+ */
+router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const body = req.body;
+    
+    console.log('[Webhook Foco] Recebido:', JSON.stringify(body, null, 2));
+    
+    let nome = '';
+    let email = '';
+    let telefone = '';
+    let faixaRenda = '';
+    let formId = '';
+    
+    // Verificar se é o formato de notificação do Facebook (com leadgen_id)
+    if (body.entry && body.entry[0]?.changes) {
+      const change = body.entry[0].changes[0];
+      
+      // Formato de notificação do Facebook Lead Ads
+      if (change?.field === 'leadgen' && change?.value?.leadgen_id) {
+        const leadgenId = change.value.leadgen_id;
+        
+        // Capturar form_id da notificação
+        if (change.value.form_id) {
+          formId = change.value.form_id;
+        }
+        console.log('[Webhook Foco] Leadgen ID recebido:', leadgenId);
+        
+        // Buscar dados completos do lead via Graph API
+        const leadData = await fetchLeadDataFromFacebook(leadgenId);
+        
+        if (leadData) {
+          nome = leadData.nome;
+          email = leadData.email;
+          telefone = leadData.telefone;
+          faixaRenda = leadData.faixaRenda || '';
+          formId = leadData.formId || '';
+        } else {
+          console.log('[Webhook Foco] Não foi possível buscar dados do lead');
+          return res.status(200).json({
+            success: false,
+            message: 'Não foi possível buscar dados do lead via Graph API',
+          });
+        }
+      }
+      // Formato antigo com field_data direto
+      else if (change?.value?.field_data) {
+        const fieldData = change.value.field_data;
+        
+        for (const field of fieldData) {
+          const fieldName = field.name?.toLowerCase();
+          const value = field.values?.[0] || '';
+          
+          if (fieldName === 'full_name' || fieldName === 'nome' || fieldName === 'name') {
+            nome = value;
+          } else if (fieldName === 'email') {
+            email = value;
+          } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
+            telefone = value;
+          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || fieldName === 'renda') {
+            faixaRenda = value;
+          }
+        }
+      }
+    } 
+    // Formato simplificado (para testes)
+    else if (body.nome || body.name || body.full_name) {
+      nome = body.nome || body.name || body.full_name || '';
+      email = body.email || '';
+      telefone = body.telefone || body.phone || body.phone_number || '';
+    }
+    
+    // Validar dados mínimos
+    if (!nome && !telefone) {
+      console.log('[Webhook Foco] Dados insuficientes:', { nome, telefone, body });
+      return res.status(200).json({ 
+        success: false,
+        error: 'Dados insuficientes',
+        message: 'Nome ou telefone são obrigatórios',
+        received: { nome, telefone }
+      });
+    }
+    
+    // Se não tiver nome, usar telefone como nome temporário
+    if (!nome && telefone) {
+      nome = `Lead ${telefone}`;
+    }
+    
+    // Se não tiver telefone, usar placeholder
+    if (!telefone && nome) {
+      telefone = 'Não informado';
+    }
+    
+    // Processar lead via Fila Foco (SEM LIMITES)
+    const resultado = await db.processarLeadWebhookFoco(token, {
+      nome,
+      email,
+      telefone,
+      origem: 'facebook',
+      faixaRenda: faixaRenda || undefined,
+    });
+    
+    console.log('[Webhook Foco] Lead processado:', resultado);
+    
+    return res.status(200).json({
+      success: true,
+      leadId: resultado.lead.id,
+      corretorId: resultado.corretorId,
+      distribuido: resultado.distribuido,
+      message: resultado.distribuido 
+        ? 'Lead criado e distribuído para Fila Foco com sucesso' 
+        : 'Lead criado, mas não havia corretor disponível na Fila Foco',
+    });
+    
+  } catch (error: any) {
+    console.error('[Webhook Foco] Erro:', error);
+    
+    return res.status(200).json({
+      success: false,
+      error: 'Erro ao processar webhook',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * Verificação do webhook Foco (GET)
+ */
+router.get('/facebook-foco/:token', async (req: Request, res: Response) => {
+  const { token } = req.params;
+  const mode = req.query['hub.mode'];
+  const challenge = req.query['hub.challenge'];
+  const verifyToken = req.query['hub.verify_token'];
+  
+  console.log('[Webhook Foco] Verificação:', { mode, challenge, verifyToken, token });
+  
+  // Verificar se o token do webhook é válido
+  const webhook = await db.getWebhookConfigByToken(token);
+  
+  if (!webhook) {
+    return res.status(404).json({ error: 'Webhook não encontrado' });
+  }
+  
+  // Se for uma verificação do Facebook
+  if (mode === 'subscribe') {
+    if (verifyToken === token) {
+      console.log('[Webhook Foco] Verificação bem-sucedida');
+      return res.status(200).send(challenge);
+    } else {
+      console.log('[Webhook Foco] Token de verificação inválido');
+      return res.status(403).json({ error: 'Token de verificação inválido' });
+    }
+  }
+  
+  // Se não for verificação, retorna info do webhook
+  return res.status(200).json({
+    status: 'active',
+    nome: webhook.nome + ' (Fila Foco)',
+    fonte: webhook.fonte,
+    leadsRecebidos: webhook.leadsRecebidos,
+  });
+});
+
+/**
  * Verificação do webhook (GET) - necessário para validação do Facebook
  * 
  * O Facebook envia uma requisição GET com:

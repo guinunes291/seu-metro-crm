@@ -2282,12 +2282,12 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   if (!db) return null;
   
   // Buscar dados do lead para verificar o projeto
-  const lead = await getLeadById(leadId);
-  if (!lead) return null;
+  const leadInfo = await getLeadById(leadId);
+  if (!leadInfo) return null;
   
   // Verificar se o lead é do projeto foco
   const config = await getConfiguracaoProjetoFoco();
-  const isProjetoFoco = config && config.ativo && config.projetoId === lead.projectId;
+  const isProjetoFoco = config && config.ativo && config.projetoId === leadInfo.projectId;
   
   let corretorId: number | null = null;
   
@@ -2494,6 +2494,90 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   };
 }
 
+/**
+ * Processa um lead recebido via webhook FOCO (SEM LIMITES)
+ * Cria o lead e distribui APENAS para corretores da Fila Foco
+ */
+export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: {
+  nome: string;
+  email?: string;
+  telefone: string;
+  origem?: string;
+  faixaRenda?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se o webhook é válido
+  const webhook = await getWebhookConfigByToken(webhookToken);
+  
+  if (!webhook || !webhook.ativo) {
+    throw new Error("Webhook inválido ou inativo");
+  }
+  
+  // Buscar configuração do projeto foco
+  const config = await getConfiguracaoProjetoFoco();
+  
+  if (!config || !config.ativo || !config.projetoId) {
+    throw new Error("Projeto Foco não configurado ou inativo");
+  }
+  
+  // Criar o lead com o projeto foco
+  const leadCriado = await createLead({
+    nome: dadosLead.nome,
+    email: dadosLead.email,
+    telefone: dadosLead.telefone,
+    origem: dadosLead.origem || webhook.fonte,
+    projectId: config.projetoId,
+    status: 'novo',
+    faixaRenda: dadosLead.faixaRenda,
+  });
+  
+  // Incrementar contador do webhook
+  await incrementarLeadsWebhook(webhook.id);
+  
+  // Distribuir APENAS para corretores da Fila Foco (SEM LIMITES)
+  const corretorId = await getProximoCorretorFilaFoco();
+  
+  if (corretorId) {
+    // Atribuir lead ao corretor
+    await db.update(leads)
+      .set({ 
+        corretorId,
+        status: 'aguardando_atendimento',
+      })
+      .where(eq(leads.id, leadCriado.id));
+    
+    // Mover corretor para o final da fila
+    await moverCorretorParaFinalFila(corretorId);
+    
+    // Registrar log de distribuição
+    await db.insert(distributionLog).values({
+      leadId: leadCriado.id,
+      corretorId,
+      tipo: 'automatica',
+      motivo: 'Distribuição automática via Fila Foco (sem limites)',
+    });
+    
+    // Criar follow-up automático
+    try {
+      await criarFollowUpParaLead(leadCriado.id, corretorId);
+    } catch (e) {
+      console.log('[Webhook Foco] Erro ao criar follow-up:', e);
+    }
+    
+    // Notificar corretor
+    await notifyLeadDistribuido(corretorId, leadCriado.id, leadCriado.nome);
+    
+    console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
+  }
+  
+  return {
+    lead: leadCriado,
+    corretorId,
+    distribuido: corretorId !== null,
+  };
+}
 
 // Buscar novas notificações desde um timestamp (para polling em tempo real)
 export async function getNewNotificationsSince(userId: number, since: Date) {

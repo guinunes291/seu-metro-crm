@@ -327,6 +327,55 @@ export default function ProjetoFoco() {
           </CardContent>
         </Card>
         
+        {/* URL do Webhook Exclusivo */}
+        {config && config.ativo && config.projetoId && (
+          <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900">
+            <CardHeader>
+              <CardTitle className="text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Webhook Exclusivo da Fila Foco
+              </CardTitle>
+              <CardDescription className="text-amber-800 dark:text-amber-200">
+                Use este webhook para enviar leads APENAS para os corretores da Fila Foco (sem limites diários)
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-amber-900 dark:text-amber-100">URL do Webhook Foco</Label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/api/webhook/facebook-foco/[SEU_TOKEN]`}
+                    className="flex-1 px-3 py-2 bg-white dark:bg-slate-950 border border-amber-300 dark:border-amber-800 rounded-md text-sm font-mono"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/api/webhook/facebook-foco/[SEU_TOKEN]`);
+                      toast.success("URL copiada!");
+                    }}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+                <p className="text-xs text-amber-700 dark:text-amber-300">
+                  Substitua [SEU_TOKEN] pelo token do webhook configurado na página de Integrações
+                </p>
+              </div>
+              
+              <div className="bg-amber-100 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg p-4 space-y-2 text-sm text-amber-900 dark:text-amber-100">
+                <p className="font-semibold">Diferenças entre os webhooks:</p>
+                <ul className="space-y-1 ml-4 list-disc">
+                  <li><strong>Webhook Geral:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook/:token</code> - Distribui para todos os corretores com limites diários</li>
+                  <li><strong>Webhook Foco:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook-foco/:token</code> - Distribui APENAS para corretores da Fila Foco SEM limites</li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         {/* Informações */}
         <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900">
           <CardHeader>
@@ -334,13 +383,13 @@ export default function ProjetoFoco() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
             <p>
-              <strong>Fila Projeto Foco:</strong> Leads do projeto selecionado são distribuídos apenas para os corretores da fila foco, <strong>sem limite diário</strong>.
+              <strong>Webhook Exclusivo:</strong> Configure o webhook <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook-foco/:token</code> no Facebook Ads para enviar leads APENAS para os corretores da Fila Foco, sem limite diário.
             </p>
             <p>
-              <strong>Fila Geral:</strong> Leads de outros projetos continuam sendo distribuídos para todos os corretores elegíveis, <strong>com limite diário</strong> configurado.
+              <strong>Webhook Geral:</strong> O webhook <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded">/api/webhook/facebook/:token</code> continua funcionando normalmente para outros projetos, com limites diários configurados.
             </p>
             <p>
-              <strong>Fallback:</strong> Se todos os corretores da fila foco estiverem ausentes, o lead do projeto foco vai para a fila geral.
+              <strong>Importante:</strong> Leads enviados via webhook foco são distribuídos APENAS para corretores presentes na Fila Foco. Se nenhum corretor estiver disponível, o lead NÃO será distribuído.
             </p>
           </CardContent>
         </Card>
