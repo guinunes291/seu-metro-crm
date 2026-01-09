@@ -2428,3 +2428,7 @@
 - [x] Implementar formulário dinâmico para adicionar/remover mapeamentos
 - [x] Salvar mapeamento via trpc.webhook.updateFormIdMapping
 - [ ] Testar mapeamento com leads reais
+
+## Bug: Erro ao clicar em "Novo Webhook" na página Roleta
+- [x] Adicionar import do useEffect na página Roleta.tsx
+- [x] Testar criação de webhook
