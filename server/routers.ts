@@ -657,10 +657,32 @@ export const appRouter = router({
           name: user?.name,
         };
       }),
+      // Corretor configura seu limite diu00e1rio de leads
+    configurarLimiteDiario: protectedProcedure
+      .input(z.object({ limite: z.number().int().min(1).max(100).nullable() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { users, filaDistribuicao } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Atualizar limite na tabela users
+        await db.update(users)
+          .set({ limiteDiarioLeads: input.limite })
+          .where(eq(users.id, ctx.user.id));
+        
+        // Sincronizar com a fila de distribuu00e7u00e3o
+        await db.update(filaDistribuicao)
+          .set({ maxLeadsDia: input.limite || 999 }) // 999 = sem limite
+          .where(eq(filaDistribuicao.corretorId, ctx.user.id));
+        
+        return { success: true, limite: input.limite };
+      }),
     
-    // Corretor altera seu próprio status de presença
-    alterarMeuStatus: protectedProcedure
-      .input(z.object({
+    // Corretor altera seu pru00f3prio status de presenu00e7a
+    alterarMeuStatus: protectedProcedure  .input(z.object({
         status: z.enum(['ativo', 'inativo', 'presente', 'ausente'])
       }))
       .mutation(async ({ input, ctx }) => {

@@ -56,6 +56,9 @@ export const users = mysqlTable("users", {
   codigoIndicacao: varchar("codigoIndicacao", { length: 20 }).unique(), // Código único para indicação
   indicadoPorId: int("indicadoPorId"), // ID do usuário que indicou
   
+  // Limite diário de leads
+  limiteDiarioLeads: int("limiteDiarioLeads"), // Quantidade máxima de leads que o corretor pode receber por dia (null = sem limite)
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
