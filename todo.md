@@ -2410,3 +2410,8 @@
 - [x] Verificar se há corretores cadastrados no banco
 - [x] Corrigir carregamento e exibição da lista
 - [x] Testar seleção de corretores
+
+## Bug: Erro ao clicar em "Novo Webhook" na Fila Foco
+- [x] Investigar erro de JavaScript no botão
+- [x] Corrigir inicialização do estado dos corretores selecionados
+- [x] Testar abertura do modal de criar webhook

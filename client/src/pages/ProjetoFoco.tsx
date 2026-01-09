@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,11 +92,11 @@ export default function ProjetoFoco() {
   });
   
   // Inicializar corretores selecionados quando config carregar
-  useState(() => {
+  useEffect(() => {
     if (config && config.corretoresIds) {
       setCorretoresSelecionados(config.corretoresIds);
     }
-  });
+  }, [config]);
   
   const handleToggleCorretor = (corretorId: number) => {
     setCorretoresSelecionados(prev =>
