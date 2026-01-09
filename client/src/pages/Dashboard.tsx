@@ -815,11 +815,11 @@ export default function Dashboard() {
                   novos: metrics?.novos || 0,
                   aguardando: metrics?.aguardando || 0,
                   emAtendimento: metrics?.emAtendimento || 0,
-                  agendados: metrics?.agendados || 0,
+                  agendados: metrics?.agendado || 0,
                   visitaRealizada: metrics?.visitaRealizada || 0,
                   analiseCredito: metrics?.analiseCredito || 0,
-                  contratoFechado: metrics?.contratosFechados || 0,
-                  perdidos: metrics?.perdidos || 0,
+                  contratoFechado: metrics?.contratoFechado || 0,
+                  perdidos: metrics?.perdido || 0,
                 }}
               />
             </div>
