@@ -32,6 +32,10 @@ export default function Roleta() {
   const { user } = useAuth();
   const [novoWebhookOpen, setNovoWebhookOpen] = useState(false);
   const [novoWebhook, setNovoWebhook] = useState({ nome: "", fonte: "facebook" as const, projectIdPadrao: "" });
+  const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [selectedWebhookId, setSelectedWebhookId] = useState<number | null>(null);
+  const [newFormId, setNewFormId] = useState("");
+  const [newProjectId, setNewProjectId] = useState("");
   
   // Queries
   const { data: fila, refetch: refetchFila, isLoading: loadingFila } = trpc.fila.list.useQuery();
@@ -87,6 +91,21 @@ export default function Roleta() {
     onSuccess: () => {
       refetchWebhooks();
       toast.success("Webhook excluído!");
+    },
+  });
+  
+  const updateFormIdMapping = trpc.webhook.updateFormIdMapping.useMutation({
+    onSuccess: () => {
+      refetchWebhooks();
+      setMappingDialogOpen(false);
+      setNewFormId("");
+      setNewProjectId("");
+      toast.success("Mapeamento atualizado!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar mapeamento", {
+        description: error.message,
+      });
     },
   });
   
@@ -486,6 +505,64 @@ export default function Roleta() {
                       Use esta URL no Facebook Ads Manager para enviar leads automaticamente.
                     </p>
                   </div>
+                  
+                  {/* Mapeamento de Form IDs */}
+                  <div className="mt-3 bg-white p-3 rounded border">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-xs font-medium">Mapeamento de Form IDs</div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedWebhookId(webhook.id);
+                          setMappingDialogOpen(true);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Adicionar
+                      </Button>
+                    </div>
+                    {webhook.formIdMapping && JSON.parse(webhook.formIdMapping) && Object.keys(JSON.parse(webhook.formIdMapping)).length > 0 ? (
+                      <div className="space-y-1">
+                        {Object.entries(JSON.parse(webhook.formIdMapping) as Record<string, number>).map(
+                          ([formId, projectId]) => {
+                            const project = projetos?.find((p) => p.id === projectId);
+                            return (
+                              <div
+                                key={formId}
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded text-xs"
+                              >
+                                <div>
+                                  <span className="font-mono">{formId}</span>
+                                  <span className="text-muted-foreground mx-2">→</span>
+                                  <span>{project?.nome || `Projeto #${projectId}`}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    const currentMapping = JSON.parse(webhook.formIdMapping || '{}');
+                                    delete currentMapping[formId];
+                                    updateFormIdMapping.mutate({
+                                      webhookId: webhook.id,
+                                      formIdMapping: currentMapping,
+                                    });
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3 text-red-500" />
+                                </Button>
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Nenhum mapeamento configurado. Clique em "Adicionar" para mapear Form IDs para projetos.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -543,6 +620,77 @@ export default function Roleta() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Dialog de Mapeamento de Form IDs */}
+      <Dialog open={mappingDialogOpen} onOpenChange={setMappingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Mapeamento de Form ID</DialogTitle>
+            <DialogDescription>
+              Configure qual projeto deve ser atribuído automaticamente quando um lead vier de um formulário específico do Facebook.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="formId">Form ID do Facebook</Label>
+              <Input
+                id="formId"
+                placeholder="Ex: 123456789012345"
+                value={newFormId}
+                onChange={(e) => setNewFormId(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                Você encontra o Form ID no Facebook Ads Manager, nas configurações do formulário.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="projectId">Projeto</Label>
+              <Select value={newProjectId} onValueChange={setNewProjectId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o projeto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projetos?.map((p) => (
+                    <SelectItem key={p.id} value={p.id.toString()}>
+                      {p.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMappingDialogOpen(false);
+                setNewFormId("");
+                setNewProjectId("");
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!selectedWebhookId || !newFormId || !newProjectId) {
+                  toast.error("Preencha todos os campos");
+                  return;
+                }
+                const webhook = webhooks?.find((w) => w.id === selectedWebhookId);
+                const currentMapping = JSON.parse(webhook?.formIdMapping || '{}');
+                currentMapping[newFormId] = parseInt(newProjectId);
+                updateFormIdMapping.mutate({
+                  webhookId: selectedWebhookId,
+                  formIdMapping: currentMapping,
+                });
+              }}
+              disabled={!newFormId || !newProjectId || updateFormIdMapping.isPending}
+            >
+              Adicionar Mapeamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
     </DashboardLayout>
   );
