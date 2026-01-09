@@ -2290,3 +2290,4 @@
 
 ## Correção de Erro no Webhook
 - [x] Corrigir erro de JavaScript ao clicar em Novo Webhook
+- [x] Investigar e corrigir erro persistente (imports/dependências)
