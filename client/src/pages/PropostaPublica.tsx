@@ -230,35 +230,57 @@ export default function PropostaPublica() {
                 </div>
               )}
               
-              {proposta.valorEntrada && proposta.valorEntrada > 0 && (
-                <div className="flex justify-between items-center py-3 border-b border-amber-200">
-                  <span className="text-slate-600">Entrada</span>
-                  <span className="text-lg font-medium text-slate-900">{formatCurrency(proposta.valorEntrada)}</span>
-                </div>
-              )}
-              
-              {proposta.valorFinanciamento && proposta.valorFinanciamento > 0 && (
+              {/* Exibir tabela de pagamento customizada se existir */}
+              {proposta.tabelaPagamento && JSON.parse(proposta.tabelaPagamento).length > 0 ? (
                 <>
-                  <div className="flex justify-between items-center py-3 border-b border-amber-200">
-                    <span className="text-slate-600">Valor Financiado</span>
-                    <span className="text-lg font-medium text-slate-900">{formatCurrency(proposta.valorFinanciamento)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-amber-200">
-                    <span className="text-slate-600">Prazo</span>
-                    <span className="text-lg font-medium text-slate-900">{proposta.parcelas} meses</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-amber-200">
-                    <span className="text-slate-600">Taxa de Juros</span>
-                    <span className="text-lg font-medium text-slate-900">{proposta.taxaJuros}</span>
-                  </div>
+                  {JSON.parse(proposta.tabelaPagamento).map((parcela: any, index: number) => (
+                    parcela.valorTotal > 0 && (
+                      <div key={index} className="flex justify-between items-center py-3 border-b border-amber-200">
+                        <div>
+                          <span className="text-slate-700 font-medium">{parcela.tipo}</span>
+                          {parcela.quantidade > 1 && (
+                            <span className="text-slate-500 text-sm ml-2">({parcela.quantidade}x)</span>
+                          )}
+                        </div>
+                        <span className="text-lg font-medium text-slate-900">{formatCurrency(parcela.valorTotal)}</span>
+                      </div>
+                    )
+                  ))}
                 </>
-              )}
-              
-              {proposta.valorParcela && proposta.valorParcela > 0 && (
-                <div className="flex justify-between items-center py-4 bg-amber-100 rounded-lg px-4">
-                  <span className="text-slate-700 font-medium">Parcela Estimada</span>
-                  <span className="text-2xl font-bold text-amber-600">{formatCurrency(proposta.valorParcela)}/mês</span>
-                </div>
+              ) : (
+                /* Fallback para valores fixos se não houver tabela customizada */
+                <>
+                  {proposta.valorEntrada && proposta.valorEntrada > 0 && (
+                    <div className="flex justify-between items-center py-3 border-b border-amber-200">
+                      <span className="text-slate-600">Entrada</span>
+                      <span className="text-lg font-medium text-slate-900">{formatCurrency(proposta.valorEntrada)}</span>
+                    </div>
+                  )}
+                  
+                  {proposta.valorFinanciamento && proposta.valorFinanciamento > 0 && (
+                    <>
+                      <div className="flex justify-between items-center py-3 border-b border-amber-200">
+                        <span className="text-slate-600">Valor Financiado</span>
+                        <span className="text-lg font-medium text-slate-900">{formatCurrency(proposta.valorFinanciamento)}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-amber-200">
+                        <span className="text-slate-600">Prazo</span>
+                        <span className="text-lg font-medium text-slate-900">{proposta.parcelas} meses</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-amber-200">
+                        <span className="text-slate-600">Taxa de Juros</span>
+                        <span className="text-lg font-medium text-slate-900">{proposta.taxaJuros}</span>
+                      </div>
+                    </>
+                  )}
+                  
+                  {proposta.valorParcela && proposta.valorParcela > 0 && (
+                    <div className="flex justify-between items-center py-4 bg-amber-100 rounded-lg px-4">
+                      <span className="text-slate-700 font-medium">Parcela Estimada</span>
+                      <span className="text-2xl font-bold text-amber-600">{formatCurrency(proposta.valorParcela)}/mês</span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </CardContent>
@@ -295,7 +317,7 @@ export default function PropostaPublica() {
                     </a>
                   )}
                   {proposta.corretor.email && (
-                    <a href={`mailto:${proposta.corretor.email}`} className="flex items-center gap-2 text-slate-600 hover:text-amber-600">
+                    <a href={`mailto:${proposta.corretor.email}`} className="flex items-center gap-2 text-slate-700 hover:text-amber-600 font-medium">
                       <Mail className="h-4 w-4" />
                       {proposta.corretor.email}
                     </a>

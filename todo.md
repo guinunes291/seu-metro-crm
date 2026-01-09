@@ -2327,3 +2327,9 @@
 - [x] Executar migração do banco de dados
 - [x] Verificar se tabelaPagamento está sendo lida ao gerar PDF (já estava implementado)
 - [x] Testar edição → salvamento → geração de PDF (pronto para teste do usuário)
+
+## Bug: Página Pública da Proposta
+- [x] Tabela de pagamento editada não aparece na página pública (link do cliente)
+- [x] Exibir tabela de pagamento customizada na seção "Condições Comerciais"
+- [x] Corrigir contraste de cores (email do corretor está ilegível)
+- [x] Testar visualização pública com tabela editada
