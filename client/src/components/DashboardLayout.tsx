@@ -104,6 +104,7 @@ const menuGroups = [
       { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
       { icon: Target, label: "Controle de Limites", path: "/controle-limites", roles: ["gestor", "admin"] },
       { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["gestor", "admin"] },
+      { icon: Target, label: "Projeto Foco do Mês", path: "/projeto-foco", roles: ["gestor", "admin"] },
       { icon: History, label: "Histórico", path: "/historico-distribuicao", roles: ["gestor", "admin"] },
       { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["gestor", "admin"] },
       { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["gestor", "admin"] },

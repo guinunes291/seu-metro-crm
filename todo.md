@@ -2357,3 +2357,16 @@
 - [x] Corrigir erro de validação ao criar lead com origem "Captação Própria"
 - [x] Corrigir contagem de leads nas metas mensais para contar apenas captação própria
 - [x] Implementar limitação de 20% por meta no cálculo da meta geral
+
+## Feature: Sistema de Duas Filas para Webhook
+- [ ] Adicionar campos no banco para projeto foco e corretores da fila
+- [ ] Criar procedures backend para configurar projeto foco
+- [ ] Modificar lógica do webhook para suportar duas filas
+- [ ] Criar página de configuração do Projeto Foco do Mês
+- [ ] Testar sistema completo
+
+## Sistema de Duas Filas de Webhook
+- [x] Adicionar campos no banco para projeto foco e corretores da fila
+- [x] Criar procedures backend para configurar projeto foco
+- [x] Modificar lógica do webhook para suportar duas filas
+- [x] Criar página de configuração do Projeto Foco do Mês

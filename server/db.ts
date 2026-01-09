@@ -16,6 +16,7 @@ import {
   notifications, InsertNotification,
   metas, InsertMeta, Meta,
   filaDistribuicao, InsertFilaDistribuicao, FilaDistribuicao,
+  configuracaoProjetoFoco, InsertConfiguracaoProjetoFoco, ConfiguracaoProjetoFoco,
   webhookConfig, InsertWebhookConfig, WebhookConfig,
   tarefas, InsertTarefa, Tarefa,
   followUps, InsertFollowUp, FollowUp,
@@ -2280,8 +2281,27 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   const db = await getDb();
   if (!db) return null;
   
-  // Buscar próximo corretor disponível
-  const corretorId = await getProximoCorretorFila();
+  // Buscar dados do lead para verificar o projeto
+  const lead = await getLeadById(leadId);
+  if (!lead) return null;
+  
+  // Verificar se o lead é do projeto foco
+  const config = await getConfiguracaoProjetoFoco();
+  const isProjetoFoco = config && config.ativo && config.projetoId === lead.projectId;
+  
+  let corretorId: number | null = null;
+  
+  if (isProjetoFoco) {
+    // Lead do projeto foco - usar fila foco (SEM LIMITE)
+    corretorId = await getProximoCorretorFilaFoco();
+    console.log(`[Roleta] Lead do projeto foco - tentando fila foco: ${corretorId ? 'sucesso' : 'sem corretor'}`);
+  }
+  
+  if (!corretorId) {
+    // Lead de outro projeto OU fila foco sem corretores - usar fila geral (COM LIMITE)
+    corretorId = await getProximoCorretorFila();
+    console.log(`[Roleta] Usando fila geral: ${corretorId ? 'sucesso' : 'sem corretor'}`);
+  }
   
   if (!corretorId) {
     console.log('[Roleta] Nenhum corretor disponível para receber o lead');
@@ -2315,9 +2335,9 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   }
   
   // Buscar dados do lead para notificação
-  const lead = await getLeadById(leadId);
-  if (lead) {
-    await notifyLeadDistribuido(corretorId, leadId, lead.nome);
+  const leadData = await getLeadById(leadId);
+  if (leadData) {
+    await notifyLeadDistribuido(corretorId, leadId, leadData.nome);
   }
   
   console.log(`[Roleta] Lead ${leadId} distribuído para corretor ${corretorId}`);
@@ -6527,4 +6547,179 @@ export async function deleteLinkAgendamento(linkId: number): Promise<void> {
   if (!db) return;
   
   await db.delete(linksAgendamento).where(eq(linksAgendamento.id, linkId));
+}
+
+
+// ============================================================================
+// PROJETO FOCO DO MÊS
+// ============================================================================
+
+/**
+ * Obtém a configuração do projeto foco
+ */
+export async function getConfiguracaoProjetoFoco() {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar configuração (deve ter apenas 1 registro)
+  const configs = await db.select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+  
+  if (configs.length === 0) {
+    // Criar configuração padrão se não existir
+    await db.insert(configuracaoProjetoFoco).values({
+      projetoId: null,
+      corretoresIds: null,
+      posicaoAtual: 0,
+      ativo: false,
+    });
+    
+    return {
+      id: 1,
+      projetoId: null,
+      corretoresIds: [],
+      posicaoAtual: 0,
+      ativo: false,
+      observacoes: null,
+    };
+  }
+  
+  const config = configs[0];
+  
+  // Se tem projeto foco, buscar dados do projeto
+  if (config.projetoId) {
+    const projeto = await db.select()
+      .from(projects)
+      .where(eq(projects.id, config.projetoId))
+      .limit(1);
+    
+    return {
+      ...config,
+      corretoresIds: (config.corretoresIds as number[]) || [],
+      projeto: projeto[0] || null,
+    };
+  }
+  
+  return {
+    ...config,
+    corretoresIds: (config.corretoresIds as number[]) || [],
+    projeto: null,
+  };
+}
+
+/**
+ * Configura o projeto foco e os corretores da fila
+ */
+export async function setConfiguracaoProjetoFoco(
+  projetoId: number | null,
+  corretoresIds: number[],
+  observacoes?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe configuração
+  const configs = await db.select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+  
+  if (configs.length === 0) {
+    // Criar nova configuração
+    await db.insert(configuracaoProjetoFoco).values({
+      projetoId,
+      corretoresIds: corretoresIds as any,
+      posicaoAtual: 0,
+      ativo: true,
+      observacoes: observacoes || null,
+    });
+  } else {
+    // Atualizar configuração existente
+    await db.update(configuracaoProjetoFoco)
+      .set({
+        projetoId,
+        corretoresIds: corretoresIds as any,
+        posicaoAtual: 0, // Reset posição ao mudar configuração
+        observacoes: observacoes || null,
+      })
+      .where(eq(configuracaoProjetoFoco.id, configs[0].id));
+  }
+}
+
+/**
+ * Ativa/desativa o projeto foco
+ */
+export async function toggleProjetoFoco(ativo: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const configs = await db.select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+  
+  if (configs.length > 0) {
+    await db.update(configuracaoProjetoFoco)
+      .set({ ativo })
+      .where(eq(configuracaoProjetoFoco.id, configs[0].id));
+  }
+}
+
+/**
+ * Busca o próximo corretor da fila do projeto foco (round-robin)
+ */
+export async function getProximoCorretorFilaFoco(): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar configuração do projeto foco
+  const config = await getConfiguracaoProjetoFoco();
+  
+  if (!config || !config.ativo || !config.corretoresIds || config.corretoresIds.length === 0) {
+    return null; // Projeto foco não configurado ou inativo
+  }
+  
+  const corretoresIds = config.corretoresIds as number[];
+  const posicaoAtual = config.posicaoAtual || 0;
+  
+  // Buscar corretores da fila foco que estão presentes
+  const corretoresPresentes = await db.select({
+    id: users.id,
+    status: users.status,
+  })
+    .from(users)
+    .where(and(
+      inArray(users.id, corretoresIds),
+      eq(users.status, 'presente')
+    ));
+  
+  if (corretoresPresentes.length === 0) {
+    return null; // Nenhum corretor presente na fila foco
+  }
+  
+  // Encontrar próximo corretor a partir da posição atual (round-robin)
+  let tentativas = 0;
+  let proximaPosicao = posicaoAtual;
+  
+  while (tentativas < corretoresIds.length) {
+    const corretorId = corretoresIds[proximaPosicao];
+    
+    // Verificar se o corretor está presente
+    const corretorPresente = corretoresPresentes.find(c => c.id === corretorId);
+    
+    if (corretorPresente) {
+      // Atualizar posição para o próximo
+      const novaPosicao = (proximaPosicao + 1) % corretoresIds.length;
+      await db.update(configuracaoProjetoFoco)
+        .set({ posicaoAtual: novaPosicao })
+        .where(eq(configuracaoProjetoFoco.id, config.id));
+      
+      return corretorId;
+    }
+    
+    // Próxima posição
+    proximaPosicao = (proximaPosicao + 1) % corretoresIds.length;
+    tentativas++;
+  }
+  
+  return null; // Nenhum corretor disponível
 }

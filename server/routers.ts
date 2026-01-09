@@ -1701,6 +1701,38 @@ export const appRouter = router({
             : 'Nenhum corretor disponível para receber o lead'
         };
       }),
+    
+    // ========== PROJETO FOCO DO MÊS ==========
+    
+    // Obter configuração do projeto foco
+    getProjetoFoco: gestorProcedure
+      .query(async () => {
+        return await db.getConfiguracaoProjetoFoco();
+      }),
+    
+    // Configurar projeto foco
+    setProjetoFoco: gestorProcedure
+      .input(z.object({
+        projetoId: z.number().nullable(),
+        corretoresIds: z.array(z.number()),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.setConfiguracaoProjetoFoco(
+          input.projetoId,
+          input.corretoresIds,
+          input.observacoes
+        );
+        return { success: true };
+      }),
+    
+    // Ativar/desativar projeto foco
+    toggleProjetoFoco: gestorProcedure
+      .input(z.object({ ativo: z.boolean() }))
+      .mutation(async ({ input }) => {
+        await db.toggleProjetoFoco(input.ativo);
+        return { success: true };
+      }),
   }),
 
   // ============================================================================

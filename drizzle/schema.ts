@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json } from "drizzle-orm/mysql-core";
 
 /**
  * Schema do CRM Imobiliário - Seu Metro Quadrado
@@ -1499,3 +1499,32 @@ export const indicacoes = mysqlTable("indicacoes", {
 
 export type Indicacao = typeof indicacoes.$inferSelect;
 export type InsertIndicacao = typeof indicacoes.$inferInsert;
+
+// ============================================================================
+// TABELA DE CONFIGURAÇÃO DO PROJETO FOCO DO MÊS
+// ============================================================================
+
+export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Projeto foco atual
+  projetoId: int("projetoId"), // NULL = nenhum projeto foco ativo
+  
+  // Corretores na fila do projeto foco (JSON array de IDs)
+  corretoresIds: json("corretoresIds").$type<number[]>(),
+  
+  // Posição atual na fila foco (para round-robin)
+  posicaoAtual: int("posicaoAtual").default(0).notNull(),
+  
+  // Metadata
+  ativo: boolean("ativo").default(true).notNull(),
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  projetoIdx: index("config_projeto_foco_projeto_idx").on(table.projetoId),
+}));
+
+export type ConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferSelect;
+export type InsertConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferInsert;

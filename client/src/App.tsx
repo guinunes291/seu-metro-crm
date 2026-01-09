@@ -46,6 +46,7 @@ import PropostaPublica from "@/pages/PropostaPublica";
 import CalendarioGestor from "@/pages/CalendarioGestor";
 import ConfiguracaoWebhooks from "@/pages/ConfiguracaoWebhooks";
 import ControleLimites from "@/pages/ControleLimites";
+import ProjetoFoco from "@/pages/ProjetoFoco";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -88,6 +89,7 @@ function Router() {
       <Route path="/propostas" component={Propostas} />
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
       <Route path="/controle-limites" component={ControleLimites} />
+      <Route path="/projeto-foco" component={ProjetoFoco} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />
