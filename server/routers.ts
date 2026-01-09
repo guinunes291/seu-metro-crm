@@ -3385,6 +3385,7 @@ export const appRouter = router({
           desconto: z.number().optional(),
           motivoDesconto: z.string().optional(),
           mensagemPersonalizada: z.string().optional(),
+          tabelaPagamento: z.string().optional(),
           imagensSelecionadas: z.array(z.string()).optional(),
           plantasSelecionadas: z.array(z.string()).optional(),
           videos: z.array(z.string()).optional(),

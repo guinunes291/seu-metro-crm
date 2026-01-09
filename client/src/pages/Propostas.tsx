@@ -300,6 +300,7 @@ export default function Propostas() {
           desconto: novaProposta.desconto || undefined,
           motivoDesconto: novaProposta.motivoDesconto || undefined,
           mensagemPersonalizada: novaProposta.mensagemPersonalizada || undefined,
+          tabelaPagamento: novaProposta.tabelaPagamento || undefined,
           imagensSelecionadas: imagensUrls.length > 0 ? imagensUrls : undefined,
           plantasSelecionadas: plantasUrls.length > 0 ? plantasUrls : undefined,
           validoAte: novaProposta.validoAte || undefined
@@ -343,8 +344,18 @@ export default function Propostas() {
       prazoMeses: proposta.parcelas || 0,
       primeiraPrestacao: proposta.valorParcela || 0,
       jurosEfetivos: proposta.taxaJuros || "",
-      tabelaPagamento: ""
+      tabelaPagamento: proposta.tabelaPagamento || ""
     });
+    
+    // Carregar tabela de pagamento se existir
+    if (proposta.tabelaPagamento) {
+      try {
+        const tabelaSalva = JSON.parse(proposta.tabelaPagamento);
+        setParcelas(tabelaSalva);
+      } catch (e) {
+        console.error('Erro ao parsear tabela de pagamento:', e);
+      }
+    }
     
     // Carregar imagens e plantas se existirem
     if (proposta.imagensSelecionadas) {

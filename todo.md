@@ -2317,6 +2317,6 @@
 ## Bug: Problemas na Geração de Propostas em PDF
 - [x] Logo da empresa não aparece (ícone de imagem quebrada)
 - [x] Fotos do book não são extraídas/exibidas no PDF (URLs já estão corretas)
-- [x] Tabela de pagamento sempre mostra condição fixa do simulador
-- [x] Implementar tabela de pagamento dinâmica que reflete ajustes do corretor
-- [x] Testar geração de PDF com todos os elementos corrigidos
+- [x] Tabela de pagamento não está sendo salva quando corretor edita
+- [x] Corrigir persistência da tabela de pagamento no banco de dados
+- [x] Testar edição e geração de PDF com tabela atualizada
