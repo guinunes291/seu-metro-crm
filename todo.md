@@ -2306,3 +2306,10 @@
 - [x] Associar lead ao projeto (existente ou novo)
 - [x] Testar importação com projetos que não existem no sistema (pronto para teste manual)
 - [x] Validar que projetos duplicados não são criados (lógica implementada)
+
+## Nova Feature: Normalização de Nomes de Projetos
+- [x] Criar função de normalização (remover acentos, espaços extras, lowercase)
+- [x] Integrar normalização na busca de projetos existentes
+- [x] Integrar normalização na criação de novos projetos
+- [x] Criar testes unitários para validar normalização
+- [x] Testar com casos reais (Brooklin Sky, Brooklin  Sky, BROOKLIN SKY, etc.)

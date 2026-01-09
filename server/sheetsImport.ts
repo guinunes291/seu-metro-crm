@@ -68,8 +68,29 @@ function mapStatus(sheetStatus: string): string {
 }
 
 /**
+ * Normaliza o nome de um projeto para evitar duplicatas
+ * Remove acentos, converte para lowercase, remove espaços extras
+ */
+function normalizeProjectName(name: string): string {
+  if (!name) return "";
+  
+  return name
+    .trim()
+    .toLowerCase()
+    // Remover acentos
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    // Remover espaços extras (múltiplos espaços viram um só)
+    .replace(/\s+/g, " ")
+    // Remover caracteres especiais extras
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim();
+}
+
+/**
  * Busca um projeto existente baseado na origem
  * Se não encontrar, CRIA automaticamente um novo projeto
+ * Usa normalização de nomes para evitar duplicatas
  */
 export async function findExistingProject(origem: string): Promise<number | null> {
   if (!origem || origem.trim() === "") return null;
@@ -78,15 +99,21 @@ export async function findExistingProject(origem: string): Promise<number | null
   if (!db) return null;
 
   try {
-    // Buscar projeto existente pelo nome exato
-    const existing = await db
+    const normalizedName = normalizeProjectName(origem);
+    
+    // Buscar projeto existente comparando nomes normalizados
+    const allProjects = await db
       .select()
-      .from(projects)
-      .where(eq(projects.nome, origem))
-      .limit(1);
+      .from(projects);
+    
+    // Encontrar projeto com nome normalizado igual
+    const existing = allProjects.find(p => 
+      normalizeProjectName(p.nome) === normalizedName
+    );
 
-    if (existing.length > 0) {
-      return existing[0].id;
+    if (existing) {
+      console.log(`[findExistingProject] Projeto encontrado: "${origem}" -> ID ${existing.id} ("${existing.nome}")`);
+      return existing.id;
     }
 
     // Se não encontrar, criar novo projeto automaticamente
