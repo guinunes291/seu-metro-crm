@@ -688,6 +688,54 @@ export const appRouter = router({
           status: statusNormalizado 
         };
       }),
+    
+    // Listar limites diários de todos os corretores
+    listarLimites: gestorProcedure
+      .query(async () => {
+        const corretores = await db.getAllCorretores();
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        
+        const limites = await Promise.all(corretores.map(async (corretor) => {
+          // Contar leads recebidos hoje
+          const leadsHoje = await db.countLeadsRecebidosHoje(corretor.id, hoje);
+          
+          return {
+            corretorId: corretor.id,
+            nome: corretor.name,
+            email: corretor.email,
+            fotoUrl: corretor.fotoUrl,
+            limiteDiarioLeads: corretor.limiteDiarioLeads || 50,
+            limiteDiarioWebhook: corretor.limiteDiarioWebhook || 10,
+            leadsRecebidosHoje: leadsHoje,
+            status: corretor.status,
+          };
+        }));
+        
+        return limites;
+      }),
+    
+    // Configurar limite diário de distribuição automática
+    configurarLimiteDiario: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        limite: z.number().min(0).max(200),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateLimiteDiarioLeads(input.corretorId, input.limite);
+        return { success: true };
+      }),
+    
+    // Configurar limite diário de webhook
+    configurarLimiteWebhook: gestorProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        limite: z.number().min(0).max(100),
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateLimiteDiarioWebhook(input.corretorId, input.limite);
+        return { success: true };
+      }),
   }),
 
   // ============================================================================

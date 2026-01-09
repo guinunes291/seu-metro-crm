@@ -56,6 +56,10 @@ export const users = mysqlTable("users", {
   codigoIndicacao: varchar("codigoIndicacao", { length: 20 }).unique(), // Código único para indicação
   indicadoPorId: int("indicadoPorId"), // ID do usuário que indicou
   
+  // Controle de distribuição de leads
+  limiteDiarioLeads: int("limiteDiarioLeads").default(50).notNull(), // Limite para distribuição automática
+  limiteDiarioWebhook: int("limiteDiarioWebhook").default(10).notNull(), // Limite para leads via webhook
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

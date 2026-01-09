@@ -225,6 +225,34 @@
       "when": 1767973435580,
       "tag": "0031_faulty_mac_gargan",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1767975216404,
+      "tag": "0032_melodic_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1767979472742,
+      "tag": "0033_smooth_screwball",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1767979549519,
+      "tag": "0034_spotty_betty_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1767979999447,
+      "tag": "0035_curvy_the_stranger",
+      "breakpoints": true
     }
   ]
 }

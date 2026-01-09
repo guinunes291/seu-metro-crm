@@ -45,6 +45,7 @@ import ChatbotPublico from "@/pages/ChatbotPublico";
 import PropostaPublica from "@/pages/PropostaPublica";
 import CalendarioGestor from "@/pages/CalendarioGestor";
 import ConfiguracaoWebhooks from "@/pages/ConfiguracaoWebhooks";
+import ControleLimites from "@/pages/ControleLimites";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/minha-agenda" component={MinhaAgenda} />
       <Route path="/propostas" component={Propostas} />
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
+      <Route path="/controle-limites" component={ControleLimites} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

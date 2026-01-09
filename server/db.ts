@@ -205,6 +205,42 @@ export async function updateUserStatus(userId: number, status: "presente" | "aus
     .where(eq(users.id, userId));
 }
 
+export async function updateLimiteDiarioLeads(userId: number, limite: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(users)
+    .set({ limiteDiarioLeads: limite, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+export async function updateLimiteDiarioWebhook(userId: number, limite: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(users)
+    .set({ limiteDiarioWebhook: limite, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+export async function countLeadsRecebidosHoje(corretorId: number, dataInicio: Date) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const dataFim = new Date(dataInicio);
+  dataFim.setHours(23, 59, 59, 999);
+  
+  const resultado = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ));
+  
+  return resultado[0]?.count || 0;
+}
+
 export async function createCorretor(data: {
   name: string;
   email?: string;
