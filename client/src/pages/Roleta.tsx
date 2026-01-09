@@ -378,7 +378,7 @@ export default function Roleta() {
                         <SelectValue placeholder="Selecione um projeto" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Nenhum</SelectItem>
+                        <SelectItem value="0">Nenhum</SelectItem>
                         {projetos?.map((p) => (
                           <SelectItem key={p.id} value={p.id.toString()}>
                             {p.nome}
@@ -396,7 +396,7 @@ export default function Roleta() {
                     onClick={() => criarWebhook.mutate({
                       nome: novoWebhook.nome,
                       fonte: novoWebhook.fonte,
-                      projectIdPadrao: novoWebhook.projectIdPadrao ? parseInt(novoWebhook.projectIdPadrao) : undefined,
+                      projectIdPadrao: novoWebhook.projectIdPadrao && novoWebhook.projectIdPadrao !== "0" ? parseInt(novoWebhook.projectIdPadrao) : undefined,
                     })}
                     disabled={!novoWebhook.nome || criarWebhook.isPending}
                   >
