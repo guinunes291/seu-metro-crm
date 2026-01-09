@@ -2286,8 +2286,3 @@
 - [x] Capturar form_id e mapear para projeto de interesse
 - [x] Exibir faixa de renda e projeto na visualização do lead
 - [x] Criar interface de configuração para mapear Form IDs para projetos
-- [x] Integrar mapeamento de Form IDs na tela de Integrações existente
-
-## Correção de Erro no Webhook
-- [x] Corrigir erro de JavaScript ao clicar em Novo Webhook
-- [x] Investigar e corrigir erro persistente (imports/dependências)
