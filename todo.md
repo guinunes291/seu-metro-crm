@@ -2336,7 +2336,7 @@
 
 ## Bug URGENTE: Tabela de Pagamento Não Aparece na Página Pública
 - [ ] Verificar se tabelaPagamento está salva no banco para a proposta do Marcio Lira
-- [ ] Verificar se há erro no parsing do JSON
+- [x] Verificar se há erro no parsing do JSON
 - [ ] Adicionar tratamento de erros e logs de debug
 - [ ] Testar com proposta que tem tabela de pagamento editada
 
@@ -2404,3 +2404,9 @@
 - [x] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
 - [x] Remover dependência de projeto - Fila Foco independente
 - [x] Testar criação e distribuição via webhooks da Fila Foco
+
+## Bug: Lista de corretores não aparece na Fila Foco
+- [x] Investigar query trpc.corretor.list
+- [x] Verificar se há corretores cadastrados no banco
+- [x] Corrigir carregamento e exibição da lista
+- [x] Testar seleção de corretores

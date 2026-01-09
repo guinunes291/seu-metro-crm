@@ -39,7 +39,7 @@ export default function ProjetoFoco() {
   
   // Queries
   const { data: config, isLoading: loadingConfig } = trpc.fila.getProjetoFoco.useQuery();
-  const { data: corretores, isLoading: loadingCorretores } = trpc.corretor.list.useQuery();
+  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
   const { data: webhooks, isLoading: loadingWebhooks } = trpc.webhook.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
   
