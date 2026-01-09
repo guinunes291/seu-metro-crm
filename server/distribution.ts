@@ -1,4 +1,4 @@
-import { getDb, notifyLeadDistribuido } from "./db";
+import { getDb, notifyLeadDistribuido, countLeadsRecebidosHoje } from "./db";
 import { users, leads, conversionStats, distributionLog } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
@@ -492,7 +492,20 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
 
   const corretoresElegiveis: number[] = [];
 
+  // Obter início do dia de hoje para verificar limite diário
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
   for (const corretor of corretoresPresentes) {
+    // Verificar limite diário de distribuição automática
+    const limiteDiario = corretor.limiteDiarioLeads || 50;
+    const leadsRecebidosHoje = await countLeadsRecebidosHoje(corretor.id, hoje);
+    
+    if (leadsRecebidosHoje >= limiteDiario) {
+      // Corretor já atingiu o limite diário de distribuição automática
+      continue;
+    }
+
     // Buscar leads do corretor
     const leadsDoCorretor = await db
       .select()

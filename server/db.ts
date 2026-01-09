@@ -230,15 +230,47 @@ export async function countLeadsRecebidosHoje(corretorId: number, dataInicio: Da
   const dataFim = new Date(dataInicio);
   dataFim.setHours(23, 59, 59, 999);
   
-  const resultado = await db.select({ count: sql<number>`count(*)` })
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
     .from(leads)
-    .where(and(
-      eq(leads.corretorId, corretorId),
-      gte(leads.createdAt, dataInicio),
-      lte(leads.createdAt, dataFim)
-    ));
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim)
+      )
+    );
   
-  return resultado[0]?.count || 0;
+  return result[0]?.count || 0;
+}
+
+/**
+ * Conta leads recebidos via webhook (facebook, site, etc.) hoje
+ * Exclui leads de captação própria do corretor
+ */
+export async function countLeadsWebhookRecebidosHoje(corretorId: number, dataInicio: Date) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  const dataFim = new Date(dataInicio);
+  dataFim.setHours(23, 59, 59, 999);
+  
+  // Origens consideradas como webhook (não inclui captacao_corretor)
+  const origensWebhook = ['facebook', 'google_sheets', 'site', 'whatsapp', 'telefone', 'plantao', 'agendamento_self_service', 'chatbot', 'outro'];
+  
+  const result = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(leads)
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim),
+        sql`${leads.origem} IN (${sql.join(origensWebhook.map(o => sql`${o}`), sql`, `)})`
+      )
+    );
+  
+  return result[0]?.count || 0;
 }
 
 export async function createCorretor(data: {
@@ -2149,18 +2181,22 @@ export async function getProximoCorretorFila(): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
   
-  // Buscar fila ordenada por posição
+  // Buscar fila ordenada por posição com limite de webhook do corretor
   const fila = await db.select({
     corretorId: filaDistribuicao.corretorId,
     posicao: filaDistribuicao.posicao,
     ativo: filaDistribuicao.ativo,
-    maxLeadsDia: filaDistribuicao.maxLeadsDia,
     leadsRecebidosHoje: filaDistribuicao.leadsRecebidosHoje,
     corretorStatus: users.status,
+    limiteDiarioWebhook: users.limiteDiarioWebhook,
   })
     .from(filaDistribuicao)
     .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
     .orderBy(filaDistribuicao.posicao);
+  
+  // Obter início do dia de hoje
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
   
   // Encontrar o primeiro corretor disponível
   for (const item of fila) {
@@ -2170,8 +2206,12 @@ export async function getProximoCorretorFila(): Promise<number | null> {
     // Verificar se está presente
     if (item.corretorStatus !== 'presente') continue;
     
-    // Verificar se não atingiu o limite diário
-    if (item.leadsRecebidosHoje >= item.maxLeadsDia) continue;
+    // Contar leads recebidos via webhook hoje (origem facebook, site, etc.)
+    const leadsWebhookHoje = await countLeadsWebhookRecebidosHoje(item.corretorId, hoje);
+    
+    // Verificar se não atingiu o limite diário de webhook
+    const limiteWebhook = item.limiteDiarioWebhook || 10;
+    if (leadsWebhookHoje >= limiteWebhook) continue;
     
     return item.corretorId;
   }
