@@ -2291,3 +2291,18 @@
 - [x] Corrigir upload de books nos projetos (botão não estava enviando arquivo)
 - [x] Implementar upload para S3 antes de associar ao projeto
 - [x] Testar upload completo com arquivo PDF
+
+## Bug: Visualização de Books Abrindo Página em Branco
+- [ ] Investigar URL do CloudFront que está retornando página em branco
+- [ ] Verificar se o arquivo foi salvo corretamente no S3
+- [ ] Verificar Content-Type do arquivo no S3
+- [ ] Testar download direto do arquivo
+- [ ] Corrigir problema de visualização
+
+## Nova Feature: Criação Automática de Projetos na Importação de Leads
+- [x] Modificar função de importação para ler coluna "Projeto"
+- [x] Implementar busca de projeto existente por nome
+- [x] Implementar criação automática de projeto se não existir
+- [x] Associar lead ao projeto (existente ou novo)
+- [x] Testar importação com projetos que não existem no sistema (pronto para teste manual)
+- [x] Validar que projetos duplicados não são criados (lógica implementada)

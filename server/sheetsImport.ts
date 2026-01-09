@@ -69,9 +69,9 @@ function mapStatus(sheetStatus: string): string {
 
 /**
  * Busca um projeto existente baseado na origem
- * NÃO cria novos projetos automaticamente
+ * Se não encontrar, CRIA automaticamente um novo projeto
  */
-async function findExistingProject(origem: string): Promise<number | null> {
+export async function findExistingProject(origem: string): Promise<number | null> {
   if (!origem || origem.trim() === "") return null;
 
   const db = await getDb();
@@ -89,10 +89,24 @@ async function findExistingProject(origem: string): Promise<number | null> {
       return existing[0].id;
     }
 
-    // Se não encontrar, retorna null (não cria novo projeto)
-    return null;
+    // Se não encontrar, criar novo projeto automaticamente
+    console.log(`[findExistingProject] Criando novo projeto: ${origem}`);
+    
+    const newProject = await db.insert(projects).values({
+      nome: origem.trim(),
+      cidade: "São Paulo",
+      estado: "SP",
+      tipo: "mcmv",
+      status: "ativo",
+    });
+
+    // Retornar o ID do projeto recém-criado
+    const projectId = Number(newProject.insertId);
+    console.log(`[findExistingProject] Projeto criado com ID: ${projectId}`);
+    
+    return projectId;
   } catch (error) {
-    console.error(`Erro ao buscar projeto ${origem}:`, error);
+    console.error(`Erro ao buscar/criar projeto ${origem}:`, error);
     return null;
   }
 }
