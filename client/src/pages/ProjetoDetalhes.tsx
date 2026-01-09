@@ -29,6 +29,7 @@ export default function ProjetoDetalhes() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [uploadingBook, setUploadingBook] = useState(false);
   const uploadBookMutation = trpc.projects.uploadBook.useMutation();
+  const uploadBookDiretoMutation = trpc.propostas.uploadBookDireto.useMutation();
   const [formData, setFormData] = useState({
     nome: "",
     construtora: "",
@@ -142,30 +143,54 @@ export default function ProjetoDetalhes() {
       return;
     }
     
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('O arquivo deve ter no máximo 10MB');
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('O arquivo deve ter no máximo 50MB');
       return;
     }
     
     setUploadingBook(true);
     
     try {
+      // Primeiro, fazer upload do arquivo para o S3
       const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
-        
-        await uploadBookMutation.mutateAsync({
-          projectId,
-          fileName: file.name,
-          fileData: base64,
-        });
-        
-        toast.success('Book do projeto enviado com sucesso!');
-        refetch();
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast.error('Erro ao enviar o book');
+      const uploadPromise = new Promise<string>((resolve, reject) => {
+        reader.onload = async () => {
+          try {
+            const base64 = (reader.result as string).split(',')[1];
+            
+            // Usar o endpoint de upload direto para S3
+            const uploadResult = await uploadBookDiretoMutation.mutateAsync({
+              fileData: base64,
+              fileName: file.name,
+              fileSize: file.size
+            });
+            
+            if (uploadResult.bookUrl) {
+              resolve(uploadResult.bookUrl);
+            } else {
+              reject(new Error('Falha ao obter URL do book'));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+        reader.readAsDataURL(file);
+      });
+      
+      const bookUrl = await uploadPromise;
+      
+      // Agora, associar o book ao projeto
+      await uploadBookMutation.mutateAsync({
+        projectId,
+        bookUrl,
+      });
+      
+      toast.success('Book do projeto enviado com sucesso!');
+      refetch();
+    } catch (error: any) {
+      console.error('Erro ao enviar book:', error);
+      toast.error(error.message || 'Erro ao enviar o book');
     } finally {
       setUploadingBook(false);
     }

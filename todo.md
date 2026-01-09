@@ -2286,3 +2286,8 @@
 - [x] Capturar form_id e mapear para projeto de interesse
 - [x] Exibir faixa de renda e projeto na visualização do lead
 - [x] Criar interface de configuração para mapear Form IDs para projetos
+
+## Bug Fix: Upload de Books nos Projetos
+- [x] Corrigir upload de books nos projetos (botão não estava enviando arquivo)
+- [x] Implementar upload para S3 antes de associar ao projeto
+- [x] Testar upload completo com arquivo PDF
