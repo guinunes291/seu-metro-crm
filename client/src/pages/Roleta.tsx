@@ -522,9 +522,16 @@ export default function Roleta() {
                         Adicionar
                       </Button>
                     </div>
-                    {webhook.formIdMapping && JSON.parse(webhook.formIdMapping) && Object.keys(JSON.parse(webhook.formIdMapping)).length > 0 ? (
+                    {(() => {
+                      try {
+                        const mapping = webhook.formIdMapping ? JSON.parse(webhook.formIdMapping) : {};
+                        return mapping && Object.keys(mapping).length > 0;
+                      } catch {
+                        return false;
+                      }
+                    })() ? (
                       <div className="space-y-1">
-                        {Object.entries(JSON.parse(webhook.formIdMapping) as Record<string, number>).map(
+                        {Object.entries(JSON.parse(webhook.formIdMapping || '{}') as Record<string, number>).map(
                           ([formId, projectId]) => {
                             const project = projetos?.find((p) => p.id === projectId);
                             return (

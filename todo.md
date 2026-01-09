@@ -2287,3 +2287,6 @@
 - [x] Exibir faixa de renda e projeto na visualização do lead
 - [x] Criar interface de configuração para mapear Form IDs para projetos
 - [x] Integrar mapeamento de Form IDs na tela de Integrações existente
+
+## Correção de Erro no Webhook
+- [x] Corrigir erro de JavaScript ao clicar em Novo Webhook
