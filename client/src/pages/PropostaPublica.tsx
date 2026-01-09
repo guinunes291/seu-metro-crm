@@ -231,7 +231,20 @@ export default function PropostaPublica() {
               )}
               
               {/* Exibir tabela de pagamento customizada se existir */}
-              {proposta.tabelaPagamento && JSON.parse(proposta.tabelaPagamento).length > 0 ? (
+              {(() => {
+                console.log('[PropostaPublica] tabelaPagamento raw:', proposta.tabelaPagamento);
+                try {
+                  if (proposta.tabelaPagamento) {
+                    const parcelas = JSON.parse(proposta.tabelaPagamento);
+                    console.log('[PropostaPublica] parcelas parsed:', parcelas);
+                    return parcelas.length > 0;
+                  }
+                  return false;
+                } catch (e) {
+                  console.error('[PropostaPublica] Erro ao parsear tabelaPagamento:', e);
+                  return false;
+                }
+              })() ? (
                 <>
                   {JSON.parse(proposta.tabelaPagamento).map((parcela: any, index: number) => (
                     parcela.valorTotal > 0 && (

@@ -2333,3 +2333,21 @@
 - [x] Exibir tabela de pagamento customizada na seção "Condições Comerciais"
 - [x] Corrigir contraste de cores (email do corretor está ilegível)
 - [x] Testar visualização pública com tabela editada
+
+## Bug URGENTE: Tabela de Pagamento Não Aparece na Página Pública
+- [ ] Verificar se tabelaPagamento está salva no banco para a proposta do Marcio Lira
+- [ ] Verificar se há erro no parsing do JSON
+- [ ] Adicionar tratamento de erros e logs de debug
+- [ ] Testar com proposta que tem tabela de pagamento editada
+
+
+## Correções Finais: Tabela de Pagamento em Propostas
+- [x] Adicionar coluna tabelaPagamento no schema do banco de dados
+- [x] Executar migração do banco (pnpm db:push)
+- [x] Adicionar campo tabelaPagamento no frontend (Propostas.tsx)
+- [x] Adicionar campo tabelaPagamento no backend (routers.ts schema de validação)
+- [x] Implementar exibição da tabela de pagamento na página pública (PropostaPublica.tsx)
+- [x] Corrigir contraste de cores ilegíveis (email do corretor)
+- [x] Testar fluxo completo: editar → salvar → gerar PDF → visualizar página pública
+- [x] Problema identificado: propostas antigas criadas antes da migração tinham campo NULL
+- [x] Solução: editar e salvar propostas antigas ou criar novas propostas
