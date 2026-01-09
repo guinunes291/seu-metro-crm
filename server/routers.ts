@@ -2456,13 +2456,16 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
         }
         
+        // Importar função de timezone
+        const { parsearDataISO } = await import('./timezone');
+        
         return await db.createAgendamento({
           leadId: input.leadId,
           corretorId: lead.corretorId || ctx.user.id,
           projectId: input.projectId,
           projetoCustom: input.projetoCustom,
           construtora: input.construtora,
-          dataAgendamento: new Date(input.dataAgendamento),
+          dataAgendamento: parsearDataISO(input.dataAgendamento),
           horaAgendamento: input.horaAgendamento,
           observacoes: input.observacoes,
           criadoPorId: ctx.user.id,
