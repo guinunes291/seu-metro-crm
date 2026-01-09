@@ -439,15 +439,7 @@ export default function Metas() {
                               <span>Obs: {item.progresso.meta.observacoes}</span>
                             )}
                           </div>
-                          {getProgressBadge(
-                            Math.round(
-                              (item.progresso.progresso.leads + 
-                               item.progresso.progresso.agendamentos + 
-                               item.progresso.progresso.visitas + 
-                               item.progresso.progresso.contratos + 
-                               item.progresso.progresso.vgv) / 5
-                            )
-                          )}
+                          {getProgressBadge(item.progresso.progressoGeral || 0)}
                         </div>
                       </div>
                     ) : (

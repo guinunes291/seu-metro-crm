@@ -71,6 +71,20 @@ const resultadoLabels: Record<string, string> = {
   outro: "Outro",
 };
 
+const origemLabels: Record<string, string> = {
+  facebook: "Facebook",
+  google_sheets: "Google Sheets",
+  site: "Site",
+  indicacao: "Indicação",
+  captacao_corretor: "Captação Própria",
+  whatsapp: "WhatsApp",
+  telefone: "Telefone",
+  plantao: "Plantão",
+  agendamento_self_service: "Agendamento Self-Service",
+  chatbot: "Chatbot",
+  outro: "Outro",
+};
+
 export default function Leads() {
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
   const { data: projects } = trpc.projects.list.useQuery();
@@ -102,6 +116,7 @@ export default function Leads() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
+  const [origemFilter, setOrigemFilter] = useState<string>("all");
 
   const updateLeadMutation = trpc.leads.update.useMutation();
   const addInteractionMutation = trpc.leads.addInteraction.useMutation();
@@ -366,8 +381,9 @@ export default function Leads() {
     
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
     const matchesProject = projectFilter === "all" || lead.projectId?.toString() === projectFilter;
+    const matchesOrigem = origemFilter === "all" || lead.origem === origemFilter;
 
-    return matchesSearch && matchesStatus && matchesProject;
+    return matchesSearch && matchesStatus && matchesProject && matchesOrigem;
   }) || [];
 
   const openDetails = (lead: any) => {
@@ -430,24 +446,43 @@ export default function Leads() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="project">Projeto</Label>
-                <Select value={projectFilter} onValueChange={setProjectFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os projetos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os projetos</SelectItem>
-                    {projects?.map((project) => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
-                        {project.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="project">Projeto</Label>
+              <Select value={projectFilter} onValueChange={setProjectFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os projetos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os projetos</SelectItem>
+                  {projects?.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
+            <div className="space-y-2">
+              <Label htmlFor="origem">Origem</Label>
+              <Select value={origemFilter} onValueChange={setOrigemFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as origens" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as origens</SelectItem>
+                  {Object.entries(origemLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-1 mt-4">
+            <div className="space-y-2">
                 <Label>Visualização</Label>
                 <div className="flex gap-2">
                   <Button
@@ -788,7 +823,7 @@ export default function Leads() {
             <Phone className="h-20 w-20 mx-auto mb-4 text-muted-foreground opacity-50" />
             <h3 className="text-lg font-semibold mb-2">Nenhum lead encontrado</h3>
             <p className="text-muted-foreground">
-              {searchTerm || statusFilter !== "all" || projectFilter !== "all"
+              {searchTerm || statusFilter !== "all" || projectFilter !== "all" || origemFilter !== "all"
                 ? "Tente ajustar os filtros de busca"
                 : "Aguarde a distribuição de novos leads pelo gestor"
               }

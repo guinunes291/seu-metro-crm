@@ -2351,3 +2351,9 @@
 - [x] Testar fluxo completo: editar → salvar → gerar PDF → visualizar página pública
 - [x] Problema identificado: propostas antigas criadas antes da migração tinham campo NULL
 - [x] Solução: editar e salvar propostas antigas ou criar novas propostas
+
+## Bug Fix: Filtro de Origem e Validação de Captação Própria
+- [x] Adicionar filtro de origem na página Meus Leads
+- [x] Corrigir erro de validação ao criar lead com origem "Captação Própria"
+- [x] Corrigir contagem de leads nas metas mensais para contar apenas captação própria
+- [x] Implementar limitação de 20% por meta no cálculo da meta geral

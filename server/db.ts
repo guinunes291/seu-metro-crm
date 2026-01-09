@@ -1759,6 +1759,7 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
   const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
   
   // Buscar realizados no período
+  // IMPORTANTE: Leads só contam se forem de captação própria
   const leadsDoMes = await db.select({
     status: leads.status,
     count: sql<number>`count(*)`
@@ -1766,6 +1767,7 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
     .from(leads)
     .where(and(
       eq(leads.corretorId, corretorId),
+      eq(leads.origem, 'captacao_corretor'), // Apenas captação própria
       gte(leads.createdAt, dataInicio),
       lte(leads.createdAt, dataFim)
     ))
@@ -1800,6 +1802,28 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
   
   const vgvRealizado = Number(vgvResult[0]?.total || 0);
   
+  // Calcular progresso individual (pode ultrapassar 100%)
+  const progressoLeads = meta.metaLeads > 0 ? Math.round((totalLeads / meta.metaLeads) * 100) : 0;
+  const progressoAgendamentos = meta.metaAgendamentos > 0 ? Math.round((agendamentos / meta.metaAgendamentos) * 100) : 0;
+  const progressoVisitas = meta.metaVisitas > 0 ? Math.round((visitas / meta.metaVisitas) * 100) : 0;
+  const progressoContratos = meta.metaContratos > 0 ? Math.round((contratos / meta.metaContratos) * 100) : 0;
+  const progressoVGV = meta.metaVGV > 0 ? Math.round((vgvRealizado / meta.metaVGV) * 100) : 0;
+  
+  // Calcular progresso geral (cada meta contribui no máximo 20%)
+  const contribuicaoLeads = Math.min(20, (progressoLeads / 100) * 20);
+  const contribuicaoAgendamentos = Math.min(20, (progressoAgendamentos / 100) * 20);
+  const contribuicaoVisitas = Math.min(20, (progressoVisitas / 100) * 20);
+  const contribuicaoContratos = Math.min(20, (progressoContratos / 100) * 20);
+  const contribuicaoVGV = Math.min(20, (progressoVGV / 100) * 20);
+  
+  const progressoGeral = Math.round(
+    contribuicaoLeads + 
+    contribuicaoAgendamentos + 
+    contribuicaoVisitas + 
+    contribuicaoContratos + 
+    contribuicaoVGV
+  );
+  
   return {
     meta,
     realizado: {
@@ -1810,12 +1834,13 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
       vgv: vgvRealizado,
     },
     progresso: {
-      leads: meta.metaLeads > 0 ? Math.round((totalLeads / meta.metaLeads) * 100) : 0,
-      agendamentos: meta.metaAgendamentos > 0 ? Math.round((agendamentos / meta.metaAgendamentos) * 100) : 0,
-      visitas: meta.metaVisitas > 0 ? Math.round((visitas / meta.metaVisitas) * 100) : 0,
-      contratos: meta.metaContratos > 0 ? Math.round((contratos / meta.metaContratos) * 100) : 0,
-      vgv: meta.metaVGV > 0 ? Math.round((vgvRealizado / meta.metaVGV) * 100) : 0,
+      leads: progressoLeads,
+      agendamentos: progressoAgendamentos,
+      visitas: progressoVisitas,
+      contratos: progressoContratos,
+      vgv: progressoVGV,
     },
+    progressoGeral, // Meta geral limitada a 100% (5 metas × 20% cada)
   };
 }
 

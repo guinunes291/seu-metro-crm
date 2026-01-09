@@ -306,7 +306,19 @@ export const appRouter = router({
         nome: z.string(),
         email: z.string().email().optional(),
         telefone: z.string(),
-        origem: z.enum(["facebook", "instagram", "google", "site", "indicacao", "outro"]).default("indicacao"),
+        origem: z.enum([
+          "facebook",
+          "google_sheets",
+          "site",
+          "indicacao",
+          "captacao_corretor",
+          "whatsapp",
+          "telefone",
+          "plantao",
+          "agendamento_self_service",
+          "chatbot",
+          "outro"
+        ]).default("captacao_corretor"),
         projectId: z.number().optional(),
         observacoes: z.string().optional(),
       }))
