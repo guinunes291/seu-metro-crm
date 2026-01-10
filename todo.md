@@ -2521,3 +2521,11 @@
 - [x] Corrigir para contar apenas interações realizadas HOJE (data = hoje)
 - [x] Testar com corretor que tem follow-ups antigos mas nenhum hoje
 - [x] Validar que progresso começa em 0% no início do dia
+
+## Indicador de Progresso no Header
+- [x] Adicionar componente de progresso no header do DashboardLayout
+- [x] Mostrar "Follow-ups: X/Y (Z%)" de forma discreta
+- [x] Adicionar barra de progresso visual
+- [x] Cores dinâmicas: vermelho (< 60%), verde (>= 60%)
+- [x] Apenas visível para corretores (não para gestores/admins)
+- [x] Testar responsividade em mobile (oculto em telas pequenas)

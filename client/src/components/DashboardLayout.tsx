@@ -633,6 +633,30 @@ function DashboardContent({
           <SidebarTrigger className="-ml-2">
             <PanelLeft className="h-5 w-5" />
           </SidebarTrigger>
+          
+          {/* Indicador de Progresso de Follow-ups (apenas para corretores) */}
+          {isCorretor && (
+            <div className="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground hidden lg:inline">Follow-ups:</span>
+                <span className={`font-bold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
+                  {concluidos}/{total}
+                </span>
+                <span className={`text-xs font-semibold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
+                  ({percentual}%)
+                </span>
+              </div>
+              <div className="flex-1 max-w-[200px]">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ${desbloqueado ? 'bg-green-500' : 'bg-red-500'}`}
+                    style={{ width: `${Math.min(percentual, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          
           <ThemeToggle />
         </header>
         <main className="flex-1 overflow-auto relative">
