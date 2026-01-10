@@ -66,6 +66,7 @@ export function useFollowUpProgress() {
       desbloqueado: true,
       isLoading: false,
       refetch,
+      showPlusOne: false, // Sempre false para não-corretores
     };
   }
   
