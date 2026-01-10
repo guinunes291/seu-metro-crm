@@ -19,6 +19,7 @@ import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, Refres
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
+import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 
 type LeadStatus = 'novo' | 'aguardando_atendimento' | 'em_atendimento' | 'agendado' | 'visita_realizada' | 'analise_credito' | 'contrato_fechado' | 'perdido';
 
@@ -45,6 +46,9 @@ const statusColors: Record<LeadStatus, string> = {
 };
 
 export default function LeadsPorCorretor() {
+  // Hook de notificação para leads Facebook Ads
+  useWebhookLeadNotification();
+  
   const [corretorId, setCorretorId] = useState<number | undefined>(undefined);
   const [status, setStatus] = useState<LeadStatus | undefined>(undefined);
   const [dataInicio, setDataInicio] = useState<string>("");

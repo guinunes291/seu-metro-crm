@@ -2449,3 +2449,12 @@
 - [ ] Polling em tempo real (pendente) para novos leads Foco
 - [ ] WhatsApp automático (pendente - requer API)
 - [x] Badge visual implementado nos cards de leads Foco não atendidos
+
+## Feature: Notificação Push e Priorização Automática
+- [x] Criar procedure getNewWebhookLeads para buscar leads recentes
+- [x] Implementar hook useWebhookLeadNotification com polling
+- [x] Adicionar notificação push do navegador
+- [x] Adicionar som de alerta
+- [x] Integrar hook na página Leads
+- [x] Integrar hook na página LeadsPorCorretor
+- [x] Ordenar leads com origemWebhook=true no topo das listas

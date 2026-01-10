@@ -761,16 +761,51 @@ export async function getAllLeads() {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(leads).orderBy(desc(leads.createdAt));
+  // Ordenar: leads webhook primeiro, depois por data de criação
+  return await db.select().from(leads)
+    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt));
 }
 
 export async function getLeadsByCorretor(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
+  // Ordenar: leads webhook primeiro, depois por data de criação
   return await db.select().from(leads)
     .where(eq(leads.corretorId, corretorId))
-    .orderBy(desc(leads.createdAt));
+    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt));
+}
+
+/**
+ * Busca novos leads via webhook de um corretor desde um timestamp
+ * Usado para notificação em tempo real
+ */
+export async function getNewWebhookLeadsSince(corretorId: number, since: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select({
+      id: leads.id,
+      nome: leads.nome,
+      telefone: leads.telefone,
+      email: leads.email,
+      projectId: leads.projectId,
+      projectNome: projects.nome,
+      createdAt: leads.createdAt,
+    })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.origemWebhook, true),
+        gt(leads.createdAt, since)
+      )
+    )
+    .orderBy(leads.createdAt);
+
+  return result;
 }
 
 export async function getLeadById(id: number) {

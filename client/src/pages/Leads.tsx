@@ -40,6 +40,7 @@ import { useCopilot } from "@/contexts/CopilotContext";
 import { Bot } from "lucide-react";
 import { ProjectCombobox } from "@/components/ProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
+import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -89,6 +90,9 @@ export default function Leads() {
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
   const { data: projects } = trpc.projects.list.useQuery();
   const [selectedLead, setSelectedLead] = useState<any>(null);
+  
+  // Hook de notificação para leads Facebook Ads
+  useWebhookLeadNotification();
   
   // Hook para integrar com o Copilot flutuante
   const { openWithLead } = useCopilot();

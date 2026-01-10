@@ -274,6 +274,19 @@ export const appRouter = router({
         
         return lead;
       }),
+    
+    // Buscar novos leads via webhook para notificação em tempo real
+    getNewWebhookLeads: protectedProcedure
+      .input(z.object({
+        since: z.string(), // ISO timestamp
+      }))
+      .query(async ({ input, ctx }) => {
+        // Corretor só pode ver seus próprios leads
+        const corretorId = ctx.user.role === 'corretor' ? ctx.user.id : undefined;
+        if (!corretorId) return [];
+        
+        return await db.getNewWebhookLeadsSince(corretorId, new Date(input.since));
+      }),
 
     
     create: gestorProcedure
