@@ -302,6 +302,20 @@
       "when": 1768070651225,
       "tag": "0042_stiff_maria_hill",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1768086021194,
+      "tag": "0043_quiet_yellow_claw",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1768086042954,
+      "tag": "0044_curly_callisto",
+      "breakpoints": true
     }
   ]
 }

@@ -60,6 +60,9 @@ export const users = mysqlTable("users", {
   limiteDiarioLeads: int("limiteDiarioLeads").default(50).notNull(), // Limite para distribuição automática
   limiteDiarioWebhook: int("limiteDiarioWebhook").default(10).notNull(), // Limite para leads via webhook
   
+  // Gamificação de follow-ups
+  ultimoDesbloqueio: timestamp("ultimoDesbloqueio"), // Data/hora do último desbloqueio (60%)
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -1531,7 +1534,7 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
   projetoId: int("projetoId"), // NULL = nenhum projeto foco ativo
   
   // Corretores na fila do projeto foco (JSON array de IDs)
-  corretoresIds: json("corretoresIds").$type<number[]>().notNull(),
+  corretoresIds: json("corretoresIds").$type<number[]>(),
   
   // Posição atual na fila foco (para round-robin)
   posicaoAtual: int("posicaoAtual").default(0).notNull(),

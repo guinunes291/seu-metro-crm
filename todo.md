@@ -2585,3 +2585,9 @@
 - [x] Reduzir tentativas de follow-up de 5 para 3 dias
 - [x] Excluir leads em fase "Agendado" ou posterior do follow-up automático
 - [x] Testar que leads agendados não vão para lixeira
+
+## Bug: Rebloqueio Após Desbloqueio no Mesmo Dia (10/01/2026)
+
+- [x] Implementar persistência de desbloqueio diário
+- [x] Garantir que corretor desbloqueado não seja bloqueado novamente no mesmo dia
+- [x] Testar com novos leads recebidos após desbloqueio
