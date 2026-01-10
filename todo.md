@@ -2558,3 +2558,10 @@
 - [x] Adicionar toast comemorativo com mensagem "🎉 Parabéns! Sistema desbloqueado!"
 - [x] Garantir que celebração só acontece uma vez por sessão (useRef)
 - [x] Testar fluxo completo de desbloqueio (aguardando teste com corretor real)
+
+## Correção: Indicador 0/0 para gestores
+- [x] Modificar useFollowUpProgress para permitir gestores verem indicador
+- [x] Ajustar endpoint progressoFollowUps.getProgresso para aceitar gestores
+- [x] Manter bloqueio apenas para corretores (gestores veem indicador mas não são bloqueados)
+- [x] Corrigir import faltante de `lt` no db.ts (causa do erro 500)
+- [x] Testar com conta de gestor

@@ -15,13 +15,15 @@ import { celebrate } from "@/lib/celebration";
 export function useFollowUpProgress() {
   const { user } = useAuth();
   
-  // Apenas corretores têm bloqueio
+  // Corretores e gestores veem indicador, mas só corretores têm bloqueio
   const isCorretor = user?.role === 'corretor';
+  const isGestor = user?.role === 'gestor';
+  const shouldFetchProgress = isCorretor || isGestor;
   
   const { data, isLoading, refetch } = trpc.progressoFollowUps.getProgresso.useQuery(
     undefined,
     {
-      enabled: isCorretor, // Só busca se for corretor
+      enabled: shouldFetchProgress, // Busca para corretores e gestores
       refetchInterval: 10000, // Atualiza a cada 10 segundos
     }
   );
@@ -42,8 +44,9 @@ export function useFollowUpProgress() {
     previousDesbloqueado.current = desbloqueado;
   }, [data?.desbloqueado]);
   
-  // Gestores e admins sempre desbloqueados (sem celebração)
-  if (!isCorretor) {
+  // Gestores veem indicador mas sempre desbloqueados (sem celebração)
+  // Outros roles (admin, etc) não veem indicador
+  if (!shouldFetchProgress) {
     return {
       total: 0,
       concluidos: 0,
