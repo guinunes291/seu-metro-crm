@@ -50,4 +50,19 @@ export function registerOAuthRoutes(app: Express) {
       res.status(500).json({ error: "OAuth callback failed" });
     }
   });
+
+  app.get("/api/oauth/logout", (req: Request, res: Response) => {
+    try {
+      // Limpar cookie de sessão
+      const cookieOptions = getSessionCookieOptions(req);
+      res.clearCookie(COOKIE_NAME, cookieOptions);
+      
+      // Redirecionar para página de login
+      const loginUrl = process.env.VITE_OAUTH_PORTAL_URL || 'https://portal.manus.im';
+      res.redirect(302, loginUrl);
+    } catch (error) {
+      console.error("[OAuth] Logout failed", error);
+      res.status(500).json({ error: "Logout failed" });
+    }
+  });
 }

@@ -2536,3 +2536,16 @@
 - [x] Verificar se getFollowUpsDoDiaExpandido está retornando dados
 - [x] Corrigir lógica para retornar total correto (role do usuário estava incorreto)
 - [x] Validar que indicador mostra dados corretos após logout/login
+
+## Bug: getProgresso retorna 0/0 mesmo após login como corretor
+- [x] Verificar se getFollowUpsDoDiaExpandido está retornando dados
+- [x] Comparar com endpoint tarefasDoDia.getAll que funciona
+- [x] Adicionar logs para debugar
+- [x] Identificar diferença entre as duas chamadas (usuário logado era gestor, não corretor)
+- [x] Corrigir e validar que indicador mostra dados corretos (aguardando teste com corretor real)
+
+## Bug: Logout redireciona para página 404
+- [x] Investigar endpoint /api/oauth/logout (não existia)
+- [x] Verificar redirecionamento após logout
+- [x] Corrigir para redirecionar para página de login (portal Manus)
+- [x] Testar logout completo
