@@ -6872,6 +6872,22 @@ export async function getLeadsComInteracaoHoje(corretorId: number, hoje: Date, a
  * (independente de terem sido trabalhados ou não)
  * Usado para cálculo de progresso com total fixo
  */
+/**
+ * Busca todos os corretores ativos (role = 'corretor')
+ */
+export async function getCorretoresAtivos() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+  })
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+}
+
 export async function getTotalFollowUpsDoDia(corretorId: number, hoje: Date, amanha: Date) {
   const db = await getDb();
   if (!db) return [];
