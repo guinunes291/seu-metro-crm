@@ -3333,8 +3333,9 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       .limit(1);
     
     if (existente.length === 0) {
-      // Criar follow-up para hoje (para aparecer nas tarefas do dia)
+      // Criar follow-up para AMANHÃ (dar tempo para primeiro contato)
       const proximaTentativa = new Date();
+      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
       proximaTentativa.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({

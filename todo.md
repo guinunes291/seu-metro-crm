@@ -2591,3 +2591,9 @@
 - [x] Implementar persistência de desbloqueio diário
 - [x] Garantir que corretor desbloqueado não seja bloqueado novamente no mesmo dia
 - [x] Testar com novos leads recebidos após desbloqueio
+
+## Bug: Follow-up Criado no Mesmo Dia da Distribuição (10/01/2026)
+
+- [x] Identificar onde follow-ups automáticos são criados
+- [x] Alterar lógica para agendar primeiro follow-up para o dia seguinte
+- [x] Testar que leads novos não aparecem em "Tarefas do Dia" no mesmo dia
