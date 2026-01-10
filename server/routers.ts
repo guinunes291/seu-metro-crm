@@ -1934,7 +1934,19 @@ export const appRouter = router({
       .query(async ({ ctx }) => {
         const followUps = await db.getFollowUpsDoDiaExpandido(ctx.user.id);
         const total = followUps.length;
-        const concluidos = followUps.filter(f => f.tentativaAtual > 0).length;
+        
+        // Contar apenas follow-ups com interação HOJE
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const amanha = new Date(hoje);
+        amanha.setDate(amanha.getDate() + 1);
+        
+        // Buscar leads que tiveram interação hoje
+        const leadsComInteracaoHoje = await db.getLeadsComInteracaoHoje(ctx.user.id, hoje, amanha);
+        const leadIdsComInteracao = new Set(leadsComInteracaoHoje.map(l => l.leadId));
+        
+        // Contar quantos follow-ups do dia já foram trabalhados hoje
+        const concluidos = followUps.filter(f => leadIdsComInteracao.has(f.leadId)).length;
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
         const desbloqueado = percentual >= 60;
         

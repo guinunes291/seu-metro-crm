@@ -2514,3 +2514,10 @@
 - [x] Adicionar badge de alerta vermelho pulsante na aba "Tarefas do Dia" quando houver follow-ups pendentes
 - [x] Adicionar destaque visual (texto vermelho) na aba "Tarefas do Dia" quando bloqueio estiver ativo
 - [x] Testar em todas as páginas do menu lateral
+
+## Bug: Cálculo de Progresso de Follow-ups Incorreto
+- [x] Investigar lógica de progressoFollowUps.getProgresso no backend
+- [x] Identificar onde está contando follow-ups do histórico completo
+- [x] Corrigir para contar apenas interações realizadas HOJE (data = hoje)
+- [x] Testar com corretor que tem follow-ups antigos mas nenhum hoje
+- [x] Validar que progresso começa em 0% no início do dia

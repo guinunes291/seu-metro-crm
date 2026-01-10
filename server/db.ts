@@ -6845,3 +6845,24 @@ export async function getProximoCorretorFilaFoco(): Promise<number | null> {
   return null; // Nenhum corretor disponível
 }
 
+
+/**
+ * Busca leads que tiveram interação HOJE (ultimaTentativa atualizada hoje)
+ * Usado para calcular progresso de follow-ups do dia
+ */
+export async function getLeadsComInteracaoHoje(corretorId: number, hoje: Date, amanha: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Buscar follow-ups que tiveram ultimaTentativa atualizada hoje
+  return await db.select({
+    leadId: followUps.leadId,
+    ultimaTentativa: followUps.ultimaTentativa,
+  })
+    .from(followUps)
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      gte(followUps.ultimaTentativa, hoje),
+      lt(followUps.ultimaTentativa, amanha)
+    ));
+}
