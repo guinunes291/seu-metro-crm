@@ -2549,3 +2549,12 @@
 - [x] Verificar redirecionamento após logout
 - [x] Corrigir para redirecionar para página de login (portal Manus)
 - [x] Testar logout completo
+
+## Sistema de Celebração ao Desbloquear
+- [x] Instalar biblioteca canvas-confetti para animação de confete
+- [x] Adicionar som de conquista (gerado via Web Audio API)
+- [x] Implementar detecção de desbloqueio no useFollowUpProgress (quando passa de < 60% para >= 60%)
+- [x] Criar função para tocar som + mostrar confete (celebration.ts)
+- [x] Adicionar toast comemorativo com mensagem "🎉 Parabéns! Sistema desbloqueado!"
+- [x] Garantir que celebração só acontece uma vez por sessão (useRef)
+- [x] Testar fluxo completo de desbloqueio (aguardando teste com corretor real)

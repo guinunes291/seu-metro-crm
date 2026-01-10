@@ -1,5 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useEffect, useRef } from "react";
+import { celebrate } from "@/lib/celebration";
 
 /**
  * Hook para monitorar progresso de follow-ups e controlar bloqueio de abas
@@ -24,7 +26,23 @@ export function useFollowUpProgress() {
     }
   );
   
-  // Gestores e admins sempre desbloqueados
+  // Detectar desbloqueio e celebrar
+  const previousDesbloqueado = useRef<boolean>(false);
+  const celebrationShown = useRef<boolean>(false);
+  
+  useEffect(() => {
+    const desbloqueado = data?.desbloqueado ?? false;
+    
+    // Se acabou de desbloquear (passou de false para true) e ainda não celebrou
+    if (!previousDesbloqueado.current && desbloqueado && !celebrationShown.current) {
+      celebrate();
+      celebrationShown.current = true;
+    }
+    
+    previousDesbloqueado.current = desbloqueado;
+  }, [data?.desbloqueado]);
+  
+  // Gestores e admins sempre desbloqueados (sem celebração)
   if (!isCorretor) {
     return {
       total: 0,
