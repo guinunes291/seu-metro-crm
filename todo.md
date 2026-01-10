@@ -2507,3 +2507,10 @@
 - [x] Integrar bloqueio no DashboardLayout (todas as abas exceto "Tarefas do Dia")
 - [x] Garantir que popup urgente funciona mesmo com tela bloqueada
 - [x] Testar fluxo completo: corretor com follow-ups pendentes → recebe lead → popup aparece → contata → volta para follow-ups
+
+## Correções do Sistema de Bloqueio Gamificado
+- [x] Investigar páginas onde overlay não aparece (Notificações, etc)
+- [x] Corrigir lógica de bloqueio para garantir que funcione em TODAS as páginas exceto Tarefas do Dia
+- [x] Adicionar badge de alerta vermelho pulsante na aba "Tarefas do Dia" quando houver follow-ups pendentes
+- [x] Adicionar destaque visual (texto vermelho) na aba "Tarefas do Dia" quando bloqueio estiver ativo
+- [x] Testar em todas as páginas do menu lateral

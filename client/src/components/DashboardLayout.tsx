@@ -56,7 +56,7 @@ const menuGroups = [
     items: [
       { icon: BookOpen, label: "Boas-Vindas", path: "/boas-vindas" },
       { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-      { icon: ClipboardList, label: "Tarefas do Dia", path: "/tarefas-do-dia", roles: ["corretor"] },
+      { icon: ClipboardList, label: "Tarefas do Dia", path: "/tarefas-do-dia", roles: ["corretor"], showAlert: true },
     ],
   },
   {
@@ -488,6 +488,12 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                               {(item as any).showBadge && <NotificationBadge />}
+                              {(item as any).showAlert && !desbloqueado && (
+                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                </span>
+                              )}
                             </div>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -532,8 +538,14 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                               {(item as any).showBadge && <NotificationBadge />}
+                              {(item as any).showAlert && !desbloqueado && (
+                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                </span>
+                              )}
                             </div>
-                            <span>{item.label}</span>
+                            <span className={!desbloqueado && (item as any).showAlert ? "font-semibold text-red-600" : ""}>{item.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
