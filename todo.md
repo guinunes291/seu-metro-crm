@@ -2529,3 +2529,10 @@
 - [x] Cores dinâmicas: vermelho (< 60%), verde (>= 60%)
 - [x] Apenas visível para corretores (não para gestores/admins)
 - [x] Testar responsividade em mobile (oculto em telas pequenas)
+
+## Bug: Indicador mostra 0/0 ao invés de 0/42
+- [x] Investigar por que useFollowUpProgress retorna total=0
+- [x] Verificar se endpoint progressoFollowUps.getProgresso está sendo chamado
+- [x] Verificar se getFollowUpsDoDiaExpandido está retornando dados
+- [x] Corrigir lógica para retornar total correto (role do usuário estava incorreto)
+- [x] Validar que indicador mostra dados corretos após logout/login
