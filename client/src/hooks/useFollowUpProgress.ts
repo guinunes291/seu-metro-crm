@@ -47,7 +47,9 @@ export function useFollowUpProgress() {
     }
     
     // Detectar aumento de concluídos para animação +1
-    if (previousConcluidos.current > 0 && concluidos > previousConcluidos.current) {
+    // Dispara quando concluidos aumenta (0→1, 1→2, etc)
+    if (concluidos > previousConcluidos.current && previousConcluidos.current >= 0) {
+      console.log('[+1 Animation] Triggered:', { previous: previousConcluidos.current, current: concluidos });
       setShowPlusOne(true);
       setTimeout(() => setShowPlusOne(false), 1500); // Duração da animação
     }
