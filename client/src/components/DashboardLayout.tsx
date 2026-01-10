@@ -636,8 +636,8 @@ function DashboardContent({
           
           {/* Indicador de Progresso de Follow-ups (apenas para corretores) */}
           {isCorretor && (
-            <div className="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md">
-              <div className="flex items-center gap-2 text-sm">
+            <div className="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md relative">
+              <div className="flex items-center gap-2 text-sm relative">
                 <span className="font-medium text-muted-foreground hidden lg:inline">Follow-ups:</span>
                 <span className={`font-bold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
                   {concluidos}/{total}
@@ -645,6 +645,18 @@ function DashboardContent({
                 <span className={`text-xs font-semibold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
                   ({percentual}%)
                 </span>
+                
+                {/* Animação +1 */}
+                {showPlusOne && (
+                  <span 
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-600 font-bold text-lg animate-[slideUp_1.5s_ease-out_forwards] pointer-events-none"
+                    style={{
+                      animation: 'slideUp 1.5s ease-out forwards',
+                    }}
+                  >
+                    +1
+                  </span>
+                )}
               </div>
               <div className="flex-1 max-w-[200px]">
                 <div className="h-2 bg-muted rounded-full overflow-hidden">

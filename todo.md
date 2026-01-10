@@ -2572,3 +2572,10 @@
 - [x] Corrigir para: total fixo (42) + concluídos aumentando (0→1→2...)
 - [x] Criar função getTotalFollowUpsDoDia que inclui follow-ups já trabalhados
 - [x] Testar com follow-up real (aguardando validação do usuário)
+
+## Animação +1 no Indicador de Progresso
+- [x] Criar componente de animação +1 com CSS (fade-in + slide-up)
+- [x] Adicionar detecção de aumento de progresso no useFollowUpProgress
+- [x] Disparar animação quando concluídos aumenta
+- [x] Posicionar animação próxima ao indicador no header
+- [x] Testar com follow-up real (aguardando validação do usuário)

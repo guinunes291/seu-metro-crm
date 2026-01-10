@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { celebrate } from "@/lib/celebration";
 
 /**
@@ -32,8 +32,13 @@ export function useFollowUpProgress() {
   const previousDesbloqueado = useRef<boolean>(false);
   const celebrationShown = useRef<boolean>(false);
   
+  // Detectar aumento de progresso para animação +1
+  const previousConcluidos = useRef<number>(0);
+  const [showPlusOne, setShowPlusOne] = useState(false);
+  
   useEffect(() => {
     const desbloqueado = data?.desbloqueado ?? false;
+    const concluidos = data?.concluidos ?? 0;
     
     // Se acabou de desbloquear (passou de false para true) e ainda não celebrou
     if (!previousDesbloqueado.current && desbloqueado && !celebrationShown.current) {
@@ -41,8 +46,15 @@ export function useFollowUpProgress() {
       celebrationShown.current = true;
     }
     
+    // Detectar aumento de concluídos para animação +1
+    if (previousConcluidos.current > 0 && concluidos > previousConcluidos.current) {
+      setShowPlusOne(true);
+      setTimeout(() => setShowPlusOne(false), 1500); // Duração da animação
+    }
+    
     previousDesbloqueado.current = desbloqueado;
-  }, [data?.desbloqueado]);
+    previousConcluidos.current = concluidos;
+  }, [data?.desbloqueado, data?.concluidos]);
   
   // Gestores veem indicador mas sempre desbloqueados (sem celebração)
   // Outros roles (admin, etc) não veem indicador
@@ -64,5 +76,6 @@ export function useFollowUpProgress() {
     desbloqueado: data?.desbloqueado ?? false,
     isLoading,
     refetch,
+    showPlusOne, // Flag para disparar animação
   };
 }
