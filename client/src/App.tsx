@@ -47,6 +47,7 @@ import CalendarioGestor from "@/pages/CalendarioGestor";
 import ConfiguracaoWebhooks from "@/pages/ConfiguracaoWebhooks";
 import ControleLimites from "@/pages/ControleLimites";
 import ProjetoFoco from "@/pages/ProjetoFoco";
+import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -77,6 +78,7 @@ function Router() {
       <Route path="/historico-distribuicao" component={HistoricoDistribuicao} />
       <Route path="/boas-vindas" component={BoasVindas} />
       <Route path="/tarefas-do-dia" component={TarefasDoDia} />
+      <Route path="/monitoramento-followups" component={MonitoramentoFollowUps} />
       <Route path="/ranking-tv" component={RankingTV} />
       <Route path="/performance-tv" component={PerformanceTV} />
       <Route path="/lixeira" component={Lixeira} />

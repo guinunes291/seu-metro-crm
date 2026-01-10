@@ -1929,6 +1929,59 @@ export const appRouter = router({
   // PROGRESSO DE FOLLOW-UPS (GAMIFICAÇÃO)
   // ============================================================================
   progressoFollowUps: router({
+    // Listar progresso de todos os corretores (apenas gestor)
+    listarProgressoEquipe: gestorProcedure
+      .query(async ({ ctx }) => {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const amanha = new Date(hoje);
+        amanha.setDate(amanha.getDate() + 1);
+        
+        // Buscar todos os corretores ativos
+        const corretores = await db.getCorretoresAtivos();
+        
+        // Calcular progresso de cada corretor
+        const progressos = await Promise.all(
+          corretores.map(async (corretor) => {
+            // Total de follow-ups do dia
+            const totalFollowUps = await db.getTotalFollowUpsDoDia(corretor.id, hoje, amanha);
+            const total = totalFollowUps.length;
+            
+            // Follow-ups concluídos hoje
+            const concluidos = totalFollowUps.filter(f => {
+              if (!f.ultimaTentativa) return false;
+              const ultimaTentativaDate = new Date(f.ultimaTentativa);
+              return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
+            }).length;
+            
+            // Encontrar horário do último follow-up
+            const ultimoFollowUp = totalFollowUps
+              .filter(f => f.ultimaTentativa)
+              .sort((a, b) => {
+                const dateA = a.ultimaTentativa ? new Date(a.ultimaTentativa).getTime() : 0;
+                const dateB = b.ultimaTentativa ? new Date(b.ultimaTentativa).getTime() : 0;
+                return dateB - dateA;
+              })[0];
+            
+            const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
+            const desbloqueado = percentual >= 60;
+            
+            return {
+              corretorId: corretor.id,
+              corretorNome: corretor.name,
+              corretorEmail: corretor.email,
+              total,
+              concluidos,
+              percentual,
+              desbloqueado,
+              ultimoFollowUp: ultimoFollowUp?.ultimaTentativa || null,
+            };
+          })
+        );
+        
+        // Ordenar por percentual (maior primeiro)
+        return progressos.sort((a, b) => b.percentual - a.percentual);
+      }),
     // Calcular progresso de follow-ups do dia (para bloqueio gamificado)
     getProgresso: corretorProcedure
       .query(async ({ ctx }) => {
