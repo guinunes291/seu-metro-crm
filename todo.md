@@ -2458,3 +2458,8 @@
 - [x] Integrar hook na página Leads
 - [x] Integrar hook na página LeadsPorCorretor
 - [x] Ordenar leads com origemWebhook=true no topo das listas
+
+## Fix: Garantir compatibilidade de origemWebhook
+- [x] Verificar que origem permanece "facebook" nos webhooks
+- [x] Confirmar que origemWebhook é apenas flag adicional
+- [x] Código verificado - origem usa enum existente
