@@ -2579,3 +2579,9 @@
 - [x] Disparar animação quando concluídos aumenta
 - [x] Posicionar animação próxima ao indicador no header
 - [x] Testar com follow-up real (aguardando validação do usuário)
+
+## Ajustes no Sistema de Follow-ups (10/01/2026)
+
+- [x] Reduzir tentativas de follow-up de 5 para 3 dias
+- [x] Excluir leads em fase "Agendado" ou posterior do follow-up automático
+- [x] Testar que leads agendados não vão para lixeira

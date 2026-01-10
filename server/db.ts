@@ -3293,7 +3293,7 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
     leadId,
     corretorId,
     tentativaAtual: 1,
-    maxTentativas: 5,
+    maxTentativas: 3,
     proximaTentativa,
     status: "ativo",
     historicoTentativas: "[]"
@@ -3311,6 +3311,8 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
   if (!db) return { criados: 0 };
   
   // Buscar leads do corretor que precisam de follow-up
+  // APENAS leads em status inicial (novo, aguardando_atendimento, em_atendimento)
+  // EXCLUIR leads em "agendado" ou fases posteriores para evitar envio para lixeira
   const leadsDoCorretor = await db.select()
     .from(leads)
     .where(and(
@@ -3339,7 +3341,7 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
         leadId: lead.id,
         corretorId,
         tentativaAtual: 0,
-        maxTentativas: 5,
+        maxTentativas: 3,
         proximaTentativa,
         status: "ativo",
         historicoTentativas: "[]"
