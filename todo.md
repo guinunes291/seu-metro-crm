@@ -2393,7 +2393,7 @@
 - [ ] Implementar modal de criação de webhook exclusivo da Fila Foco
 - [ ] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
 - [ ] Remover dependência de projeto - Fila Foco independente
-- [ ] Testar criação e distribuição via webhooks da Fila Foco
+- [x] Testar criação e distribuição via webhooks da Fila Foco
 
 ## Status Final: Fila Foco Redesenhada
 - [x] Adicionar campo 'tipoFila' (geral/foco) na tabela webhook_config
@@ -2432,3 +2432,9 @@
 ## Bug: Erro ao clicar em "Novo Webhook" na página Roleta
 - [x] Adicionar import do useEffect na página Roleta.tsx
 - [x] Testar criação de webhook
+
+## Bug: Webhooks misturados entre Fila Foco e Roleta Geral
+- [x] Filtrar webhooks por tipoFila='foco' na página ProjetoFoco
+- [x] Filtrar webhooks por tipoFila='geral' (ou null) na página Roleta
+- [x] Verificar se distribuição está usando corretores corretos
+- [x] Testar criação e distribuição separadamente

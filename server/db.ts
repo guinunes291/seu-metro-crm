@@ -6724,6 +6724,7 @@ export async function setConfiguracaoProjetoFoco(
         projetoId,
         corretoresIds: corretoresIds as any,
         posicaoAtual: 0, // Reset posição ao mudar configuração
+        ativo: true, // Ativar automaticamente ao salvar
         observacoes: observacoes || null,
       })
       .where(eq(configuracaoProjetoFoco.id, configs[0].id));
