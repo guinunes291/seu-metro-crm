@@ -44,7 +44,7 @@ import { Button } from "./ui/button";
 import NotificationListener from "./NotificationListener";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
-// Sistema de bloqueio gamificado será implementado posteriormente
+import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
 
 // Estrutura de menu agrupado
@@ -232,8 +232,8 @@ function DashboardContent({
 }) {
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
-  // Sistema de bloqueio gamificado será implementado posteriormente
-  const desbloqueado = true; // Temporariamente sempre desbloqueado
+  // Sistema de bloqueio gamificado
+  const { total, concluidos, percentual, desbloqueado } = useFollowUpProgress();
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isMobile = useIsMobile();

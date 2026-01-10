@@ -2498,3 +2498,12 @@
 - [x] Integrar overlay no DashboardLayout
 - [ ] Criar componente UrgentLeadPopup
 - [ ] Integrar popup com notificação de leads Facebook Ads
+
+## Sistema de Bloqueio Gamificado (Prioridade Alta)
+- [x] Criar endpoint backend para cálculo de progresso de follow-ups (60%)
+- [x] Implementar lógica de contagem: total de follow-ups vs follow-ups concluídos
+- [x] Criar hook useFollowUpProgress para monitorar progresso em tempo real
+- [x] Criar componente LockedTabOverlay com overlay semi-transparente e cadeado vermelho
+- [x] Integrar bloqueio no DashboardLayout (todas as abas exceto "Tarefas do Dia")
+- [x] Garantir que popup urgente funciona mesmo com tela bloqueada
+- [x] Testar fluxo completo: corretor com follow-ups pendentes → recebe lead → popup aparece → contata → volta para follow-ups
