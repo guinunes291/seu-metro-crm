@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `desbloqueio_corretor` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `corretor_id` int NOT NULL,\n  `data` date NOT NULL,\n  `desbloqueado_por` int,\n  `motivo` text,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `desbloqueio_corretor_id` PRIMARY KEY(`id`),\n  CONSTRAINT `desbloqueio_corretor_corretor_id_fk` FOREIGN KEY (`corretor_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,\n  CONSTRAINT `desbloqueio_corretor_desbloqueado_por_fk` FOREIGN KEY (`desbloqueado_por`) REFERENCES `users`(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS `desbloqueio_corretor` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `corretor_id` int NOT NULL,\n  `data` date NOT NULL,\n  `desbloqueado_por` int,\n  `motivo` text,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `desbloqueio_corretor_id` PRIMARY KEY(`id`),\n  CONSTRAINT `desbloqueio_corretor_corretor_id_fk` FOREIGN KEY (`corretor_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,\n  CONSTRAINT `desbloqueio_corretor_desbloqueado_por_fk` FOREIGN KEY (`desbloqueado_por`) REFERENCES `users`(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1072
+}

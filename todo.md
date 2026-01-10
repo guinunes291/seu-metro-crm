@@ -2463,3 +2463,30 @@
 - [x] Verificar que origem permanece "facebook" nos webhooks
 - [x] Confirmar que origemWebhook é apenas flag adicional
 - [x] Código verificado - origem usa enum existente
+
+## Feature: Sistema de Bloqueio Gamificado + Popup Urgente
+- [x] Criar tabela desbloqueio_corretor para tracking
+- [ ] Criar procedure getProgressoFollowUps (calcula %)
+- [ ] Criar procedure desbloquearCorretor (gestor)
+- [ ] Implementar hook useFollowUpProgress
+- [ ] Criar componente LockedTabOverlay com cadeado
+- [ ] Integrar overlay no DashboardLayout
+- [ ] Criar componente UrgentLeadPopup para Facebook Ads
+- [ ] Adicionar botão "Contatar Agora" com integração WhatsApp
+- [ ] Marcar interação + mudar status automaticamente
+- [ ] Criar página RankingFollowUps semanal
+- [ ] Adicionar painel de desbloqueio para gestor
+- [ ] Ícone de alerta em Tarefas do Dia
+
+## Escopo Reduzido - Prioridade 1
+- [ ] Criar procedure getProgressoFollowUps
+- [ ] Criar hook useFollowUpProgress
+- [ ] Criar componente LockedTabOverlay
+- [ ] Integrar overlay no DashboardLayout
+- [ ] Criar componente UrgentLeadPopup
+- [ ] Botão "Contatar Agora" + WhatsApp + marcar interação
+
+## Bug: Erro ao registrar interação
+- [x] Investigar procedure de registrar interação
+- [x] Corrigir validação de permissão
+- [x] Código corrigido - permite leads sem corretor

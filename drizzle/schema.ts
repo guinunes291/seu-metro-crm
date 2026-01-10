@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json, date } from "drizzle-orm/mysql-core";
 
 /**
  * Schema do CRM Imobiliário - Seu Metro Quadrado
@@ -1509,6 +1509,20 @@ export type InsertIndicacao = typeof indicacoes.$inferInsert;
 // ============================================================================
 // TABELA DE CONFIGURAÇÃO DO PROJETO FOCO DO MÊS
 // ============================================================================
+
+/**
+ * Tabela: desbloqueio_corretor
+ * Registra quando um corretor foi desbloqueado (manual ou automático)
+ * Usado para gamificação e controle de acesso às abas
+ */
+export const desbloqueioCorretor = mysqlTable("desbloqueio_corretor", {
+  id: int("id").primaryKey().autoincrement(),
+  corretorId: int("corretor_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  data: date("data").notNull(), // Data do desbloqueio
+  desbloqueadoPor: int("desbloqueado_por").references(() => users.id), // Gestor que desbloqueou (null = desbloqueio automático)
+  motivo: text("motivo"), // Motivo do desbloqueio manual
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
   id: int("id").primaryKey().autoincrement(),
