@@ -2466,11 +2466,11 @@
 
 ## Feature: Sistema de Bloqueio Gamificado + Popup Urgente
 - [x] Criar tabela desbloqueio_corretor para tracking
-- [ ] Criar procedure getProgressoFollowUps (calcula %)
+- [x] Criar procedure getProgressoFollowUps (calcula %)
 - [ ] Criar procedure desbloquearCorretor (gestor)
 - [ ] Implementar hook useFollowUpProgress
-- [ ] Criar componente LockedTabOverlay com cadeado
-- [ ] Integrar overlay no DashboardLayout
+- [x] Criar componente LockedTabOverlay com cadeado
+- [x] Integrar overlay no DashboardLayout
 - [ ] Criar componente UrgentLeadPopup para Facebook Ads
 - [ ] Adicionar botão "Contatar Agora" com integração WhatsApp
 - [ ] Marcar interação + mudar status automaticamente
@@ -2479,10 +2479,10 @@
 - [ ] Ícone de alerta em Tarefas do Dia
 
 ## Escopo Reduzido - Prioridade 1
-- [ ] Criar procedure getProgressoFollowUps
-- [ ] Criar hook useFollowUpProgress
-- [ ] Criar componente LockedTabOverlay
-- [ ] Integrar overlay no DashboardLayout
+- [x] Criar procedure getProgressoFollowUps
+- [x] Criar hook useFollowUpProgress
+- [x] Criar componente LockedTabOverlay
+- [x] Integrar overlay no DashboardLayout
 - [ ] Criar componente UrgentLeadPopup
 - [ ] Botão "Contatar Agora" + WhatsApp + marcar interação
 
@@ -2490,3 +2490,11 @@
 - [x] Investigar procedure de registrar interação
 - [x] Corrigir validação de permissão
 - [x] Código corrigido - permite leads sem corretor
+
+## Bloqueio Gamificado - Implementação
+- [x] Criar procedure getProgressoFollowUps (calcula % de follow-ups concluídos)
+- [x] Criar hook useFollowUpProgress
+- [x] Criar componente LockedTabOverlay
+- [x] Integrar overlay no DashboardLayout
+- [ ] Criar componente UrgentLeadPopup
+- [ ] Integrar popup com notificação de leads Facebook Ads

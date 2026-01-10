@@ -47,7 +47,7 @@ const statusColors: Record<LeadStatus, string> = {
 
 export default function LeadsPorCorretor() {
   // Hook de notificação para leads Facebook Ads
-  useWebhookLeadNotification();
+  const { popup: webhookPopup } = useWebhookLeadNotification();
   
   const [corretorId, setCorretorId] = useState<number | undefined>(undefined);
   const [status, setStatus] = useState<LeadStatus | undefined>(undefined);
@@ -432,6 +432,9 @@ export default function LeadsPorCorretor() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Popup urgente para leads Facebook Ads */}
+      {webhookPopup}
     </DashboardLayout>
   );
 }

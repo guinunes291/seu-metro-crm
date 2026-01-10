@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { UrgentLeadPopup } from '@/components/UrgentLeadPopup';
 
 /**
  * Hook para notificar corretor sobre novos leads via webhook (Facebook Ads)
@@ -8,11 +9,13 @@ import { toast } from 'sonner';
  * - Notificação push no navegador
  * - Som de alerta
  * - Toast visual
+ * - Popup urgente com botão WhatsApp
  */
 export function useWebhookLeadNotification() {
   const lastCheckRef = useRef(new Date());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const notifiedLeadsRef = useRef<Set<number>>(new Set());
+  const [urgentLead, setUrgentLead] = useState<any>(null);
 
   // Query para buscar novos leads webhook
   const { data: newLeads } = trpc.leads.getNewWebhookLeads.useQuery(
@@ -113,13 +116,24 @@ export function useWebhookLeadNotification() {
           notification.close();
         };
       }
+      
+      // 4. Popup urgente (mostra apenas o primeiro lead se houver múltiplos)
+      if (!urgentLead) {
+        setUrgentLead(lead);
+      }
     });
 
     // Atualizar timestamp da última verificação
     lastCheckRef.current = new Date();
-  }, [newLeads]);
+  }, [newLeads, urgentLead]);
 
   return {
     newLeadsCount: newLeads?.length || 0,
+    popup: urgentLead ? (
+      <UrgentLeadPopup
+        lead={urgentLead}
+        onClose={() => setUrgentLead(null)}
+      />
+    ) : null,
   };
 }

@@ -44,6 +44,8 @@ import { Button } from "./ui/button";
 import NotificationListener from "./NotificationListener";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
+// Sistema de bloqueio gamificado será implementado posteriormente
+import { LockedTabOverlay } from "./LockedTabOverlay";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -225,13 +227,15 @@ function DashboardContent({
   setSidebarWidth,
 }: {
   children: React.ReactNode;
-  sidebarWidth: number;
-  setSidebarWidth: (width: number) => void;
+  sidebarWidth: string;
+  setSidebarWidth: (width: string) => void;
 }) {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+  // Sistema de bloqueio gamificado será implementado posteriormente
+  const desbloqueado = true; // Temporariamente sempre desbloqueado
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
-  const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -619,7 +623,17 @@ function DashboardContent({
           </SidebarTrigger>
           <ThemeToggle />
         </header>
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="flex-1 overflow-auto relative">
+          {children}
+          {/* Overlay de bloqueio se não atingiu 60% e não está em Tarefas do Dia */}
+          {!desbloqueado && location !== "/tarefas-do-dia" && (
+            <LockedTabOverlay
+              total={total}
+              concluidos={concluidos}
+              percentual={percentual}
+            />
+          )}
+        </main>
       </SidebarInset>
     </>
   );

@@ -1926,6 +1926,28 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // PROGRESSO DE FOLLOW-UPS (GAMIFICAÇÃO)
+  // ============================================================================
+  progressoFollowUps: router({
+    // Calcular progresso de follow-ups do dia (para bloqueio gamificado)
+    getProgresso: corretorProcedure
+      .query(async ({ ctx }) => {
+        const followUps = await db.getFollowUpsDoDiaExpandido(ctx.user.id);
+        const total = followUps.length;
+        const concluidos = followUps.filter(f => f.tentativaAtual > 0).length;
+        const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
+        const desbloqueado = percentual >= 60;
+        
+        return {
+          total,
+          concluidos,
+          percentual,
+          desbloqueado,
+        };
+      }),
+  }),
+
+  // ============================================================================
   // HISTÓRICO DE DISTRIBUIÇÃO
   // ============================================================================
   historicoDistribuicao: router({

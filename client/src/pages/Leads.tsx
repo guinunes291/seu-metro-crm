@@ -92,7 +92,7 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   
   // Hook de notificação para leads Facebook Ads
-  useWebhookLeadNotification();
+  const { popup: webhookPopup } = useWebhookLeadNotification();
   
   // Hook para integrar com o Copilot flutuante
   const { openWithLead } = useCopilot();
@@ -1497,6 +1497,9 @@ export default function Leads() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Popup urgente para leads Facebook Ads */}
+      {webhookPopup}
     </DashboardLayout>
   );
 }
