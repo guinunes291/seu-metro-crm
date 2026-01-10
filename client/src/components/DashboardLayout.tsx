@@ -233,7 +233,7 @@ function DashboardContent({
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
   // Sistema de bloqueio gamificado
-  const { total, concluidos, percentual, desbloqueado } = useFollowUpProgress();
+  const { total, concluidos, percentual, desbloqueado, showPlusOne } = useFollowUpProgress();
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isMobile = useIsMobile();
