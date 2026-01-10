@@ -1932,21 +1932,23 @@ export const appRouter = router({
     // Calcular progresso de follow-ups do dia (para bloqueio gamificado)
     getProgresso: corretorProcedure
       .query(async ({ ctx }) => {
-        const followUps = await db.getFollowUpsDoDiaExpandido(ctx.user.id);
-        const total = followUps.length;
-        
-        // Contar apenas follow-ups com interação HOJE
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
-        // Buscar leads que tiveram interação hoje
-        const leadsComInteracaoHoje = await db.getLeadsComInteracaoHoje(ctx.user.id, hoje, amanha);
-        const leadIdsComInteracao = new Set(leadsComInteracaoHoje.map(l => l.leadId));
+        // TOTAL FIXO: Contar TODOS os follow-ups que tinham proximaTentativa <= hoje
+        // (independente de terem sido trabalhados ou não)
+        const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
+        const total = totalFollowUps.length;
         
-        // Contar quantos follow-ups do dia já foram trabalhados hoje
-        const concluidos = followUps.filter(f => leadIdsComInteracao.has(f.leadId)).length;
+        // CONCLUÍDOS: Contar follow-ups que tiveram ultimaTentativa atualizada HOJE
+        const concluidos = totalFollowUps.filter(f => {
+          if (!f.ultimaTentativa) return false;
+          const ultimaTentativaDate = new Date(f.ultimaTentativa);
+          return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
+        }).length;
+        
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
         const desbloqueado = percentual >= 60;
         

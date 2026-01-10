@@ -2565,3 +2565,10 @@
 - [x] Manter bloqueio apenas para corretores (gestores veem indicador mas não são bloqueados)
 - [x] Corrigir import faltante de `lt` no db.ts (causa do erro 500)
 - [x] Testar com conta de gestor
+
+## Bug: Lógica Invertida do Indicador de Progresso
+- [x] Investigar endpoint progressoFollowUps.getProgresso
+- [x] Identificar por que total diminui ao invés de concluídos aumentar (proximaTentativa muda para amanhã)
+- [x] Corrigir para: total fixo (42) + concluídos aumentando (0→1→2...)
+- [x] Criar função getTotalFollowUpsDoDia que inclui follow-ups já trabalhados
+- [x] Testar com follow-up real (aguardando validação do usuário)

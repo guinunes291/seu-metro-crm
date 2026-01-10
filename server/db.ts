@@ -6866,3 +6866,50 @@ export async function getLeadsComInteracaoHoje(corretorId: number, hoje: Date, a
       lt(followUps.ultimaTentativa, amanha)
     ));
 }
+
+/**
+ * Retorna TODOS os follow-ups que estavam agendados para hoje ou antes
+ * (independente de terem sido trabalhados ou não)
+ * Usado para cálculo de progresso com total fixo
+ */
+export async function getTotalFollowUpsDoDia(corretorId: number, hoje: Date, amanha: Date) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  // Primeiro, criar follow-ups automáticos
+  await criarFollowUpsAutomaticos(corretorId);
+  
+  // Buscar TODOS os follow-ups ativos que tinham proximaTentativa <= hoje
+  // Isso inclui:
+  // 1. Follow-ups ainda não trabalhados (proximaTentativa <= hoje)
+  // 2. Follow-ups já trabalhados hoje (ultimaTentativa = hoje, mas proximaTentativa pode ser amanhã)
+  
+  // Estratégia: buscar follow-ups onde:
+  // - proximaTentativa <= amanhã (inclui os ainda não trabalhados)
+  // OU
+  // - ultimaTentativa foi hoje (inclui os já trabalhados)
+  
+  return await db.select({
+    id: followUps.id,
+    leadId: followUps.leadId,
+    tentativaAtual: followUps.tentativaAtual,
+    maxTentativas: followUps.maxTentativas,
+    proximaTentativa: followUps.proximaTentativa,
+    ultimaTentativa: followUps.ultimaTentativa,
+    status: followUps.status,
+  })
+    .from(followUps)
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      eq(followUps.status, "ativo"),
+      or(
+        // Follow-ups ainda não trabalhados (proximaTentativa <= amanhã)
+        lte(followUps.proximaTentativa, amanha),
+        // Follow-ups já trabalhados hoje (ultimaTentativa = hoje)
+        and(
+          gte(followUps.ultimaTentativa, hoje),
+          lt(followUps.ultimaTentativa, amanha)
+        )
+      )
+    ));
+}
