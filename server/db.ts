@@ -224,6 +224,15 @@ export async function updateLimiteDiarioWebhook(userId: number, limite: number) 
     .where(eq(users.id, userId));
 }
 
+export async function updateUser(userId: number, data: Partial<typeof users.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  
+  await db.update(users)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
 export async function countLeadsRecebidosHoje(corretorId: number, dataInicio?: Date) {
   const db = await getDb();
   if (!db) return 0;

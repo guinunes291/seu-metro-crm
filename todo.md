@@ -2597,3 +2597,15 @@
 - [x] Identificar onde follow-ups automáticos são criados
 - [x] Alterar lógica para agendar primeiro follow-up para o dia seguinte
 - [x] Testar que leads novos não aparecem em "Tarefas do Dia" no mesmo dia
+
+## Bugs Críticos (10/01/2026)
+
+### Bug 1: Letícia Zerou Progresso e Foi Rebloqueada
+- [x] Investigar por que ultimoDesbloqueio não está persistindo
+- [x] Verificar se campo está sendo salvo corretamente no banco
+- [x] Corrigir lógica de persistência (criada função updateUser)
+
+### Bug 2: Leads "Em Atendimento" Aparecem Hoje em Follow-up
+- [x] Identificar onde status é alterado para "em_atendimento"
+- [x] Ajustar para criar follow-up para amanhã, não hoje
+- [x] Testar mudança de status (já estava correto)
