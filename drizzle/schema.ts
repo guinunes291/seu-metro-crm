@@ -254,6 +254,9 @@ export const leads = mysqlTable("leads", {
   prefereContatoPor: varchar("prefereContatoPor", { length: 50 }), // Preferência de contato (prefere_falar_por)
   dataHoraCriacao: timestamp("dataHoraCriacao"), // Data/hora de criação no Facebook (created_time)
   
+  // Identificação de leads via webhook (para notificação urgente)
+  origemWebhook: boolean("origemWebhook").default(false).notNull(), // true se veio via webhook
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({

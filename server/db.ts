@@ -2468,19 +2468,19 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     }
   }
   
-  // Criar o lead com os novos campos
-  const lead = await createLead({
+  // Criar o lead (marcar como origemWebhook para notificação urgente)
+  const leadCriado = await createLead({
     nome: dadosLead.nome,
     email: dadosLead.email,
     telefone: dadosLead.telefone,
     origem: dadosLead.origem || webhook.fonte,
-    projectId: webhook.projectIdPadrao || undefined,
+    projectId: projectIdFinal,
     status: 'novo',
-    // Campos do Facebook Lead Ads
     campanha: dadosLead.campanha,
     faixaRenda: dadosLead.faixaRenda,
     prefereContatoPor: dadosLead.prefereContatoPor,
-    dataHoraCriacao: dataHoraCriacao,
+    dataHoraCriacao: dadosLead.dataHoraCriacao ? new Date(dadosLead.dataHoraCriacao) : undefined,
+    origemWebhook: true, // Marcar como lead via webhook para notificação urgente
   });
   
   // Incrementar contador do webhook
@@ -2531,6 +2531,7 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     projectId: dadosLead.projectId || webhook.projectIdPadrao || undefined,
     status: 'novo',
     faixaRenda: dadosLead.faixaRenda,
+    origemWebhook: true, // Marcar como lead via webhook para notificação urgente
   });
   
   // Incrementar contador do webhook
@@ -6808,3 +6809,4 @@ export async function getProximoCorretorFilaFoco(): Promise<number | null> {
   
   return null; // Nenhum corretor disponível
 }
+

@@ -288,6 +288,13 @@
       "when": 1767992094674,
       "tag": "0040_glorious_multiple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1768065955663,
+      "tag": "0041_lean_steve_rogers",
+      "breakpoints": true
     }
   ]
 }

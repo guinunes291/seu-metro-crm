@@ -325,14 +325,25 @@ export default function LeadsPorCorretor() {
                   </TableHeader>
                   <TableBody>
                     {leads.map((lead) => (
-                      <TableRow key={lead.id} className={selectedLeads.includes(lead.id) ? "bg-muted/50" : ""}>
+                      <TableRow key={lead.id} className={`${
+                        selectedLeads.includes(lead.id) ? "bg-muted/50" : ""
+                      } ${lead.origemWebhook ? 'bg-red-50/30 border-l-4 border-l-red-500' : ''}`}>
                         <TableCell>
                           <Checkbox
                             checked={selectedLeads.includes(lead.id)}
                             onCheckedChange={() => toggleSelectLead(lead.id)}
                           />
                         </TableCell>
-                        <TableCell className="font-medium">{lead.nome}</TableCell>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {lead.nome}
+                            {lead.origemWebhook && (
+                              <Badge className="bg-red-600 hover:bg-red-700 text-white text-xs">
+                                🔥 ADS URGENTE
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{lead.corretorNome || "-"}</TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">

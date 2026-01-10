@@ -2371,47 +2371,47 @@
 - [x] Modificar lógica do webhook para suportar duas filas
 - [x] Criar página de configuração do Projeto Foco do Mês
 
-## Simplificação: Webhook Exclusivo para Fila Foco
+## Simplificação: Webhook Exclusivo para Facebook Ads
 - [ ] Criar endpoint /api/webhook/facebook-foco/:token
-- [ ] Modificar lógica para distribuir apenas para corretores da Fila Foco
+- [ ] Modificar lógica para distribuir apenas para corretores da Facebook Ads
 - [ ] Remover verificação de limites diários no webhook foco
 - [ ] Atualizar página Projeto Foco com URL do novo webhook
 - [ ] Testar distribuição via webhook foco
 
-## Simplificação: Webhook Exclusivo para Fila Foco - CONCLUÍDO
+## Simplificação: Webhook Exclusivo para Facebook Ads - CONCLUÍDO
 - [x] Criar endpoint /api/webhook/facebook-foco/:token
-- [x] Modificar lógica para distribuir apenas para corretores da Fila Foco
+- [x] Modificar lógica para distribuir apenas para corretores da Facebook Ads
 - [x] Remover verificação de limites diários no webhook foco
 - [x] Atualizar página Projeto Foco com URL do novo webhook
 - [x] Testar distribuição via webhook foco
 
-## Redesign: Fila Foco como Roleta Independente
-- [x] Adicionar campo 'tipoFila' (geral/foco) na tabela webhook_config
-- [x] Criar procedures para listar/criar/editar/excluir webhooks da Fila Foco
-- [ ] Redesenhar página Fila Foco com lista de corretores (similar à Roleta)
-- [ ] Adicionar botão "Novo Webhook" na página Fila Foco
-- [ ] Implementar modal de criação de webhook exclusivo da Fila Foco
-- [ ] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
-- [ ] Remover dependência de projeto - Fila Foco independente
-- [x] Testar criação e distribuição via webhooks da Fila Foco
+## Redesign: Facebook Ads como Roleta Independente
+- [x] Adicionar campo 'origemWebhook' (geral/foco) na tabela webhook_config
+- [x] Criar procedures para listar/criar/editar/excluir webhooks da Facebook Ads
+- [ ] Redesenhar página Facebook Ads com lista de corretores (similar à Roleta)
+- [ ] Adicionar botão "Novo Webhook" na página Facebook Ads
+- [ ] Implementar modal de criação de webhook exclusivo da Facebook Ads
+- [ ] Exibir lista de webhooks da Facebook Ads com URLs e estatísticas
+- [ ] Remover dependência de projeto - Facebook Ads independente
+- [x] Testar criação e distribuição via webhooks da Facebook Ads
 
-## Status Final: Fila Foco Redesenhada
-- [x] Adicionar campo 'tipoFila' (geral/foco) na tabela webhook_config
-- [x] Criar procedures para listar/criar/editar/excluir webhooks da Fila Foco
-- [x] Redesenhar página Fila Foco com lista de corretores (similar à Roleta)
-- [x] Adicionar botão "Novo Webhook" na página Fila Foco
-- [x] Implementar modal de criação de webhook exclusivo da Fila Foco
-- [x] Exibir lista de webhooks da Fila Foco com URLs e estatísticas
-- [x] Remover dependência de projeto - Fila Foco independente
-- [x] Testar criação e distribuição via webhooks da Fila Foco
+## Status Final: Facebook Ads Redesenhada
+- [x] Adicionar campo 'origemWebhook' (geral/foco) na tabela webhook_config
+- [x] Criar procedures para listar/criar/editar/excluir webhooks da Facebook Ads
+- [x] Redesenhar página Facebook Ads com lista de corretores (similar à Roleta)
+- [x] Adicionar botão "Novo Webhook" na página Facebook Ads
+- [x] Implementar modal de criação de webhook exclusivo da Facebook Ads
+- [x] Exibir lista de webhooks da Facebook Ads com URLs e estatísticas
+- [x] Remover dependência de projeto - Facebook Ads independente
+- [x] Testar criação e distribuição via webhooks da Facebook Ads
 
-## Bug: Lista de corretores não aparece na Fila Foco
+## Bug: Lista de corretores não aparece na Facebook Ads
 - [x] Investigar query trpc.corretor.list
 - [x] Verificar se há corretores cadastrados no banco
 - [x] Corrigir carregamento e exibição da lista
 - [x] Testar seleção de corretores
 
-## Bug: Erro ao clicar em "Novo Webhook" na Fila Foco
+## Bug: Erro ao clicar em "Novo Webhook" na Facebook Ads
 - [x] Investigar erro de JavaScript no botão
 - [x] Corrigir inicialização do estado dos corretores selecionados
 - [x] Testar abertura do modal de criar webhook
@@ -2433,8 +2433,19 @@
 - [x] Adicionar import do useEffect na página Roleta.tsx
 - [x] Testar criação de webhook
 
-## Bug: Webhooks misturados entre Fila Foco e Roleta Geral
-- [x] Filtrar webhooks por tipoFila='foco' na página ProjetoFoco
-- [x] Filtrar webhooks por tipoFila='geral' (ou null) na página Roleta
+## Bug: Webhooks misturados entre Facebook Ads e Roleta Geral
+- [x] Filtrar webhooks por origemWebhook='foco' na página ProjetoFoco
+- [x] Filtrar webhooks por origemWebhook='geral' (ou null) na página Roleta
 - [x] Verificar se distribuição está usando corretores corretos
 - [x] Testar criação e distribuição separadamente
+
+## Feature: Visual e Notificação Urgente para Leads Facebook Ads (Webhook)
+- [x] Adicionar campo origemWebhook (enum: 'geral', 'foco') na tabela leads
+- [x] Marcar leads como origemWebhook='foco' ao distribuir via Facebook Ads
+- [x] Adicionar badge e borda colorida para leads Facebook Ads nos cards de leads
+- [x] Visual diferenciado implementado (badge vermelho + borda) da lista
+- [x] Visual diferenciado implementado (notificação via interface)
+- [ ] Som de alerta (pendente - requer implementação completa)
+- [ ] Polling em tempo real (pendente) para novos leads Foco
+- [ ] WhatsApp automático (pendente - requer API)
+- [x] Badge visual implementado nos cards de leads Foco não atendidos

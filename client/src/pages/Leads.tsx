@@ -576,12 +576,19 @@ export default function Leads() {
                 const needsFollowup = lead.diasFollowupConsecutivos < 5 && lead.status !== "contrato_fechado" && lead.status !== "perdido";
                 
                 return (
-                  <Card key={lead.id} className="hover:shadow-md transition-shadow">
+                  <Card key={lead.id} className={`hover:shadow-md transition-shadow ${
+                    lead.origemWebhook ? 'border-l-4 border-l-red-500 bg-red-50/30' : ''
+                  }`}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <CardTitle className="text-xl">{lead.nome}</CardTitle>
+                            {lead.origemWebhook && (
+                              <Badge className="bg-red-600 hover:bg-red-700 text-white">
+                                🔥 FACEBOOK ADS - URGENTE
+                              </Badge>
+                            )}
                             {needsFollowup && (
                               <Badge variant="outline" className="text-orange-600 border-orange-600">
                                 <AlertCircle className="h-3 w-3 mr-1" />
@@ -772,8 +779,17 @@ export default function Leads() {
                     const project = projects?.find(p => p.id === lead.projectId);
                     
                     return (
-                      <TableRow key={lead.id}>
-                        <TableCell className="font-medium">{lead.nome}</TableCell>
+                      <TableRow key={lead.id} className={lead.origemWebhook ? 'bg-red-50/30' : ''}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {lead.nome}
+                            {lead.origemWebhook && (
+                              <Badge className="bg-red-600 hover:bg-red-700 text-white text-xs">
+                                🔥 ADS
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{lead.telefone}</TableCell>
                         <TableCell>{project?.nome || "-"}</TableCell>
                         <TableCell>
