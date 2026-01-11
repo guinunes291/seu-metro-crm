@@ -2623,3 +2623,9 @@
 - [x] Implementar atualização em tempo real (a cada segundo)
 - [x] Mostrar "🕐 Horário: São Paulo (GMT-3) - HH:MM:SS"
 - [x] Testar visualização em diferentes resoluções
+
+## Bug: Roleta de Leads - projectIdFinal is not defined (10/01/2026)
+
+- [x] Identificar onde projectIdFinal é usado no webhook da roleta
+- [x] Corrigir variável indefinida que impede distribuição
+- [x] Testar roleta com webhook real do Zapier

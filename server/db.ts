@@ -2518,7 +2518,7 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     email: dadosLead.email,
     telefone: dadosLead.telefone,
     origem: dadosLead.origem || webhook.fonte,
-    projectId: projectIdFinal,
+    projectId: webhook.projectId || null,
     status: 'novo',
     campanha: dadosLead.campanha,
     faixaRenda: dadosLead.faixaRenda,
@@ -2531,10 +2531,10 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   await incrementarLeadsWebhook(webhook.id);
   
   // Distribuir pela roleta
-  const corretorId = await distribuirLeadPelaRoleta(lead.id);
+  const corretorId = await distribuirLeadPelaRoleta(leadCriado.id);
   
   return {
-    lead,
+    lead: leadCriado,
     corretorId,
     distribuido: corretorId !== null,
   };
