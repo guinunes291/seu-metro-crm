@@ -2642,3 +2642,12 @@
 
 - [x] Alterar status de "em_atendimento" para "aguardando_atendimento" na procedure atribuirCorretor
 - [x] Testar atribuição manual e validar status correto
+
+## Bug: Mapeamento de Form ID e Faixa de Renda (10/01/2026)
+
+- [x] Investigar por que mapeamento de Form ID não está atribuindo projeto ao lead
+- [x] Corrigir lógica de busca de projeto pelo Form ID no webhook
+- [x] Adicionar captura do campo "faixa de renda" do Facebook Lead Ads
+- [x] Adicionar logs detalhados no webhook para debug
+- [x] Adicionar exibição de faixa de renda nos cards de leads (interface)
+- [ ] Testar com lead real do Facebook e validar projeto e faixa de renda

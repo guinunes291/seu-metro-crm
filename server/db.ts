@@ -2486,6 +2486,7 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   email?: string;
   telefone: string;
   origem?: string;
+  projectId?: number; // Projeto mapeado pelo Form ID
   // Campos do Facebook Lead Ads
   campanha?: string;
   faixaRenda?: string;
@@ -2518,13 +2519,21 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     email: dadosLead.email,
     telefone: dadosLead.telefone,
     origem: dadosLead.origem || webhook.fonte,
-    projectId: webhook.projectId || null,
+    projectId: dadosLead.projectId || webhook.projectId || null,
     status: 'novo',
     campanha: dadosLead.campanha,
     faixaRenda: dadosLead.faixaRenda,
     prefereContatoPor: dadosLead.prefereContatoPor,
     dataHoraCriacao: dadosLead.dataHoraCriacao ? new Date(dadosLead.dataHoraCriacao) : undefined,
     origemWebhook: true, // Marcar como lead via webhook para notificação urgente
+  });
+  
+  console.log('[Webhook] Lead criado com sucesso:', {
+    leadId: leadCriado.id,
+    nome: leadCriado.nome,
+    projectId: leadCriado.projectId,
+    faixaRenda: leadCriado.faixaRenda,
+    origemWebhook: leadCriado.origemWebhook
   });
   
   // Incrementar contador do webhook
@@ -2576,6 +2585,14 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     status: 'novo',
     faixaRenda: dadosLead.faixaRenda,
     origemWebhook: true, // Marcar como lead via webhook para notificação urgente
+  });
+  
+  console.log('[Webhook Foco] Lead criado com sucesso:', {
+    leadId: leadCriado.id,
+    nome: leadCriado.nome,
+    projectId: leadCriado.projectId,
+    faixaRenda: leadCriado.faixaRenda,
+    origemWebhook: leadCriado.origemWebhook
   });
   
   // Incrementar contador do webhook

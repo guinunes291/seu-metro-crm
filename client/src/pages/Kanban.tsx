@@ -180,8 +180,13 @@ export default function Kanban() {
                               <span className="truncate">{lead.email}</span>
                             </div>
                           )}
-
-
+                          
+                          {lead.faixaRenda && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                              <span className="font-medium">Renda:</span>
+                              <span className="truncate">{lead.faixaRenda}</span>
+                            </div>
+                          )}
 
                           <div className="flex items-center justify-between mt-2">
                             {lead.origem && (

@@ -375,6 +375,12 @@ export default function LeadsPorCorretor() {
                                 {lead.email}
                               </div>
                             )}
+                            {lead.faixaRenda && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <span className="font-medium">Renda:</span>
+                                {lead.faixaRenda}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
