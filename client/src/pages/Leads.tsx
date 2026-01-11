@@ -529,28 +529,28 @@ export default function Leads() {
           </CardContent>
         </Card>
 
-        {/* Estatísticas Rápidas */}
+        {/* Estatísticas Rápidas - Mostra total filtrado */}
         <div className="grid gap-4 md:grid-cols-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Leads
+                Total de Leads {(searchTerm || statusFilter !== 'all' || projectFilter !== 'all' || origemFilter !== 'all') && '(filtrados)'}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{filteredLeads.length}</div>
+              <div className="text-2xl font-bold">{totalLeads}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Em Atendimento
+                Nesta Página
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {filteredLeads.filter(l => l.status === "em_atendimento").length}
+                {filteredLeads.length}
               </div>
             </CardContent>
           </Card>
@@ -558,12 +558,12 @@ export default function Leads() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Agendados
+                Página Atual
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {filteredLeads.filter(l => l.status === "agendado").length}
+                {currentPage} de {totalPages}
               </div>
             </CardContent>
           </Card>
@@ -571,12 +571,12 @@ export default function Leads() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Contratos Fechados
+                Leads por Página
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {filteredLeads.filter(l => l.status === "contrato_fechado").length}
+              <div className="text-2xl font-bold text-muted-foreground">
+                {pageSize}
               </div>
             </CardContent>
           </Card>

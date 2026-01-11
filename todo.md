@@ -2669,3 +2669,12 @@
 - [x] Atualizar frontend para enviar filtros ao backend via query
 - [x] Remover filtros client-side (filteredLeads) e usar dados do backend
 - [x] Testar busca e filtros com 4000+ leads
+
+## CRÍTICO: Performance Página Meus Leads Não Carrega (10/01/2026)
+
+- [x] Investigar logs do servidor para identificar erro ou timeout
+- [x] Verificar query getLeadsByCorretor e tempo de execução
+- [x] Adicionar índices no banco (corretorId, status, projectId, origem, createdAt)
+- [x] Simplificar renderização inicial (remover cálculos pesados)
+- [x] Otimizar cards de estatísticas (mostrar informações de paginação)
+- [x] Testar com volume real de 4000+ leads
