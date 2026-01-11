@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { TimezoneFooter } from "@/components/TimezoneFooter";
 import { 
   LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, 
   BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, 
@@ -683,6 +684,7 @@ function DashboardContent({
             />
           )}
         </main>
+        <TimezoneFooter />
       </SidebarInset>
     </>
   );

@@ -2616,3 +2616,10 @@
 - [x] Criar função helper para obter data/hora em timezone de São Paulo (já existia em timezone.ts)
 - [x] Atualizar lógica de reset diário para usar timezone correto
 - [x] Testar que reset acontece à meia-noite de São Paulo
+
+## Feature: Indicador Visual de Timezone no Rodapé (10/01/2026)
+
+- [x] Adicionar componente de relógio no rodapé do DashboardLayout
+- [x] Implementar atualização em tempo real (a cada segundo)
+- [x] Mostrar "🕐 Horário: São Paulo (GMT-3) - HH:MM:SS"
+- [x] Testar visualização em diferentes resoluções
