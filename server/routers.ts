@@ -474,6 +474,46 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    // Atribuir corretor manualmente (apenas gestores)
+    atribuirCorretor: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        corretorId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const lead = await db.getLeadById(input.leadId);
+        
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        // Verificar se corretor existe
+        const corretor = await db.getUserById(input.corretorId);
+        if (!corretor || corretor.role !== 'corretor') {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        }
+        
+        // Atualizar lead com novo corretor
+        await db.updateLead(input.leadId, {
+          corretorId: input.corretorId,
+          status: lead.status === 'novo' ? 'em_atendimento' : lead.status,
+        });
+        
+        // Criar follow-up automático para amanhã
+        await db.criarFollowUpsAutomaticos();
+        
+        // Registrar no histórico
+        await db.createLeadHistory({
+          leadId: input.leadId,
+          corretorId: input.corretorId,
+          tipo: 'outro',
+          resultado: 'outro',
+          observacoes: `Lead atribuído manualmente pelo gestor`,
+        });
+        
+        return { success: true, corretor: corretor.name };
+      }),
+    
     // Excluir lead (apenas gestores)
     delete: gestorProcedure
       .input(z.object({ id: z.number() }))

@@ -2629,3 +2629,11 @@
 - [x] Identificar onde projectIdFinal é usado no webhook da roleta
 - [x] Corrigir variável indefinida que impede distribuição
 - [x] Testar roleta com webhook real do Zapier
+
+## Feature: Atribuição Manual de Leads pelo Gestor (10/01/2026)
+
+- [x] Criar procedure tRPC para atribuir lead a corretor específico
+- [x] Adicionar botão "Atribuir Corretor" na lista de leads sem corretor
+- [x] Implementar modal de seleção de corretor com lista de corretores ativos
+- [x] Atualizar lead com corretor selecionado e criar follow-up automático
+- [x] Testar atribuição manual e validar que lead aparece para corretor

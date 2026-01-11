@@ -41,6 +41,7 @@ import { Bot } from "lucide-react";
 import { ProjectCombobox } from "@/components/ProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
+import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -89,6 +90,8 @@ const origemLabels: Record<string, string> = {
 export default function Leads() {
   const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
   const { data: projects } = trpc.projects.list.useQuery();
+  const { data: user } = trpc.auth.me.useQuery();
+  const isGestor = user?.role === 'gestor' || user?.role === 'admin';
   const [selectedLead, setSelectedLead] = useState<any>(null);
   
   // Hook de notificação para leads Facebook Ads
@@ -116,6 +119,7 @@ export default function Leads() {
     }
   }, [leads]);
   const [interactionDialog, setInteractionDialog] = useState(false);
+  const [atribuirDialog, setAtribuirDialog] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -812,6 +816,19 @@ export default function Leads() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            {isGestor && !lead.corretorId && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedLead(lead);
+                                  setAtribuirDialog(true);
+                                }}
+                              >
+                                <UserPlus className="h-4 w-4 mr-1" />
+                                Atribuir
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -1500,6 +1517,17 @@ export default function Leads() {
       
       {/* Popup urgente para leads Facebook Ads */}
       {webhookPopup}
+      
+      {/* Dialog de atribuição de corretor */}
+      <AtribuirCorretorDialog
+        open={atribuirDialog}
+        onOpenChange={setAtribuirDialog}
+        lead={selectedLead}
+        onSuccess={() => {
+          refetch();
+          toast.success("Lead atribuído com sucesso!");
+        }}
+      />
     </DashboardLayout>
   );
 }
