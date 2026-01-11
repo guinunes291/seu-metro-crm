@@ -94,18 +94,29 @@ export default function Leads() {
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [origemFilter, setOrigemFilter] = useState<string>("all");
   
-  // Query com filtros server-side
+  // Debounce para busca (evita queries excessivas)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  // Query com filtros server-side (usa debouncedSearch)
   const { data: leadsData, isLoading, refetch } = trpc.leads.list.useQuery({ 
     page: currentPage, 
     limit: pageSize,
-    searchTerm: searchTerm || undefined,
+    searchTerm: debouncedSearch || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     projectId: projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
     origem: origemFilter !== 'all' ? origemFilter : undefined,
+  }, {
+    keepPreviousData: true, // Evita tela branca durante re-fetch
   });
   const leads = leadsData?.leads || [];
   const totalPages = leadsData?.totalPages || 1;
@@ -401,7 +412,7 @@ export default function Leads() {
   // Resetar para página 1 quando filtros mudarem
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, projectFilter, origemFilter]);
+  }, [debouncedSearch, statusFilter, projectFilter, origemFilter]);
   
   // Usar leads diretamente do backend (já filtrados)
   const filteredLeads = leads;
@@ -707,6 +718,19 @@ export default function Leads() {
                           </Select>
                           
                           <div className="flex gap-2">
+                            {isGestor && !lead.corretorId && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedLead(lead);
+                                  setAtribuirDialog(true);
+                                }}
+                              >
+                                <UserPlus className="h-4 w-4 mr-1" />
+                                Atribuir
+                              </Button>
+                            )}
                             {lead.telefone && (
                               <Button
                                 variant="outline"

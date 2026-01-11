@@ -2678,3 +2678,15 @@
 - [x] Simplificar renderização inicial (remover cálculos pesados)
 - [x] Otimizar cards de estatísticas (mostrar informações de paginação)
 - [x] Testar com volume real de 4000+ leads
+
+## CRÍTICO: Travamentos e Atribuição de Corretor (10/01/2026)
+
+- [x] Investigar causa de travamentos e reloads automáticos na página Meus Leads
+- [x] Identificar queries sendo disparadas em loop
+- [x] Corrigir re-renders excessivos (useEffect sem dependências corretas)
+- [x] Adicionar debounce de 500ms na busca para evitar queries excessivas
+- [x] Adicionar keepPreviousData na query para evitar tela branca
+- [x] Verificar por que atribuição manual de corretor não funciona
+- [x] Adicionar botão "Atribuir" na visualização de cards (estava só na tabela)
+- [x] Testar atribuição de lead sem corretor para corretor específico
+- [x] Garantir estabilidade da página após ações
