@@ -3375,8 +3375,8 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   await criarFollowUpsAutomaticos(corretorId);
   
   // Agora buscar todos os follow-ups ativos (incluindo os recém-criados)
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje } = await import('./timezone');
+  const hoje = inicioDoDiaHoje();
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
   
@@ -6900,9 +6900,18 @@ export async function getCorretoresAtivos() {
     .where(eq(users.role, 'corretor'));
 }
 
-export async function getTotalFollowUpsDoDia(corretorId: number, hoje: Date, amanha: Date) {
+export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Date, amanhaParam?: Date) {
   const db = await getDb();
   if (!db) return [];
+  
+  // Usar timezone de São Paulo se não fornecido
+  const { inicioDoDiaHoje } = await import('./timezone');
+  const hoje = hojeParam || inicioDoDiaHoje();
+  const amanha = amanhaParam || (() => {
+    const a = new Date(hoje);
+    a.setDate(a.getDate() + 1);
+    return a;
+  })();
   
   // Primeiro, criar follow-ups automáticos
   await criarFollowUpsAutomaticos(corretorId);

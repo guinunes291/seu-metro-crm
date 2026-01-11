@@ -2609,3 +2609,10 @@
 - [x] Identificar onde status é alterado para "em_atendimento"
 - [x] Ajustar para criar follow-up para amanhã, não hoje
 - [x] Testar mudança de status (já estava correto)
+
+## Bug: Sistema Resetou às 21h (UTC) ao invés de Meia-noite SP (10/01/2026)
+
+- [x] Identificar onde cálculos de "hoje" são feitos (hoje.setHours(0,0,0,0))
+- [x] Criar função helper para obter data/hora em timezone de São Paulo (já existia em timezone.ts)
+- [x] Atualizar lógica de reset diário para usar timezone correto
+- [x] Testar que reset acontece à meia-noite de São Paulo

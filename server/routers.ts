@@ -1932,8 +1932,8 @@ export const appRouter = router({
     // Listar progresso de todos os corretores (apenas gestor)
     listarProgressoEquipe: gestorProcedure
       .query(async ({ ctx }) => {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
+        const { inicioDoDiaHoje } = await import('./timezone');
+        const hoje = inicioDoDiaHoje();
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
@@ -1985,8 +1985,8 @@ export const appRouter = router({
     // Calcular progresso de follow-ups do dia (para bloqueio gamificado)
     getProgresso: corretorProcedure
       .query(async ({ ctx }) => {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
+        const { inicioDoDiaHoje } = await import('./timezone');
+        const hoje = inicioDoDiaHoje();
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
