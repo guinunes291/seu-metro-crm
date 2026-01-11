@@ -2651,3 +2651,12 @@
 - [x] Adicionar logs detalhados no webhook para debug
 - [x] Adicionar exibição de faixa de renda nos cards de leads (interface)
 - [ ] Testar com lead real do Facebook e validar projeto e faixa de renda
+
+## Performance: Paginação na Página de Leads (10/01/2026)
+
+- [x] Adicionar parâmetros de paginação (page, limit) nas procedures do backend
+- [x] Implementar queries com LIMIT e OFFSET no banco de dados
+- [x] Retornar total de registros para cálculo de páginas
+- [x] Implementar controles de paginação no frontend (anterior/próxima/ir para página)
+- [x] Testar performance com 4000+ leads
+- [ ] Aplicar mesma paginação em outras páginas com grande volume (LeadsPorCorretor, Kanban)

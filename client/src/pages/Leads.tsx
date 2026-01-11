@@ -88,7 +88,15 @@ const origemLabels: Record<string, string> = {
 };
 
 export default function Leads() {
-  const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
+  // Estado de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(50);
+  
+  const { data: leadsData, isLoading, refetch } = trpc.leads.list.useQuery({ page: currentPage, limit: pageSize });
+  const leads = leadsData?.leads || [];
+  const totalPages = leadsData?.totalPages || 1;
+  const totalLeads = leadsData?.total || 0;
+  
   const { data: projects } = trpc.projects.list.useQuery();
   const { data: user } = trpc.auth.me.useQuery();
   const isGestor = user?.role === 'gestor' || user?.role === 'admin';
@@ -865,6 +873,58 @@ export default function Leads() {
                 : "Aguarde a distribuição de novos leads pelo gestor"
               }
             </p>
+          </div>
+        )}
+
+        {/* Controles de Paginação */}
+        {!isLoading && totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, totalLeads)} de {totalLeads} leads
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-10"
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Próxima
+              </Button>
+            </div>
           </div>
         )}
 

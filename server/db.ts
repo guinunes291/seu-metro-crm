@@ -775,14 +775,33 @@ export async function getAllLeads() {
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt));
 }
 
-export async function getLeadsByCorretor(corretorId: number) {
+export async function getLeadsByCorretor(corretorId: number, options?: {
+  page?: number;
+  limit?: number;
+}) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { leads: [], total: 0 };
   
-  // Ordenar: leads webhook primeiro, depois por data de criação
-  return await db.select().from(leads)
+  const page = options?.page || 1;
+  const limit = options?.limit || 50;
+  const offset = (page - 1) * limit;
+  
+  // Buscar total de leads do corretor
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(eq(leads.corretorId, corretorId));
+  
+  const total = Number(countResult?.count || 0);
+  
+  // Buscar leads paginados
+  const leadsData = await db.select().from(leads)
     .where(eq(leads.corretorId, corretorId))
-    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt));
+    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
+    .limit(limit)
+    .offset(offset);
+  
+  return { leads: leadsData, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
 /**
