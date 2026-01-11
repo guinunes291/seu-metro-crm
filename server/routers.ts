@@ -496,7 +496,7 @@ export const appRouter = router({
         // Atualizar lead com novo corretor
         await db.updateLead(input.leadId, {
           corretorId: input.corretorId,
-          status: lead.status === 'novo' ? 'em_atendimento' : lead.status,
+          status: lead.status === 'novo' ? 'aguardando_atendimento' : lead.status,
         });
         
         // Criar follow-up automático para amanhã

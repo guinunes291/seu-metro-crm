@@ -2637,3 +2637,8 @@
 - [x] Implementar modal de seleção de corretor com lista de corretores ativos
 - [x] Atualizar lead com corretor selecionado e criar follow-up automático
 - [x] Testar atribuição manual e validar que lead aparece para corretor
+
+## Correção: Status de Lead Atribuído Manualmente (10/01/2026)
+
+- [x] Alterar status de "em_atendimento" para "aguardando_atendimento" na procedure atribuirCorretor
+- [x] Testar atribuição manual e validar status correto
