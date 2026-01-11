@@ -92,7 +92,21 @@ export default function Leads() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(50);
   
-  const { data: leadsData, isLoading, refetch } = trpc.leads.list.useQuery({ page: currentPage, limit: pageSize });
+  // Estados de filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [projectFilter, setProjectFilter] = useState<string>("all");
+  const [origemFilter, setOrigemFilter] = useState<string>("all");
+  
+  // Query com filtros server-side
+  const { data: leadsData, isLoading, refetch } = trpc.leads.list.useQuery({ 
+    page: currentPage, 
+    limit: pageSize,
+    searchTerm: searchTerm || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    projectId: projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
+    origem: origemFilter !== 'all' ? origemFilter : undefined,
+  });
   const leads = leadsData?.leads || [];
   const totalPages = leadsData?.totalPages || 1;
   const totalLeads = leadsData?.total || 0;
@@ -129,10 +143,6 @@ export default function Leads() {
   const [interactionDialog, setInteractionDialog] = useState(false);
   const [atribuirDialog, setAtribuirDialog] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
-  const [origemFilter, setOrigemFilter] = useState<string>("all");
 
   const updateLeadMutation = trpc.leads.update.useMutation();
   const addInteractionMutation = trpc.leads.addInteraction.useMutation();
@@ -388,19 +398,13 @@ export default function Leads() {
     }
   };
 
-  // Filtrar leads
-  const filteredLeads = leads?.filter((lead) => {
-    const matchesSearch = 
-      lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.telefone.includes(searchTerm) ||
-      (lead.email && lead.email.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
-    const matchesProject = projectFilter === "all" || lead.projectId?.toString() === projectFilter;
-    const matchesOrigem = origemFilter === "all" || lead.origem === origemFilter;
-
-    return matchesSearch && matchesStatus && matchesProject && matchesOrigem;
-  }) || [];
+  // Resetar para página 1 quando filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, projectFilter, origemFilter]);
+  
+  // Usar leads diretamente do backend (já filtrados)
+  const filteredLeads = leads;
 
   const openDetails = (lead: any) => {
     setSelectedLead(lead);

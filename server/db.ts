@@ -778,6 +778,12 @@ export async function getAllLeads() {
 export async function getLeadsByCorretor(corretorId: number, options?: {
   page?: number;
   limit?: number;
+  searchTerm?: string;
+  status?: string;
+  projectId?: number;
+  origem?: string;
+  dataInicio?: string;
+  dataFim?: string;
 }) {
   const db = await getDb();
   if (!db) return { leads: [], total: 0 };
@@ -786,17 +792,57 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   const limit = options?.limit || 50;
   const offset = (page - 1) * limit;
   
-  // Buscar total de leads do corretor
+  // Construir condições de filtro
+  const conditions = [eq(leads.corretorId, corretorId)];
+  
+  // Busca por nome, telefone ou email
+  if (options?.searchTerm) {
+    const searchLower = `%${options.searchTerm.toLowerCase()}%`;
+    conditions.push(
+      or(
+        sql`LOWER(${leads.nome}) LIKE ${searchLower}`,
+        sql`${leads.telefone} LIKE ${searchLower}`,
+        sql`LOWER(${leads.email}) LIKE ${searchLower}`
+      )!
+    );
+  }
+  
+  // Filtro por status
+  if (options?.status && options.status !== 'all') {
+    conditions.push(eq(leads.status, options.status));
+  }
+  
+  // Filtro por projeto
+  if (options?.projectId) {
+    conditions.push(eq(leads.projectId, options.projectId));
+  }
+  
+  // Filtro por origem
+  if (options?.origem && options.origem !== 'all') {
+    conditions.push(eq(leads.origem, options.origem));
+  }
+  
+  // Filtro por data de criação
+  if (options?.dataInicio) {
+    conditions.push(gte(leads.createdAt, new Date(options.dataInicio)));
+  }
+  if (options?.dataFim) {
+    const endDate = new Date(options.dataFim);
+    endDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(leads.createdAt, endDate));
+  }
+  
+  // Buscar total de leads com filtros
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
     .from(leads)
-    .where(eq(leads.corretorId, corretorId));
+    .where(and(...conditions));
   
   const total = Number(countResult?.count || 0);
   
-  // Buscar leads paginados
+  // Buscar leads paginados com filtros
   const leadsData = await db.select().from(leads)
-    .where(eq(leads.corretorId, corretorId))
+    .where(and(...conditions))
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)
     .offset(offset);

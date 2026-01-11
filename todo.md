@@ -2660,3 +2660,12 @@
 - [x] Implementar controles de paginação no frontend (anterior/próxima/ir para página)
 - [x] Testar performance com 4000+ leads
 - [ ] Aplicar mesma paginação em outras páginas com grande volume (LeadsPorCorretor, Kanban)
+
+## Feature: Busca e Filtros Server-Side (10/01/2026)
+
+- [x] Adicionar parâmetros de busca (searchTerm) e filtros (status, projectId, origem, dataInicio, dataFim) no backend
+- [x] Atualizar função getLeadsByCorretor para aplicar filtros antes da paginação
+- [x] Atualizar procedure leads.list para aceitar todos os parâmetros de filtro
+- [x] Atualizar frontend para enviar filtros ao backend via query
+- [x] Remover filtros client-side (filteredLeads) e usar dados do backend
+- [x] Testar busca e filtros com 4000+ leads
