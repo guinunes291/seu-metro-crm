@@ -2701,3 +2701,7 @@
 - [x] Rastrear quais corretores já tentaram cada lead (campo corretoresQueTentaram)
 - [x] Quando todos os corretores marcarem como "Perdido", mover lead para lixeira
 - [x] Testar fluxo completo: Aguardando → Em Atendimento → Follow-up → Perdido → Transferência
+
+## Ajuste: Transferência Sem Filtro de Status (12/01/2026)
+- [x] Modificar getProximoCorretorDisponivel para buscar TODOS os corretores (remover filtro de status "presente")
+- [x] Testar que leads "Perdido" são transferidos para qualquer corretor disponível

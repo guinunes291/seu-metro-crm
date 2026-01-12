@@ -7092,19 +7092,16 @@ export async function getProximoCorretorDisponivel(corretoresQueTentaram: number
   const db = await getDb();
   if (!db) return null;
   
-  // Buscar corretores presentes que não estão na lista de quem já tentou
+  // Buscar TODOS os corretores que não estão na lista de quem já tentou
+  // Não filtra por status (presente/ausente) - todos podem receber leads perdidos
   let whereConditions;
   if (corretoresQueTentaram.length > 0) {
     whereConditions = and(
       eq(users.role, 'corretor'),
-      eq(users.status, 'presente'),
       notInArray(users.id, corretoresQueTentaram)
     );
   } else {
-    whereConditions = and(
-      eq(users.role, 'corretor'),
-      eq(users.status, 'presente')
-    );
+    whereConditions = eq(users.role, 'corretor');
   }
   
   const corretoresDisponiveis = await db.select()
