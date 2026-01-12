@@ -2447,6 +2447,11 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   const leadData = await getLeadById(leadId);
   if (leadData) {
     await notifyLeadDistribuido(corretorId, leadId, leadData.nome);
+    
+    // Notificar via Zapier se o lead veio de webhook (Facebook, etc)
+    if (leadData.origemWebhook) {
+      await notificarCorretorViaZapier(leadId, corretorId);
+    }
   }
   
   console.log(`[Roleta] Lead ${leadId} distribuído para corretor ${corretorId}`);
@@ -7161,4 +7166,97 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
         )
       )
     ));
+}
+
+// ============================================================================
+// INTEGRAÇÃO ZAPIER - NOTIFICAÇÃO WHATSAPP
+// ============================================================================
+
+/**
+ * Envia notificação para Zapier quando um lead é distribuído para um corretor
+ * Zapier pode então enviar mensagem via WhatsApp para o corretor
+ */
+export async function notificarCorretorViaZapier(leadId: number, corretorId: number) {
+  const zapierWebhookUrl = ENV.zapierWebhookUrl;
+  
+  // Se não houver URL configurada, não faz nada
+  if (!zapierWebhookUrl) {
+    console.log('[Zapier] URL não configurada, notificação não enviada');
+    return { sucesso: false, motivo: 'URL não configurada' };
+  }
+  
+  const db = await getDb();
+  if (!db) {
+    console.log('[Zapier] Database não disponível');
+    return { sucesso: false, motivo: 'Database não disponível' };
+  }
+  
+  try {
+    // Buscar dados do lead
+    const leadData = await db.select().from(leads).where(eq(leads.id, leadId)).limit(1);
+    if (!leadData[0]) {
+      console.log('[Zapier] Lead não encontrado:', leadId);
+      return { sucesso: false, motivo: 'Lead não encontrado' };
+    }
+    const lead = leadData[0];
+    
+    // Buscar dados do corretor
+    const corretorData = await db.select().from(users).where(eq(users.id, corretorId)).limit(1);
+    if (!corretorData[0]) {
+      console.log('[Zapier] Corretor não encontrado:', corretorId);
+      return { sucesso: false, motivo: 'Corretor não encontrado' };
+    }
+    const corretor = corretorData[0];
+    
+    // Buscar nome do projeto (se houver)
+    let projetoNome = 'Não especificado';
+    if (lead.projectId) {
+      const projetoData = await db.select().from(projects).where(eq(projects.id, lead.projectId)).limit(1);
+      if (projetoData[0]) {
+        projetoNome = projetoData[0].nome;
+      }
+    }
+    
+    // Montar payload para o Zapier
+    const payload = {
+      evento: 'lead_distribuido',
+      timestamp: new Date().toISOString(),
+      corretor: {
+        id: corretor.id,
+        nome: corretor.name,
+        telefone: corretor.telefone || '',
+        email: corretor.email || ''
+      },
+      lead: {
+        id: lead.id,
+        nome: lead.nome,
+        telefone: lead.telefone || '',
+        email: lead.email || '',
+        origem: lead.origem,
+        projeto: projetoNome,
+        campanha: lead.campanha || '',
+        faixaRenda: lead.faixaRenda || ''
+      }
+    };
+    
+    // Enviar para Zapier
+    const response = await fetch(zapierWebhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (response.ok) {
+      console.log('[Zapier] Notificação enviada com sucesso para:', corretor.name);
+      return { sucesso: true };
+    } else {
+      console.error('[Zapier] Erro ao enviar notificação:', response.status, response.statusText);
+      return { sucesso: false, motivo: `HTTP ${response.status}` };
+    }
+  } catch (error: any) {
+    console.error('[Zapier] Erro ao enviar notificação:', error.message);
+    return { sucesso: false, motivo: error.message };
+  }
 }

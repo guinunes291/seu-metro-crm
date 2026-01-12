@@ -32,3 +32,11 @@
 - [x] Forçar sistema desbloqueado para permitir trabalho dos corretores
 - [x] Fluxo de follow-ups iniciará normalmente amanhã (13/01/2026)
 - [x] Exceção expira automaticamente à meia-noite de 13/01/2026
+
+## Integração Zapier → WhatsApp (12/01/2026)
+
+- [x] Criar função notificarCorretorViaZapier no backend
+- [x] Integrar na distribuição automática de leads (distribuirLeadPelaRoleta)
+- [x] Enviar apenas para leads de origem webhook (verifica origemWebhook = true)
+- [x] Incluir dados: nome corretor, telefone, dados do lead, projeto, campanha
+- [x] Documentar configuração do Zap (Webhook → WhatsApp) - Ver ZAPIER_WHATSAPP_SETUP.md
