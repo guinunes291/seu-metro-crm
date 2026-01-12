@@ -3570,8 +3570,8 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   amanha.setDate(amanha.getDate() + 1);
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
-  // NÃO mostra follow-ups agendados para amanhã
-  // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
+  // Mostra follow-ups de leads que precisam de contato hoje
+  // Inclui leads em "em_atendimento" E "aguardando_atendimento" (para não perder follow-ups)
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -3591,8 +3591,12 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
-      eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
-      lte(followUps.proximaTentativa, hoje) // Apenas HOJE ou atrasados (não amanhã)
+      // Aceita leads em atendimento OU aguardando atendimento (para não perder follow-ups)
+      or(
+        eq(leads.status, "em_atendimento"),
+        eq(leads.status, "aguardando_atendimento")
+      ),
+      lte(followUps.proximaTentativa, amanha) // Inclui até o fim de hoje
     ))
     .orderBy(followUps.proximaTentativa);
 }

@@ -2725,3 +2725,23 @@
 - [x] Adicionar item no menu lateral (apenas gestor)
 - [x] Testar ativação e desativação do bloqueio
 - [x] Validar que apenas gestor tem acesso ao controle
+
+## Sistema de Notificação por Email para Leads via Webhook (12/01/2026)
+- [x] Instalar Nodemailer para envio de emails
+- [x] Criar serviço de email (emailService.ts) com suporte a SMTP
+- [x] Criar template HTML profissional para notificação de lead
+- [x] Integrar notificação no fluxo de webhook padrão (processarLeadWebhook)
+- [x] Integrar notificação no fluxo de webhook Foco (processarLeadWebhookFoco)
+- [x] Garantir que apenas leads via webhook recebem notificação (não distribuição automática)
+- [x] Criar documentação completa de configuração (EMAIL_SETUP.md)
+- [x] Criar teste de validação de credenciais SMTP
+- [ ] Configurar credenciais SMTP no ambiente de produção (pendente do usuário)
+
+## Correção: Follow-ups não aparecem para Aline (12/01/2026) - CONCLUÍDO ✅
+- [x] Investigar dados de follow-ups da Aline no banco de dados
+- [x] Identificar que leads estavam com status "aguardando_atendimento" ao invés de "em_atendimento"
+- [x] Corrigir função getFollowUpsDoDiaExpandido para aceitar ambos os status
+- [x] Alterar filtro de proximaTentativa de <= hoje para <= amanhã
+- [x] Criar e executar testes unitários (2 testes passando)
+- [x] Validar na interface que follow-ups aparecem corretamente
+- [x] Confirmar que contador mostra 187 follow-ups totais
