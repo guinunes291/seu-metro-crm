@@ -29,17 +29,17 @@ export async function executarDistribuicaoAutomatica() {
  * Agenda o job para executar a cada hora
  */
 export function agendarDistribuicaoAutomatica() {
-  // DESABILITADO TEMPORARIAMENTE PARA INVESTIGAÇÃO
-  console.log("[Job] Distribuição automática DESABILITADA temporariamente");
-  
-  // Descomentar para reativar:
-  // setTimeout(() => {
-  //   console.log("[Job] Executando primeira distribuição automática...");
-  //   executarDistribuicaoAutomatica().catch(console.error);
-  // }, 30000);
-  //
-  // setInterval(() => {
-  //   console.log("[Job] Executando distribuição automática agendada...");
-  //   executarDistribuicaoAutomatica().catch(console.error);
-  // }, 300000);
+  // Executar imediatamente na inicialização (após 30 segundos)
+  setTimeout(() => {
+    console.log("[Job] Executando primeira distribuição automática...");
+    executarDistribuicaoAutomatica().catch(console.error);
+  }, 30000);
+
+  // Executar a cada 5 minutos (300000 ms)
+  setInterval(() => {
+    console.log("[Job] Executando distribuição automática agendada...");
+    executarDistribuicaoAutomatica().catch(console.error);
+  }, 300000);
+
+  console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
 }

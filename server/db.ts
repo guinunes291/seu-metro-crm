@@ -776,6 +776,8 @@ export async function getAllLeads() {
 }
 
 export async function getLeadsByCorretor(corretorId: number, options?: {
+  page?: number;
+  limit?: number;
   searchTerm?: string;
   status?: string;
   projectId?: number;
@@ -784,7 +786,11 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   dataFim?: string;
 }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return { leads: [], total: 0 };
+  
+  const page = options?.page || 1;
+  const limit = options?.limit || 50;
+  const offset = (page - 1) * limit;
   
   // Construir condições de filtro
   const conditions = [eq(leads.corretorId, corretorId)];
@@ -826,12 +832,22 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
     conditions.push(lte(leads.createdAt, endDate));
   }
   
-  // Buscar todos os leads com filtros (sem paginação)
+  // Buscar total de leads com filtros
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .where(and(...conditions));
+  
+  const total = Number(countResult?.count || 0);
+  
+  // Buscar leads paginados com filtros
   const leadsData = await db.select().from(leads)
     .where(and(...conditions))
-    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt));
+    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
+    .limit(limit)
+    .offset(offset);
   
-  return leadsData;
+  return { leads: leadsData, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
 /**
