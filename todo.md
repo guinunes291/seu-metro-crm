@@ -2707,3 +2707,11 @@
 
 - [x] AJUSTE: Criar follow-ups para HOJE ao invés de amanhã para aparecerem imediatamente nas Tarefas do Dia
 - [x] CORREÇÃO: Reverter para lógica +1 dia com exceção apenas para 12/01/2026
+
+
+## 🚨 URGENTE - Desbloqueio Imediato (12/01/2026 11:01)
+
+- [x] DESATIVAR bloqueio de follow-ups completamente no backend
+- [x] Forçar desbloqueado=true para TODOS os corretores
+- [x] Remover TODAS as verificações de percentual/data/condições
+- [x] Reiniciar servidor e aplicar correção urgente
