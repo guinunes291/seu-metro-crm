@@ -2607,34 +2607,58 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   // Distribuir pela roleta
   const corretorId = await distribuirLeadPelaRoleta(leadCriado.id);
   
-  // Notificar corretor via Zapier (WhatsApp)
+  // Notificar corretor via Email e Zapier (WhatsApp)
   if (corretorId && leadCriado.origemWebhook) {
     try {
       const corretor = await getUserById(corretorId);
       const projeto = leadCriado.projectId ? await getProjectById(leadCriado.projectId) : null;
       
       if (corretor) {
-        const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
-        await notificarCorretorLeadWebhook({
-          corretor: {
-            id: corretor.id,
-            nome: corretor.name,
-            telefone: corretor.telefone || undefined,
-            email: corretor.email,
-          },
-          lead: {
-            id: leadCriado.id,
-            nome: leadCriado.nome,
-            telefone: leadCriado.telefone,
-            email: leadCriado.email || undefined,
-            status: leadCriado.status,
-            origem: leadCriado.origem,
-            projeto: projeto?.nome,
-          },
-        });
+        // Enviar notificação por EMAIL
+        try {
+          const { enviarNotificacaoLeadWebhook } = await import('./emailService');
+          await enviarNotificacaoLeadWebhook({
+            corretorNome: corretor.name,
+            corretorEmail: corretor.email,
+            leadNome: leadCriado.nome,
+            leadTelefone: leadCriado.telefone,
+            leadEmail: leadCriado.email || undefined,
+            leadOrigem: leadCriado.origem,
+            leadProjeto: projeto?.nome,
+            leadCampanha: leadCriado.campanha || undefined,
+            leadFaixaRenda: leadCriado.faixaRenda || undefined,
+          });
+          console.log('[Webhook] Notificação por email enviada para:', corretor.email);
+        } catch (emailError) {
+          console.error('[Webhook] Erro ao enviar email:', emailError);
+        }
+        
+        // Enviar notificação via Zapier (WhatsApp) - se configurado
+        try {
+          const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
+          await notificarCorretorLeadWebhook({
+            corretor: {
+              id: corretor.id,
+              nome: corretor.name,
+              telefone: corretor.telefone || undefined,
+              email: corretor.email,
+            },
+            lead: {
+              id: leadCriado.id,
+              nome: leadCriado.nome,
+              telefone: leadCriado.telefone,
+              email: leadCriado.email || undefined,
+              status: leadCriado.status,
+              origem: leadCriado.origem,
+              projeto: projeto?.nome,
+            },
+          });
+        } catch (zapierError) {
+          console.error('[Webhook] Erro ao notificar via Zapier:', zapierError);
+        }
       }
     } catch (error) {
-      console.error('[Webhook] Erro ao notificar corretor via Zapier:', error);
+      console.error('[Webhook] Erro ao notificar corretor:', error);
     }
   }
   
@@ -2727,33 +2751,57 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     // Notificar corretor
     await notifyLeadDistribuido(corretorId, leadCriado.id, leadCriado.nome);
     
-    // Notificar corretor via Zapier (WhatsApp)
+    // Notificar corretor via Email e Zapier (WhatsApp)
     try {
       const corretor = await getUserById(corretorId);
       const projeto = leadCriado.projectId ? await getProjectById(leadCriado.projectId) : null;
       
       if (corretor) {
-        const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
-        await notificarCorretorLeadWebhook({
-          corretor: {
-            id: corretor.id,
-            nome: corretor.name,
-            telefone: corretor.telefone || undefined,
-            email: corretor.email,
-          },
-          lead: {
-            id: leadCriado.id,
-            nome: leadCriado.nome,
-            telefone: leadCriado.telefone,
-            email: leadCriado.email || undefined,
-            status: leadCriado.status,
-            origem: leadCriado.origem,
-            projeto: projeto?.nome,
-          },
-        });
+        // Enviar notificação por EMAIL
+        try {
+          const { enviarNotificacaoLeadWebhook } = await import('./emailService');
+          await enviarNotificacaoLeadWebhook({
+            corretorNome: corretor.name,
+            corretorEmail: corretor.email,
+            leadNome: leadCriado.nome,
+            leadTelefone: leadCriado.telefone,
+            leadEmail: leadCriado.email || undefined,
+            leadOrigem: leadCriado.origem,
+            leadProjeto: projeto?.nome,
+            leadCampanha: undefined,
+            leadFaixaRenda: leadCriado.faixaRenda || undefined,
+          });
+          console.log('[Webhook Foco] Notificação por email enviada para:', corretor.email);
+        } catch (emailError) {
+          console.error('[Webhook Foco] Erro ao enviar email:', emailError);
+        }
+        
+        // Enviar notificação via Zapier (WhatsApp) - se configurado
+        try {
+          const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
+          await notificarCorretorLeadWebhook({
+            corretor: {
+              id: corretor.id,
+              nome: corretor.name,
+              telefone: corretor.telefone || undefined,
+              email: corretor.email,
+            },
+            lead: {
+              id: leadCriado.id,
+              nome: leadCriado.nome,
+              telefone: leadCriado.telefone,
+              email: leadCriado.email || undefined,
+              status: leadCriado.status,
+              origem: leadCriado.origem,
+              projeto: projeto?.nome,
+            },
+          });
+        } catch (zapierError) {
+          console.error('[Webhook Foco] Erro ao notificar via Zapier:', zapierError);
+        }
       }
     } catch (error) {
-      console.error('[Webhook Foco] Erro ao notificar corretor via Zapier:', error);
+      console.error('[Webhook Foco] Erro ao notificar corretor:', error);
     }
     
     console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
