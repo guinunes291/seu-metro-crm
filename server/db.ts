@@ -3476,9 +3476,16 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
     return existente[0].id; // Já existe, retorna o ID
   }
   
-  // Criar novo follow-up para HOJE (imediatamente disponível)
+  // Criar novo follow-up
+  // REGRA NORMAL: +1 dia (dar tempo para primeiro contato)
+  // EXCEÇÃO: 12/01/2026 criar para HOJE (permitir trabalho imediato)
   const proximaTentativa = new Date();
-  // NÃO adicionar +1 dia - criar para hoje mesmo
+  const hoje = new Date();
+  const isDataExcecao = (hoje.getFullYear() === 2026 && hoje.getMonth() === 0 && hoje.getDate() === 12);
+  
+  if (!isDataExcecao) {
+    proximaTentativa.setDate(proximaTentativa.getDate() + 1); // Normal: amanhã
+  }
   proximaTentativa.setHours(9, 0, 0, 0);
   
   const result = await db.insert(followUps).values({
@@ -3524,9 +3531,16 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       .limit(1);
     
     if (existente.length === 0) {
-      // Criar follow-up para HOJE (imediatamente disponível)
+      // Criar follow-up
+      // REGRA NORMAL: +1 dia (dar tempo para primeiro contato)
+      // EXCEÇÃO: 12/01/2026 criar para HOJE (permitir trabalho imediato)
       const proximaTentativa = new Date();
-      // NÃO adicionar +1 dia - criar para hoje mesmo
+      const hoje = new Date();
+      const isDataExcecao = (hoje.getFullYear() === 2026 && hoje.getMonth() === 0 && hoje.getDate() === 12);
+      
+      if (!isDataExcecao) {
+        proximaTentativa.setDate(proximaTentativa.getDate() + 1); // Normal: amanhã
+      }
       proximaTentativa.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({

@@ -2706,3 +2706,4 @@
 - [ ] Testar fluxo completo: Em Atendimento → 3 dias → Perdido
 
 - [x] AJUSTE: Criar follow-ups para HOJE ao invés de amanhã para aparecerem imediatamente nas Tarefas do Dia
+- [x] CORREÇÃO: Reverter para lógica +1 dia com exceção apenas para 12/01/2026
