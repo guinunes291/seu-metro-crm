@@ -2747,3 +2747,13 @@
 - [x] Criar e executar testes unitários (3 testes passando)
 - [x] Validar na interface que follow-ups aparecem corretamente
 - [x] Sistema agora mostra "1 Follow-up" para Aline (Rodrigo Carvalho)
+
+## Limpeza e Reconfiguração de Follow-ups (12/01/2026) - CONCLUÍDO ✅
+- [x] Identificar ID da Hellen (hellen.rs0710@gmail.com) - ID: 6600098
+- [x] Limpar todos os follow-ups pendentes (exceto da Hellen) - 2.871 deletados
+- [x] Criar script para gerar follow-ups para amanhã
+- [x] Buscar todos os leads "em_atendimento" de cada corretor
+- [x] Criar follow-ups para amanhã (não hoje) para cada lead - 336 criados
+- [x] Ajustar lógica de bloqueio para considerar apenas follow-ups do dia atual
+- [x] Testar que bloqueio funciona apenas com follow-ups de hoje
+- [x] Validar que follow-ups de amanhã não afetam o bloqueio de hoje

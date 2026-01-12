@@ -7107,15 +7107,14 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   // Primeiro, criar follow-ups automáticos
   await criarFollowUpsAutomaticos(corretorId);
   
-  // Buscar TODOS os follow-ups ativos que tinham proximaTentativa <= hoje
-  // Isso inclui:
-  // 1. Follow-ups ainda não trabalhados (proximaTentativa <= hoje)
-  // 2. Follow-ups já trabalhados hoje (ultimaTentativa = hoje, mas proximaTentativa pode ser amanhã)
+  // Buscar APENAS follow-ups do dia atual (hoje)
+  // Lógica de bloqueio: considerar apenas follow-ups de HOJE, não de outros dias
+  // Isso garante que o bloqueio seja diário e não acumule follow-ups de dias futuros
   
   // Estratégia: buscar follow-ups onde:
-  // - proximaTentativa <= amanhã (inclui os ainda não trabalhados)
+  // - proximaTentativa <= hoje (follow-ups agendados para hoje ou antes)
   // OU
-  // - ultimaTentativa foi hoje (inclui os já trabalhados)
+  // - ultimaTentativa foi hoje (follow-ups já trabalhados hoje)
   
   return await db.select({
     id: followUps.id,
@@ -7131,8 +7130,8 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
       or(
-        // Follow-ups ainda não trabalhados (proximaTentativa <= amanhã)
-        lte(followUps.proximaTentativa, amanha),
+        // Follow-ups agendados para hoje ou antes (proximaTentativa <= hoje)
+        lte(followUps.proximaTentativa, hoje),
         // Follow-ups já trabalhados hoje (ultimaTentativa = hoje)
         and(
           gte(followUps.ultimaTentativa, hoje),
