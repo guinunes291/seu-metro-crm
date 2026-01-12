@@ -2690,3 +2690,14 @@
 - [x] Adicionar botão "Atribuir" na visualização de cards (estava só na tabela)
 - [x] Testar atribuição de lead sem corretor para corretor específico
 - [x] Garantir estabilidade da página após ações
+
+
+## CRÍTICO: Correção Sistema de Follow-up (12/01/2026)
+- [x] Modificar lógica para criar follow-up APENAS quando lead muda para "Em Atendimento"
+- [x] Garantir que apenas leads com status "Em Atendimento" apareçam em Tarefas do Dia
+- [x] Remover follow-ups de leads em outros status (Agendado, Visita Realizada, etc)
+- [x] Implementar sistema de transferência quando corretor marca lead como "Perdido"
+- [x] Lead "Perdido" deve ser transferido para próximo corretor disponível
+- [x] Rastrear quais corretores já tentaram cada lead (campo corretoresQueTentaram)
+- [x] Quando todos os corretores marcarem como "Perdido", mover lead para lixeira
+- [x] Testar fluxo completo: Aguardando → Em Atendimento → Follow-up → Perdido → Transferência

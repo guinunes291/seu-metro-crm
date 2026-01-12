@@ -3464,6 +3464,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
   // NÃO mostra follow-ups agendados para amanhã
+  // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -3483,6 +3484,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
+      eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
       lte(followUps.proximaTentativa, hoje) // Apenas HOJE ou atrasados (não amanhã)
     ))
     .orderBy(followUps.proximaTentativa);
@@ -7032,4 +7034,83 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
         )
       )
     ));
+}
+
+
+/**
+ * Cria ou atualiza follow-up quando lead muda para "Em Atendimento"
+ * Esta é a ÚNICA forma de criar follow-ups no sistema
+ */
+export async function criarOuAtualizarFollowUp(leadId: number, corretorId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Verificar se já existe follow-up ativo para este lead
+  const existente = await db.select()
+    .from(followUps)
+    .where(and(
+      eq(followUps.leadId, leadId),
+      eq(followUps.status, "ativo")
+    ))
+    .limit(1);
+  
+  if (existente[0]) {
+    // Já existe, apenas atualizar próxima tentativa para amanhã
+    const proximaTentativa = new Date();
+    proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+    proximaTentativa.setHours(9, 0, 0, 0);
+    
+    await db.update(followUps)
+      .set({ proximaTentativa })
+      .where(eq(followUps.id, existente[0].id));
+    
+    return existente[0].id;
+  }
+  
+  // Criar novo follow-up para amanhã às 9h
+  const proximaTentativa = new Date();
+  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+  proximaTentativa.setHours(9, 0, 0, 0);
+  
+  const result = await db.insert(followUps).values({
+    leadId,
+    corretorId,
+    tentativaAtual: 0, // Começa em 0, será incrementado na primeira tentativa
+    maxTentativas: 3,
+    proximaTentativa,
+    status: "ativo",
+    historicoTentativas: "[]"
+  });
+  
+  return result[0].insertId;
+}
+
+/**
+ * Busca próximo corretor disponível que ainda não tentou este lead
+ */
+export async function getProximoCorretorDisponivel(corretoresQueTentaram: number[]) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar corretores presentes que não estão na lista de quem já tentou
+  let whereConditions;
+  if (corretoresQueTentaram.length > 0) {
+    whereConditions = and(
+      eq(users.role, 'corretor'),
+      eq(users.status, 'presente'),
+      notInArray(users.id, corretoresQueTentaram)
+    );
+  } else {
+    whereConditions = and(
+      eq(users.role, 'corretor'),
+      eq(users.status, 'presente')
+    );
+  }
+  
+  const corretoresDisponiveis = await db.select()
+    .from(users)
+    .where(whereConditions)
+    .limit(1);
+  
+  return corretoresDisponiveis[0] || null;
 }

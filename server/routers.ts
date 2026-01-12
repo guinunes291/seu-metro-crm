@@ -421,16 +421,53 @@ export const appRouter = router({
           );
         }
         
-        // Se o status for "perdido", mover para lixeira e remover do corretor
+        // Se o status mudou para "em_atendimento", criar follow-up automático para amanhã
+        if (input.data.status === 'em_atendimento' && lead.status !== 'em_atendimento') {
+          await db.criarOuAtualizarFollowUp(input.id, lead.corretorId || ctx.user.id);
+        }
+        
+        // Se o status for "perdido", tentar transferir para outro corretor
         if (input.data.status === 'perdido') {
-          await db.updateLead(input.id, {
-            ...input.data,
-            naLixeira: true,
-            dataMovidoLixeira: new Date(),
-            corretorAnteriorId: lead.corretorId, // Guardar quem era o corretor
-            corretorId: null, // Remover do corretor
-          });
-          return { success: true, movedToTrash: true };
+          // Adicionar corretor atual à lista de quem já tentou
+          const corretoresQueTentaram = lead.corretoresQueTentaram ? JSON.parse(lead.corretoresQueTentaram) : [];
+          if (lead.corretorId && !corretoresQueTentaram.includes(lead.corretorId)) {
+            corretoresQueTentaram.push(lead.corretorId);
+          }
+          
+          // Buscar próximo corretor disponível (presente e que não tentou ainda)
+          const proximoCorretor = await db.getProximoCorretorDisponivel(corretoresQueTentaram);
+          
+          if (proximoCorretor) {
+            // Transferir para próximo corretor
+            await db.updateLead(input.id, {
+              ...input.data,
+              status: 'aguardando_atendimento', // Volta para aguardando
+              corretorId: proximoCorretor.id,
+              corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
+            });
+            
+            // Registrar transferência no histórico
+            await db.createLeadHistory({
+              leadId: input.id,
+              corretorId: lead.corretorId || ctx.user.id,
+              tipo: 'outro',
+              resultado: 'outro',
+              observacoes: `Lead transferido automaticamente para ${proximoCorretor.name} após ser marcado como perdido`,
+            });
+            
+            return { success: true, transferred: true, newCorretor: proximoCorretor.name };
+          } else {
+            // Todos os corretores já tentaram, mover para lixeira
+            await db.updateLead(input.id, {
+              ...input.data,
+              naLixeira: true,
+              dataMovidoLixeira: new Date(),
+              corretorAnteriorId: lead.corretorId,
+              corretorId: null,
+              corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
+            });
+            return { success: true, movedToTrash: true };
+          }
         }
         
         await db.updateLead(input.id, input.data);
