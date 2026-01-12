@@ -3476,9 +3476,9 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
     return existente[0].id; // Já existe, retorna o ID
   }
   
-  // Criar novo follow-up
+  // Criar novo follow-up para HOJE (imediatamente disponível)
   const proximaTentativa = new Date();
-  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+  // NÃO adicionar +1 dia - criar para hoje mesmo
   proximaTentativa.setHours(9, 0, 0, 0);
   
   const result = await db.insert(followUps).values({
@@ -3524,9 +3524,9 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       .limit(1);
     
     if (existente.length === 0) {
-      // Criar follow-up para AMANHÃ (dar tempo para primeiro contato)
+      // Criar follow-up para HOJE (imediatamente disponível)
       const proximaTentativa = new Date();
-      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
+      // NÃO adicionar +1 dia - criar para hoje mesmo
       proximaTentativa.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({

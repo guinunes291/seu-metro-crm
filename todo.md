@@ -2704,3 +2704,5 @@
 - [ ] Adicionar botões "Atendeu" e "Não Atendeu" na aba
 - [ ] Implementar automação: 3/3 → Status Perdido
 - [ ] Testar fluxo completo: Em Atendimento → 3 dias → Perdido
+
+- [x] AJUSTE: Criar follow-ups para HOJE ao invés de amanhã para aparecerem imediatamente nas Tarefas do Dia
