@@ -2705,3 +2705,10 @@
 ## Ajuste: Transferência Sem Filtro de Status (12/01/2026)
 - [x] Modificar getProximoCorretorDisponivel para buscar TODOS os corretores (remover filtro de status "presente")
 - [x] Testar que leads "Perdido" são transferidos para qualquer corretor disponível
+
+## Ajuste: Follow-up no Mesmo Dia (12/01/2026)
+- [x] Modificar criarFollowUpParaLead para criar follow-up para HOJE (não amanhã)
+- [x] Modificar criarFollowUpsAutomaticos para criar follow-up para HOJE
+- [x] Atualizar getFollowUpsDoDiaExpandido para incluir follow-ups de HOJE
+- [x] Testar que lead em "Em Atendimento" aparece imediatamente em Tarefas do Dia
+- [x] Testar que corretor pode registrar "Respondeu" ou "Não Respondeu" no mesmo dia
