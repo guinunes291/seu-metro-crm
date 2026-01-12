@@ -36,6 +36,14 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
     console.log('[Webhook Facebook] form_id:', data.form_id);
     console.log('[Webhook Facebook] field_data:', JSON.stringify(data.field_data, null, 2));
     
+    // Log detalhado de todos os nomes de campos para debug
+    if (data.field_data) {
+      console.log('[Webhook Facebook] Nomes de campos recebidos:');
+      data.field_data.forEach((field: any) => {
+        console.log(`  - ${field.name} = ${field.values?.[0] || '(vazio)'}`);
+      });
+    }
+    
     // Extrair dados do field_data
     let nome = '';
     let email = '';
@@ -59,10 +67,24 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
                    fieldName === 'phone' || fieldName === 'celular' || fieldName === 'whatsapp') {
           telefone = value;
         } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
-                   fieldName === 'renda' || fieldName === 'income') {
+                   fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
+                   fieldName === 'renda' || fieldName === 'income' || 
+                   fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
+                   fieldName === 'income_range' || fieldName === 'income range' ||
+                   fieldName === 'monthly_income' || fieldName === 'monthly income' ||
+                   fieldName === 'salario' || fieldName === 'salário' ||
+                   fieldName === 'rendimento' || fieldName === 'rendimentos' ||
+                   fieldName.includes('renda') || fieldName.includes('income')) {
           faixaRenda = value;
+          console.log(`[Webhook Facebook] ✅ Faixa de renda capturada do campo "${field.name}": ${value}`);
         }
       }
+    }
+    
+    // Log final dos dados extraídos
+    console.log('[Webhook Facebook] Dados extraídos:', { nome, email, telefone, faixaRenda, formId });
+    if (!faixaRenda) {
+      console.warn('[Webhook Facebook] ⚠️ ATENÇÃO: Faixa de renda NÃO foi capturada!');
     }
     
     // Capturar form_id se disponível
@@ -161,7 +183,15 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
             email = value;
           } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
             telefone = value;
-          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || fieldName === 'renda') {
+          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+                     fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
+                     fieldName === 'renda' || fieldName === 'income' || 
+                     fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
+                     fieldName === 'income_range' || fieldName === 'income range' ||
+                     fieldName === 'monthly_income' || fieldName === 'monthly income' ||
+                     fieldName === 'salario' || fieldName === 'salário' ||
+                     fieldName === 'rendimento' || fieldName === 'rendimentos' ||
+                     fieldName.includes('renda') || fieldName.includes('income')) {
             faixaRenda = value;
           }
         }
@@ -326,7 +356,15 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
             email = value;
           } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
             telefone = value;
-          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || fieldName === 'renda') {
+          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+                     fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
+                     fieldName === 'renda' || fieldName === 'income' || 
+                     fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
+                     fieldName === 'income_range' || fieldName === 'income range' ||
+                     fieldName === 'monthly_income' || fieldName === 'monthly income' ||
+                     fieldName === 'salario' || fieldName === 'salário' ||
+                     fieldName === 'rendimento' || fieldName === 'rendimentos' ||
+                     fieldName.includes('renda') || fieldName.includes('income')) {
             faixaRenda = value;
           }
         }
@@ -536,7 +574,11 @@ router.post('/lead/:token', async (req: Request, res: Response) => {
     // Extrair campos do Facebook Lead Ads
     const campanha = body.campaign_name || body.campanha || body.Campanha || '';
     const faixaRenda = body.faixa_de_renda || body.faixaRenda || body.faixa_renda || 
-                       body['Faixa de Renda'] || body.renda || '';
+                       body['Faixa de Renda'] || body['faixa de renda'] || 
+                       body.renda || body.renda_familiar || body['renda familiar'] ||
+                       body.income || body.income_range || body['income range'] ||
+                       body.monthly_income || body['monthly income'] ||
+                       body.salario || body.salário || body.rendimento || body.rendimentos || '';
     const prefereContatoPor = body.prefere_falar_por || body.prefereContatoPor || 
                               body.preferencia_contato || body['Prefere contato por'] || '';
     const dataHoraCriacao = body.created_time || body.dataHoraCriacao || 
@@ -546,6 +588,18 @@ router.post('/lead/:token', async (req: Request, res: Response) => {
       leadNome, leadTelefone, leadEmail, 
       campanha, faixaRenda, prefereContatoPor, dataHoraCriacao 
     });
+    
+    // Log de todos os campos do body para debug
+    console.log('[Webhook Lead] Todos os campos recebidos no body:');
+    Object.keys(body).forEach(key => {
+      console.log(`  - ${key} = ${body[key]}`);
+    });
+    
+    if (!faixaRenda) {
+      console.warn('[Webhook Lead] ⚠️ ATENÇÃO: Faixa de renda NÃO foi capturada!');
+    } else {
+      console.log(`[Webhook Lead] ✅ Faixa de renda capturada: ${faixaRenda}`);
+    }
     
     // Validar - precisa ter pelo menos nome OU telefone
     if (!leadNome && !leadTelefone) {

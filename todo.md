@@ -2767,3 +2767,4 @@
 - [x] Investigar useFollowUpProgress e lógica de detecção de desbloqueio
 - [x] Adicionar flag de sessão para celebração acontecer apenas uma vez
 - [x] Testar que celebração só aparece quando realmente desbloqueia (não em toda navegação)
+- [x] Investigar e corrigir captura de faixa de renda dos leads do Facebook Ads via webhook

@@ -1,0 +1,31 @@
+{
+  "query": "\nSELECT 'Total leads Facebook:' as Metrica, COUNT(*) as Valor FROM leads WHERE origem = 'facebook'\nUNION ALL\nSELECT 'COM faixa de renda:', COUNT(*) FROM leads WHERE origem = 'facebook' AND faixaRenda IS NOT NULL AND faixaRenda != ''\nUNION ALL\nSELECT 'SEM faixa de renda:', COUNT(*) FROM leads WHERE origem = 'facebook' AND (faixaRenda IS NULL OR faixaRenda = '');\n\nSELECT id, nome, telefone, faixaRenda, campanha FROM leads WHERE origem = 'facebook' AND faixaRenda IS NOT NULL AND faixaRenda != '' LIMIT 5;\n\nSELECT id, nome, telefone, faixaRenda, campanha FROM leads WHERE origem = 'facebook' AND (faixaRenda IS NULL OR faixaRenda = '') LIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT 'Total leads Facebook:' as Metrica, COUNT(*) as Valor FROM leads WHERE origem = 'facebook'\nUNION ALL\nSELECT 'COM faixa de renda:', COUNT(*) FROM leads WHERE origem = 'facebook' AND faixaRenda IS NOT NULL AND faixaRenda != ''\nUNION ALL\nSELECT 'SEM faixa de renda:', COUNT(*) FROM leads WHERE origem = 'facebook' AND (faixaRenda IS NULL OR faixaRenda = '');\n\nSELECT id, nome, telefone, faixaRenda, campanha FROM leads WHERE origem = 'facebook' AND faixaRenda IS NOT NULL AND faixaRenda != '' LIMIT 5;\n\nSELECT id, nome, telefone, faixaRenda, campanha FROM leads WHERE origem = 'facebook' AND (faixaRenda IS NULL OR faixaRenda = '') LIMIT 5;\n",
+  "rows": [
+    {
+      "Metrica": "Total leads Facebook:",
+      "Valor": "204"
+    },
+    {
+      "Metrica": "SEM faixa de renda:",
+      "Valor": "203"
+    },
+    {
+      "Metrica": "COM faixa de renda:",
+      "Valor": "1"
+    }
+  ],
+  "messages": [
+    "id\tnome\ttelefone\tfaixaRenda\tcampanha",
+    "960003\t_TESTE_Lead_Zapier_WhatsApp\t11987654321\tR$ 5.000 - R$ 10.000\tTeste Integração Zapier",
+    "id\tnome\ttelefone\tfaixaRenda\tcampanha",
+    "60443\tRodrigo Carvalho \t11953748643\tNULL\tNULL",
+    "60444\tBrunno SOBRENOME\t11968477104\tNULL\tNULL",
+    "60849\tKarina Freitas\t11982939916\tNULL\tNULL",
+    "60850\tVeronica \t11965537026\tNULL\tNULL",
+    "61752\tJoe Cardoso\t11981281677\tNULL\tNULL"
+  ],
+  "stdout": "Metrica\tValor\nTotal leads Facebook:\t204\nSEM faixa de renda:\t203\nCOM faixa de renda:\t1\nid\tnome\ttelefone\tfaixaRenda\tcampanha\n960003\t_TESTE_Lead_Zapier_WhatsApp\t11987654321\tR$ 5.000 - R$ 10.000\tTeste Integração Zapier\nid\tnome\ttelefone\tfaixaRenda\tcampanha\n60443\tRodrigo Carvalho \t11953748643\tNULL\tNULL\n60444\tBrunno SOBRENOME\t11968477104\tNULL\tNULL\n60849\tKarina Freitas\t11982939916\tNULL\tNULL\n60850\tVeronica \t11965537026\tNULL\tNULL\n61752\tJoe Cardoso\t11981281677\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 124
+}
