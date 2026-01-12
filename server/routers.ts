@@ -2052,34 +2052,7 @@ export const appRouter = router({
         // Ordenar por percentual (maior primeiro)
         return progressos.sort((a, b) => b.percentual - a.percentual);
       }),
-    // Calcular progresso de follow-ups do dia (BLOQUEIO DESATIVADO - SEMPRE DESBLOQUEADO)
-    getProgresso: corretorProcedure
-      .query(async ({ ctx }) => {
-        const { inicioDoDiaHoje } = await import('./timezone');
-        const hoje = inicioDoDiaHoje();
-        const amanha = new Date(hoje);
-        amanha.setDate(amanha.getDate() + 1);
-        
-        // BLOQUEIO DESATIVADO: Calcular métricas apenas para exibição
-        const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
-        const total = totalFollowUps.length;
-        
-        const concluidos = totalFollowUps.filter(f => {
-          if (!f.ultimaTentativa) return false;
-          const ultimaTentativaDate = new Date(f.ultimaTentativa);
-          return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
-        }).length;
-        
-        const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-        
-        // SEMPRE RETORNAR DESBLOQUEADO=TRUE (bloqueio desativado)
-        return {
-          total,
-          concluidos,
-          percentual,
-          desbloqueado: true, // 🔓 BLOQUEIO DESATIVADO - SEMPRE DESBLOQUEADO
-        };
-      }),
+    // Procedure getProgresso removida (sistema de bloqueio deletado)
   }),
 
   // ============================================================================

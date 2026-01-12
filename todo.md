@@ -2715,3 +2715,29 @@
 - [x] Forçar desbloqueado=true para TODOS os corretores
 - [x] Remover TODAS as verificações de percentual/data/condições
 - [x] Reiniciar servidor e aplicar correção urgente
+
+
+## 📚 Documentação do Sistema de Bloqueio (12/01/2026)
+
+- [x] Analisar código do checkpoint a7e22434 (último com bloqueio ativo)
+- [x] Documentar lógica de backend (procedure getProgresso)
+- [x] Documentar componentes visuais (LockedTabOverlay, DashboardLayout, useFollowUpProgress)
+- [x] Documentar sistema de celebração (confete, som, toast)
+- [x] Criar documento técnico completo (SISTEMA_BLOQUEIO_FOLLOWUPS.md)
+- [x] Criar backup do código original (BACKUP_BLOQUEIO_getProgresso_COMPLETO.ts)
+- [x] Criar guia de restauração (COMO_RESTAURAR_BLOQUEIO.md)
+- [ ] AGUARDANDO APROVAÇÃO: Reimplementar bloqueio amanhã conforme solicitado
+
+
+## 🗑️ REMOÇÃO COMPLETA do Sistema de Bloqueio (12/01/2026 - URGENTE)
+
+- [x] Deletar arquivo LockedTabOverlay.tsx
+- [x] Deletar arquivo useFollowUpProgress.ts
+- [x] Deletar arquivo celebration.ts
+- [x] Remover todas as referências no DashboardLayout.tsx
+- [x] Remover indicador de progresso do header
+- [x] Remover badges de alerta no menu lateral
+- [x] Remover overlay de bloqueio
+- [x] Remover procedure getProgresso do backend
+- [x] Reiniciar servidor
+- [x] Sistema 100% livre de bloqueios

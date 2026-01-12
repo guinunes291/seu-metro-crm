@@ -45,8 +45,7 @@ import { Button } from "./ui/button";
 import NotificationListener from "./NotificationListener";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
-import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
-import { LockedTabOverlay } from "./LockedTabOverlay";
+// Imports de bloqueio removidos
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -234,8 +233,6 @@ function DashboardContent({
 }) {
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
-  // Sistema de bloqueio gamificado
-  const { total, concluidos, percentual, desbloqueado, showPlusOne } = useFollowUpProgress();
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isMobile = useIsMobile();
@@ -490,12 +487,6 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                               {(item as any).showBadge && <NotificationBadge />}
-                              {(item as any).showAlert && !desbloqueado && (
-                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                </span>
-                              )}
                             </div>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -540,14 +531,8 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                               {(item as any).showBadge && <NotificationBadge />}
-                              {(item as any).showAlert && !desbloqueado && (
-                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                </span>
-                              )}
                             </div>
-                            <span className={!desbloqueado && (item as any).showAlert ? "font-semibold text-red-600" : ""}>{item.label}</span>
+                            <span>{item.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -636,53 +621,13 @@ function DashboardContent({
             <PanelLeft className="h-5 w-5" />
           </SidebarTrigger>
           
-          {/* Indicador de Progresso de Follow-ups (apenas para corretores) */}
-          {isCorretor && (
-            <div className="hidden md:flex items-center gap-3 flex-1 justify-center max-w-md relative">
-              <div className="flex items-center gap-2 text-sm relative">
-                <span className="font-medium text-muted-foreground hidden lg:inline">Follow-ups:</span>
-                <span className={`font-bold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
-                  {concluidos}/{total}
-                </span>
-                <span className={`text-xs font-semibold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
-                  ({percentual}%)
-                </span>
-                
-                {/* Animação +1 */}
-                {showPlusOne && (
-                  <span 
-                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-green-600 font-bold text-lg animate-[slideUp_1.5s_ease-out_forwards] pointer-events-none"
-                    style={{
-                      animation: 'slideUp 1.5s ease-out forwards',
-                    }}
-                  >
-                    +1
-                  </span>
-                )}
-              </div>
-              <div className="flex-1 max-w-[200px]">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${desbloqueado ? 'bg-green-500' : 'bg-red-500'}`}
-                    style={{ width: `${Math.min(percentual, 100)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Indicador de progresso removido */}
           
           <ThemeToggle />
         </header>
         <main className="flex-1 overflow-auto relative">
           {children}
-          {/* Overlay de bloqueio se não atingiu 60% e não está em Tarefas do Dia (APENAS CORRETORES) */}
-          {isCorretor && !desbloqueado && location !== "/tarefas-do-dia" && (
-            <LockedTabOverlay
-              total={total}
-              concluidos={concluidos}
-              percentual={percentual}
-            />
-          )}
+          {/* Overlay de bloqueio removido */}
         </main>
         <TimezoneFooter />
       </SidebarInset>
