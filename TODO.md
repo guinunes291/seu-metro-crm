@@ -47,3 +47,9 @@
 - [x] Verificar timezone da comparação de datas (problema encontrado: new Date() vs inicioDoDiaHoje)
 - [x] Ajustar lógica para garantir desbloqueio para 12/01/2026 (usa hojeData.toISOString())
 - [ ] Testar após correção
+
+## Debug: Exceção Ainda Não Funciona (12/01/2026)
+
+- [ ] Adicionar console.log para ver valor de hojeData.toISOString()
+- [ ] Verificar se a comparação de string está correta
+- [ ] Testar com abordagem alternativa (comparar getDate/getMonth/getFullYear)

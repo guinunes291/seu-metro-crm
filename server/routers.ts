@@ -2062,11 +2062,17 @@ export const appRouter = router({
         
         // EXCEÇÃO TEMPORÁRIA: Forçar desbloqueio para 12/01/2026
         // Permite que corretores trabalhem hoje e fluxo de follow-ups inicie amanhã
-        const dataExcecao12Jan = new Date('2026-01-12');
-        const hojeData = new Date(hoje); // Usar o 'hoje' já calculado com timezone correto
+        const hojeData = new Date(hoje);
+        const ano = hojeData.getFullYear();
+        const mes = hojeData.getMonth() + 1; // getMonth() retorna 0-11
+        const dia = hojeData.getDate();
         
-        // Comparar apenas a data (ignorar hora)
-        const isDataExcecao = hojeData.toISOString().split('T')[0] === '2026-01-12';
+        console.log(`[Desbloqueio] Verificando exceção: ${ano}-${mes}-${dia}`);
+        
+        // Comparar ano, mês e dia diretamente
+        const isDataExcecao = (ano === 2026 && mes === 1 && dia === 12);
+        
+        console.log(`[Desbloqueio] É data de exceção? ${isDataExcecao}`);
         
         if (isDataExcecao) {
           // Forçar desbloqueio para 12/01/2026
