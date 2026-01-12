@@ -29,8 +29,24 @@ export function useFollowUpProgress() {
   );
   
   // Detectar desbloqueio e celebrar
-  const previousDesbloqueado = useRef<boolean>(false);
-  const celebrationShown = useRef<boolean>(false);
+  // Usar null para indicar "primeira carga" e evitar celebração falsa
+  const previousDesbloqueado = useRef<boolean | null>(null);
+  
+  // Usar sessionStorage para persistir celebração durante toda a sessão
+  const getCelebrationKey = () => {
+    const hoje = new Date().toISOString().split('T')[0];
+    return `celebration_shown_${user?.id}_${hoje}`;
+  };
+  
+  const hasCelebrated = () => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem(getCelebrationKey()) === 'true';
+  };
+  
+  const markCelebrated = () => {
+    if (typeof window === 'undefined') return;
+    sessionStorage.setItem(getCelebrationKey(), 'true');
+  };
   
   // Detectar aumento de progresso para animação +1
   const previousConcluidos = useRef<number>(0);
@@ -40,10 +56,12 @@ export function useFollowUpProgress() {
     const desbloqueado = data?.desbloqueado ?? false;
     const concluidos = data?.concluidos ?? 0;
     
-    // Se acabou de desbloquear (passou de false para true) e ainda não celebrou
-    if (!previousDesbloqueado.current && desbloqueado && !celebrationShown.current) {
+    // Se acabou de desbloquear (passou de false para true) e ainda não celebrou HOJE
+    // Ignora primeira carga (previousDesbloqueado === null)
+    // APENAS corretores veem celebração (gestores não têm bloqueio)
+    if (isCorretor && previousDesbloqueado.current === false && desbloqueado && !hasCelebrated()) {
       celebrate();
-      celebrationShown.current = true;
+      markCelebrated();
     }
     
     // Detectar aumento de concluídos para animação +1

@@ -3591,7 +3591,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
       eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
-      lte(followUps.proximaTentativa, amanha) // Inclui todo o dia de hoje
+      lte(followUps.proximaTentativa, hoje) // APENAS follow-ups de hoje (não amanhã)
     ))
     .orderBy(followUps.proximaTentativa);
 }

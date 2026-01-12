@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, name, email FROM users WHERE email LIKE '%andrew%' OR name LIKE '%Andrew%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email FROM users WHERE email LIKE '%andrew%' OR name LIKE '%Andrew%';",
+  "rows": [
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\n4236208\tAndrew\tandrewformigoni.corretor@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 71
+}

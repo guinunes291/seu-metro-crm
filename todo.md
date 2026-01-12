@@ -2757,3 +2757,13 @@
 - [x] Ajustar lógica de bloqueio para considerar apenas follow-ups do dia atual
 - [x] Testar que bloqueio funciona apenas com follow-ups de hoje
 - [x] Validar que follow-ups de amanhã não afetam o bloqueio de hoje
+
+## Correção de Bugs Reportados (12/01/2026)
+- [x] Investigar divergência: barra superior mostra 13 follow-ups, painel mostra 21
+- [x] Identificar qual fonte de dados está correta (barra vs painel)
+- [x] Corrigir lógica de contagem para usar mesma query/função
+- [x] Garantir que ambos usem getTotalFollowUpsDoDia ou getFollowUpsDoDiaExpandido
+- [x] Corrigir animação de desbloqueio que aparece toda vez que muda de página
+- [x] Investigar useFollowUpProgress e lógica de detecção de desbloqueio
+- [x] Adicionar flag de sessão para celebração acontecer apenas uma vez
+- [x] Testar que celebração só aparece quando realmente desbloqueia (não em toda navegação)
