@@ -223,3 +223,69 @@ export function gerarMensagemConfirmacao(params: {
   
   return mensagem;
 }
+
+/**
+ * Notifica corretor via Zapier quando recebe lead do Facebook/Webhook
+ * O Zapier processa e envia WhatsApp para o corretor
+ */
+export async function notificarCorretorLeadWebhook(params: {
+  corretor: CorretorData;
+  lead: LeadData;
+}): Promise<{ success: boolean; error?: string }> {
+  const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
+  
+  if (!zapierUrl) {
+    console.log('[Zapier] ZAPIER_WEBHOOK_URL não configurada - notificação ignorada');
+    return { success: false, error: 'URL não configurada' };
+  }
+
+  const payload: WebhookPayload = {
+    evento: 'lead_criado',
+    timestamp: new Date().toISOString(),
+    lead: params.lead,
+    corretor: params.corretor,
+    metadata: {
+      tipo: 'notificacao_corretor',
+      origem_webhook: true,
+    },
+  };
+
+  console.log('[Zapier] Notificando corretor sobre novo lead:', {
+    corretor: params.corretor.nome,
+    lead: params.lead.nome,
+    origem: params.lead.origem,
+  });
+
+  return await enviarWebhookZapier(zapierUrl, payload);
+}
+
+/**
+ * Gera mensagem de notificação de novo lead para o corretor
+ */
+export function gerarMensagemNovoLead(params: {
+  nomeCorretor: string;
+  nomeLead: string;
+  telefoneLead: string;
+  origemLead: string;
+  projetoLead?: string;
+  faixaRenda?: string;
+}): string {
+  let mensagem = `🚨 *NOVO LEAD RECEBIDO!* 🚨\n\n`;
+  mensagem += `Olá ${params.nomeCorretor}! Você recebeu um novo lead via ${params.origemLead}.\n\n`;
+  mensagem += `👤 *Cliente:* ${params.nomeLead}\n`;
+  mensagem += `📱 *Telefone:* ${params.telefoneLead}\n`;
+  
+  if (params.projetoLead) {
+    mensagem += `🏠 *Interesse:* ${params.projetoLead}\n`;
+  }
+  
+  if (params.faixaRenda) {
+    mensagem += `💰 *Renda:* ${params.faixaRenda}\n`;
+  }
+  
+  mensagem += `\n⏰ *ATENÇÃO:* Entre em contato o mais rápido possível!\n`;
+  mensagem += `\nAcesse o sistema para ver mais detalhes e registrar o atendimento.\n`;
+  mensagem += `\n_Seu Metro Quadrado - Sistema CRM_ 🏡`;
+  
+  return mensagem;
+}

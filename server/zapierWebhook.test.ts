@@ -95,6 +95,71 @@ describe('Zapier Webhook', () => {
     });
   });
 
+  describe('notificarCorretorLeadWebhook', () => {
+    it('deve enviar notificação de lead com sucesso quando URL está configurada', async () => {
+      const webhookUrl = process.env.ZAPIER_WEBHOOK_URL;
+      
+      if (!webhookUrl) {
+        console.log('ZAPIER_WEBHOOK_URL não configurada, pulando teste');
+        return;
+      }
+
+      const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
+      
+      const resultado = await notificarCorretorLeadWebhook({
+        corretor: {
+          id: 1,
+          nome: '_TESTE_Corretor',
+          telefone: '11999999999',
+          email: 'corretor@teste.com',
+        },
+        lead: {
+          id: 999999,
+          nome: '_TESTE_Lead_Zapier',
+          telefone: '11988888888',
+          email: 'lead@teste.com',
+          status: 'aguardando_atendimento',
+          origem: 'facebook',
+          projeto: 'TESTE - Ignorar',
+        },
+      });
+
+      expect(resultado.success).toBe(true);
+    });
+
+    it('deve retornar erro quando URL não está configurada', async () => {
+      // Salvar URL original
+      const originalUrl = process.env.ZAPIER_WEBHOOK_URL;
+      
+      // Remover temporariamente
+      delete process.env.ZAPIER_WEBHOOK_URL;
+
+      const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
+      
+      const resultado = await notificarCorretorLeadWebhook({
+        corretor: {
+          id: 1,
+          nome: 'Corretor Teste',
+          email: 'corretor@teste.com',
+        },
+        lead: {
+          id: 1,
+          nome: 'Lead Teste',
+          telefone: '11999999999',
+          origem: 'facebook',
+        },
+      });
+
+      expect(resultado.success).toBe(false);
+      expect(resultado.error).toBe('URL não configurada');
+      
+      // Restaurar URL
+      if (originalUrl) {
+        process.env.ZAPIER_WEBHOOK_URL = originalUrl;
+      }
+    });
+  });
+
   describe('enviarWebhookZapier', () => {
     it('deve retornar erro se URL não estiver configurada', async () => {
       const payload: WebhookPayload = {
