@@ -18,3 +18,17 @@
 - [x] Investigar inconsistência entre query de bloqueio e query de tarefas do dia
 - [x] Sincronizar lógica de contagem de follow-ups pendentes
 - [x] Implementada limpeza automática de follow-ups órfãos (leads que saíram de "em_atendimento")
+
+## Verificação Solicitada (12/01/2026)
+
+- [ ] Verificar se página Tarefas do Dia busca corretamente leads "Em Atendimento"
+- [ ] Confirmar que follow-ups são criados automaticamente para leads "Em Atendimento"
+- [ ] Validar que corretor vê esses leads na aba Tarefas do Dia
+- [ ] Testar fluxo: Lead → Em Atendimento → Aparece em Tarefas do Dia
+
+## Exceção Temporária (12/01/2026)
+
+- [x] Adicionar exceção de desbloqueio para 12/01/2026
+- [x] Forçar sistema desbloqueado para permitir trabalho dos corretores
+- [x] Fluxo de follow-ups iniciará normalmente amanhã (13/01/2026)
+- [x] Exceção expira automaticamente à meia-noite de 13/01/2026

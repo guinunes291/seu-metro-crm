@@ -2060,6 +2060,31 @@ export const appRouter = router({
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
+        // EXCEÇÃO TEMPORÁRIA: Forçar desbloqueio para 12/01/2026
+        // Permite que corretores trabalhem hoje e fluxo de follow-ups inicie amanhã
+        const dataExcecao = new Date('2026-01-12T00:00:00-03:00'); // 12/01/2026 em São Paulo
+        const fimDataExcecao = new Date('2026-01-13T00:00:00-03:00'); // 13/01/2026 00:00
+        const agora = new Date();
+        
+        if (agora >= dataExcecao && agora < fimDataExcecao) {
+          // Forçar desbloqueio para 12/01/2026
+          const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
+          const total = totalFollowUps.length;
+          const concluidos = totalFollowUps.filter(f => {
+            if (!f.ultimaTentativa) return false;
+            const ultimaTentativaDate = new Date(f.ultimaTentativa);
+            return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
+          }).length;
+          const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
+          
+          return {
+            total,
+            concluidos,
+            percentual,
+            desbloqueado: true, // Forçar desbloqueado para 12/01/2026
+          };
+        }
+        
         // Verificar se já desbloqueou hoje (persistência de desbloqueio)
         const usuario = await db.getUserById(ctx.user.id);
         const ultimoDesbloqueio = usuario?.ultimoDesbloqueio;
