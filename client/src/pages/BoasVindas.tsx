@@ -95,7 +95,7 @@ export default function BoasVindas() {
         "Preencha nome, telefone, email e projeto de interesse",
         "A origem já vem selecionada como 'Captação Própria'",
         "Leads de captação própria NUNCA são transferidos para outros corretores",
-        "Esses leads ficam com você mesmo após 5 tentativas de follow-up sem resposta"
+        "Esses leads ficam com você mesmo após 3 tentativas de follow-up sem resposta"
       ],
       important: "🎯 REGRA: Leads de Captação Própria são seus para sempre!"
     },
@@ -135,12 +135,12 @@ export default function BoasVindas() {
       color: "bg-red-500",
       steps: [
         "Veja todos os leads que precisam de follow-up hoje",
-        "Cada lead tem um contador de tentativas (1/5 até 5/5)",
+        "Cada lead tem um contador de tentativas (1/3 até 3/3)",
         "Ao registrar contato, responda: 'Cliente respondeu? Sim ou Não'",
         "Se SIM: contador reseta e lead sai das tarefas do dia",
-        "Se NÃO: contador avança (2/5, 3/5...) e você tenta novamente amanhã"
+        "Se NÃO: contador avança (2/3, 3/3) e você tenta novamente amanhã"
       ],
-      important: "⚠️ REGRA: Após 5 tentativas sem resposta, o lead é transferido para outro corretor automaticamente!"
+      important: "⚠️ REGRA: Após 3 tentativas sem resposta, o lead é transferido para outro corretor automaticamente!"
     },
     {
       icon: TrendingUp,
@@ -306,13 +306,13 @@ export default function BoasVindas() {
     },
     {
       icon: RefreshCw,
-      title: "Sistema de Follow-up (5 Tentativas)",
-      description: "Cada lead tem direito a 5 tentativas de contato",
+      title: "Sistema de Follow-up (3 Tentativas)",
+      description: "Cada lead tem direito a 3 tentativas de contato",
       rules: [
-        "Tentativa 1/5 até 5/5 - você tenta contatar o cliente",
+        "Tentativa 1/3 até 3/3 - você tenta contatar o cliente",
         "Se o cliente RESPONDER: contador reseta e você continua o atendimento",
-        "Se o cliente NÃO RESPONDER após 5 tentativas: lead é transferido automaticamente",
-        "Novo corretor recebe o lead e começa 1/5 novamente"
+        "Se o cliente NÃO RESPONDER após 3 tentativas: lead é transferido automaticamente",
+        "Novo corretor recebe o lead e começa 1/3 novamente"
       ],
       color: "bg-blue-100 border-blue-300 text-blue-800"
     },
@@ -322,7 +322,7 @@ export default function BoasVindas() {
       description: "Leads cadastrados por você com origem 'Captação Própria'",
       rules: [
         "Leads de captação própria NUNCA são transferidos",
-        "Mesmo após 5/5 tentativas, o lead continua com você",
+        "Mesmo após 3/3 tentativas, o lead continua com você",
         "Ao cadastrar um lead, selecione 'Captação Própria' como origem",
         "Essa regra protege os leads que você mesmo captou"
       ],
@@ -333,9 +333,9 @@ export default function BoasVindas() {
       title: "Transferência Automática",
       description: "Como funciona a transferência de leads entre corretores",
       rules: [
-        "Após 5/5 tentativas sem resposta → lead vai para outro corretor",
+        "Após 3/3 tentativas sem resposta → lead vai para outro corretor",
         "O sistema escolhe um corretor que ainda não tentou esse lead",
-        "O novo corretor começa do 1/5 novamente",
+        "O novo corretor começa do 1/3 novamente",
         "Leads de 'Captação Própria' são exceção e não são transferidos"
       ],
       color: "bg-purple-100 border-purple-300 text-purple-800"
@@ -345,8 +345,8 @@ export default function BoasVindas() {
       title: "Lixeira (Leads Perdidos)",
       description: "Quando um lead vai para a lixeira",
       rules: [
-        "Lead só vai para lixeira quando TODOS os corretores completarem 5/5",
-        "Ou seja, todos tentaram 5x e ninguém conseguiu contato",
+        "Lead só vai para lixeira quando TODOS os corretores completarem 3/3",
+        "Ou seja, todos tentaram 3x e ninguém conseguiu contato",
         "Leads na lixeira podem ser recuperados pelo gestor",
         "Motivo é registrado automaticamente no histórico"
       ],

@@ -2690,3 +2690,17 @@
 - [x] Adicionar botão "Atribuir" na visualização de cards (estava só na tabela)
 - [x] Testar atribuição de lead sem corretor para corretor específico
 - [x] Garantir estabilidade da página após ações
+
+## Feature: Sistema de Follow-Up Automático (10/01/2026)
+
+- [ ] Adicionar campo `followupsPendentes` (0-3) no schema de leads
+- [ ] Adicionar campo `proximoFollowup` (data) no schema de leads
+- [ ] Migrar banco de dados com novos campos
+- [ ] Criar job diário que identifica leads "Em Atendimento" para follow-up
+- [ ] Implementar lógica de incremento de contador (0→1→2→3)
+- [ ] Implementar lógica de reset de contador ao registrar atividade
+- [ ] Criar aba "Tarefas do Dia" no menu de Leads
+- [ ] Implementar filtro de leads com follow-up para hoje
+- [ ] Adicionar botões "Atendeu" e "Não Atendeu" na aba
+- [ ] Implementar automação: 3/3 → Status Perdido
+- [ ] Testar fluxo completo: Em Atendimento → 3 dias → Perdido

@@ -237,6 +237,7 @@ export const leads = mysqlTable("leads", {
   // Follow-up
   proximoFollowup: timestamp("proximoFollowup"),
   diasFollowupConsecutivos: int("diasFollowupConsecutivos").default(0).notNull(),
+  followupsPendentes: int("followupsPendentes").default(0).notNull(), // Contador 0-3 para "Não Atendeu"
   ultimoContato: timestamp("ultimoContato"),
   
   // Observações
