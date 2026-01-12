@@ -3503,20 +3503,19 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
 
 /**
  * Cria follow-ups automáticos para leads que precisam de acompanhamento
- * Leads em status "novo", "aguardando_atendimento" ou "em_atendimento" sem follow-up ativo
+ * APENAS leads em status "em_atendimento" devem ter follow-ups
  */
 export async function criarFollowUpsAutomaticos(corretorId: number) {
   const db = await getDb();
   if (!db) return { criados: 0 };
   
   // Buscar leads do corretor que precisam de follow-up
-  // APENAS leads em status inicial (novo, aguardando_atendimento, em_atendimento)
-  // EXCLUIR leads em "agendado" ou fases posteriores para evitar envio para lixeira
+  // APENAS leads em status "em_atendimento"
   const leadsDoCorretor = await db.select()
     .from(leads)
     .where(and(
       eq(leads.corretorId, corretorId),
-      sql`${leads.status} IN ('novo', 'aguardando_atendimento', 'em_atendimento')`
+      eq(leads.status, "em_atendimento")
     ));
   
   let criados = 0;
@@ -3532,8 +3531,9 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       .limit(1);
     
     if (existente.length === 0) {
-      // Criar follow-up para HOJE (corretor registra resultado ao final do dia)
-      const proximaTentativa = new Date();
+      // Criar follow-up para HOJE usando timezone de São Paulo
+      const { inicioDoDiaHoje } = await import('./timezone');
+      const proximaTentativa = inicioDoDiaHoje();
       proximaTentativa.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({
@@ -3570,8 +3570,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   amanha.setDate(amanha.getDate() + 1);
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
-  // Mostra follow-ups de leads que precisam de contato hoje
-  // Inclui leads em "em_atendimento" E "aguardando_atendimento" (para não perder follow-ups)
+  // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -3591,12 +3590,8 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
-      // Aceita leads em atendimento OU aguardando atendimento (para não perder follow-ups)
-      or(
-        eq(leads.status, "em_atendimento"),
-        eq(leads.status, "aguardando_atendimento")
-      ),
-      lte(followUps.proximaTentativa, amanha) // Inclui até o fim de hoje
+      eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
+      lte(followUps.proximaTentativa, amanha) // Inclui todo o dia de hoje
     ))
     .orderBy(followUps.proximaTentativa);
 }

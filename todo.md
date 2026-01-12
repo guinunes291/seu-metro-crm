@@ -2739,9 +2739,11 @@
 
 ## Correção: Follow-ups não aparecem para Aline (12/01/2026) - CONCLUÍDO ✅
 - [x] Investigar dados de follow-ups da Aline no banco de dados
-- [x] Identificar que leads estavam com status "aguardando_atendimento" ao invés de "em_atendimento"
-- [x] Corrigir função getFollowUpsDoDiaExpandido para aceitar ambos os status
-- [x] Alterar filtro de proximaTentativa de <= hoje para <= amanhã
-- [x] Criar e executar testes unitários (2 testes passando)
+- [x] Identificar problema: follow-ups existiam mas para leads com status errado
+- [x] Corrigir função criarFollowUpsAutomaticos para criar APENAS para leads "em_atendimento"
+- [x] Manter filtro em getFollowUpsDoDiaExpandido para APENAS leads "em_atendimento"
+- [x] Alterar filtro de proximaTentativa de <= hoje para <= amanhã (inclui todo o dia)
+- [x] Criar follow-ups para todos os 73 leads "em_atendimento" da Aline
+- [x] Criar e executar testes unitários (3 testes passando)
 - [x] Validar na interface que follow-ups aparecem corretamente
-- [x] Confirmar que contador mostra 187 follow-ups totais
+- [x] Sistema agora mostra "1 Follow-up" para Aline (Rodrigo Carvalho)
