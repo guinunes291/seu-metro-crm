@@ -3283,7 +3283,7 @@ export async function registrarTentativaFollowUp(
   }
   
   if (atual.tentativaAtual >= atual.maxTentativas) {
-    // Atingiu máximo de tentativas (3/3) - verificar se deve transferir ou mover para lixeira
+    // Atingiu máximo de tentativas (5/5) - mover lead para Perdido e Lixeira
     await db.update(followUps)
       .set({
         status: "encerrado",
@@ -3297,133 +3297,32 @@ export async function registrarTentativaFollowUp(
     const leadData = await db.select().from(leads).where(eq(leads.id, atual.leadId)).limit(1);
     if (!leadData[0]) throw new Error("Lead não encontrado");
     
-    const lead = leadData[0];
+    // Mover lead para status Perdido e Lixeira (independente da origem)
+    await db.update(leads)
+      .set({
+        status: "perdido",
+        naLixeira: true,
+        dataMovidoLixeira: agora,
+        motivoPerdido: "Sem resposta após 5 tentativas de follow-up",
+        updatedAt: agora
+      })
+      .where(eq(leads.id, atual.leadId));
     
-    // Se for captação própria, NÃO transfere - apenas reseta contador
-    if (lead.origem === 'captacao_corretor') {
-      // Criar novo follow-up para amanhã (reseta o ciclo)
-      const proximaTentativa = new Date(agora);
-      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-      proximaTentativa.setHours(9, 0, 0, 0);
-      
-      await db.insert(followUps).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tentativaAtual: 0,
-        maxTentativas: 3,
-        proximaTentativa,
-        status: "ativo",
-        historicoTentativas: "[]"
-      });
-      
-      return { 
-        status: "resetado", 
-        mensagem: "Lead de Captação Própria - contador resetado. Você continua com este lead." 
-      };
-    }
+    // Registrar interação no histórico
+    await db.insert(leadHistory).values({
+      leadId: atual.leadId,
+      corretorId: atual.corretorId,
+      tipo: "outro",
+      resultado: "outro",
+      observacoes: `Lead movido para Perdido/Lixeira após 5 tentativas de follow-up sem resposta`,
+      statusAnterior: leadData[0].status,
+      statusNovo: "perdido"
+    });
     
-    // Parsear lista de corretores que já tentaram
-    let corretoresJaTentaram: number[] = [];
-    try {
-      corretoresJaTentaram = lead.corretoresQueTentaram ? JSON.parse(lead.corretoresQueTentaram) : [];
-    } catch (e) {
-      corretoresJaTentaram = [];
-    }
-    
-    // Adicionar corretor atual à lista
-    if (!corretoresJaTentaram.includes(atual.corretorId)) {
-      corretoresJaTentaram.push(atual.corretorId);
-    }
-    
-    // Buscar outros corretores disponíveis (presentes e que ainda não tentaram)
-    const todosCorretores = await db.select()
-      .from(users)
-      .where(and(
-        inArray(users.role, ['corretor', 'gestor']),
-        eq(users.status, 'presente')
-      ));
-    
-    // Filtrar corretores que ainda não tentaram
-    const corretoresDisponiveis = todosCorretores.filter(
-      c => !corretoresJaTentaram.includes(c.id)
-    );
-    
-    if (corretoresDisponiveis.length > 0) {
-      // TRANSFERIR para outro corretor
-      const novoCorretor = corretoresDisponiveis[0];
-      
-      // Atualizar lead com novo corretor
-      await db.update(leads)
-        .set({
-          corretorId: novoCorretor.id,
-          corretorAnteriorId: atual.corretorId,
-          corretoresQueTentaram: JSON.stringify(corretoresJaTentaram),
-          diasFollowupConsecutivos: 0,
-          updatedAt: agora
-        })
-        .where(eq(leads.id, atual.leadId));
-      
-      // Criar novo follow-up para o novo corretor (começa 1/3)
-      const proximaTentativa = new Date(agora);
-      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-      proximaTentativa.setHours(9, 0, 0, 0);
-      
-      await db.insert(followUps).values({
-        leadId: atual.leadId,
-        corretorId: novoCorretor.id,
-        tentativaAtual: 0,
-        maxTentativas: 3,
-        proximaTentativa,
-        status: "ativo",
-        historicoTentativas: "[]"
-      });
-      
-      // Registrar transferência no histórico
-      await db.insert(leadHistory).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tipo: "outro",
-        resultado: "outro",
-        observacoes: `Lead transferido para ${novoCorretor.name} após 3 tentativas sem resposta`,
-        statusAnterior: lead.status,
-        statusNovo: lead.status
-      });
-      
-      return { 
-        status: "transferido", 
-        mensagem: `Lead transferido para ${novoCorretor.name}. Você completou suas 3 tentativas.`,
-        novoCorretor: novoCorretor.name
-      };
-    } else {
-      // TODOS os corretores já tentaram - mover para lixeira
-      await db.update(leads)
-        .set({
-          status: "perdido",
-          naLixeira: true,
-          dataMovidoLixeira: agora,
-          motivoPerdido: "Sem resposta após todos os corretores tentarem 3x",
-          corretoresQueTentaram: JSON.stringify(corretoresJaTentaram),
-          corretorId: null, // Desvincular corretor
-          updatedAt: agora
-        })
-        .where(eq(leads.id, atual.leadId));
-      
-      // Registrar no histórico
-      await db.insert(leadHistory).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        tipo: "outro",
-        resultado: "outro",
-        observacoes: `Lead movido para Lixeira após todos os ${corretoresJaTentaram.length} corretores tentarem 3x`,
-        statusAnterior: lead.status,
-        statusNovo: "perdido"
-      });
-      
-      return { 
-        status: "perdido", 
-        mensagem: `Lead movido para Lixeira. Todos os ${corretoresJaTentaram.length} corretores já tentaram 3x.` 
-      };
-    }
+    return { 
+      status: "perdido", 
+      mensagem: "Lead movido para Perdido e Lixeira após 5 tentativas sem resposta." 
+    };
   }
   
   // Agendar próxima tentativa para amanhã
@@ -3477,15 +3376,8 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
   }
   
   // Criar novo follow-up
-  // REGRA NORMAL: +1 dia (dar tempo para primeiro contato)
-  // EXCEÇÃO: 12/01/2026 criar para HOJE (permitir trabalho imediato)
   const proximaTentativa = new Date();
-  const hoje = new Date();
-  const isDataExcecao = (hoje.getFullYear() === 2026 && hoje.getMonth() === 0 && hoje.getDate() === 12);
-  
-  if (!isDataExcecao) {
-    proximaTentativa.setDate(proximaTentativa.getDate() + 1); // Normal: amanhã
-  }
+  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
   proximaTentativa.setHours(9, 0, 0, 0);
   
   const result = await db.insert(followUps).values({
@@ -3510,12 +3402,13 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
   if (!db) return { criados: 0 };
   
   // Buscar leads do corretor que precisam de follow-up
-  // APENAS leads em status "em_atendimento" (leads que o corretor já iniciou o atendimento)
+  // APENAS leads em status inicial (novo, aguardando_atendimento, em_atendimento)
+  // EXCLUIR leads em "agendado" ou fases posteriores para evitar envio para lixeira
   const leadsDoCorretor = await db.select()
     .from(leads)
     .where(and(
       eq(leads.corretorId, corretorId),
-      eq(leads.status, 'em_atendimento')
+      sql`${leads.status} IN ('novo', 'aguardando_atendimento', 'em_atendimento')`
     ));
   
   let criados = 0;
@@ -3531,16 +3424,9 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       .limit(1);
     
     if (existente.length === 0) {
-      // Criar follow-up
-      // REGRA NORMAL: +1 dia (dar tempo para primeiro contato)
-      // EXCEÇÃO: 12/01/2026 criar para HOJE (permitir trabalho imediato)
+      // Criar follow-up para AMANHÃ (dar tempo para primeiro contato)
       const proximaTentativa = new Date();
-      const hoje = new Date();
-      const isDataExcecao = (hoje.getFullYear() === 2026 && hoje.getMonth() === 0 && hoje.getDate() === 12);
-      
-      if (!isDataExcecao) {
-        proximaTentativa.setDate(proximaTentativa.getDate() + 1); // Normal: amanhã
-      }
+      proximaTentativa.setDate(proximaTentativa.getDate() + 1);
       proximaTentativa.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({
@@ -7111,36 +6997,6 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   
   // Primeiro, criar follow-ups automáticos
   await criarFollowUpsAutomaticos(corretorId);
-  
-  // Limpar follow-ups órfãos (leads que saíram de "em_atendimento")
-  // Buscar follow-ups ativos do corretor
-  const followUpsAtivos = await db.select({
-    id: followUps.id,
-    leadId: followUps.leadId
-  })
-    .from(followUps)
-    .where(and(
-      eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "ativo")
-    ));
-  
-  // Para cada follow-up, verificar se o lead ainda está em "em_atendimento"
-  for (const followUp of followUpsAtivos) {
-    const leadData = await db.select({ status: leads.status })
-      .from(leads)
-      .where(eq(leads.id, followUp.leadId))
-      .limit(1);
-    
-    // Se lead não está mais em "em_atendimento", encerrar follow-up
-    if (leadData[0] && leadData[0].status !== 'em_atendimento') {
-      await db.update(followUps)
-        .set({ 
-          status: "encerrado",
-          updatedAt: new Date()
-        })
-        .where(eq(followUps.id, followUp.id));
-    }
-  }
   
   // Buscar TODOS os follow-ups ativos que tinham proximaTentativa <= hoje
   // Isso inclui:
