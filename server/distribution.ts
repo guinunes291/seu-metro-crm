@@ -457,10 +457,12 @@ async function distribuirLeadsEmLoteParaElegiveis(
       // Avançar para o próximo corretor (round-robin)
       corretorIndex = (corretorIndex + 1) % corretoresElegiveis.length;
     } catch (error) {
+      console.error(`[Distribuição] Erro ao distribuir lead ${leadId}:`, error);
+      console.error(`[Distribuição] Stack trace:`, error instanceof Error ? error.stack : 'N/A');
       results.details.push({
         leadId,
         success: false,
-        message: `Erro ao distribuir: ${error}`,
+        message: `Erro ao distribuir: ${error instanceof Error ? error.message : String(error)}`,
       });
       results.failed++;
     }
