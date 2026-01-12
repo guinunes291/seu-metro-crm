@@ -1,0 +1,17 @@
+{
+  "query": "SELECT * FROM system_config LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT * FROM system_config LIMIT 1;",
+  "rows": [
+    {
+      "id": "1",
+      "bloqueio_followup_ativo": "0",
+      "percentual_minimo_desbloqueio": "60",
+      "createdAt": "2026-01-12 13:26:01",
+      "updatedAt": "2026-01-12 13:26:01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbloqueio_followup_ativo\tpercentual_minimo_desbloqueio\tcreatedAt\tupdatedAt\n1\t0\t60\t2026-01-12 13:26:01\t2026-01-12 13:26:01\n",
+  "stderr": "",
+  "execution_time_ms": 114
+}

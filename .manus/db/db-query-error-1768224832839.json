@@ -1,0 +1,8 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS system_config (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  bloqueioFollowUpAtivo BOOLEAN NOT NULL DEFAULT FALSE,\n  percentualMinimoDesbloqueio INT NOT NULL DEFAULT 60,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\nINSERT INTO system_config (bloqueioFollowUpAtivo, percentualMinimoDesbloqueio) \nVALUES (FALSE, 60);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS system_config (\n  id INT PRIMARY KEY AUTO_INCREMENT,\n  bloqueioFollowUpAtivo BOOLEAN NOT NULL DEFAULT FALSE,\n  percentualMinimoDesbloqueio INT NOT NULL DEFAULT 60,\n  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\nINSERT INTO system_config (bloqueioFollowUpAtivo, percentualMinimoDesbloqueio) \nVALUES (FALSE, 60);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 9: Unknown column 'bloqueioFollowUpAtivo' in 'field list'"
+  ]
+}
