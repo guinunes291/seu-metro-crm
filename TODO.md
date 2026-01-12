@@ -11,3 +11,10 @@
 - [x] Mover para lixeira apenas quando todos os corretores tentarem 3x
 - [x] Leads de Captação Própria resetam contador ao invés de transferir
 - [ ] Testar fluxo completo: Em Atendimento → 3 tentativas → Transfere → 3 tentativas → Lixeira
+
+## Bug Reportado (12/01/2026)
+
+- [x] Corrigir bloqueio de Kanban mostrando "Complete seus Follow-ups" quando contador está 0/0
+- [x] Investigar inconsistência entre query de bloqueio e query de tarefas do dia
+- [x] Sincronizar lógica de contagem de follow-ups pendentes
+- [x] Implementada limpeza automática de follow-ups órfãos (leads que saíram de "em_atendimento")

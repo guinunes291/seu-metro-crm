@@ -7098,6 +7098,36 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   // Primeiro, criar follow-ups automáticos
   await criarFollowUpsAutomaticos(corretorId);
   
+  // Limpar follow-ups órfãos (leads que saíram de "em_atendimento")
+  // Buscar follow-ups ativos do corretor
+  const followUpsAtivos = await db.select({
+    id: followUps.id,
+    leadId: followUps.leadId
+  })
+    .from(followUps)
+    .where(and(
+      eq(followUps.corretorId, corretorId),
+      eq(followUps.status, "ativo")
+    ));
+  
+  // Para cada follow-up, verificar se o lead ainda está em "em_atendimento"
+  for (const followUp of followUpsAtivos) {
+    const leadData = await db.select({ status: leads.status })
+      .from(leads)
+      .where(eq(leads.id, followUp.leadId))
+      .limit(1);
+    
+    // Se lead não está mais em "em_atendimento", encerrar follow-up
+    if (leadData[0] && leadData[0].status !== 'em_atendimento') {
+      await db.update(followUps)
+        .set({ 
+          status: "encerrado",
+          updatedAt: new Date()
+        })
+        .where(eq(followUps.id, followUp.id));
+    }
+  }
+  
   // Buscar TODOS os follow-ups ativos que tinham proximaTentativa <= hoje
   // Isso inclui:
   // 1. Follow-ups ainda não trabalhados (proximaTentativa <= hoje)
