@@ -40,3 +40,10 @@
 - [x] Enviar apenas para leads de origem webhook (verifica origemWebhook = true)
 - [x] Incluir dados: nome corretor, telefone, dados do lead, projeto, campanha
 - [x] Documentar configuração do Zap (Webhook → WhatsApp) - Ver ZAPIER_WHATSAPP_SETUP.md
+
+## Bug: Exceção de Desbloqueio não Funcionando (12/01/2026)
+
+- [x] Investigar por que exceção temporária não está desbloqueando o sistema
+- [x] Verificar timezone da comparação de datas (problema encontrado: new Date() vs inicioDoDiaHoje)
+- [x] Ajustar lógica para garantir desbloqueio para 12/01/2026 (usa hojeData.toISOString())
+- [ ] Testar após correção

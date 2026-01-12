@@ -2062,11 +2062,13 @@ export const appRouter = router({
         
         // EXCEÇÃO TEMPORÁRIA: Forçar desbloqueio para 12/01/2026
         // Permite que corretores trabalhem hoje e fluxo de follow-ups inicie amanhã
-        const dataExcecao = new Date('2026-01-12T00:00:00-03:00'); // 12/01/2026 em São Paulo
-        const fimDataExcecao = new Date('2026-01-13T00:00:00-03:00'); // 13/01/2026 00:00
-        const agora = new Date();
+        const dataExcecao12Jan = new Date('2026-01-12');
+        const hojeData = new Date(hoje); // Usar o 'hoje' já calculado com timezone correto
         
-        if (agora >= dataExcecao && agora < fimDataExcecao) {
+        // Comparar apenas a data (ignorar hora)
+        const isDataExcecao = hojeData.toISOString().split('T')[0] === '2026-01-12';
+        
+        if (isDataExcecao) {
           // Forçar desbloqueio para 12/01/2026
           const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
           const total = totalFollowUps.length;
