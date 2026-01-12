@@ -1535,7 +1535,7 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
   projetoId: int("projetoId"), // NULL = nenhum projeto foco ativo
   
   // Corretores na fila do projeto foco (JSON array de IDs)
-  corretoresIds: json("corretoresIds").$type<number[]>(),
+  corretoresIds: text("corretoresIds"), // Armazenar JSON como TEXT para compatibilidade TiDB
   
   // Posição atual na fila foco (para round-robin)
   posicaoAtual: int("posicaoAtual").default(0).notNull(),
@@ -1552,3 +1552,30 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
 
 export type ConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferSelect;
 export type InsertConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferInsert;
+
+// ============================================================================
+// TABELA DE CONFIGURAÇÕES DO SISTEMA
+// ============================================================================
+
+/**
+ * Configurações globais do sistema
+ * Apenas o owner (dono do projeto) pode modificar
+ */
+export const systemConfig = mysqlTable("system_config", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Controle de bloqueio de follow-ups
+  // true = Sistema de gamificação ativo (60% para desbloquear)
+  // false = Sistema sempre desbloqueado (sem bloqueio)
+  bloqueioFollowUpAtivo: boolean("bloqueio_followup_ativo").default(true).notNull(),
+  
+  // Percentual mínimo para desbloquear (quando bloqueio está ativo)
+  percentualMinimoDesbloqueio: int("percentual_minimo_desbloqueio").default(60).notNull(),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SystemConfig = typeof systemConfig.$inferSelect;
+export type InsertSystemConfig = typeof systemConfig.$inferInsert;

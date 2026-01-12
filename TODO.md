@@ -53,3 +53,15 @@
 - [ ] Adicionar console.log para ver valor de hojeData.toISOString()
 - [ ] Verificar se a comparação de string está correta
 - [ ] Testar com abordagem alternativa (comparar getDate/getMonth/getFullYear)
+
+## Sistema de Controle de Bloqueio para Owner (12/01/2026)
+
+- [x] Criar tabela systemConfig no schema para armazenar configurações
+- [x] Adicionar campo bloqueioFollowUpAtivo (boolean) - Criado via SQL direto
+- [x] Criar procedures getSystemConfig e updateBloqueioFollowUp
+- [x] Modificar getProgresso para verificar se bloqueio está ativo (verificação prioritária)
+- [x] Criar página de configurações exclusiva para owner (ConfiguracoesFollowUp.tsx)
+- [x] Adicionar toggle "Sistema de Bloqueio Ativo/Inativo" com Switch
+- [x] Adicionar procedures tRPC (systemConfig.get e systemConfig.updateBloqueio)
+- [x] Adicionar rota /configuracoes-followup no App.tsx
+- [ ] Testar: Inativo → Sistema desbloqueado | Ativo → Sistema com gamificação

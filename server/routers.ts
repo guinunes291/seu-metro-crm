@@ -2060,6 +2060,28 @@ export const appRouter = router({
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
+        // VERIFICAÇÃO PRIORITÁRIA: Configuração do sistema
+        // Se o owner desativou o bloqueio, sistema sempre desbloqueado
+        const systemConfig = await db.getSystemConfig();
+        if (systemConfig && !systemConfig.bloqueioFollowUpAtivo) {
+          console.log('[Desbloqueio] Sistema configurado como sempre desbloqueado pelo owner');
+          const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
+          const total = totalFollowUps.length;
+          const concluidos = totalFollowUps.filter(f => {
+            if (!f.ultimaTentativa) return false;
+            const ultimaTentativaDate = new Date(f.ultimaTentativa);
+            return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
+          }).length;
+          const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
+          
+          return {
+            total,
+            concluidos,
+            percentual,
+            desbloqueado: true, // Forçar desbloqueado por configuração do owner
+          };
+        }
+        
         // EXCEÇÃO TEMPORÁRIA: Forçar desbloqueio para 12/01/2026
         // Permite que corretores trabalhem hoje e fluxo de follow-ups inicie amanhã
         const hojeData = new Date(hoje);
@@ -4514,7 +4536,30 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }),
   }),
 
-
-
+  // ============================================================================
+  // CONFIGURAÇÕES DO SISTEMA (APENAS OWNER)
+  // ============================================================================
+  
+  systemConfig: t.router({
+    // Buscar configuração atual
+    get: ownerProcedure
+      .query(async () => {
+        const config = await db.getSystemConfig();
+        return config || {
+          bloqueioFollowUpAtivo: true,
+          percentualMinimoDesbloqueio: 60
+        };
+      }),
+    
+    // Atualizar bloqueio de follow-ups
+    updateBloqueio: ownerProcedure
+      .input(z.object({
+        ativo: z.boolean()
+      }))
+      .mutation(async ({ input }) => {
+        await db.updateBloqueioFollowUp(input.ativo);
+        return { success: true, bloqueioFollowUpAtivo: input.ativo };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

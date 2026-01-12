@@ -7260,3 +7260,49 @@ export async function notificarCorretorViaZapier(leadId: number, corretorId: num
     return { sucesso: false, motivo: error.message };
   }
 }
+
+// ============================================================================
+// CONFIGURAÇÕES DO SISTEMA (APENAS OWNER)
+// ============================================================================
+
+/**
+ * Busca configuração do sistema
+ * Retorna sempre a primeira linha (deve ter apenas 1 registro)
+ */
+export async function getSystemConfig() {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const config = await db.select().from(systemConfig).limit(1);
+  return config[0] || null;
+}
+
+/**
+ * Atualiza configuração de bloqueio de follow-ups
+ * Apenas o owner pode chamar esta função
+ */
+export async function updateBloqueioFollowUp(ativo: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Buscar configuração existente
+  const existing = await db.select().from(systemConfig).limit(1);
+  
+  if (existing[0]) {
+    // Atualizar existente
+    await db.update(systemConfig)
+      .set({ 
+        bloqueioFollowUpAtivo: ativo,
+        updatedAt: new Date()
+      })
+      .where(eq(systemConfig.id, existing[0].id));
+  } else {
+    // Criar novo registro
+    await db.insert(systemConfig).values({
+      bloqueioFollowUpAtivo: ativo,
+      percentualMinimoDesbloqueio: 60
+    });
+  }
+  
+  return { bloqueioFollowUpAtivo: ativo };
+}
