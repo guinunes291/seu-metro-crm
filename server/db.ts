@@ -3462,7 +3462,8 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
   
-  // Buscar follow-ups com próxima tentativa para hoje OU que estão atrasados
+  // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
+  // NÃO mostra follow-ups agendados para amanhã
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -3482,7 +3483,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
-      lte(followUps.proximaTentativa, amanha) // Hoje ou atrasados
+      lte(followUps.proximaTentativa, hoje) // Apenas HOJE ou atrasados (não amanhã)
     ))
     .orderBy(followUps.proximaTentativa);
 }
