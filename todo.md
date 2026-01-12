@@ -2712,3 +2712,16 @@
 - [x] Atualizar getFollowUpsDoDiaExpandido para incluir follow-ups de HOJE
 - [x] Testar que lead em "Em Atendimento" aparece imediatamente em Tarefas do Dia
 - [x] Testar que corretor pode registrar "Respondeu" ou "Não Respondeu" no mesmo dia
+
+
+## Sistema de Controle de Desbloqueio Exclusivo para Gestor (12/01/2026)
+- [x] Criar tabela system_config no banco de dados
+- [x] Adicionar campo bloqueioAtivo (boolean, padrão false)
+- [x] Criar procedure backend para buscar configuração (apenas gestor)
+- [x] Criar procedure backend para atualizar configuração (apenas gestor)
+- [x] Criar página de controle para gestor (/controle-bloqueio)
+- [x] Adicionar toggle visual para ativar/desativar bloqueio
+- [x] Integrar verificação de bloqueio no sistema de follow-ups
+- [x] Adicionar item no menu lateral (apenas gestor)
+- [x] Testar ativação e desativação do bloqueio
+- [x] Validar que apenas gestor tem acesso ao controle

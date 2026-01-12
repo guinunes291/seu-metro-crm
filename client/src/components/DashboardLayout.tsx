@@ -35,7 +35,7 @@ import {
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
-  FileText, MessageCircle, Link2, Activity
+  FileText, MessageCircle, Link2, Activity, Lock
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -104,6 +104,7 @@ const menuGroups = [
     roles: ["gestor", "admin"],
     items: [
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin"] },
+      { icon: Lock, label: "Controle de Bloqueio", path: "/controle-bloqueio", roles: ["gestor", "admin"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin"] },
       { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
       { icon: Target, label: "Controle de Limites", path: "/controle-limites", roles: ["gestor", "admin"] },
