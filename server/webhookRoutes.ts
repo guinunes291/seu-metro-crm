@@ -66,7 +66,7 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
         } else if (fieldName === 'phone_number' || fieldName === 'telefone' || 
                    fieldName === 'phone' || fieldName === 'celular' || fieldName === 'whatsapp') {
           telefone = value;
-        } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+        } else if (field.name === 'Faixa De Renda' || fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
                    fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
                    fieldName === 'renda' || fieldName === 'income' || 
                    fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
@@ -183,7 +183,7 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
             email = value;
           } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
             telefone = value;
-          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+          } else if (field.name === 'Faixa De Renda' || fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
                      fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
                      fieldName === 'renda' || fieldName === 'income' || 
                      fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
@@ -356,7 +356,7 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
             email = value;
           } else if (fieldName === 'phone_number' || fieldName === 'telefone' || fieldName === 'phone') {
             telefone = value;
-          } else if (fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
+          } else if (field.name === 'Faixa De Renda' || fieldName === 'faixa_de_renda' || fieldName === 'faixa_renda' || 
                      fieldName === 'faixa de renda' || fieldName === 'faixaderenda' ||
                      fieldName === 'renda' || fieldName === 'income' || 
                      fieldName === 'renda_familiar' || fieldName === 'renda familiar' ||
