@@ -4454,9 +4454,9 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // CONFIGURAÇÕES DO SISTEMA (APENAS OWNER)
   // ============================================================================
   
-  systemConfig: t.router({
+  systemConfig: router({
     // Buscar configuração atual
-    get: ownerProcedure
+    get: gestorProcedure
       .query(async () => {
         const config = await db.getSystemConfig();
         return config || {
@@ -4466,7 +4466,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }),
     
     // Atualizar bloqueio de follow-ups
-    updateBloqueio: ownerProcedure
+    updateBloqueio: gestorProcedure
       .input(z.object({
         ativo: z.boolean()
       }))

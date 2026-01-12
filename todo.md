@@ -2704,3 +2704,5 @@
 - [ ] Adicionar botões "Atendeu" e "Não Atendeu" na aba
 - [ ] Implementar automação: 3/3 → Status Perdido
 - [ ] Testar fluxo completo: Em Atendimento → 3 dias → Perdido
+
+- [x] BUG CRÍTICO: Erro de build "ReferenceError: t is not defined" impedindo publicação do site
