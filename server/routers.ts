@@ -541,13 +541,16 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Corretor só pode adicionar interação aos seus leads ou leads sem corretor
-        if (ctx.user.role === 'corretor' && lead.corretorId && lead.corretorId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
-        }
-        
         // Se o lead não tem corretor, atribuir ao corretor que está registrando a interação
         if (!lead.corretorId) {
+          await db.updateLead(input.leadId, {
+            corretorId: ctx.user.id,
+          });
+        }
+        
+        // Se o lead tem corretor diferente mas está em follow-up, reatribuir ao corretor atual
+        // Isso acontece quando o lead foi transferido automaticamente
+        if (ctx.user.role === 'corretor' && lead.corretorId && lead.corretorId !== ctx.user.id) {
           await db.updateLead(input.leadId, {
             corretorId: ctx.user.id,
           });
