@@ -251,8 +251,6 @@ export const appRouter = router({
   leads: router({
     list: protectedProcedure
       .input(z.object({
-        page: z.number().optional().default(1),
-        limit: z.number().optional().default(50),
         searchTerm: z.string().optional(),
         status: z.string().optional(),
         projectId: z.number().optional(),
@@ -261,8 +259,6 @@ export const appRouter = router({
         dataFim: z.string().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
-        const page = input?.page || 1;
-        const limit = input?.limit || 50;
         const searchTerm = input?.searchTerm;
         const status = input?.status;
         const projectId = input?.projectId;
@@ -270,15 +266,12 @@ export const appRouter = router({
         const dataInicio = input?.dataInicio;
         const dataFim = input?.dataFim;
         
-        // Gestor vê todos os leads (por enquanto sem paginação, vamos adicionar depois)
+        // Gestor vê todos os leads
         if (ctx.user.role === 'gestor' || ctx.user.role === 'admin') {
-          const allLeads = await db.getAllLeads();
-          return { leads: allLeads, total: allLeads.length, page: 1, limit: allLeads.length, totalPages: 1 };
+          return await db.getAllLeads();
         }
-        // Corretor vê apenas seus leads (com paginação e filtros)
+        // Corretor vê apenas seus leads (com filtros)
         return await db.getLeadsByCorretor(ctx.user.id, { 
-          page, 
-          limit, 
           searchTerm, 
           status, 
           projectId, 

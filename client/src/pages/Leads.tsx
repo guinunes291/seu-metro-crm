@@ -88,9 +88,7 @@ const origemLabels: Record<string, string> = {
 };
 
 export default function Leads() {
-  // Estado de paginação
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(50);
+
   
   // Estados de filtros
   const [searchTerm, setSearchTerm] = useState("");
@@ -108,9 +106,7 @@ export default function Leads() {
   }, [searchTerm]);
   
   // Query com filtros server-side (usa debouncedSearch)
-  const { data: leadsData, isLoading, refetch } = trpc.leads.list.useQuery({ 
-    page: currentPage, 
-    limit: pageSize,
+  const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery({ 
     searchTerm: debouncedSearch || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     projectId: projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
@@ -118,9 +114,6 @@ export default function Leads() {
   }, {
     keepPreviousData: true, // Evita tela branca durante re-fetch
   });
-  const leads = leadsData?.leads || [];
-  const totalPages = leadsData?.totalPages || 1;
-  const totalLeads = leadsData?.total || 0;
   
   const { data: projects } = trpc.projects.list.useQuery();
   const { data: user } = trpc.auth.me.useQuery();
@@ -409,10 +402,7 @@ export default function Leads() {
     }
   };
 
-  // Resetar para página 1 quando filtros mudarem
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, projectFilter, origemFilter]);
+
   
   // Usar leads diretamente do backend (já filtrados)
   const filteredLeads = leads;
@@ -566,31 +556,7 @@ export default function Leads() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Página Atual
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {currentPage} de {totalPages}
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Leads por Página
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-muted-foreground">
-                {pageSize}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Lista de leads */}
@@ -904,57 +870,7 @@ export default function Leads() {
           </div>
         )}
 
-        {/* Controles de Paginação */}
-        {!isLoading && totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Mostrando {((currentPage - 1) * pageSize) + 1} a {Math.min(currentPage * pageSize, totalLeads)} de {totalLeads} leads
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                Anterior
-              </Button>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className="w-10"
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Próxima
-              </Button>
-            </div>
-          </div>
-        )}
+
 
         {/* Dialog de detalhes do lead */}
         <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>

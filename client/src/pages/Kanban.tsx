@@ -35,8 +35,7 @@ export default function Kanban() {
   const { user } = useAuth();
   
   // Buscar leads - corretor vê apenas seus leads, gestor vê todos
-  const { data, isLoading, refetch } = trpc.leads.list.useQuery();
-  const leads = data?.leads || [];
+  const { data: leads, isLoading, refetch } = trpc.leads.list.useQuery();
   
   // Mutation para atualizar status do lead
   const updateLead = trpc.leads.update.useMutation({
@@ -51,7 +50,7 @@ export default function Kanban() {
 
   // Agrupar leads por status
   const leadsByStatus = KANBAN_COLUMNS.reduce((acc, column) => {
-    acc[column.id] = leads.filter((lead: Lead) => lead.status === column.id);
+    acc[column.id] = (leads || []).filter((lead: Lead) => lead.status === column.id);
     return acc;
   }, {} as Record<string, Lead[]>);
 
