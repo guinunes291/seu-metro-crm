@@ -7095,8 +7095,8 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   
   // Usar timezone de São Paulo
   const { fimDoDiaHoje, inicioDoDiaHoje } = await import('./timezone');
-  const fimDeHoje = hojeParam || fimDoDiaHoje(); // 23:59:59.999 de hoje
-  const inicioDeHoje = inicioDoDiaHoje(); // 00:00:00 de hoje
+  const inicioDeHoje = hojeParam || inicioDoDiaHoje(); // 00:00:00 de hoje
+  const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje
   const amanha = amanhaParam || (() => {
     const a = new Date(fimDeHoje);
     a.setDate(a.getDate() + 1);
