@@ -227,7 +227,7 @@ describe("Distribuição Automática - Regras do AppScript", () => {
     expect(result.elegivel).toBe(true);
   });
 
-  it("deve exigir 40% de taxa de trabalho para corretor com 30+ leads", async () => {
+  it("deve exigir 90% de taxa de trabalho para corretor com 30+ leads", async () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -240,7 +240,7 @@ describe("Distribuição Automática - Regras do AppScript", () => {
     const [corretor] = await db.insert(users).values({
       openId: `test-corretor-${Date.now()}`,
       name: testName("Corretor Com Muitos Leads"),
-      email: testEmail("corretor-40@test.com"),
+      email: testEmail("corretor-90@test.com"),
       role: "corretor",
       status: "presente",
     });
