@@ -2774,3 +2774,4 @@
 - [x] Deletar todos os follow-ups ativos de todos os corretores
 - [x] Ajustar lógica de bloqueio para bloquear desde o início (0/80 = 0% = bloqueado)
 - [x] Implementar sistema de estoque de leads (fila de espera) para distribuição quando não houver corretores disponíveis
+- [x] Adicionar card de leads em estoque na página de roletas (foco e normal)

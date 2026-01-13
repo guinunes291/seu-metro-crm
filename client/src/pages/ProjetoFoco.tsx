@@ -3,7 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Target, Users, Zap, Loader2, Plus, Copy, Trash2, Power, PowerOff } from "lucide-react";
+import { Target, Users, Zap, Loader2, Plus, Copy, Trash2, Power, PowerOff, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ export default function ProjetoFoco() {
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
   const { data: webhooks, isLoading: loadingWebhooks } = trpc.webhook.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
+  const { data: estoque } = trpc.distribution.getEstatisticasEstoque.useQuery();
   
   // Filtrar apenas webhooks da Fila Foco
   const webhooksFoco = webhooks?.filter(w => w.tipoFila === 'foco') || [];
@@ -173,7 +174,7 @@ export default function ProjetoFoco() {
         </div>
         
         {/* Cards de Status */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Corretores na Fila</CardTitle>
@@ -226,6 +227,27 @@ export default function ProjetoFoco() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 leads recebidos
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className={estoque && estoque.porFila.foco > 0 ? "border-orange-200 bg-orange-50/50" : ""}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Estoque Foco</CardTitle>
+              <Package className={`h-4 w-4 ${estoque && estoque.porFila.foco > 0 ? "text-orange-600" : "text-muted-foreground"}`} />
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${estoque && estoque.porFila.foco > 0 ? "text-orange-600" : ""}`}>
+                {estoque?.porFila.foco || 0}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {estoque && estoque.porFila.foco > 0 ? (
+                  <span className="text-orange-600 font-medium">
+                    aguardando distribuição
+                  </span>
+                ) : (
+                  "nenhum em espera"
+                )}
               </p>
             </CardContent>
           </Card>
