@@ -2770,3 +2770,4 @@
 - [x] Investigar e corrigir captura de faixa de renda dos leads do Facebook Ads via webhook
 - [x] Adicionar variação exata "Faixa De Renda" (com espaços e maiúsculas) ao mapeamento do webhook
 - [x] Investigar e corrigir problema de follow-ups não aparecendo para Hellen (mostrando 0 ao invés dos follow-ups ativos)
+- [x] Revisar completamente sistema de follow-ups e bloqueio/desbloqueio para garantir funcionamento (timezone, filtros, lógica)

@@ -3564,10 +3564,8 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   await criarFollowUpsAutomaticos(corretorId);
   
   // Agora buscar todos os follow-ups ativos (incluindo os recém-criados)
-  const { inicioDoDiaHoje } = await import('./timezone');
-  const hoje = inicioDoDiaHoje();
-  const amanha = new Date(hoje);
-  amanha.setDate(amanha.getDate() + 1);
+  const { fimDoDiaHoje } = await import('./timezone');
+  const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje em SP
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
   // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
@@ -3591,7 +3589,7 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
       eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
-      lte(followUps.proximaTentativa, hoje) // APENAS follow-ups de hoje (não amanhã)
+      lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
     ))
     .orderBy(followUps.proximaTentativa);
 }
@@ -7095,11 +7093,12 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   const db = await getDb();
   if (!db) return [];
   
-  // Usar timezone de São Paulo se não fornecido
-  const { inicioDoDiaHoje } = await import('./timezone');
-  const hoje = hojeParam || inicioDoDiaHoje();
+  // Usar timezone de São Paulo
+  const { fimDoDiaHoje, inicioDoDiaHoje } = await import('./timezone');
+  const fimDeHoje = hojeParam || fimDoDiaHoje(); // 23:59:59.999 de hoje
+  const inicioDeHoje = inicioDoDiaHoje(); // 00:00:00 de hoje
   const amanha = amanhaParam || (() => {
-    const a = new Date(hoje);
+    const a = new Date(fimDeHoje);
     a.setDate(a.getDate() + 1);
     return a;
   })();
@@ -7112,7 +7111,7 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   // Isso garante que o bloqueio seja diário e não acumule follow-ups de dias futuros
   
   // Estratégia: buscar follow-ups onde:
-  // - proximaTentativa <= hoje (follow-ups agendados para hoje ou antes)
+  // - proximaTentativa <= fim de hoje (follow-ups agendados para hoje ou antes)
   // OU
   // - ultimaTentativa foi hoje (follow-ups já trabalhados hoje)
   
@@ -7130,11 +7129,11 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
       or(
-        // Follow-ups agendados para hoje ou antes (proximaTentativa <= hoje)
-        lte(followUps.proximaTentativa, hoje),
-        // Follow-ups já trabalhados hoje (ultimaTentativa = hoje)
+        // Follow-ups agendados para hoje ou antes (proximaTentativa <= fim de hoje)
+        lte(followUps.proximaTentativa, fimDeHoje),
+        // Follow-ups já trabalhados hoje (ultimaTentativa entre início e fim de hoje)
         and(
-          gte(followUps.ultimaTentativa, hoje),
+          gte(followUps.ultimaTentativa, inicioDeHoje),
           lt(followUps.ultimaTentativa, amanha)
         )
       )
