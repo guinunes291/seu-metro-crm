@@ -2769,3 +2769,4 @@
 - [x] Testar que celebração só aparece quando realmente desbloqueia (não em toda navegação)
 - [x] Investigar e corrigir captura de faixa de renda dos leads do Facebook Ads via webhook
 - [x] Adicionar variação exata "Faixa De Renda" (com espaços e maiúsculas) ao mapeamento do webhook
+- [x] Investigar e corrigir problema de follow-ups não aparecendo para Hellen (mostrando 0 ao invés dos follow-ups ativos)

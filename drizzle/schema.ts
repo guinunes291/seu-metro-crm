@@ -751,8 +751,8 @@ export const followUps = mysqlTable("follow_ups", {
   corretorId: int("corretorId").notNull(),
   
   // Controle de tentativas
-  tentativaAtual: int("tentativaAtual").default(1).notNull(), // 1 a 5
-  maxTentativas: int("maxTentativas").default(5).notNull(),
+  tentativaAtual: int("tentativaAtual").default(1).notNull(), // 1 a 3
+  maxTentativas: int("maxTentativas").default(3).notNull(),
   
   // Datas
   proximaTentativa: timestamp("proximaTentativa").notNull(),

@@ -1,0 +1,1 @@
+ALTER TABLE `follow_ups` MODIFY COLUMN `maxTentativas` int NOT NULL DEFAULT 3;

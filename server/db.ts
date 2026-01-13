@@ -3539,7 +3539,7 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
       await db.insert(followUps).values({
         leadId: lead.id,
         corretorId,
-        tentativaAtual: 0,
+        tentativaAtual: 1,
         maxTentativas: 3,
         proximaTentativa,
         status: "ativo",
@@ -7180,7 +7180,7 @@ export async function criarOuAtualizarFollowUp(leadId: number, corretorId: numbe
   const result = await db.insert(followUps).values({
     leadId,
     corretorId,
-    tentativaAtual: 0, // Começa em 0, será incrementado na primeira tentativa
+    tentativaAtual: 1, // Primeira tentativa
     maxTentativas: 3,
     proximaTentativa,
     status: "ativo",
