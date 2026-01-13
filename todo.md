@@ -2783,3 +2783,8 @@
 - [x] Adicionar horário na data de criação dos leads na página "Leads por Corretor"
 - [x] Alterar percentual de desbloqueio de 60% para 40%
 - [x] Alterar percentual de distribuição automática de 40% para 90%
+
+## Novas Funcionalidades Estratégicas
+- [x] Implementar PWA (Progressive Web App) com notificações push no mobile
+- [x] Criar histórico de interações com timeline visual
+- [x] Implementar modo blitz para follow-ups em massa

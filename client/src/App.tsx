@@ -49,6 +49,7 @@ import ControleLimites from "@/pages/ControleLimites";
 import ProjetoFoco from "@/pages/ProjetoFoco";
 import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
 import ControleBloqueio from "@/pages/ControleBloqueio";
+import ModoBlitz from "@/pages/ModoBlitz";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -81,6 +82,7 @@ function Router() {
       <Route path="/tarefas-do-dia" component={TarefasDoDia} />
       <Route path="/monitoramento-followups" component={MonitoramentoFollowUps} />
       <Route path="/controle-bloqueio" component={ControleBloqueio} />
+      <Route path="/modo-blitz" component={ModoBlitz} />
       <Route path="/ranking-tv" component={RankingTV} />
       <Route path="/performance-tv" component={PerformanceTV} />
       <Route path="/lixeira" component={Lixeira} />
