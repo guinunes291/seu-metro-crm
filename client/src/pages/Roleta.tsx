@@ -42,6 +42,7 @@ export default function Roleta() {
   const { data: fila, refetch: refetchFila, isLoading: loadingFila } = trpc.fila.list.useQuery();
   const { data: allWebhooks, refetch: refetchWebhooks, isLoading: loadingWebhooks } = trpc.webhook.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
+  const { data: estoque } = trpc.estoqueLeads.getEstatisticas.useQuery();
   
   // Filtrar apenas webhooks da fila geral (tipoFila null ou 'geral')
   const webhooks = allWebhooks?.filter(w => !w.tipoFila || w.tipoFila === 'geral') || [];
