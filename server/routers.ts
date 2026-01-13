@@ -2100,7 +2100,7 @@ export const appRouter = router({
               })[0];
             
             const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-            const desbloqueado = percentual >= 60;
+            const desbloqueado = total === 0 ? true : percentual >= 60;
             
             return {
               corretorId: corretor.id,
@@ -2164,7 +2164,7 @@ export const appRouter = router({
         }).length;
         
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-        const desbloqueado = percentual >= 60;
+        const desbloqueado = total === 0 ? true : percentual >= 60;
         
         // Se acabou de desbloquear (>=60%), registrar timestamp
         if (desbloqueado && !jaDesbloqueouHoje) {

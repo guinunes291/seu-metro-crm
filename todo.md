@@ -2772,3 +2772,4 @@
 - [x] Investigar e corrigir problema de follow-ups não aparecendo para Hellen (mostrando 0 ao invés dos follow-ups ativos)
 - [x] Revisar completamente sistema de follow-ups e bloqueio/desbloqueio para garantir funcionamento (timezone, filtros, lógica)
 - [x] Deletar todos os follow-ups ativos de todos os corretores
+- [x] Ajustar lógica de bloqueio para bloquear desde o início (0/80 = 0% = bloqueado)
