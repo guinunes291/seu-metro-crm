@@ -1212,6 +1212,20 @@ export const appRouter = router({
         return await getEstatisticasDistribuicao();
       }),
 
+    // Obter estatísticas do estoque de leads
+    getEstatisticasEstoque: gestorProcedure
+      .query(async () => {
+        const { getEstatisticasEstoque } = await import("./distribution");
+        return await getEstatisticasEstoque();
+      }),
+
+    // Forçar distribuição manual do estoque
+    distribuirEstoque: gestorProcedure
+      .mutation(async () => {
+        const { distribuirLeadsDoEstoque } = await import("./distribution");
+        return await distribuirLeadsDoEstoque();
+      }),
+
     // Verificar se um corretor está elegível
     verificarElegibilidade: gestorProcedure
       .input(z.object({ corretorId: z.number() }))

@@ -1551,3 +1551,47 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
 
 export type ConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferSelect;
 export type InsertConfiguracaoProjetoFoco = typeof configuracaoProjetoFoco.$inferInsert;
+
+// ============================================================================
+// ESTOQUE DE LEADS (FILA DE ESPERA)
+// ============================================================================
+
+/**
+ * Tabela para armazenar leads que não puderam ser distribuídos
+ * por falta de corretores disponíveis.
+ * 
+ * Leads ficam em estoque até que:
+ * - Um corretor fique disponível (automático a cada 5 min)
+ * - Gestor force distribuição manual
+ */
+export const leadEstoque = mysqlTable("lead_estoque", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead em estoque
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  
+  // Tipo de fila (normal ou foco)
+  tipoFila: mysqlEnum("tipoFila", ["normal", "foco"]).default("normal").notNull(),
+  
+  // Motivo de estar em estoque
+  motivoEstoque: text("motivoEstoque"), // Ex: "Nenhum corretor disponível", "Limite diário atingido"
+  
+  // Tentativas de redistribuição
+  tentativasDistribuicao: int("tentativasDistribuicao").default(0).notNull(),
+  ultimaTentativa: timestamp("ultimaTentativa"),
+  
+  // Status do estoque
+  status: mysqlEnum("status", ["aguardando", "distribuido", "cancelado"]).default("aguardando").notNull(),
+  
+  // Metadata
+  criadoEm: timestamp("criadoEm").defaultNow().notNull(),
+  distribuidoEm: timestamp("distribuidoEm"),
+  distribuidoParaCorretorId: int("distribuidoParaCorretorId"),
+}, (table) => ({
+  leadIdx: index("lead_estoque_lead_idx").on(table.leadId),
+  statusIdx: index("lead_estoque_status_idx").on(table.status),
+  tipoFilaIdx: index("lead_estoque_tipo_fila_idx").on(table.tipoFila),
+}));
+
+export type LeadEstoque = typeof leadEstoque.$inferSelect;
+export type InsertLeadEstoque = typeof leadEstoque.$inferInsert;

@@ -358,6 +358,13 @@
       "when": 1768307549086,
       "tag": "0050_grey_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "5",
+      "when": 1768317341734,
+      "tag": "0051_broken_vindicator",
+      "breakpoints": true
     }
   ]
 }

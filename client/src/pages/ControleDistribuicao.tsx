@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play, History, Clock } from "lucide-react";
+import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play, History, Clock, Package, AlertTriangle } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function ControleDistribuicao() {
@@ -16,6 +16,9 @@ export default function ControleDistribuicao() {
 
   // Buscar estatísticas de distribuição
   const { data: estatisticas, isLoading, refetch } = trpc.distribution.getEstatisticas.useQuery();
+
+  // Buscar estatísticas do estoque
+  const { data: estoque, refetch: refetchEstoque } = trpc.distribution.getEstatisticasEstoque.useQuery();
 
   // Buscar histórico de distribuições
   const { data: historico, refetch: refetchHistorico } = trpc.distribution.getHistorico.useQuery({ limit: 20 });
@@ -29,11 +32,31 @@ export default function ControleDistribuicao() {
       });
       refetch();
       refetchHistorico();
+      refetchEstoque();
     },
     onError: (error) => {
       setResultado({
         tipo: "erro",
         mensagem: `❌ Erro na distribuição: ${error.message}`,
+      });
+    },
+  });
+
+  // Mutation para distribuir estoque
+  const distribuirEstoque = trpc.distribution.distribuirEstoque.useMutation({
+    onSuccess: (data) => {
+      setResultado({
+        tipo: "sucesso",
+        mensagem: `✅ Estoque distribuído! ${data.distribuidos} leads distribuídos, ${data.erros} erros.`,
+      });
+      refetch();
+      refetchHistorico();
+      refetchEstoque();
+    },
+    onError: (error) => {
+      setResultado({
+        tipo: "erro",
+        mensagem: `❌ Erro ao distribuir estoque: ${error.message}`,
       });
     },
   });
@@ -93,7 +116,7 @@ export default function ControleDistribuicao() {
       )}
 
       {/* Cards de resumo */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Corretores</CardTitle>
@@ -126,7 +149,77 @@ export default function ControleDistribuicao() {
             <p className="text-xs text-muted-foreground">Não podem receber leads</p>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Estoque de Leads</CardTitle>
+            <Package className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{estoque?.totalEmEstoque || 0}</div>
+            <p className="text-xs text-muted-foreground">Aguardando distribuição</p>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Detalhes do Estoque */}
+      {estoque && estoque.totalEmEstoque > 0 && (
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600" />
+                  Estoque de Leads
+                </CardTitle>
+                <CardDescription>
+                  {estoque.totalEmEstoque} lead{estoque.totalEmEstoque !== 1 ? 's' : ''} aguardando distribuição
+                </CardDescription>
+              </div>
+              <Button
+                onClick={() => distribuirEstoque.mutate()}
+                disabled={distribuirEstoque.isPending}
+                variant="outline"
+                className="border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white"
+              >
+                {distribuirEstoque.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Distribuindo...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Distribuir Estoque
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Fila Normal</p>
+                <p className="text-2xl font-bold text-orange-600">{estoque.porFila.normal}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Fila Foco</p>
+                <p className="text-2xl font-bold text-orange-600">{estoque.porFila.foco}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Mais Antigo</p>
+                <p className="text-sm font-medium">
+                  {estoque.maisAntigo ? new Date(estoque.maisAntigo).toLocaleString('pt-BR') : 'N/A'}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Média de Tentativas</p>
+                <p className="text-2xl font-bold">{estoque.tentativasMedia}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabela de corretores elegíveis */}
       {corretoresElegiveis.length > 0 && (

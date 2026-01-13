@@ -1,5 +1,5 @@
 import { getDb, notifyLeadDistribuido, countLeadsRecebidosHoje } from "./db";
-import { users, leads, conversionStats, distributionLog } from "../drizzle/schema";
+import { users, leads, conversionStats, distributionLog, leadEstoque } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
@@ -257,8 +257,19 @@ export async function distribuirLeadAutomatico(
     leadData.origem || undefined
   );
 
+  // Se não houver corretores disponíveis, adicionar ao estoque
   if (corretoresElegiveis.length === 0) {
-    return { success: false, message: "Nenhum corretor elegível disponível" };
+    await db.insert(leadEstoque).values({
+      leadId: leadId,
+      tipoFila: "normal",
+      motivoEstoque: "Nenhum corretor elegível disponível",
+      tentativasDistribuicao: 0,
+    });
+    
+    return { 
+      success: false, 
+      message: "Nenhum corretor disponível. Lead adicionado ao estoque para distribuição posterior." 
+    };
   }
 
   // Selecionar o melhor corretor (primeiro da lista ordenada)
@@ -553,4 +564,190 @@ export async function getEstatisticasDistribuicao(): Promise<CorretorStatus[]> {
   }
 
   return estatisticas;
+}
+
+
+/**
+ * Distribui leads do estoque para corretores disponíveis
+ * Chamado automaticamente a cada 5 minutos
+ */
+export async function distribuirLeadsDoEstoque(): Promise<{
+  distribuidos: number;
+  erros: number;
+  mensagens: string[];
+}> {
+  const db = await getDb();
+  if (!db) {
+    return { distribuidos: 0, erros: 1, mensagens: ["Database não disponível"] };
+  }
+
+  const mensagens: string[] = [];
+  let distribuidos = 0;
+  let erros = 0;
+
+  // Buscar leads aguardando no estoque (ordenar por mais antigo primeiro)
+  const leadsEmEstoque = await db
+    .select()
+    .from(leadEstoque)
+    .where(eq(leadEstoque.status, "aguardando"))
+    .orderBy(leadEstoque.criadoEm)
+    .limit(50); // Processar no máximo 50 por vez
+
+  if (leadsEmEstoque.length === 0) {
+    return { distribuidos: 0, erros: 0, mensagens: ["Nenhum lead em estoque"] };
+  }
+
+  mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque...`);
+
+  for (const estoqueItem of leadsEmEstoque) {
+    try {
+      // Buscar informações do lead
+      const lead = await db
+        .select()
+        .from(leads)
+        .where(eq(leads.id, estoqueItem.leadId))
+        .limit(1);
+
+      if (!lead.length) {
+        mensagens.push(`Lead ${estoqueItem.leadId} não encontrado`);
+        
+        // Marcar como cancelado
+        await db
+          .update(leadEstoque)
+          .set({ status: "cancelado" })
+          .where(eq(leadEstoque.id, estoqueItem.id));
+        
+        erros++;
+        continue;
+      }
+
+      const leadData = lead[0];
+
+      // Buscar corretores elegíveis
+      const corretoresElegiveis = await getCorretoresElegiveis(
+        leadData.projectId || undefined,
+        leadData.origem || undefined
+      );
+
+      if (corretoresElegiveis.length === 0) {
+        // Ainda não há corretores disponíveis, incrementar tentativas
+        await db
+          .update(leadEstoque)
+          .set({
+            tentativasDistribuicao: estoqueItem.tentativasDistribuicao + 1,
+            ultimaTentativa: new Date(),
+          })
+          .where(eq(leadEstoque.id, estoqueItem.id));
+
+        mensagens.push(`Lead ${estoqueItem.leadId}: Nenhum corretor disponível (tentativa ${estoqueItem.tentativasDistribuicao + 1})`);
+        continue;
+      }
+
+      // Selecionar o melhor corretor
+      const melhorCorretor = corretoresElegiveis[0];
+
+      // Atualizar lead
+      await db
+        .update(leads)
+        .set({
+          corretorId: melhorCorretor,
+          dataDistribuicao: new Date(),
+          status: "aguardando_atendimento",
+        })
+        .where(eq(leads.id, estoqueItem.leadId));
+
+      // Registrar no log de distribuição
+      await db.insert(distributionLog).values({
+        leadId: estoqueItem.leadId,
+        corretorId: melhorCorretor,
+        tipo: "automatica",
+      });
+
+      // Marcar como distribuído no estoque
+      await db
+        .update(leadEstoque)
+        .set({
+          status: "distribuido",
+          distribuidoEm: new Date(),
+          distribuidoParaCorretorId: melhorCorretor,
+        })
+        .where(eq(leadEstoque.id, estoqueItem.id));
+
+      // Enviar notificação para o corretor
+      try {
+        await notifyLeadDistribuido(melhorCorretor, estoqueItem.leadId, leadData.nome);
+      } catch (error) {
+        console.error("Erro ao enviar notificação:", error);
+      }
+
+      mensagens.push(`Lead ${estoqueItem.leadId} distribuído para corretor ${melhorCorretor}`);
+      distribuidos++;
+
+    } catch (error) {
+      console.error(`Erro ao distribuir lead ${estoqueItem.leadId} do estoque:`, error);
+      mensagens.push(`Erro ao distribuir lead ${estoqueItem.leadId}: ${error}`);
+      erros++;
+    }
+  }
+
+  return { distribuidos, erros, mensagens };
+}
+
+/**
+ * Obtém estatísticas do estoque de leads
+ */
+export async function getEstatisticasEstoque(): Promise<{
+  totalEmEstoque: number;
+  porFila: { normal: number; foco: number };
+  maisAntigo: Date | null;
+  tentativasMedia: number;
+}> {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalEmEstoque: 0,
+      porFila: { normal: 0, foco: 0 },
+      maisAntigo: null,
+      tentativasMedia: 0,
+    };
+  }
+
+  // Buscar todos os leads em estoque
+  const leadsEmEstoque = await db
+    .select()
+    .from(leadEstoque)
+    .where(eq(leadEstoque.status, "aguardando"));
+
+  const totalEmEstoque = leadsEmEstoque.length;
+
+  if (totalEmEstoque === 0) {
+    return {
+      totalEmEstoque: 0,
+      porFila: { normal: 0, foco: 0 },
+      maisAntigo: null,
+      tentativasMedia: 0,
+    };
+  }
+
+  // Contar por fila
+  const porFila = {
+    normal: leadsEmEstoque.filter((l) => l.tipoFila === "normal").length,
+    foco: leadsEmEstoque.filter((l) => l.tipoFila === "foco").length,
+  };
+
+  // Encontrar o mais antigo
+  const maisAntigo = leadsEmEstoque.reduce((oldest, current) => {
+    return new Date(current.criadoEm) < new Date(oldest.criadoEm) ? current : oldest;
+  }).criadoEm;
+
+  // Calcular média de tentativas
+  const tentativasMedia =
+    leadsEmEstoque.reduce((sum, l) => sum + l.tentativasDistribuicao, 0) / totalEmEstoque;
+
+  return {
+    totalEmEstoque,
+    porFila,
+    maisAntigo,
+    tentativasMedia: Math.round(tentativasMedia * 10) / 10,
+  };
 }
