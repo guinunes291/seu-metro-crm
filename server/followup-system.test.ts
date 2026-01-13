@@ -53,7 +53,7 @@ describe('Sistema de Follow-ups - Timezone e Filtros', () => {
   });
 });
 
-describe('Sistema de Bloqueio/Desbloqueio (60%)', () => {
+describe('Sistema de Bloqueio/Desbloqueio (40%)', () => {
   let hellenId: number;
 
   beforeAll(async () => {
@@ -82,16 +82,16 @@ describe('Sistema de Bloqueio/Desbloqueio (60%)', () => {
     expect(percentual).toBeLessThanOrEqual(100);
   });
 
-  it('deve desbloquear quando percentual >= 60%', () => {
-    const percentual = 60;
-    const desbloqueado = percentual >= 60;
+  it('deve desbloquear quando percentual >= 40%', () => {
+    const percentual = 40;
+    const desbloqueado = percentual >= 40;
     
     expect(desbloqueado).toBe(true);
   });
 
-  it('deve manter bloqueado quando percentual < 60%', () => {
-    const percentual = 59;
-    const desbloqueado = percentual >= 60;
+  it('deve manter bloqueado quando percentual < 40%', () => {
+    const percentual = 39;
+    const desbloqueado = percentual >= 40;
     
     expect(desbloqueado).toBe(false);
   });

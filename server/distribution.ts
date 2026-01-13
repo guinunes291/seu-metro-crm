@@ -4,7 +4,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 30;
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60%
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.4; // 40%
 const LOTE_SIZE = 20; // Total de leads por rodada
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 
@@ -23,7 +23,7 @@ interface CorretorStatus {
  * Verifica se um corretor está elegível para receber novos leads
  * Regras baseadas no AppScript:
  * 1. Status deve ser "presente"
- * 2. Deve ter menos de 30 leads OU ter trabalhado pelo menos 60% dos seus leads
+ * 2. Deve ter menos de 30 leads OU ter trabalhado pelo menos 40% dos seus leads
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -53,7 +53,7 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
     return true;
   }
 
-  // Verificar taxa de trabalho (60% rule)
+  // Verificar taxa de trabalho (40% rule)
   const leadsTrabalhados = leadsDoCorretor.filter(
     (lead) => lead.status !== "aguardando_atendimento"
   ).length;
@@ -342,7 +342,7 @@ export async function distribuirLeadsEmLote(
  * Regras:
  * - Distribui leads com corretorId = null (não atribuídos a nenhum corretor)
  * - Apenas para corretores presentes
- * - Apenas para corretores com taxa de trabalho > 60%
+ * - Apenas para corretores com taxa de trabalho > 40%
  * - Limite de 20 leads por ação
  */
 export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
@@ -373,7 +373,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
 
 /**
  * Distribui leads em lote apenas para corretores elegíveis
- * (presentes e com taxa de trabalho > 60%)
+ * (presentes e com taxa de trabalho > 40%)
  */
 async function distribuirLeadsEmLoteParaElegiveis(
   leadIds: number[]
@@ -393,7 +393,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
     details: [] as Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>,
   };
 
-  // Buscar corretores elegíveis (presentes e com taxa de trabalho > 60%)
+  // Buscar corretores elegíveis (presentes e com taxa de trabalho > 40%)
   const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
 
   if (corretoresElegiveis.length === 0) {
@@ -402,7 +402,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
       results.details.push({
         leadId,
         success: false,
-        message: "Nenhum corretor elegível disponível (presente e com taxa de trabalho > 60%)",
+        message: "Nenhum corretor elegível disponível (presente e com taxa de trabalho > 40%)",
       });
       results.failed++;
     }
@@ -527,7 +527,7 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
       continue;
     }
 
-    // Verificar taxa de trabalho (60% rule)
+    // Verificar taxa de trabalho (40% rule)
     const leadsTrabalhados = leadsDoCorretor.filter(
       (lead) => lead.status !== "aguardando_atendimento"
     ).length;

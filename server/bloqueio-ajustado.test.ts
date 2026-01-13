@@ -5,29 +5,29 @@ describe('Lógica de Bloqueio Ajustada', () => {
     const total = 80;
     const concluidos = 0;
     const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-    const desbloqueado = total === 0 ? true : percentual >= 60;
+    const desbloqueado = total === 0 ? true : percentual >= 40;
     
     expect(percentual).toBe(0);
     expect(desbloqueado).toBe(false); // BLOQUEADO
   });
 
-  it('deve bloquear quando percentual < 60%', () => {
+  it('deve bloquear quando percentual < 40%', () => {
     const total = 80;
-    const concluidos = 47; // 58.75%
+    const concluidos = 31; // 38.75%
     const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-    const desbloqueado = total === 0 ? true : percentual >= 60;
+    const desbloqueado = total === 0 ? true : percentual >= 40;
     
-    expect(percentual).toBe(59);
+    expect(percentual).toBe(39);
     expect(desbloqueado).toBe(false); // BLOQUEADO
   });
 
-  it('deve desbloquear quando percentual >= 60%', () => {
+  it('deve desbloquear quando percentual >= 40%', () => {
     const total = 80;
-    const concluidos = 48; // 60%
+    const concluidos = 32; // 40%
     const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-    const desbloqueado = total === 0 ? true : percentual >= 60;
+    const desbloqueado = total === 0 ? true : percentual >= 40;
     
-    expect(percentual).toBe(60);
+    expect(percentual).toBe(40);
     expect(desbloqueado).toBe(true); // DESBLOQUEADO
   });
 
@@ -35,7 +35,7 @@ describe('Lógica de Bloqueio Ajustada', () => {
     const total = 0;
     const concluidos = 0;
     const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-    const desbloqueado = total === 0 ? true : percentual >= 60;
+    const desbloqueado = total === 0 ? true : percentual >= 40;
     
     expect(percentual).toBe(100);
     expect(desbloqueado).toBe(true); // DESBLOQUEADO (sem follow-ups)
@@ -45,7 +45,7 @@ describe('Lógica de Bloqueio Ajustada', () => {
     const total = 80;
     const concluidos = 80;
     const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-    const desbloqueado = total === 0 ? true : percentual >= 60;
+    const desbloqueado = total === 0 ? true : percentual >= 40;
     
     expect(percentual).toBe(100);
     expect(desbloqueado).toBe(true); // DESBLOQUEADO

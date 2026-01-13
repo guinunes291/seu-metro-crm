@@ -2781,3 +2781,4 @@
 - [ ] Implementar funcionalidade de transferência de leads entre corretores
 - [x] Adicionar botão de transferência em todos os cards de lead (exceto Roletas)
 - [x] Adicionar horário na data de criação dos leads na página "Leads por Corretor"
+- [x] Alterar percentual de desbloqueio de 60% para 40%

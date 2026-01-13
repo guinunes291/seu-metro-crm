@@ -2155,7 +2155,7 @@ export const appRouter = router({
               })[0];
             
             const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-            const desbloqueado = total === 0 ? true : percentual >= 60;
+            const desbloqueado = total === 0 ? true : percentual >= 40;
             
             return {
               corretorId: corretor.id,
@@ -2194,7 +2194,7 @@ export const appRouter = router({
         }).length;
         
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-        const desbloqueado = total === 0 ? true : percentual >= 60;
+        const desbloqueado = total === 0 ? true : percentual >= 40;
         
         return {
           total,
