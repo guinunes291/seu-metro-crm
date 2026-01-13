@@ -37,7 +37,8 @@ import {
   RefreshCw,
   User,
   FileText,
-  Target
+  Target,
+  Zap
 } from "lucide-react";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -234,6 +235,13 @@ export default function TarefasDoDia() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={() => window.location.href = '/modo-blitz'}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold shadow-lg"
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Modo Blitz
+            </Button>
             <Button variant="outline" onClick={() => refetch()}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Atualizar

@@ -2788,3 +2788,4 @@
 - [x] Implementar PWA (Progressive Web App) com notificações push no mobile
 - [x] Criar histórico de interações com timeline visual
 - [x] Implementar modo blitz para follow-ups em massa
+- [x] Adicionar botão de atalho para Modo Blitz na página Tarefas do Dia
