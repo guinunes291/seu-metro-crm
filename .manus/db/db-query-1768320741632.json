@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, name, email, role, ultimoDesbloqueio FROM users WHERE role = 'corretor' ORDER BY id LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, ultimoDesbloqueio FROM users WHERE role = 'corretor' ORDER BY id LIMIT 10;",
+  "rows": [
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 13:10:36"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-12 18:10:03"
+    },
+    {
+      "id": "5052575",
+      "name": "Leticia Castro",
+      "email": "leticiaccastro2@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 16:05:08"
+    },
+    {
+      "id": "5053030",
+      "name": "Breno Brunelli",
+      "email": "imoveis.brunelli@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "NULL"
+    },
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes ",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 14:36:59"
+    },
+    {
+      "id": "6364694",
+      "name": "ivenspagule",
+      "email": "ivenspagule@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 15:13:47"
+    },
+    {
+      "id": "6368447",
+      "name": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 14:18:45"
+    },
+    {
+      "id": "6371101",
+      "name": "Rodrigo Martiniano",
+      "email": "rodrigomartiniano07@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 13:22:37"
+    },
+    {
+      "id": "6396243",
+      "name": "Igor Nigro",
+      "email": "igor.nigro09@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "2026-01-13 13:48:13"
+    },
+    {
+      "id": "6399794",
+      "name": "Kamila Silva",
+      "email": "millakamila42@gmail.com",
+      "role": "corretor",
+      "ultimoDesbloqueio": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tultimoDesbloqueio\n4236208\tAndrew\tandrewformigoni.corretor@gmail.com\tcorretor\t2026-01-13 13:10:36\n4236243\tkauanthyago34\tkauanthyago34@gmail.com\tcorretor\t2026-01-12 18:10:03\n5052575\tLeticia Castro\tleticiaccastro2@gmail.com\tcorretor\t2026-01-13 16:05:08\n5053030\tBreno Brunelli\timoveis.brunelli@gmail.com\tcorretor\tNULL\n5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tcorretor\t2026-01-13 14:36:59\n6364694\tivenspagule\tivenspagule@gmail.com\tcorretor\t2026-01-13 15:13:47\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\t2026-01-13 14:18:45\n6371101\tRodrigo Martiniano\trodrigomartiniano07@gmail.com\tcorretor\t2026-01-13 13:22:37\n6396243\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\t2026-01-13 13:48:13\n6399794\tKamila Silva\tmillakamila42@gmail.com\tcorretor\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

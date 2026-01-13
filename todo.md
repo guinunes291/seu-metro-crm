@@ -2776,3 +2776,4 @@
 - [x] Implementar sistema de estoque de leads (fila de espera) para distribuição quando não houver corretores disponíveis
 - [x] Adicionar card de leads em estoque na página de roletas (foco e normal)
 - [x] Corrigir lógica de contagem de follow-ups (mostrando 0/0 ao invés de 0/X pendentes)
+- [x] Corrigir overlay de bloqueio que não está impedindo acesso dos corretores bloqueados
