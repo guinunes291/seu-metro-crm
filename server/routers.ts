@@ -570,6 +570,47 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    // Transferir lead para outro corretor (gestores e corretores)
+    transferir: protectedProcedure
+      .input(z.object({
+        leadId: z.number(),
+        novoCorretorId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const lead = await db.getLeadById(input.leadId);
+        
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        // Verificar se novo corretor existe
+        const novoCorretor = await db.getUserById(input.novoCorretorId);
+        if (!novoCorretor || novoCorretor.role !== 'corretor') {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        }
+        
+        const corretorAnteriorId = lead.corretorId;
+        
+        // Atualizar lead com novo corretor
+        await db.updateLead(input.leadId, {
+          corretorId: input.novoCorretorId,
+        });
+        
+        // Criar follow-up automático para amanhã
+        await db.criarFollowUpsAutomaticos();
+        
+        // Registrar no histórico
+        await db.createLeadHistory({
+          leadId: input.leadId,
+          corretorId: ctx.user.id,
+          tipo: 'outro',
+          resultado: 'outro',
+          observacoes: `Lead transferido para ${novoCorretor.name}${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
+        });
+        
+        return { success: true, novoCorretor: novoCorretor.name };
+      }),
+    
     // Atribuir corretor manualmente (apenas gestores)
     atribuirCorretor: gestorProcedure
       .input(z.object({

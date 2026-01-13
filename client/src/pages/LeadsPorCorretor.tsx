@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
+import TransferirLeadButton from "@/components/TransferirLeadButton";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
@@ -325,6 +326,7 @@ export default function LeadsPorCorretor() {
                       <TableHead>Status</TableHead>
                       <TableHead>Projeto</TableHead>
                       <TableHead>Data Criação</TableHead>
+                      <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -393,10 +395,19 @@ export default function LeadsPorCorretor() {
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             {lead.createdAt 
-                              ? new Date(lead.createdAt).toLocaleDateString('pt-BR')
+                              ? new Date(lead.createdAt).toLocaleString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
                               : "-"
                             }
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <TransferirLeadButton leadId={lead.id} leadNome={lead.nome} corretores={corretores || []} onSuccess={() => { refetchLeads(); refetchEstatisticas(); }} />
                         </TableCell>
                       </TableRow>
                     ))}

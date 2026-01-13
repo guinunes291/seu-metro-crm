@@ -2778,3 +2778,6 @@
 - [x] Corrigir lógica de contagem de follow-ups (mostrando 0/0 ao invés de 0/X pendentes)
 - [x] Corrigir overlay de bloqueio que não está impedindo acesso dos corretores bloqueados
 - [x] Corrigir erro na página de Roleta de Leads
+- [ ] Implementar funcionalidade de transferência de leads entre corretores
+- [x] Adicionar botão de transferência em todos os cards de lead (exceto Roletas)
+- [x] Adicionar horário na data de criação dos leads na página "Leads por Corretor"
