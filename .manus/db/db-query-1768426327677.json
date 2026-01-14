@@ -1,0 +1,30 @@
+{
+  "query": "SELECT corretorId, COUNT(*) as total FROM leads WHERE status = 'em_atendimento' GROUP BY corretorId ORDER BY total DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT corretorId, COUNT(*) as total FROM leads WHERE status = 'em_atendimento' GROUP BY corretorId ORDER BY total DESC LIMIT 5;",
+  "rows": [
+    {
+      "corretorId": "5053030",
+      "total": "351"
+    },
+    {
+      "corretorId": "6368447",
+      "total": "221"
+    },
+    {
+      "corretorId": "6396243",
+      "total": "170"
+    },
+    {
+      "corretorId": "6364694",
+      "total": "168"
+    },
+    {
+      "corretorId": "6183990",
+      "total": "167"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\ttotal\n5053030\t351\n6368447\t221\n6396243\t170\n6364694\t168\n6183990\t167\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}
