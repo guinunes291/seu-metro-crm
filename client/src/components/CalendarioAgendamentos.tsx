@@ -125,7 +125,16 @@ export default function CalendarioAgendamentos({
     const map = new Map<string, Agendamento[]>();
     
     (agendamentos || []).forEach((ag: Agendamento) => {
-      const dateKey = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
+      // Usar a data diretamente sem conversão de timezone
+      // Se vier como string, extrair apenas a parte da data (YYYY-MM-DD)
+      let dateKey: string;
+      if (typeof ag.dataAgendamento === 'string') {
+        dateKey = ag.dataAgendamento.split('T')[0];
+      } else {
+        // Se vier como Date, formatar sem aplicar timezone
+        const date = new Date(ag.dataAgendamento);
+        dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      }
       if (!map.has(dateKey)) {
         map.set(dateKey, []);
       }

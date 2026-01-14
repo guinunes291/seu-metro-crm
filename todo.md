@@ -2832,3 +2832,11 @@
 - [x] Verificar se frontend está usando array paginado ou array completo
 - [x] Corrigir lógica de renderização para usar apenas leads da página atual
 - [x] Testar navegação entre páginas
+
+## Bug: Agendamentos Aparecem 1 Dia Antes no Calendário
+- [x] Investigar problema de fuso horário na criação de agendamentos
+- [x] Verificar como data/hora são salvas no banco de dados
+- [x] Verificar como data/hora são exibidas no calendário
+- [x] Corrigir conversão de timezone no backend (salvar em UTC ou São Paulo)
+- [x] Corrigir conversão de timezone no frontend (exibir em São Paulo)
+- [x] Testar criação de agendamento e verificar data correta no calendário

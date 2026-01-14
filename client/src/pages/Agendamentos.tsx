@@ -218,7 +218,14 @@ export default function Agendamentos() {
 
   // Agrupar agendamentos por data
   const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
-    const data = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
+    // Extrair data sem conversão de timezone
+    let data: string;
+    if (typeof ag.dataAgendamento === 'string') {
+      data = ag.dataAgendamento.split('T')[0];
+    } else {
+      const date = new Date(ag.dataAgendamento);
+      data = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
     if (!acc[data]) acc[data] = [];
     acc[data].push(ag);
     return acc;
