@@ -38,7 +38,7 @@ export default function ModoBlitz() {
   );
 
   // Mutation para registrar follow-up
-  const registrarFollowUp = trpc.followUps.registrarFollowUp.useMutation({
+  const registrarFollowUp = trpc.followUps.registrarTentativa.useMutation({
     onSuccess: () => {
       refetch();
       setProcessedCount((prev) => prev + 1);
@@ -84,11 +84,9 @@ export default function ModoBlitz() {
       if (!currentLead) return;
 
       await registrarFollowUp.mutateAsync({
-        leadId: currentLead.leadId,
         followUpId: currentLead.id,
-        tipo: "ligacao",
         resultado,
-        observacoes: observacoes || undefined,
+        observacao: observacoes || undefined,
       });
 
       // Limpar observações e avançar

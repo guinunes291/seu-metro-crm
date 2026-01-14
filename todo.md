@@ -2801,3 +2801,9 @@
 - [x] Verificar query getFollowUpsDoDiaExpandido usada pelo Modo Blitz
 - [x] Corrigir query para retornar follow-ups pendentes corretamente
 - [x] Testar Modo Blitz com corretor que tem follow-ups pendentes
+
+## Bug: Modo Blitz - Erro ao Registrar Follow-up
+- [x] Investigar erro "No procedure found on path followUps.registrarFollowUp"
+- [x] Verificar qual é o endpoint correto para registrar follow-up
+- [x] Corrigir chamada do endpoint no ModoBlitz.tsx
+- [x] Testar registro de follow-up com "Respondeu" e "Não Respondeu"
