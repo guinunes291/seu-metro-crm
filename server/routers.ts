@@ -2070,6 +2070,12 @@ export const appRouter = router({
         return await db.getFollowUpsDoDia(ctx.user.id);
       }),
     
+    // Buscar follow-ups do dia (versão expandida que cria follow-ups automáticos se necessário)
+    getFollowUpsDoDiaExpandido: corretorProcedure
+      .query(async ({ ctx }) => {
+        return await db.getFollowUpsDoDiaExpandido(ctx.user.id);
+      }),
+    
     // Registrar tentativa de contato
     registrarTentativa: corretorProcedure
       .input(z.object({

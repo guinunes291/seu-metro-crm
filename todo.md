@@ -2795,3 +2795,9 @@
 - [x] Investigar por que o botão Modo Blitz está mostrando tela de bloqueio ao invés de abrir a interface
 - [x] Corrigir lógica para permitir acesso ao Modo Blitz mesmo quando corretor está bloqueado (o Modo Blitz serve justamente para desbloquear)
 - [x] Testar correção com corretor bloqueado
+
+## Bug: Modo Blitz Não Carrega Follow-ups Pendentes
+- [x] Investigar por que o Modo Blitz mostra "Parabéns! Você não tem follow-ups pendentes" quando existem 50/352 follow-ups pendentes
+- [x] Verificar query getFollowUpsDoDiaExpandido usada pelo Modo Blitz
+- [x] Corrigir query para retornar follow-ups pendentes corretamente
+- [x] Testar Modo Blitz com corretor que tem follow-ups pendentes
