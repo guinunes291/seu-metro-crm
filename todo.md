@@ -2866,3 +2866,11 @@
 - [x] Verificar se createdAt está sendo salvo em UTC ou horário local
 - [x] Corrigir conversão de timezone para exibição correta (usar funções de timezone.ts)
 - [x] Testar criação de leads hoje e verificar aparição no gráfico
+
+## Feature: Remover Bloqueio Atual e Criar Sistema Pré-Montado
+- [x] Remover bloqueio atual do DashboardLayout (desbloquear corretores)
+- [x] Atualizar hook useFollowUpProgress para retornar sempre desbloqueado
+- [x] Criar versão comentada do sistema de bloqueio compatível com novo fluxo
+- [x] Atualizar LockedTabOverlay para 100% e comentar código
+- [x] Criar documentação de ativação do bloqueio
+- [x] Testar sistema desbloqueado
