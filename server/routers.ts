@@ -408,19 +408,7 @@ export const appRouter = router({
         })
       }))
       .mutation(async ({ input, ctx }) => {
-        // Verificar se o sistema está bloqueado (apenas para corretores)
-        if (ctx.user.role === 'corretor') {
-          const { getSystemConfig } = await import('./systemConfig');
-          const config = await getSystemConfig();
-          
-          if (config?.bloqueio_ativo) {
-            throw new TRPCError({ 
-              code: 'FORBIDDEN', 
-              message: 'Sistema temporariamente bloqueado. Aguarde autorização do gestor para atualizar leads.' 
-            });
-          }
-        }
-        
+
         const lead = await db.getLeadById(input.id);
         
         if (!lead) {
@@ -530,19 +518,7 @@ export const appRouter = router({
         statusNovo: z.string().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Verificar se o sistema está bloqueado (apenas para corretores)
-        if (ctx.user.role === 'corretor') {
-          const { getSystemConfig } = await import('./systemConfig');
-          const config = await getSystemConfig();
-          
-          if (config?.bloqueio_ativo) {
-            throw new TRPCError({ 
-              code: 'FORBIDDEN', 
-              message: 'Sistema temporariamente bloqueado. Aguarde autorização do gestor para registrar follow-ups.' 
-            });
-          }
-        }
-        
+
         const lead = await db.getLeadById(input.leadId);
         
         if (!lead) {
@@ -4599,47 +4575,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // ============================================================================
   // CONFIGURAÇÃO DO SISTEMA
   // ============================================================================
-  
-  systemConfig: router({
-    // Buscar configuração atual (apenas gestor)
-    get: gestorProcedure.query(async () => {
-      const { getSystemConfig } = await import('./systemConfig');
-      const config = await getSystemConfig();
-      
-      if (!config) {
-        // Retornar configuração padrão se não existir
-        return {
-          bloqueioAtivo: false
-        };
-      }
-      
-      return {
-        bloqueioAtivo: config.bloqueio_ativo
-      };
-    }),
-    
-    // Atualizar status do bloqueio (apenas gestor)
-    updateBloqueio: gestorProcedure
-      .input(z.object({
-        ativo: z.boolean()
-      }))
-      .mutation(async ({ input }) => {
-        const { updateBloqueioFollowUp } = await import('./systemConfig');
-        const success = await updateBloqueioFollowUp(input.ativo);
-        
-        if (!success) {
-          throw new TRPCError({ 
-            code: 'INTERNAL_SERVER_ERROR', 
-            message: 'Erro ao atualizar configuração' 
-          });
-        }
-        
-        return { 
-          success: true,
-          bloqueioAtivo: input.ativo
-        };
-      }),
-  }),
+  // Router de configuração removido - bloqueio manual do gestor foi removido
+  // Bloqueio automático (100% follow-ups) permanece ativo
 
 });
 export type AppRouter = typeof appRouter;

@@ -320,7 +320,7 @@ export default function ModoBlitz() {
                   </div>
                 </div>
                 <Badge variant="secondary" className="text-lg px-4 py-2">
-                  Tentativa {currentLead.tentativaAtual}/{currentLead.maxTentativas}
+                  Follow-up do Dia
                 </Badge>
               </div>
 

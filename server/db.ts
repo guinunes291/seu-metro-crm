@@ -3415,128 +3415,76 @@ export async function registrarTentativaFollowUp(
   const atual = followUp[0];
   const agora = new Date();
   
-  // Parsear histórico existente
-  let historico: any[] = [];
-  try {
-    historico = atual.historicoTentativas ? JSON.parse(atual.historicoTentativas) : [];
-  } catch (e) {
-    historico = [];
-  }
-  
-  // Adicionar nova tentativa ao histórico
-  historico.push({
-    data: agora.toISOString(),
-    tentativa: atual.tentativaAtual,
-    resultado,
-    observacao
-  });
+  // Buscar dados do lead
+  const leadData = await db.select().from(leads).where(eq(leads.id, atual.leadId)).limit(1);
+  if (!leadData[0]) throw new Error("Lead não encontrado");
+  const lead = leadData[0];
   
   if (resultado === "respondeu") {
-    // Cliente respondeu - resetar contador para 0 e agendar próxima tentativa para amanhã
-    // O lead continua no fluxo de follow-up, apenas reseta o contador
-    const proximaTentativa = new Date(agora);
-    proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-    proximaTentativa.setHours(9, 0, 0, 0);
-    
+    // Cliente respondeu - marcar follow-up atual como respondido
     await db.update(followUps)
       .set({
-        tentativaAtual: 0, // Reseta o contador
-        proximaTentativa,
+        status: "respondeu",
+        resultado: "respondeu",
+        observacao,
         ultimaTentativa: agora,
-        historicoTentativas: JSON.stringify(historico),
         updatedAt: agora
-        // Mantém status "ativo" para continuar no fluxo
       })
       .where(eq(followUps.id, followUpId));
     
-    // Atualizar contador no lead também
+    // Atualizar dataUltimaInteracao do lead
     await db.update(leads)
       .set({
-        diasFollowupConsecutivos: 0,
+        dataUltimaInteracao: agora,
+        aguardandoTransferencia: false,
         updatedAt: agora
       })
       .where(eq(leads.id, atual.leadId));
+    
+    // Criar novo follow-up para amanhã (se lead ainda estiver em atendimento)
+    if (lead.status === "em_atendimento") {
+      const { inicioDoDiaSeguinte } = await import('./timezone');
+      const proximaTentativa = inicioDoDiaSeguinte();
+      proximaTentativa.setHours(9, 0, 0, 0);
+      
+      await db.insert(followUps).values({
+        leadId: atual.leadId,
+        corretorId: atual.corretorId,
+        proximaTentativa,
+        status: "pendente"
+      });
+    }
     
     return { 
       status: "respondeu", 
-      mensagem: "Cliente respondeu! Contador resetado. Próximo follow-up amanhã.",
-      proximaTentativa
+      mensagem: "Cliente respondeu! Novo follow-up criado para amanhã."
     };
   }
   
-  if (atual.tentativaAtual >= atual.maxTentativas) {
-    // Atingiu máximo de tentativas (5/5) - mover lead para Perdido e Lixeira
-    await db.update(followUps)
-      .set({
-        status: "encerrado",
-        ultimaTentativa: agora,
-        historicoTentativas: JSON.stringify(historico),
-        updatedAt: agora
-      })
-      .where(eq(followUps.id, followUpId));
-    
-    // Buscar o lead
-    const leadData = await db.select().from(leads).where(eq(leads.id, atual.leadId)).limit(1);
-    if (!leadData[0]) throw new Error("Lead não encontrado");
-    
-    // Mover lead para status Perdido e Lixeira (independente da origem)
-    await db.update(leads)
-      .set({
-        status: "perdido",
-        naLixeira: true,
-        dataMovidoLixeira: agora,
-        motivoPerdido: "Sem resposta após 5 tentativas de follow-up",
-        updatedAt: agora
-      })
-      .where(eq(leads.id, atual.leadId));
-    
-    // Registrar interação no histórico
-    await db.insert(leadHistory).values({
-      leadId: atual.leadId,
-      corretorId: atual.corretorId,
-      tipo: "outro",
-      resultado: "outro",
-      observacoes: `Lead movido para Perdido/Lixeira após 5 tentativas de follow-up sem resposta`,
-      statusAnterior: leadData[0].status,
-      statusNovo: "perdido"
-    });
-    
-    return { 
-      status: "perdido", 
-      mensagem: "Lead movido para Perdido e Lixeira após 5 tentativas sem resposta." 
-    };
-  }
-  
-  // Agendar próxima tentativa para amanhã
-  const proximaTentativa = new Date(agora);
-  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-  proximaTentativa.setHours(9, 0, 0, 0); // Agendar para 9h do próximo dia
-  
-  const novaTentativa = atual.tentativaAtual + 1;
-  
+  // resultado === "nao_atendeu" ou "outro"
+  // Cliente não respondeu - marcar follow-up como concluído e aguardar transferência
   await db.update(followUps)
     .set({
-      tentativaAtual: novaTentativa,
-      proximaTentativa,
+      status: "nao_respondeu",
+      resultado: "nao_respondeu",
+      observacao,
       ultimaTentativa: agora,
-      historicoTentativas: JSON.stringify(historico),
       updatedAt: agora
     })
     .where(eq(followUps.id, followUpId));
   
-  // Atualizar contador de dias consecutivos no lead também
+  // Marcar lead para transferência após 2 dias sem interação
   await db.update(leads)
     .set({
-      diasFollowupConsecutivos: novaTentativa,
+      dataUltimaInteracao: agora,
+      aguardandoTransferencia: true,
       updatedAt: agora
     })
     .where(eq(leads.id, atual.leadId));
   
   return { 
-    status: "agendado", 
-    mensagem: `Tentativa ${atual.tentativaAtual + 1} registrada. Próxima tentativa: ${proximaTentativa.toLocaleDateString('pt-BR')}`,
-    proximaTentativa,
-    novaTentativa: atual.tentativaAtual + 1
+    status: "nao_respondeu", 
+    mensagem: "Lead marcado para transferência. Será transferido se não houver nova interação em 2 dias."
   };
 }
 

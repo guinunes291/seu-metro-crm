@@ -316,9 +316,7 @@ export default function TarefasDoDia() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900">
-                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                          {followUp.tentativaAtual}/{followUp.maxTentativas}
-                        </span>
+                        <Phone className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                       </div>
                       <div>
                         <p className="font-medium text-lg">{followUp.leadNome}</p>
@@ -340,9 +338,7 @@ export default function TarefasDoDia() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {followUp.tentativaAtual === 0 
-                            ? "Primeiro contato do dia" 
-                            : `Dia ${followUp.tentativaAtual} de follow-up`}
+                          Follow-up do dia
                         </p>
                       </div>
                     </div>
