@@ -2886,3 +2886,14 @@
 - [ ] Testar botões "Respondeu" e "Não Respondeu"
 - [x] Ativar sistema de bloqueio (100%)
 - [x] Testar fluxo completo end-to-end
+
+## Bug: Sistema Bloqueando com 0/0 Follow-ups
+- [ ] Investigar endpoint progressoFollowUps.getProgresso
+- [ ] Corrigir lógica de desbloqueio para considerar 0/0 como desbloqueado
+- [ ] Testar correção
+
+
+## Bug: Sistema Bloqueando com 0/0 Follow-ups (14/01/2026)
+- [x] Investigar endpoint progressoFollowUps.getProgresso
+- [x] Corrigir lógica de desbloqueio para considerar 0/0 como desbloqueado (mudado de 40% para 100%)
+- [x] Testar correção

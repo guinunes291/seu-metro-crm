@@ -2194,7 +2194,8 @@ export const appRouter = router({
         }).length;
         
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-        const desbloqueado = total === 0 ? true : percentual >= 40;
+        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups) OU 100% concluído
+        const desbloqueado = total === 0 ? true : percentual >= 100;
         
         return {
           total,
