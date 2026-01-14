@@ -4,19 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import { celebrate } from "@/lib/celebration";
 
 /**
- * Hook para monitorar progresso de follow-ups e controlar bloqueio de abas
+ * ⚠️ VERSÃO PRÉ-MONTADA PARA O NOVO FLUXO DE FOLLOW-UP (1 DIA)
  * 
- * ⚠️ BLOQUEIO TEMPORARIAMENTE DESABILITADO
- * Aguardando implementação do novo fluxo de follow-up de 1 dia.
- * Para reativar o bloqueio, veja documentação em IMPLEMENTACAO_FOLLOWUP_1DIA.md
+ * Este arquivo contém a versão atualizada do hook useFollowUpProgress
+ * compatível com o novo fluxo de follow-up de 1 tentativa por dia.
  * 
- * Retorna:
- * - total: número total de follow-ups do dia
- * - concluidos: número de follow-ups com tentativa registrada
- * - percentual: % de conclusão (0-100)
- * - desbloqueado: SEMPRE TRUE (bloqueio desabilitado)
- * - isLoading: carregando dados
+ * PARA ATIVAR:
+ * 1. Implementar o novo fluxo de follow-up conforme IMPLEMENTACAO_FOLLOWUP_1DIA.md
+ * 2. Renomear useFollowUpProgress.ts para useFollowUpProgress.OLD.ts
+ * 3. Renomear este arquivo para useFollowUpProgress.ts
+ * 4. Reiniciar servidor
+ * 
+ * MUDANÇAS EM RELAÇÃO À VERSÃO ANTIGA:
+ * - Bloqueio exige 100% dos follow-ups (não mais 60%)
+ * - Comentários atualizados para refletir novo fluxo
+ * - Lógica de celebração mantida
+ * - Animação +1 mantida
  */
+
 export function useFollowUpProgress() {
   const { user } = useAuth();
   
@@ -79,7 +84,7 @@ export function useFollowUpProgress() {
     
     previousDesbloqueado.current = desbloqueado;
     previousConcluidos.current = concluidos;
-  }, [data?.desbloqueado, data?.concluidos]);
+  }, [data?.desbloqueado, data?.concluidos, isCorretor]);
   
   // Gestores veem indicador mas sempre desbloqueados (sem celebração)
   // Outros roles (admin, etc) não veem indicador
@@ -99,7 +104,8 @@ export function useFollowUpProgress() {
     total: data?.total ?? 0,
     concluidos: data?.concluidos ?? 0,
     percentual: data?.percentual ?? 0,
-    desbloqueado: true, // ⚠️ SEMPRE TRUE - Bloqueio desabilitado temporariamente
+    // ✅ NOVO FLUXO: Desbloqueia quando 100% concluído (total === 0 OU concluidos === total)
+    desbloqueado: data?.desbloqueado ?? false,
     isLoading,
     refetch,
     showPlusOne, // Flag para disparar animação

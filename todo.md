@@ -2874,3 +2874,15 @@
 - [x] Atualizar LockedTabOverlay para 100% e comentar código
 - [x] Criar documentação de ativação do bloqueio
 - [x] Testar sistema desbloqueado
+
+## Feature: Implementação Completa do Novo Fluxo de Follow-up (1 Dia)
+- [x] Verificar schema do banco de dados (tabela follow_ups)
+- [x] Atualizar função criarFollowUpParaLead para novo schema
+- [x] Atualizar função registrarTentativaFollowUp para novo schema
+- [x] Atualizar função getTotalFollowUpsDoDia para novo schema
+- [x] Atualizar função getFollowUpsDoDia para novo schema
+- [x] Remover função criarFollowUpsAutomaticos (não mais necessária)
+- [ ] Testar criação automática ao mudar lead para "em_atendimento"
+- [ ] Testar botões "Respondeu" e "Não Respondeu"
+- [x] Ativar sistema de bloqueio (100%)
+- [x] Testar fluxo completo end-to-end

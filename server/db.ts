@@ -3366,18 +3366,17 @@ export async function getFollowUpsDoDia(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const amanha = new Date(hoje);
-  amanha.setDate(amanha.getDate() + 1);
+  // Usar timezone de São Paulo
+  const { fimDoDiaHoje, inicioDoDiaHoje } = await import('./timezone');
+  const inicioDeHoje = inicioDoDiaHoje(); // 00:00:00 de hoje
+  const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje
   
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
-    tentativaAtual: followUps.tentativaAtual,
-    maxTentativas: followUps.maxTentativas,
-    proximaTentativa: followUps.proximaTentativa,
-    ultimaTentativa: followUps.ultimaTentativa,
+    dataFollowUp: followUps.dataFollowUp,
+    dataRegistro: followUps.dataRegistro,
+    resultado: followUps.resultado,
     status: followUps.status,
     leadNome: leads.nome,
     leadTelefone: leads.telefone,
@@ -3388,11 +3387,11 @@ export async function getFollowUpsDoDia(corretorId: number) {
     .innerJoin(leads, eq(followUps.leadId, leads.id))
     .where(and(
       eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "ativo"),
-      gte(followUps.proximaTentativa, hoje),
-      lte(followUps.proximaTentativa, amanha)
+      eq(followUps.status, "pendente"),
+      gte(followUps.dataFollowUp, inicioDeHoje),
+      lte(followUps.dataFollowUp, fimDeHoje)
     ))
-    .orderBy(followUps.proximaTentativa);
+    .orderBy(followUps.dataFollowUp);
 }
 
 export async function registrarTentativaFollowUp(
@@ -3420,13 +3419,13 @@ export async function registrarTentativaFollowUp(
   const lead = leadData[0];
   
   if (resultado === "respondeu") {
-    // Cliente respondeu - marcar follow-up atual como respondido
+    // Cliente respondeu - marcar follow-up atual como concluído
     await db.update(followUps)
       .set({
-        status: "respondeu",
+        status: "concluido",
         resultado: "respondeu",
         observacao,
-        ultimaTentativa: agora,
+        dataRegistro: agora,
         updatedAt: agora
       })
       .where(eq(followUps.id, followUpId));
@@ -3443,13 +3442,13 @@ export async function registrarTentativaFollowUp(
     // Criar novo follow-up para amanhã (se lead ainda estiver em atendimento)
     if (lead.status === "em_atendimento") {
       const { inicioDoDiaSeguinte } = await import('./timezone');
-      const proximaTentativa = inicioDoDiaSeguinte();
-      proximaTentativa.setHours(9, 0, 0, 0);
+      const amanha = inicioDoDiaSeguinte();
+      amanha.setHours(9, 0, 0, 0);
       
       await db.insert(followUps).values({
         leadId: atual.leadId,
         corretorId: atual.corretorId,
-        proximaTentativa,
+        dataFollowUp: amanha,
         status: "pendente"
       });
     }
@@ -3464,10 +3463,10 @@ export async function registrarTentativaFollowUp(
   // Cliente não respondeu - marcar follow-up como concluído e aguardar transferência
   await db.update(followUps)
     .set({
-      status: "nao_respondeu",
+      status: "concluido",
       resultado: "nao_respondeu",
       observacao,
-      ultimaTentativa: agora,
+      dataRegistro: agora,
       updatedAt: agora
     })
     .where(eq(followUps.id, followUpId));
@@ -3491,12 +3490,12 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Verificar se já existe follow-up ativo para este lead
+  // Verificar se já existe follow-up pendente para este lead
   const existente = await db.select()
     .from(followUps)
     .where(and(
       eq(followUps.leadId, leadId),
-      eq(followUps.status, "ativo")
+      eq(followUps.status, "pendente")
     ))
     .limit(1);
   
@@ -3504,73 +3503,29 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
     return existente[0].id; // Já existe, retorna o ID
   }
   
-  // Criar novo follow-up para HOJE (não amanhã)
-  // Corretor pode registrar resultado ao final do dia
-  const proximaTentativa = new Date();
-  proximaTentativa.setHours(9, 0, 0, 0);
+  // Criar novo follow-up para AMANHÃ às 9h (novo fluxo de 1 dia)
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  amanha.setHours(9, 0, 0, 0);
   
   const result = await db.insert(followUps).values({
     leadId,
     corretorId,
-    tentativaAtual: 1,
-    maxTentativas: 3,
-    proximaTentativa,
-    status: "ativo",
-    historicoTentativas: "[]"
+    dataFollowUp: amanha,
+    status: "pendente"
   });
   
   return result[0].insertId;
 }
 
 /**
- * Cria follow-ups automáticos para leads que precisam de acompanhamento
- * APENAS leads em status "em_atendimento" devem ter follow-ups
+ * [DESABILITADO] Função antiga de criação automática de follow-ups
+ * No novo fluxo de 1 dia, follow-ups são criados APENAS quando lead muda para "em_atendimento"
+ * via função criarFollowUpParaLead()
  */
 export async function criarFollowUpsAutomaticos(corretorId: number) {
-  const db = await getDb();
-  if (!db) return { criados: 0 };
-  
-  // Buscar leads do corretor que precisam de follow-up
-  // APENAS leads em status "em_atendimento"
-  const leadsDoCorretor = await db.select()
-    .from(leads)
-    .where(and(
-      eq(leads.corretorId, corretorId),
-      eq(leads.status, "em_atendimento")
-    ));
-  
-  let criados = 0;
-  
-  for (const lead of leadsDoCorretor) {
-    // Verificar se já existe follow-up ativo para este lead
-    const existente = await db.select()
-      .from(followUps)
-      .where(and(
-        eq(followUps.leadId, lead.id),
-        eq(followUps.status, "ativo")
-      ))
-      .limit(1);
-    
-    if (existente.length === 0) {
-      // Criar follow-up para HOJE usando timezone de São Paulo
-      const { inicioDoDiaHoje } = await import('./timezone');
-      const proximaTentativa = inicioDoDiaHoje();
-      proximaTentativa.setHours(9, 0, 0, 0);
-      
-      await db.insert(followUps).values({
-        leadId: lead.id,
-        corretorId,
-        tentativaAtual: 1,
-        maxTentativas: 3,
-        proximaTentativa,
-        status: "ativo",
-        historicoTentativas: "[]"
-      });
-      criados++;
-    }
-  }
-  
-  return { criados };
+  // Função desabilitada no novo fluxo
+  return { criados: 0 };
 }
 
 /**
@@ -7158,46 +7113,24 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   const { fimDoDiaHoje, inicioDoDiaHoje } = await import('./timezone');
   const inicioDeHoje = hojeParam || inicioDoDiaHoje(); // 00:00:00 de hoje
   const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje
-  const amanha = amanhaParam || (() => {
-    const a = new Date(fimDeHoje);
-    a.setDate(a.getDate() + 1);
-    return a;
-  })();
   
-  // Primeiro, criar follow-ups automáticos
-  await criarFollowUpsAutomaticos(corretorId);
-  
-  // Buscar APENAS follow-ups do dia atual (hoje)
-  // Lógica de bloqueio: considerar apenas follow-ups de HOJE, não de outros dias
-  // Isso garante que o bloqueio seja diário e não acumule follow-ups de dias futuros
-  
-  // Estratégia: buscar follow-ups onde:
-  // - proximaTentativa <= fim de hoje (follow-ups agendados para hoje ou antes)
-  // OU
-  // - ultimaTentativa foi hoje (follow-ups já trabalhados hoje)
+  // Buscar follow-ups pendentes do dia atual (hoje)
+  // Novo fluxo: apenas follow-ups com status "pendente" e dataFollowUp de hoje
   
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
-    tentativaAtual: followUps.tentativaAtual,
-    maxTentativas: followUps.maxTentativas,
-    proximaTentativa: followUps.proximaTentativa,
-    ultimaTentativa: followUps.ultimaTentativa,
+    dataFollowUp: followUps.dataFollowUp,
+    dataRegistro: followUps.dataRegistro,
+    resultado: followUps.resultado,
     status: followUps.status,
   })
     .from(followUps)
     .where(and(
       eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "ativo"),
-      or(
-        // Follow-ups agendados para hoje ou antes (proximaTentativa <= fim de hoje)
-        lte(followUps.proximaTentativa, fimDeHoje),
-        // Follow-ups já trabalhados hoje (ultimaTentativa entre início e fim de hoje)
-        and(
-          gte(followUps.ultimaTentativa, inicioDeHoje),
-          lt(followUps.ultimaTentativa, amanha)
-        )
-      )
+      eq(followUps.status, "pendente"),
+      gte(followUps.dataFollowUp, inicioDeHoje),
+      lte(followUps.dataFollowUp, fimDeHoje)
     ));
 }
 

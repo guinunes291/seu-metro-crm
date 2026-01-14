@@ -10,27 +10,13 @@ interface LockedTabOverlayProps {
 }
 
 /**
- * ⚠️ VERSÃO PRÉ-MONTADA PARA O NOVO FLUXO DE FOLLOW-UP (1 DIA)
- * 
- * Overlay semi-transparente que bloqueia abas até atingir 100% de follow-ups
+ * Overlay semi-transparente que bloqueia abas até atingir 60% de follow-ups
  * Mostra progresso visual e botão para ir para Tarefas do Dia
- * 
- * MUDANÇAS EM RELAÇÃO À VERSÃO ANTIGA:
- * - Exige 100% dos follow-ups (não mais 60%)
- * - Textos atualizados para refletir novo fluxo
- * - Cálculo de "faltam" ajustado para 100%
- * 
- * PARA ATIVAR:
- * 1. Implementar o novo fluxo de follow-up conforme IMPLEMENTACAO_FOLLOWUP_1DIA.md
- * 2. Renomear LockedTabOverlay.tsx para LockedTabOverlay.OLD.tsx
- * 3. Renomear este arquivo para LockedTabOverlay.tsx
- * 4. Reiniciar servidor
  */
 export function LockedTabOverlay({ total, concluidos, percentual }: LockedTabOverlayProps) {
   const [, setLocation] = useLocation();
   
-  // ✅ NOVO FLUXO: Calcula quantos faltam para 100% (não mais 60%)
-  const faltam = total - concluidos;
+  const faltam = Math.ceil(total * 0.6) - concluidos;
   
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -65,8 +51,7 @@ export function LockedTabOverlay({ total, concluidos, percentual }: LockedTabOve
           </div>
           <Progress value={percentual} className="h-3" />
           <p className="text-center text-xs text-muted-foreground">
-            {/* ✅ NOVO FLUXO: Meta atualizada para 100% */}
-            Meta: 100% dos follow-ups concluídos
+            Meta: 60% dos follow-ups concluídos
           </p>
         </div>
         
