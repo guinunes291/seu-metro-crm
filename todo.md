@@ -2847,3 +2847,9 @@
 - [x] Verificar query do contador global da barra superior
 - [x] Corrigir query para que ambos usem a mesma fonte de dados
 - [x] Testar com usuário Igor Nigro que tem 77/267 follow-ups pendentes
+
+## Correção: Tarefas do Dia e Contador Global Devem Mostrar Apenas Leads em_atendimento
+- [x] Reverter remoção do filtro em_atendimento na função getFollowUpsDoDiaExpandido
+- [x] Adicionar filtro por status em_atendimento na função getTotalFollowUpsDoDia (contador global)
+- [x] Atualizar comentários para documentar que apenas leads em atendimento aparecem
+- [x] Testar com Igor Nigro para verificar que contador e página estão alinhados

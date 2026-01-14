@@ -3647,14 +3647,13 @@ export async function getFollowUpsDoDiaExpandido(
   const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje em SP
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
-  // Todos os leads com follow-ups ativos aparecem em Tarefas do Dia
+  // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
   
   // Construir condições de filtro
   const conditions = [
     eq(followUps.corretorId, corretorId),
     eq(followUps.status, "ativo"),
-    // Removido filtro por status do lead - mostrar TODOS os leads que precisam de follow-up
-    // Isso alinha com o contador global da barra superior
+    eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
     lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
   ];
   
@@ -7229,6 +7228,8 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   // OU
   // - ultimaTentativa foi hoje (follow-ups já trabalhados hoje)
   
+  // APENAS leads com status "em_atendimento" são contados
+  // Isso alinha com a página Tarefas do Dia
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -7239,9 +7240,11 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
     status: followUps.status,
   })
     .from(followUps)
+    .innerJoin(leads, eq(followUps.leadId, leads.id))
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "ativo"),
+      eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
       or(
         // Follow-ups agendados para hoje ou antes (proximaTentativa <= fim de hoje)
         lte(followUps.proximaTentativa, fimDeHoje),
