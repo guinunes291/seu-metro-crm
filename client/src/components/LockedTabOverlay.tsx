@@ -29,8 +29,10 @@ interface LockedTabOverlayProps {
 export function LockedTabOverlay({ total, concluidos, percentual }: LockedTabOverlayProps) {
   const [, setLocation] = useLocation();
   
-  // ✅ NOVO FLUXO: Calcula quantos faltam para 100% (não mais 60%)
-  const faltam = total - concluidos;
+  // total = pendentes (ainda não feitos)
+  // concluidos = realizados (já feitos hoje)
+  const pendentes = total;
+  const realizados = concluidos;
   
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -48,7 +50,7 @@ export function LockedTabOverlay({ total, concluidos, percentual }: LockedTabOve
             Complete seus Follow-ups
           </h2>
           <p className="text-muted-foreground">
-            Você precisa concluir <span className="font-semibold text-red-600">{faltam} follow-up{faltam !== 1 ? 's' : ''}</span> para desbloquear esta aba
+            Você precisa realizar <span className="font-semibold text-red-600">{pendentes} follow-up{pendentes !== 1 ? 's' : ''} pendente{pendentes !== 1 ? 's' : ''}</span> para desbloquear esta aba
           </p>
         </div>
         
@@ -60,13 +62,13 @@ export function LockedTabOverlay({ total, concluidos, percentual }: LockedTabOve
               Progresso
             </span>
             <span className="font-semibold">
-              {concluidos}/{total} ({percentual}%)
+              {realizados}/{pendentes} ({percentual}%)
             </span>
           </div>
           <Progress value={percentual} className="h-3" />
           <p className="text-center text-xs text-muted-foreground">
-            {/* ✅ NOVO FLUXO: Meta atualizada para 100% */}
-            Meta: 100% dos follow-ups concluídos
+            {/* ✅ NOVO FLUXO: Realizados hoje / Pendentes hoje */}
+            Realizados hoje / Pendentes hoje
           </p>
         </div>
         

@@ -2182,24 +2182,29 @@ export const appRouter = router({
         amanha.setDate(amanha.getDate() + 1);
         
         
-        // TOTAL FIXO: Contar TODOS os follow-ups que tinham proximaTentativa <= hoje
-        const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
-        const total = totalFollowUps.length;
+        // Buscar TODOS os follow-ups do dia
+        const todosFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
         
-        // CONCLUÍDOS: Contar follow-ups que tiveram ultimaTentativa atualizada HOJE
-        const concluidos = totalFollowUps.filter(f => {
+        // REALIZADOS: Follow-ups que foram registrados HOJE (ultimaTentativa atualizada hoje)
+        const realizados = todosFollowUps.filter(f => {
           if (!f.ultimaTentativa) return false;
           const ultimaTentativaDate = new Date(f.ultimaTentativa);
           return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
         }).length;
         
-        const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
-        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups) OU 100% concluído
-        const desbloqueado = total === 0 ? true : percentual >= 100;
+        // PENDENTES: Follow-ups que ainda NÃO foram registrados hoje
+        const pendentes = todosFollowUps.length - realizados;
+        
+        // Percentual baseado no total de follow-ups do dia
+        const totalDoDia = todosFollowUps.length;
+        const percentual = totalDoDia > 0 ? Math.round((realizados / totalDoDia) * 100) : 100;
+        
+        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups pendentes) OU 100% concluído
+        const desbloqueado = pendentes === 0;
         
         return {
-          total,
-          concluidos,
+          total: pendentes,        // Segundo número = pendentes
+          concluidos: realizados,  // Primeiro número = realizados
           percentual,
           desbloqueado,
         };

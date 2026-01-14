@@ -2903,3 +2903,10 @@
 - [x] Investigar lógica de desbloqueio no frontend (useFollowUpProgress, LockedTabOverlay)
 - [x] Corrigir condição de bloqueio no componente (fallback inteligente: total === 0 ? true : false)
 - [x] Testar correção
+
+
+## Ajuste: Lógica de Contagem de Follow-ups (14/01/2026)
+- [x] Investigar função getTotalFollowUpsDoDia e endpoint getProgresso
+- [x] Ajustar lógica: primeiro número = realizados hoje, segundo número = pendentes hoje
+- [x] Atualizar textos da interface (realizados/pendentes ao invés de concluídos/total)
+- [x] Testar nova contagem
