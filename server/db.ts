@@ -3523,13 +3523,54 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
 }
 
 /**
- * DEPRECATED: Função não utilizada no novo fluxo de follow-up de 1 dia
- * Follow-ups são criados automaticamente quando lead muda para "em_atendimento"
- * via função criarFollowUpParaLead() no db.ts
+ * Cria follow-ups automáticos para leads que precisam de acompanhamento
+ * APENAS leads em status "em_atendimento" devem ter follow-ups
  */
 export async function criarFollowUpsAutomaticos(corretorId: number) {
-  // Não criar follow-ups automaticamente
-  return { criados: 0 };
+  const db = await getDb();
+  if (!db) return { criados: 0 };
+  
+  // Buscar leads do corretor que precisam de follow-up
+  // APENAS leads em status "em_atendimento"
+  const leadsDoCorretor = await db.select()
+    .from(leads)
+    .where(and(
+      eq(leads.corretorId, corretorId),
+      eq(leads.status, "em_atendimento")
+    ));
+  
+  let criados = 0;
+  
+  for (const lead of leadsDoCorretor) {
+    // Verificar se já existe follow-up ativo para este lead
+    const existente = await db.select()
+      .from(followUps)
+      .where(and(
+        eq(followUps.leadId, lead.id),
+        eq(followUps.status, "ativo")
+      ))
+      .limit(1);
+    
+    if (existente.length === 0) {
+      // Criar follow-up para HOJE usando timezone de São Paulo
+      const { inicioDoDiaHoje } = await import('./timezone');
+      const proximaTentativa = inicioDoDiaHoje();
+      proximaTentativa.setHours(9, 0, 0, 0);
+      
+      await db.insert(followUps).values({
+        leadId: lead.id,
+        corretorId,
+        tentativaAtual: 1,
+        maxTentativas: 3,
+        proximaTentativa,
+        status: "ativo",
+        historicoTentativas: "[]"
+      });
+      criados++;
+    }
+  }
+  
+  return { criados };
 }
 
 /**
@@ -7123,6 +7164,9 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
     return a;
   })();
   
+  // Primeiro, criar follow-ups automáticos
+  await criarFollowUpsAutomaticos(corretorId);
+  
   // Buscar APENAS follow-ups do dia atual (hoje)
   // Lógica de bloqueio: considerar apenas follow-ups de HOJE, não de outros dias
   // Isso garante que o bloqueio seja diário e não acumule follow-ups de dias futuros
@@ -7135,17 +7179,25 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
-    dataFollowUp: followUps.dataFollowUp,
-    ultimaTentativa: followUps.dataRegistro,
+    tentativaAtual: followUps.tentativaAtual,
+    maxTentativas: followUps.maxTentativas,
+    proximaTentativa: followUps.proximaTentativa,
+    ultimaTentativa: followUps.ultimaTentativa,
     status: followUps.status,
   })
     .from(followUps)
     .where(and(
       eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "pendente"),
-      // Follow-ups agendados para hoje
-      gte(followUps.dataFollowUp, inicioDeHoje),
-      lte(followUps.dataFollowUp, fimDeHoje)
+      eq(followUps.status, "ativo"),
+      or(
+        // Follow-ups agendados para hoje ou antes (proximaTentativa <= fim de hoje)
+        lte(followUps.proximaTentativa, fimDeHoje),
+        // Follow-ups já trabalhados hoje (ultimaTentativa entre início e fim de hoje)
+        and(
+          gte(followUps.ultimaTentativa, inicioDeHoje),
+          lt(followUps.ultimaTentativa, amanha)
+        )
+      )
     ));
 }
 
