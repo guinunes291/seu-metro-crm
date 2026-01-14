@@ -2825,3 +2825,10 @@
 - [x] Adicionar virtualização de lista para renderização eficiente
 - [x] Otimizar queries SQL com índices apropriados
 - [x] Testar performance com grande volume de dados (4000+ leads)
+
+## Bug: Paginação Não Funciona - Todos os Leads Renderizados
+- [x] Investigar por que todos os leads estão sendo renderizados mesmo com paginação implementada
+- [x] Verificar se backend está retornando apenas 50 leads ou todos
+- [x] Verificar se frontend está usando array paginado ou array completo
+- [x] Corrigir lógica de renderização para usar apenas leads da página atual
+- [x] Testar navegação entre páginas
