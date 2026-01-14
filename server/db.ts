@@ -1589,20 +1589,19 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
   
   const result = await Promise.all(corretores.map(async (corretor) => {
     const conditions: any[] = [
-      eq(leads.corretorId, corretor.id),
-      eq(leads.status, 'agendado')
+      eq(agendamentos.corretorId, corretor.id)
     ];
     
     if (filtros?.dataInicio) {
-      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+      conditions.push(gte(agendamentos.createdAt, filtros.dataInicio));
     }
     
     if (filtros?.dataFim) {
-      conditions.push(lte(leads.createdAt, filtros.dataFim));
+      conditions.push(lte(agendamentos.createdAt, filtros.dataFim));
     }
     
     const agendados = await db.select({ count: sql<number>`count(*)` })
-      .from(leads)
+      .from(agendamentos)
       .where(and(...conditions));
     
     return {
@@ -1626,27 +1625,26 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   
   const result = await Promise.all(corretores.map(async (corretor) => {
     const conditions: any[] = [
-      eq(leads.corretorId, corretor.id),
-      eq(leads.status, 'visita_realizada')
+      eq(visitas.corretorId, corretor.id)
     ];
     
     if (filtros?.dataInicio) {
-      conditions.push(gte(leads.createdAt, filtros.dataInicio));
+      conditions.push(gte(visitas.createdAt, filtros.dataInicio));
     }
     
     if (filtros?.dataFim) {
-      conditions.push(lte(leads.createdAt, filtros.dataFim));
+      conditions.push(lte(visitas.createdAt, filtros.dataFim));
     }
     
-    const visitas = await db.select({ count: sql<number>`count(*)` })
-      .from(leads)
+    const visitasCount = await db.select({ count: sql<number>`count(*)` })
+      .from(visitas)
       .where(and(...conditions));
     
     return {
       id: corretor.id,
       nome: corretor.name || 'Sem nome',
       status: corretor.status,
-      visitas: Number(visitas[0]?.count || 0),
+      visitas: Number(visitasCount[0]?.count || 0),
     };
   }));
   
@@ -1722,16 +1720,17 @@ export async function getMetricasHistoricas(dias: number = 30): Promise<Metricas
   const db = await getDb();
   if (!db) return [];
   
+  const { agora, inicioDoDia, fimDoDia } = await import('./timezone');
+  
   const resultado: MetricasDiarias[] = [];
-  const hoje = new Date();
+  const hoje = agora(); // Usar timezone de São Paulo
   
   for (let i = dias - 1; i >= 0; i--) {
-    const data = new Date(hoje);
-    data.setDate(data.getDate() - i);
-    data.setHours(0, 0, 0, 0);
+    const dataBase = new Date(hoje);
+    dataBase.setDate(dataBase.getDate() - i);
     
-    const dataFim = new Date(data);
-    dataFim.setHours(23, 59, 59, 999);
+    const data = inicioDoDia(dataBase); // Início do dia em SP
+    const dataFim = fimDoDia(dataBase); // Fim do dia em SP
     
     const dataStr = data.toISOString().split('T')[0];
     

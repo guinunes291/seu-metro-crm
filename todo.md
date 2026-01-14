@@ -2847,3 +2847,22 @@
 - [x] Verificar query do contador global da barra superior
 - [x] Corrigir query para que ambos usem a mesma fonte de dados
 - [x] Testar com usuário Igor Nigro que tem 77/267 follow-ups pendentes
+
+## Bug: Leads Perdidos Não Atualizam no Dashboard
+- [ ] Investigar query de contagem de leads perdidos no dashboard do gestor
+- [ ] Verificar se filtros ou cache estão impedindo atualização
+- [ ] Corrigir lógica de contagem para refletir dados em tempo real
+- [ ] Testar com leads marcados como perdidos recentemente
+
+## Bug: Agendamentos Somem Após Alguns Dias
+- [x] Investigar se há job de limpeza deletando agendamentos antigos
+- [x] Verificar se há soft delete não intencional
+- [x] Verificar se há problema de timezone causando perda de dados
+- [x] Corrigir lógica de persistência de agendamentos (usar tabela agendamentos ao invés de status do lead)
+- [x] Testar criação e permanência de agendamentos por vários dias
+
+## Bug: Gráfico de Evolução de Leads Mostra 1 Dia Atrasado
+- [x] Investigar problema de timezone no gráfico de Evolução de Leads
+- [x] Verificar se createdAt está sendo salvo em UTC ou horário local
+- [x] Corrigir conversão de timezone para exibição correta (usar funções de timezone.ts)
+- [x] Testar criação de leads hoje e verificar aparição no gráfico
