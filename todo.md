@@ -2790,3 +2790,8 @@
 - [x] Implementar modo blitz para follow-ups em massa
 - [x] Adicionar botão de atalho para Modo Blitz na página Tarefas do Dia
 - [x] Implementar timer de 5 minutos para leads do Facebook Ads com redistribuição automática se não trabalhados
+
+## Bug: Modo Blitz Mostrando Tela de Bloqueio
+- [x] Investigar por que o botão Modo Blitz está mostrando tela de bloqueio ao invés de abrir a interface
+- [x] Corrigir lógica para permitir acesso ao Modo Blitz mesmo quando corretor está bloqueado (o Modo Blitz serve justamente para desbloquear)
+- [x] Testar correção com corretor bloqueado

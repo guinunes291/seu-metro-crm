@@ -676,8 +676,8 @@ function DashboardContent({
         </header>
         <main className="flex-1 overflow-auto relative">
           {children}
-          {/* Overlay de bloqueio se não atingiu 60% e não está em Tarefas do Dia (APENAS CORRETORES) */}
-          {isCorretor && !desbloqueado && location !== "/tarefas-do-dia" && (
+          {/* Overlay de bloqueio se não atingiu 40% e não está em Tarefas do Dia ou Modo Blitz (APENAS CORRETORES) */}
+          {isCorretor && !desbloqueado && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && (
             <LockedTabOverlay
               total={total}
               concluidos={concluidos}
