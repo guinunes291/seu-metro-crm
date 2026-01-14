@@ -3647,13 +3647,14 @@ export async function getFollowUpsDoDiaExpandido(
   const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje em SP
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
-  // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
+  // Todos os leads com follow-ups ativos aparecem em Tarefas do Dia
   
   // Construir condições de filtro
   const conditions = [
     eq(followUps.corretorId, corretorId),
     eq(followUps.status, "ativo"),
-    eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
+    // Removido filtro por status do lead - mostrar TODOS os leads que precisam de follow-up
+    // Isso alinha com o contador global da barra superior
     lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
   ];
   

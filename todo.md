@@ -2840,3 +2840,10 @@
 - [x] Corrigir conversão de timezone no backend (salvar em UTC ou São Paulo)
 - [x] Corrigir conversão de timezone no frontend (exibir em São Paulo)
 - [x] Testar criação de agendamento e verificar data correta no calendário
+
+## Bug: Página Tarefas do Dia Mostra 0 Follow-ups Mas Barra Superior Mostra 77/267
+- [x] Investigar inconsistência entre contador global (barra superior) e dados da página Tarefas do Dia
+- [x] Verificar query de follow-ups da página TarefasDoDia.tsx
+- [x] Verificar query do contador global da barra superior
+- [x] Corrigir query para que ambos usem a mesma fonte de dados
+- [x] Testar com usuário Igor Nigro que tem 77/267 follow-ups pendentes
