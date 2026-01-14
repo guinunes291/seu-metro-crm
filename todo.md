@@ -2910,3 +2910,26 @@
 - [x] Ajustar lógica: primeiro número = realizados hoje, segundo número = pendentes hoje
 - [x] Atualizar textos da interface (realizados/pendentes ao invés de concluídos/total)
 - [x] Testar nova contagem
+
+
+## Correção: Contagem de Follow-ups (Manter 2/3) - 14/01/2026
+- [x] Reverter mudanças do endpoint getProgresso (voltar para concluídos/total)
+- [x] Reverter textos da interface (voltar para concluídos/total)
+- [ ] Investigar por que contagem está incorreta (mostra 0/0 quando há follow-ups)
+- [ ] Corrigir contagem em todos os lugares (header, tarefas do dia, overlay, barras de progresso)
+- [ ] Testar contagem completa
+
+## Bug: Erro ao Atualizar Status do Lead - 14/01/2026
+- [ ] Investigar endpoint de atualização de status
+- [ ] Corrigir erro
+- [ ] Testar atualização de status
+
+
+## Correções Críticas: Sistema de Follow-up (14/01/2026)
+- [x] Corrigir erro ao atualizar lead para "em_atendimento" (função criarOuAtualizarFollowUp não existia)
+- [x] Migrar schema do banco de dados para novo fluxo de follow-up
+- [x] Atualizar enum de status (pendente, concluido, cancelado)
+- [x] Adicionar campos novos (dataFollowUp, dataRegistro, resultado, observacao)
+- [x] Migrar 1791 follow-ups existentes de 'ativo' para 'pendente'
+- [x] Testar contagem de follow-ups (0/1 para corretor com 1 follow-up pendente)
+- [x] Reiniciar servidor para aplicar mudanças

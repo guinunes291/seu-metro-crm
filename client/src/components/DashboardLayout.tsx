@@ -645,11 +645,8 @@ function DashboardContent({
                 <span className={`font-bold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
                   {concluidos}/{total}
                 </span>
-                <span className={`text-xs font-medium text-muted-foreground hidden xl:inline`}>
-                  (realizados/pendentes)
-                </span>
                 <span className={`text-xs font-semibold ${desbloqueado ? 'text-green-600' : 'text-red-600'}`}>
-                  {percentual}%
+                  ({percentual}%)
                 </span>
                 
                 {/* Animação +1 */}

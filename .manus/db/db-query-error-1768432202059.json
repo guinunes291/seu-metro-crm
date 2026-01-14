@@ -1,0 +1,8 @@
+{
+  "query": "-- Adicionar novos campos\nALTER TABLE follow_ups \n  ADD COLUMN dataFollowUp timestamp NULL AFTER corretorId,\n  ADD COLUMN dataRegistro timestamp NULL AFTER dataFollowUp,\n  ADD COLUMN resultado enum('respondeu', 'nao_respondeu') NULL AFTER dataRegistro,\n  ADD COLUMN observacao text NULL AFTER resultado;\n\n-- Migrar dados: proximaTentativa → dataFollowUp\nUPDATE follow_ups SET dataFollowUp = proximaTentativa WHERE dataFollowUp IS NULL;\n\n-- Migrar dados: ultimaTentativa → dataRegistro  \nUPDATE follow_ups SET dataRegistro = ultimaTentativa WHERE ultimaTentativa IS NOT NULL;\n\n-- Tornar dataFollowUp NOT NULL após migração\nALTER TABLE follow_ups MODIFY COLUMN dataFollowUp timestamp NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute -- Adicionar novos campos\nALTER TABLE follow_ups \n  ADD COLUMN dataFollowUp timestamp NULL AFTER corretorId,\n  ADD COLUMN dataRegistro timestamp NULL AFTER dataFollowUp,\n  ADD COLUMN resultado enum('respondeu', 'nao_respondeu') NULL AFTER dataRegistro,\n  ADD COLUMN observacao text NULL AFTER resultado;\n\n-- Migrar dados: proximaTentativa → dataFollowUp\nUPDATE follow_ups SET dataFollowUp = proximaTentativa WHERE dataFollowUp IS NULL;\n\n-- Migrar dados: ultimaTentativa → dataRegistro  \nUPDATE follow_ups SET dataRegistro = ultimaTentativa WHERE ultimaTentativa IS NOT NULL;\n\n-- Tornar dataFollowUp NOT NULL após migração\nALTER TABLE follow_ups MODIFY COLUMN dataFollowUp timestamp NOT NULL;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1060 (42S21) at line 2: Duplicate column name 'dataFollowUp'"
+  ]
+}

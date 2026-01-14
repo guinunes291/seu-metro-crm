@@ -1,0 +1,8 @@
+{
+  "query": "-- Migrar status antigo para novo\nUPDATE follow_ups SET status = 'pendente' WHERE status = 'ativo';\nUPDATE follow_ups SET status = 'concluido' WHERE status IN ('respondido', 'encerrado', 'convertido');\n\n-- Alterar enum do status\nALTER TABLE follow_ups MODIFY COLUMN status enum('pendente','concluido','cancelado') NOT NULL DEFAULT 'pendente';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute -- Migrar status antigo para novo\nUPDATE follow_ups SET status = 'pendente' WHERE status = 'ativo';\nUPDATE follow_ups SET status = 'concluido' WHERE status IN ('respondido', 'encerrado', 'convertido');\n\n-- Alterar enum do status\nALTER TABLE follow_ups MODIFY COLUMN status enum('pendente','concluido','cancelado') NOT NULL DEFAULT 'pendente';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 2: Data truncated for column '%s' at row %d"
+  ]
+}

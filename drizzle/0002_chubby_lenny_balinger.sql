@@ -1,0 +1,1 @@
+ALTER TABLE `follow_ups` MODIFY COLUMN `status` enum('pendente','concluido','cancelado') NOT NULL DEFAULT 'pendente';

@@ -432,7 +432,7 @@ export const appRouter = router({
         
         // Se o status mudou para "em_atendimento", criar follow-up automático para amanhã
         if (input.data.status === 'em_atendimento' && lead.status !== 'em_atendimento') {
-          await db.criarOuAtualizarFollowUp(input.id, lead.corretorId || ctx.user.id);
+          await db.criarFollowUpParaLead(input.id, lead.corretorId || ctx.user.id);
         }
         
         // Se o status for "perdido", tentar transferir para outro corretor
@@ -2182,29 +2182,26 @@ export const appRouter = router({
         amanha.setDate(amanha.getDate() + 1);
         
         
-        // Buscar TODOS os follow-ups do dia
-        const todosFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
+        // TOTAL: Contar TODOS os follow-ups do dia
+        const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
+        const total = totalFollowUps.length;
         
-        // REALIZADOS: Follow-ups que foram registrados HOJE (ultimaTentativa atualizada hoje)
-        const realizados = todosFollowUps.filter(f => {
+        // CONCLUÍDOS: Follow-ups que foram registrados HOJE (ultimaTentativa atualizada hoje)
+        const concluidos = totalFollowUps.filter(f => {
           if (!f.ultimaTentativa) return false;
           const ultimaTentativaDate = new Date(f.ultimaTentativa);
           return ultimaTentativaDate >= hoje && ultimaTentativaDate < amanha;
         }).length;
         
-        // PENDENTES: Follow-ups que ainda NÃO foram registrados hoje
-        const pendentes = todosFollowUps.length - realizados;
-        
         // Percentual baseado no total de follow-ups do dia
-        const totalDoDia = todosFollowUps.length;
-        const percentual = totalDoDia > 0 ? Math.round((realizados / totalDoDia) * 100) : 100;
+        const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
         
-        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups pendentes) OU 100% concluído
-        const desbloqueado = pendentes === 0;
+        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups) OU 100% concluído
+        const desbloqueado = total === 0 || percentual >= 100;
         
         return {
-          total: pendentes,        // Segundo número = pendentes
-          concluidos: realizados,  // Primeiro número = realizados
+          total,           // Segundo número = total de follow-ups do dia
+          concluidos,      // Primeiro número = concluídos hoje
           percentual,
           desbloqueado,
         };

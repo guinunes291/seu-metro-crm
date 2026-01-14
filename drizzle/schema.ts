@@ -743,8 +743,8 @@ export type InsertTarefa = typeof tarefas.$inferInsert;
 // ============================================================================
 
 /**
- * Sistema de follow-up automático para leads novos
- * Cria 5 tentativas de contato, se não houver resposta o lead é encerrado
+ * Sistema de follow-up simplificado (1 dia)
+ * 1 follow-up por dia: "Respondeu" cria novo para amanhã, "Não Respondeu" marca para transferência em 2 dias
  */
 export const followUps = mysqlTable("follow_ups", {
   id: int("id").autoincrement().primaryKey(),
@@ -753,32 +753,30 @@ export const followUps = mysqlTable("follow_ups", {
   leadId: int("leadId").notNull(),
   corretorId: int("corretorId").notNull(),
   
-  // Controle de tentativas
-  tentativaAtual: int("tentativaAtual").default(1).notNull(), // 1 a 3
-  maxTentativas: int("maxTentativas").default(3).notNull(),
+  // Datas do novo fluxo
+  dataFollowUp: timestamp("dataFollowUp").notNull(), // Data que o follow-up deve ser feito
+  dataRegistro: timestamp("dataRegistro"), // Quando foi registrado/concluído
   
-  // Datas
-  proximaTentativa: timestamp("proximaTentativa").notNull(),
-  ultimaTentativa: timestamp("ultimaTentativa"),
+  // Resultado do follow-up
+  resultado: mysqlEnum("resultado", [
+    "respondeu",        // Cliente respondeu
+    "nao_respondeu"     // Cliente não respondeu
+  ]),
+  observacao: text("observacao"), // Observações do corretor
   
   // Status
   status: mysqlEnum("status", [
-    "ativo",            // Follow-up em andamento
-    "respondido",       // Cliente respondeu (contador resetado)
-    "encerrado",        // 5 tentativas sem resposta
-    "convertido",       // Lead avançou no funil
-    "cancelado"         // Cancelado manualmente
-  ]).default("ativo").notNull(),
-  
-  // Histórico de tentativas (JSON array)
-  historicoTentativas: text("historicoTentativas"), // [{ data, resultado, observacao }]
+    "pendente",         // Aguardando ser feito
+    "concluido",        // Já foi registrado
+    "cancelado"         // Cancelado (lead mudou de status)
+  ]).default("pendente").notNull(),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   leadIdx: index("followup_lead_idx").on(table.leadId),
   corretorIdx: index("followup_corretor_idx").on(table.corretorId),
-  proximaIdx: index("followup_proxima_idx").on(table.proximaTentativa),
+  dataFollowUpIdx: index("followup_data_idx").on(table.dataFollowUp),
   statusIdx: index("followup_status_idx").on(table.status),
 }));
 
