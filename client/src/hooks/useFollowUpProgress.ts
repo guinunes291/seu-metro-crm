@@ -100,12 +100,19 @@ export function useFollowUpProgress() {
     };
   }
   
+  const total = data?.total ?? 0;
+  const concluidos = data?.concluidos ?? 0;
+  const percentual = data?.percentual ?? 0;
+  
+  // ✅ NOVO FLUXO: Desbloqueia quando 100% concluído (total === 0 OU concluidos === total)
+  // Se data.desbloqueado existe, usa ele. Senão, calcula localmente (0/0 = desbloqueado)
+  const desbloqueado = data?.desbloqueado ?? (total === 0 ? true : false);
+  
   return {
-    total: data?.total ?? 0,
-    concluidos: data?.concluidos ?? 0,
-    percentual: data?.percentual ?? 0,
-    // ✅ NOVO FLUXO: Desbloqueia quando 100% concluído (total === 0 OU concluidos === total)
-    desbloqueado: data?.desbloqueado ?? false,
+    total,
+    concluidos,
+    percentual,
+    desbloqueado,
     isLoading,
     refetch,
     showPlusOne, // Flag para disparar animação

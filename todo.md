@@ -2897,3 +2897,9 @@
 - [x] Investigar endpoint progressoFollowUps.getProgresso
 - [x] Corrigir lógica de desbloqueio para considerar 0/0 como desbloqueado (mudado de 40% para 100%)
 - [x] Testar correção
+
+
+## Bug: Sistema Ainda Bloqueando com 0/0 (Frontend) - 14/01/2026
+- [x] Investigar lógica de desbloqueio no frontend (useFollowUpProgress, LockedTabOverlay)
+- [x] Corrigir condição de bloqueio no componente (fallback inteligente: total === 0 ? true : false)
+- [x] Testar correção
