@@ -2933,3 +2933,10 @@
 - [x] Migrar 1791 follow-ups existentes de 'ativo' para 'pendente'
 - [x] Testar contagem de follow-ups (0/1 para corretor com 1 follow-up pendente)
 - [x] Reiniciar servidor para aplicar mudanças
+
+
+## Bug: Página Tarefas do Dia Não Mostra Follow-ups (14/01/2026)
+- [x] Investigar query da página Tarefas do Dia (função getFollowUpsDoDiaExpandido usava campos antigos)
+- [x] Corrigir filtro de data para buscar follow-ups de hoje (atualizado para usar timezone São Paulo)
+- [x] Corrigir função criarFollowUpParaLead para usar timezone correto
+- [x] Testar exibição de follow-ups na página

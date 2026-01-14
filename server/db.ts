@@ -3504,7 +3504,9 @@ export async function criarFollowUpParaLead(leadId: number, corretorId: number) 
   }
   
   // Criar novo follow-up para AMANHÃ às 9h (novo fluxo de 1 dia)
-  const amanha = new Date();
+  // Usar timezone de São Paulo
+  const { agora } = await import('./timezone');
+  const amanha = agora();
   amanha.setDate(amanha.getDate() + 1);
   amanha.setHours(9, 0, 0, 0);
   
@@ -3529,8 +3531,8 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
 }
 
 /**
- * Atualiza a função getFollowUpsDoDia para incluir leads que precisam de contato
- * mesmo que não tenham follow-up formal criado
+ * Busca follow-ups pendentes para hoje (novo fluxo de 1 dia)
+ * Retorna leads que têm follow-up agendado para hoje e ainda não foi registrado
  */
 export async function getFollowUpsDoDiaExpandido(
   corretorId: number,
@@ -3541,23 +3543,18 @@ export async function getFollowUpsDoDiaExpandido(
   const db = await getDb();
   if (!db) return [];
   
-  // Primeiro, criar follow-ups automáticos para leads sem acompanhamento
-  await criarFollowUpsAutomaticos(corretorId);
-  
-  // Agora buscar todos os follow-ups ativos (incluindo os recém-criados)
-  const { fimDoDiaHoje } = await import('./timezone');
-  const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje em SP
-  
-  // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
-  // Todos os leads com follow-ups ativos aparecem em Tarefas do Dia
+  // Buscar follow-ups pendentes com dataFollowUp de hoje (timezone São Paulo)
+  const { inicioDoDiaHoje } = await import('./timezone');
+  const hoje = inicioDoDiaHoje();
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
   
   // Construir condições de filtro
   const conditions = [
     eq(followUps.corretorId, corretorId),
-    eq(followUps.status, "ativo"),
-    // Removido filtro por status do lead - mostrar TODOS os leads que precisam de follow-up
-    // Isso alinha com o contador global da barra superior
-    lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
+    eq(followUps.status, "pendente"),
+    gte(followUps.dataFollowUp, hoje),
+    lt(followUps.dataFollowUp, amanha)
   ];
   
   // Filtro por projeto
@@ -3574,16 +3571,16 @@ export async function getFollowUpsDoDiaExpandido(
   let query = db.select({
     id: followUps.id,
     leadId: followUps.leadId,
-    tentativaAtual: followUps.tentativaAtual,
-    maxTentativas: followUps.maxTentativas,
-    proximaTentativa: followUps.proximaTentativa,
-    ultimaTentativa: followUps.ultimaTentativa,
+    dataFollowUp: followUps.dataFollowUp,
+    dataRegistro: followUps.dataRegistro,
+    resultado: followUps.resultado,
     status: followUps.status,
     leadNome: leads.nome,
     leadTelefone: leads.telefone,
     leadEmail: leads.email,
     leadStatus: leads.status,
-    diasFollowup: leads.diasFollowupConsecutivos,
+    leadProjeto: leads.projeto,
+    leadOrigem: leads.origem,
     leadCriadoEm: leads.criadoEm,
   })
     .from(followUps)
@@ -3594,12 +3591,6 @@ export async function getFollowUpsDoDiaExpandido(
   switch (ordenacao) {
     case "mais_recentes":
       query = query.orderBy(desc(leads.criadoEm));
-      break;
-    case "menos_tentativas":
-      query = query.orderBy(followUps.tentativaAtual);
-      break;
-    case "mais_tentativas":
-      query = query.orderBy(desc(followUps.tentativaAtual));
       break;
     case "mais_antigos":
     default:

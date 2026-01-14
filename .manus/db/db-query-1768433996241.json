@@ -1,0 +1,18 @@
+{
+  "query": "\nSELECT \n  f.id,\n  f.leadId,\n  f.dataFollowUp,\n  f.status,\n  l.nome as leadNome,\n  l.telefone as leadTelefone\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = 5055943\n  AND f.status = 'pendente'\n  AND DATE(f.dataFollowUp) = '2026-01-14'\nLIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  f.id,\n  f.leadId,\n  f.dataFollowUp,\n  f.status,\n  l.nome as leadNome,\n  l.telefone as leadTelefone\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = 5055943\n  AND f.status = 'pendente'\n  AND DATE(f.dataFollowUp) = '2026-01-14'\nLIMIT 5;\n",
+  "rows": [
+    {
+      "id": "2015",
+      "leadId": "510215",
+      "dataFollowUp": "2026-01-14 21:48:46",
+      "status": "pendente",
+      "leadNome": "Guilherme Nunes",
+      "leadTelefone": "11930785690"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tleadId\tdataFollowUp\tstatus\tleadNome\tleadTelefone\n2015\t510215\t2026-01-14 21:48:46\tpendente\tGuilherme Nunes\t11930785690\n",
+  "stderr": "",
+  "execution_time_ms": 90
+}
