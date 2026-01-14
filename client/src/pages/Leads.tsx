@@ -40,6 +40,7 @@ import { useCopilot } from "@/contexts/CopilotContext";
 import { Bot } from "lucide-react";
 import { ProjectCombobox } from "@/components/ProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
+import { TimerLead } from "@/components/TimerLead";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 
@@ -636,7 +637,15 @@ export default function Leads() {
                             {getStatusIcon(lead.status)}
                             {statusLabels[lead.status]}
                           </Badge>
-                          <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
+                          <div className="flex flex-col gap-1">
+                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
+                            {lead.origem?.includes('webhook') && (
+                              <TimerLead 
+                                timestampRecebimento={lead.timestampRecebimento} 
+                                timerAtivo={lead.timerAtivo ?? false} 
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </CardHeader>

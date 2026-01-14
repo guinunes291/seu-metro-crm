@@ -221,6 +221,9 @@ export const leads = mysqlTable("leads", {
   // Atribuição
   corretorId: int("corretorId"), // Corretor responsável
   dataDistribuicao: timestamp("dataDistribuicao"),
+  timestampRecebimento: timestamp("timestampRecebimento"), // Quando o lead foi atribuído ao corretor atual
+  timerAtivo: boolean("timerAtivo").default(false), // Se o timer de 5min está ativo
+  tentativasRedistribuicao: int("tentativasRedistribuicao").default(0), // Quantas vezes foi redistribuído por timeout
   
   // Status no funil
   status: mysqlEnum("status", [

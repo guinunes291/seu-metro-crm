@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Phone, Mail, GripVertical, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LeadTimer from "@/components/LeadTimer";
+import { TimerLead } from "@/components/TimerLead";
 
 // Definição das colunas do Kanban baseadas nos status do lead
 const KANBAN_COLUMNS = [
@@ -195,7 +196,15 @@ export default function Kanban() {
                                 {lead.origem}
                               </Badge>
                             )}
-                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon />
+                            <div className="flex flex-col gap-1 items-end">
+                              <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon />
+                              {lead.origem?.includes('webhook') && (
+                                <TimerLead 
+                                  timestampRecebimento={lead.timestampRecebimento} 
+                                  timerAtivo={lead.timerAtivo ?? false} 
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>

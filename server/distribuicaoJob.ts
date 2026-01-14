@@ -1,4 +1,5 @@
 import { distribuirTodosLeadsNaoDistribuidos, distribuirLeadsDoEstoque } from "./distribution";
+import { verificarTimerLeads } from "./timerLeadsJob";
 
 /**
  * Job de distribuição automática periódica
@@ -51,4 +52,11 @@ export function agendarDistribuicaoAutomatica() {
   }, 300000);
 
   console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
+  
+  // Agendar verificação de timer de leads (a cada 1 minuto)
+  setInterval(() => {
+    verificarTimerLeads().catch(console.error);
+  }, 60000);
+  
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 1 minuto");
 }

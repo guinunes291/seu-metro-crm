@@ -2789,3 +2789,4 @@
 - [x] Criar histórico de interações com timeline visual
 - [x] Implementar modo blitz para follow-ups em massa
 - [x] Adicionar botão de atalho para Modo Blitz na página Tarefas do Dia
+- [x] Implementar timer de 5 minutos para leads do Facebook Ads com redistribuição automática se não trabalhados

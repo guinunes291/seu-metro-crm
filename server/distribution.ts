@@ -751,3 +751,81 @@ export async function getEstatisticasEstoque(): Promise<{
     tentativasMedia: Math.round(tentativasMedia * 10) / 10,
   };
 }
+
+/**
+ * Redistribui um lead que não foi trabalhado dentro do prazo (5 minutos)
+ * para o próximo corretor disponível ou para o estoque
+ */
+export async function distribuirLeadParaProximoCorretor(
+  leadId: number,
+  origem: string
+): Promise<{ sucesso: boolean; corretorId?: number; motivo?: string }> {
+  const db = await getDb();
+  if (!db) {
+    return { sucesso: false, motivo: "Database não disponível" };
+  }
+
+  try {
+    // Buscar lead
+    const [lead] = await db.select().from(leads).where(eq(leads.id, leadId));
+
+    if (!lead) {
+      return { sucesso: false, motivo: "Lead não encontrado" };
+    }
+
+    // Buscar corretores elegíveis
+    const corretoresElegiveis = await getCorretoresElegiveis(
+      lead.projectId || undefined,
+      origem || undefined
+    );
+
+    if (corretoresElegiveis.length > 0) {
+      // Selecionar próximo corretor (primeiro da lista)
+      const proximoCorretor = corretoresElegiveis[0];
+
+      // Atualizar lead com novo corretor e reativar timer
+      await db
+        .update(leads)
+        .set({
+          corretorId: proximoCorretor,
+          timestampRecebimento: new Date(),
+          timerAtivo: true,
+        })
+        .where(eq(leads.id, leadId));
+
+      // Registrar no log de distribuição
+      await db.insert(distributionLog).values({
+        leadId: leadId,
+        corretorId: proximoCorretor,
+        tipo: "automatica",
+        motivo: "Redistribuição por timeout de 5 minutos",
+      });
+
+      // Enviar notificação para o novo corretor
+      try {
+        await notifyLeadDistribuido(proximoCorretor, leadId, lead.nome);
+      } catch (error) {
+        console.error("Erro ao enviar notificação:", error);
+      }
+
+      return { sucesso: true, corretorId: proximoCorretor };
+    } else {
+      // Nenhum corretor disponível - enviar para estoque
+      await db.insert(leadEstoque).values({
+        leadId: lead.id,
+        tipoFila: "normal",
+        motivoEstoque: "Nenhum corretor disponível após timeout de 5 minutos",
+        tentativasDistribuicao: 0,
+        status: "aguardando",
+      });
+
+      return {
+        sucesso: false,
+        motivo: "Nenhum corretor disponível - lead enviado para estoque",
+      };
+    }
+  } catch (error) {
+    console.error("[Redistribuição] Erro:", error);
+    return { sucesso: false, motivo: `Erro: ${error}` };
+  }
+}
