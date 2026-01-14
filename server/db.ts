@@ -3550,11 +3550,13 @@ export async function getFollowUpsDoDiaExpandido(
   amanha.setDate(amanha.getDate() + 1);
   
   // Construir condições de filtro
+  // Usar sql`` para comparar apenas a data (sem hora)
+  const { sql } = await import('drizzle-orm');
+  const dataHoje = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
   const conditions = [
     eq(followUps.corretorId, corretorId),
     eq(followUps.status, "pendente"),
-    gte(followUps.dataFollowUp, hoje),
-    lt(followUps.dataFollowUp, amanha)
+    sql`DATE(${followUps.dataFollowUp}) = ${dataHoje}`
   ];
   
   // Filtro por projeto

@@ -2940,3 +2940,10 @@
 - [x] Corrigir filtro de data para buscar follow-ups de hoje (atualizado para usar timezone São Paulo)
 - [x] Corrigir função criarFollowUpParaLead para usar timezone correto
 - [x] Testar exibição de follow-ups na página
+
+
+## Limpeza: Deletar Follow-ups Pendentes (14/01/2026)
+- [x] Deletar todos os follow-ups com status 'pendente' do banco
+- [x] Remover logs de debug do código
+- [x] Sistema pronto para criar follow-ups automaticamente ao mudar status
+- [x] Página Tarefas do Dia limpa e pronta para receber novos follow-ups
