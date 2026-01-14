@@ -16,6 +16,8 @@ import {
   Zap,
   Trophy,
   Clock,
+  Filter,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -27,10 +29,20 @@ export default function ModoBlitz() {
   const [observacoes, setObservacoes] = useState("");
   const [startTime] = useState(Date.now());
   const [processedCount, setProcessedCount] = useState(0);
+  const [showFiltros, setShowFiltros] = useState(false);
+  
+  // Estados de filtro
+  const [ordenacao, setOrdenacao] = useState<"mais_antigos" | "mais_recentes" | "menos_tentativas" | "mais_tentativas">("mais_antigos");
+  const [projetoId, setProjetoId] = useState<number | undefined>(undefined);
+  const [origem, setOrigem] = useState<string | undefined>(undefined);
 
   // Buscar follow-ups do dia
   const { data: followUps, isLoading, refetch } = trpc.followUps.getFollowUpsDoDiaExpandido.useQuery(
-    undefined,
+    {
+      ordenacao,
+      projetoId,
+      origem,
+    },
     {
       enabled: !!user,
       refetchOnWindowFocus: false,
@@ -158,11 +170,27 @@ export default function ModoBlitz() {
                 Processe follow-ups rapidamente com atalhos de teclado
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-primary">
-                {currentIndex + 1} / {totalLeads}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFiltros(!showFiltros)}
+                className="gap-2"
+              >
+                <Filter className="h-4 w-4" />
+                Filtros
+                {(projetoId || origem || ordenacao !== "mais_antigos") && (
+                  <Badge variant="secondary" className="ml-1">
+                    {[projetoId ? 1 : 0, origem ? 1 : 0, ordenacao !== "mais_antigos" ? 1 : 0].reduce((a, b) => a + b, 0)}
+                  </Badge>
+                )}
+              </Button>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-primary">
+                  {currentIndex + 1} / {totalLeads}
+                </div>
+                <p className="text-sm text-muted-foreground">Follow-ups</p>
               </div>
-              <p className="text-sm text-muted-foreground">Follow-ups</p>
             </div>
           </div>
 
@@ -188,6 +216,87 @@ export default function ModoBlitz() {
               )}
             </div>
           </div>
+          
+          {/* Painel de Filtros */}
+          {showFiltros && (
+            <Card className="p-4 mt-4 bg-muted/50">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filtros
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setOrdenacao("mais_antigos");
+                    setProjetoId(undefined);
+                    setOrigem(undefined);
+                    setCurrentIndex(0);
+                  }}
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Limpar Filtros
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Ordenação */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Ordenação</label>
+                  <select
+                    value={ordenacao}
+                    onChange={(e) => {
+                      setOrdenacao(e.target.value as any);
+                      setCurrentIndex(0);
+                    }}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="mais_antigos">Leads mais antigos primeiro</option>
+                    <option value="mais_recentes">Leads mais recentes primeiro</option>
+                    <option value="menos_tentativas">Menos tentativas primeiro</option>
+                    <option value="mais_tentativas">Mais tentativas primeiro</option>
+                  </select>
+                </div>
+                
+                {/* Projeto */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Projeto</label>
+                  <select
+                    value={projetoId || ""}
+                    onChange={(e) => {
+                      setProjetoId(e.target.value ? Number(e.target.value) : undefined);
+                      setCurrentIndex(0);
+                    }}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="">Todos os projetos</option>
+                    {/* Projetos serão carregados dinamicamente */}
+                  </select>
+                </div>
+                
+                {/* Origem */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Origem</label>
+                  <select
+                    value={origem || ""}
+                    onChange={(e) => {
+                      setOrigem(e.target.value || undefined);
+                      setCurrentIndex(0);
+                    }}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="">Todas as origens</option>
+                    <option value="facebook_ads">Facebook Ads</option>
+                    <option value="whatsapp">WhatsApp</option>
+                    <option value="site">Site</option>
+                    <option value="indicacao">Indicação</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                </div>
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Card principal do lead */}

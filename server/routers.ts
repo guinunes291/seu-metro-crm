@@ -2072,8 +2072,18 @@ export const appRouter = router({
     
     // Buscar follow-ups do dia (versão expandida que cria follow-ups automáticos se necessário)
     getFollowUpsDoDiaExpandido: corretorProcedure
-      .query(async ({ ctx }) => {
-        return await db.getFollowUpsDoDiaExpandido(ctx.user.id);
+      .input(z.object({
+        ordenacao: z.enum(["mais_antigos", "mais_recentes", "menos_tentativas", "mais_tentativas"]).optional(),
+        projetoId: z.number().optional(),
+        origem: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        return await db.getFollowUpsDoDiaExpandido(
+          ctx.user.id,
+          input?.ordenacao,
+          input?.projetoId,
+          input?.origem
+        );
       }),
     
     // Registrar tentativa de contato

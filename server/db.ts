@@ -3556,7 +3556,12 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
  * Atualiza a função getFollowUpsDoDia para incluir leads que precisam de contato
  * mesmo que não tenham follow-up formal criado
  */
-export async function getFollowUpsDoDiaExpandido(corretorId: number) {
+export async function getFollowUpsDoDiaExpandido(
+  corretorId: number,
+  ordenacao?: "mais_antigos" | "mais_recentes" | "menos_tentativas" | "mais_tentativas",
+  projetoId?: number,
+  origem?: string
+) {
   const db = await getDb();
   if (!db) return [];
   
@@ -3569,7 +3574,27 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
   
   // Buscar follow-ups com próxima tentativa para HOJE OU que estão atrasados
   // APENAS leads com status "em_atendimento" aparecem em Tarefas do Dia
-  return await db.select({
+  
+  // Construir condições de filtro
+  const conditions = [
+    eq(followUps.corretorId, corretorId),
+    eq(followUps.status, "ativo"),
+    eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
+    lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
+  ];
+  
+  // Filtro por projeto
+  if (projetoId) {
+    conditions.push(eq(leads.projetoId, projetoId));
+  }
+  
+  // Filtro por origem
+  if (origem) {
+    conditions.push(eq(leads.origem, origem));
+  }
+  
+  // Query base
+  let query = db.select({
     id: followUps.id,
     leadId: followUps.leadId,
     tentativaAtual: followUps.tentativaAtual,
@@ -3582,16 +3607,30 @@ export async function getFollowUpsDoDiaExpandido(corretorId: number) {
     leadEmail: leads.email,
     leadStatus: leads.status,
     diasFollowup: leads.diasFollowupConsecutivos,
+    leadCriadoEm: leads.criadoEm,
   })
     .from(followUps)
     .innerJoin(leads, eq(followUps.leadId, leads.id))
-    .where(and(
-      eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "ativo"),
-      eq(leads.status, "em_atendimento"), // APENAS leads em atendimento
-      lte(followUps.proximaTentativa, fimDeHoje) // Follow-ups até o fim de hoje
-    ))
-    .orderBy(followUps.proximaTentativa);
+    .where(and(...conditions));
+  
+  // Aplicar ordenação
+  switch (ordenacao) {
+    case "mais_recentes":
+      query = query.orderBy(desc(leads.criadoEm));
+      break;
+    case "menos_tentativas":
+      query = query.orderBy(followUps.tentativaAtual);
+      break;
+    case "mais_tentativas":
+      query = query.orderBy(desc(followUps.tentativaAtual));
+      break;
+    case "mais_antigos":
+    default:
+      query = query.orderBy(leads.criadoEm);
+      break;
+  }
+  
+  return await query;
 }
 
 // Buscar leads agendados para Tarefas do Dia

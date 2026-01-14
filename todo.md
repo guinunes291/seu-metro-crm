@@ -2807,3 +2807,12 @@
 - [x] Verificar qual é o endpoint correto para registrar follow-up
 - [x] Corrigir chamada do endpoint no ModoBlitz.tsx
 - [x] Testar registro de follow-up com "Respondeu" e "Não Respondeu"
+
+## Feature: Filtros no Modo Blitz
+- [x] Adicionar parâmetros de filtro ao endpoint getFollowUpsDoDiaExpandido (ordenação, projeto, tentativas, origem)
+- [x] Criar interface de filtros no frontend do Modo Blitz
+- [x] Implementar lógica de ordenação no backend (mais antigos primeiro, mais recentes, menos tentativas, mais tentativas)
+- [x] Implementar filtro por projeto específico
+- [x] Implementar filtro por origem do lead
+- [ ] Adicionar persistência dos filtros selecionados (localStorage)
+- [x] Testar todos os filtros e combinações
