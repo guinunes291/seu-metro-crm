@@ -2816,3 +2816,12 @@
 - [x] Implementar filtro por origem do lead
 - [ ] Adicionar persistência dos filtros selecionados (localStorage)
 - [x] Testar todos os filtros e combinações
+
+## Bug: Performance da Página Meus Leads (Gestor)
+- [x] Investigar causa da lentidão (carregamento de todos os leads de uma vez)
+- [x] Implementar paginação no backend (endpoint leads.list)
+- [x] Adicionar filtros e busca otimizados no backend
+- [x] Implementar paginação no frontend com controles de navegação
+- [x] Adicionar virtualização de lista para renderização eficiente
+- [x] Otimizar queries SQL com índices apropriados
+- [x] Testar performance com grande volume de dados (4000+ leads)

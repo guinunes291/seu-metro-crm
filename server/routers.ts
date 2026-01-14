@@ -270,10 +270,18 @@ export const appRouter = router({
         const dataInicio = input?.dataInicio;
         const dataFim = input?.dataFim;
         
-        // Gestor vê todos os leads (por enquanto sem paginação, vamos adicionar depois)
+        // Gestor vê todos os leads (com paginação e filtros)
         if (ctx.user.role === 'gestor' || ctx.user.role === 'admin') {
-          const allLeads = await db.getAllLeads();
-          return { leads: allLeads, total: allLeads.length, page: 1, limit: allLeads.length, totalPages: 1 };
+          return await db.getAllLeads({ 
+            page, 
+            limit, 
+            searchTerm, 
+            status, 
+            projectId, 
+            origem, 
+            dataInicio, 
+            dataFim 
+          });
         }
         // Corretor vê apenas seus leads (com paginação e filtros)
         return await db.getLeadsByCorretor(ctx.user.id, { 
