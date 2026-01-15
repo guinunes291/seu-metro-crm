@@ -1090,6 +1090,11 @@ export async function createLeadHistory(history: InsertLeadHistory) {
   
   const result = await db.insert(leadHistory).values(history);
   
+  // Atualizar ultimaInteracao do lead
+  await db.update(leads)
+    .set({ ultimaInteracao: new Date() })
+    .where(eq(leads.id, history.leadId));
+  
   // Atualizar contador de follow-up do lead
   await atualizarContadorFollowUp(history.leadId);
   

@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { getDb } from "./db";
 import { leads, users, logTransferencias } from "../drizzle/schema";
 import { eq, and, lt, ne, isNull, or } from "drizzle-orm";
 import { agora } from "./timezone";

@@ -3079,3 +3079,11 @@
 - [x] Implementar paginação na tabela
 - [x] Adicionar rota no App.tsx
 - [x] Adicionar item no menu Sistema (apenas gestor)
+
+## Correção de ultimaInteracao e Badge de Inatividade
+- [x] Encontrar onde interações são registradas (histórico de interações)
+- [x] Atualizar campo ultimaInteracao ao registrar interação
+- [x] Corrigir cálculo do badge para usar ultimaInteracao corretamente
+- [x] Sincronizar ultimaInteracao de todos os leads com histórico
+- [x] Verificar job de transferência para usar ultimaInteracao
+- [ ] Testar com lead que tem interações recentes
