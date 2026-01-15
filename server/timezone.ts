@@ -146,6 +146,26 @@ export function formatarDataHoraBR(data: Date): string {
 }
 
 /**
+ * Retorna a data/hora do próximo dia às 09:00 no fuso de São Paulo
+ * Usado para agendar follow-ups automáticos
+ */
+export function proximoDiaAs9h(): Date {
+  // Pegar data/hora atual em SP
+  const agoraSP = agora();
+  
+  // Criar data para 09:00:00 do próximo dia em SP
+  const ano = agoraSP.getFullYear();
+  const mes = agoraSP.getMonth();
+  const dia = agoraSP.getDate() + 1; // próximo dia
+  
+  // Criar Date em UTC que representa 09:00:00 SP do próximo dia
+  // 09:00:00 SP = 12:00:00 UTC (SP está 3h atrás)
+  const proximoDia9h = new Date(Date.UTC(ano, mes, dia, 12, 0, 0, 0));
+  
+  return proximoDia9h;
+}
+
+/**
  * Converte filtros de data (dataInicio/dataFim) do frontend para o fuso de São Paulo
  * Usado em queries de relatórios e dashboards
  * 

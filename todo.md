@@ -3045,9 +3045,9 @@
 - [x] Remover leads "Aguardando Atendimento" da aba Tarefas do Dia
 - [x] Adicionar campo ultimaInteracao na tabela leads
 - [x] Migrar banco de dados com novo campo
-- [ ] Criar follow-up automaticamente ao mudar para "Em Atendimento"
-- [ ] Ajustar registro de follow-up: Respondeu → novo follow-up próximo dia
-- [ ] Ajustar registro de follow-up: Não Respondeu → volta para base sem follow-up
+- [x] Criar follow-up automaticamente ao mudar para "Em Atendimento"
+- [x] Ajustar registro de follow-up: Respondeu → novo follow-up próximo dia
+- [x] Ajustar registro de follow-up: Não Respondeu → volta para base sem follow-up
 - [ ] Criar job diário de transferência após 2 dias sem interação
 - [ ] Leads captacao_corretor são exceção (não transferem)
 - [ ] Ao passar por todos corretores → Perdido + Lixeira

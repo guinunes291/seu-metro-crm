@@ -992,11 +992,32 @@ export async function updateLead(id: number, data: Partial<InsertLead>) {
         statusAnterior: leadAtual.status as any,
         statusNovo: data.status as any,
       });
+      
+      // Se mudou para "em_atendimento", criar follow-up automático para o próximo dia às 09:00
+      if (data.status === 'em_atendimento' && leadAtual.corretorId) {
+        const { proximoDiaAs9h } = await import('./timezone');
+        const dataFollowUp = proximoDiaAs9h();
+        
+        await db.insert(followUps).values({
+          leadId: id,
+          corretorId: leadAtual.corretorId,
+          dataFollowUp,
+          status: 'pendente',
+        });
+        
+        console.log(`[updateLead] Follow-up automático criado para lead ${id} em ${dataFollowUp.toISOString()}`);
+      }
     }
   }
   
+  // Atualizar ultimaInteracao sempre que houver mudança de status ou dados
+  const updateData = { ...data, updatedAt: new Date() };
+  if (data.status || data.observacoes) {
+    updateData.ultimaInteracao = new Date();
+  }
+  
   await db.update(leads)
-    .set({ ...data, updatedAt: new Date() })
+    .set(updateData)
     .where(eq(leads.id, id));
 }
 
@@ -3443,37 +3464,37 @@ export async function registrarTentativaFollowUp(
       })
       .where(eq(followUps.id, followUpId));
     
-    // Atualizar dataUltimaInteracao do lead
+    // Atualizar ultimaInteracao do lead
     await db.update(leads)
       .set({
-        dataUltimaInteracao: agora,
-        aguardandoTransferencia: false,
+        ultimaInteracao: agora,
         updatedAt: agora
       })
       .where(eq(leads.id, atual.leadId));
     
-    // Criar novo follow-up para amanhã (se lead ainda estiver em atendimento)
+    // Criar novo follow-up para amanhã às 09:00 (se lead ainda estiver em atendimento)
     if (lead.status === "em_atendimento") {
-      const { inicioDoDiaSeguinte } = await import('./timezone');
-      const amanha = inicioDoDiaSeguinte();
-      amanha.setHours(9, 0, 0, 0);
+      const { proximoDiaAs9h } = await import('./timezone');
+      const proximoFollowUp = proximoDiaAs9h();
       
       await db.insert(followUps).values({
         leadId: atual.leadId,
         corretorId: atual.corretorId,
-        dataFollowUp: amanha,
+        dataFollowUp: proximoFollowUp,
         status: "pendente"
       });
+      
+      console.log(`[registrarTentativaFollowUp] Novo follow-up criado para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}`);
     }
     
     return { 
       status: "respondeu", 
-      mensagem: "Cliente respondeu! Novo follow-up criado para amanhã."
+      mensagem: "Cliente respondeu! Novo follow-up criado para amanhã às 09:00."
     };
   }
   
   // resultado === "nao_atendeu" ou "outro"
-  // Cliente não respondeu - marcar follow-up como concluído e aguardar transferência
+  // Cliente não respondeu - marcar follow-up como concluído SEM criar novo follow-up
   await db.update(followUps)
     .set({
       status: "concluido",
@@ -3484,18 +3505,17 @@ export async function registrarTentativaFollowUp(
     })
     .where(eq(followUps.id, followUpId));
   
-  // Marcar lead para transferência após 2 dias sem interação
+  // Atualizar ultimaInteracao do lead (para contagem de 2 dias sem interação)
   await db.update(leads)
     .set({
-      dataUltimaInteracao: agora,
-      aguardandoTransferencia: true,
+      ultimaInteracao: agora,
       updatedAt: agora
     })
     .where(eq(leads.id, atual.leadId));
   
   return { 
     status: "nao_respondeu", 
-    mensagem: "Lead marcado para transferência. Será transferido se não houver nova interação em 2 dias."
+    mensagem: "Registrado. Lead volta para sua base sem follow-up agendado."
   };
 }
 
