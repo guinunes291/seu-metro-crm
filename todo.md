@@ -3072,3 +3072,10 @@
 - [ ] Criar página LogTransferencias.tsx com tabela e filtros
 - [ ] Adicionar rota no menu Sistema (apenas gestor)
 - [ ] Testar funcionalidade completa
+
+## Página LogTransferencias.tsx (Menu Sistema - Apenas Gestor)
+- [x] Criar página LogTransferencias.tsx com tabela de logs
+- [x] Adicionar filtros: data início/fim, corretor origem/destino, motivo, status
+- [x] Implementar paginação na tabela
+- [x] Adicionar rota no App.tsx
+- [x] Adicionar item no menu Sistema (apenas gestor)

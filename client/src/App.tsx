@@ -50,6 +50,7 @@ import ProjetoFoco from "@/pages/ProjetoFoco";
 import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
 import ControleBloqueio from "@/pages/ControleBloqueio";
 import ModoBlitz from "@/pages/ModoBlitz";
+import LogTransferencias from "@/pages/LogTransferencias";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -96,6 +97,7 @@ function Router() {
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
       <Route path="/controle-limites" component={ControleLimites} />
       <Route path="/projeto-foco" component={ProjetoFoco} />
+      <Route path="/log-transferencias" component={LogTransferencias} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />
