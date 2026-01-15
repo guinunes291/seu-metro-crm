@@ -99,6 +99,9 @@ export default function Leads() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [origemFilter, setOrigemFilter] = useState<string>("all");
+  const [corretorFilter, setCorretorFilter] = useState<string>("all");
+  const [dataInicioFilter, setDataInicioFilter] = useState<string>("");
+  const [dataFimFilter, setDataFimFilter] = useState<string>("");
   
   // Debounce para busca (evita queries excessivas)
   useEffect(() => {
@@ -116,6 +119,9 @@ export default function Leads() {
     status: statusFilter !== 'all' ? statusFilter : undefined,
     projectId: projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
     origem: origemFilter !== 'all' ? origemFilter : undefined,
+    corretorId: corretorFilter !== 'all' ? parseInt(corretorFilter) : undefined,
+    dataInicio: dataInicioFilter || undefined,
+    dataFim: dataFimFilter || undefined,
   }, {
     keepPreviousData: true, // Evita tela branca durante re-fetch
   });
@@ -124,6 +130,7 @@ export default function Leads() {
   const totalLeads = leadsData?.total || 0;
   
   const { data: projects } = trpc.projects.list.useQuery();
+  const { data: corretores } = trpc.corretores.list.useQuery();
   const { data: user } = trpc.auth.me.useQuery();
   const isGestor = user?.role === 'gestor' || user?.role === 'admin';
   const [selectedLead, setSelectedLead] = useState<any>(null);
@@ -446,7 +453,7 @@ export default function Leads() {
             <CardTitle className="text-lg">Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className={`grid gap-4 ${isGestor ? 'md:grid-cols-6' : 'md:grid-cols-4'}`}>
               <div className="space-y-2">
                 <Label htmlFor="search">Buscar</Label>
                 <div className="relative">
@@ -510,6 +517,47 @@ export default function Leads() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Filtro de Corretor (apenas para gestor) */}
+            {isGestor && (
+              <div className="space-y-2">
+                <Label htmlFor="corretor">Corretor</Label>
+                <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os corretores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os corretores</SelectItem>
+                    {corretores?.map((corretor) => (
+                      <SelectItem key={corretor.id} value={corretor.id.toString()}>
+                        {corretor.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Filtros de Data */}
+            <div className="space-y-2">
+              <Label htmlFor="dataInicio">Data Início</Label>
+              <Input
+                id="dataInicio"
+                type="date"
+                value={dataInicioFilter}
+                onChange={(e) => setDataInicioFilter(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dataFim">Data Fim</Label>
+              <Input
+                id="dataFim"
+                type="date"
+                value={dataFimFilter}
+                onChange={(e) => setDataFimFilter(e.target.value)}
+              />
             </div>
           </div>
 
@@ -630,6 +678,11 @@ export default function Leads() {
                           </div>
                           <CardDescription className="mt-1">
                             {lead.origem && `Origem: ${lead.origem}`}
+                            {isGestor && lead.corretorNome && (
+                              <span className="block text-sm text-muted-foreground mt-1">
+                                Corretor: {lead.corretorNome}
+                              </span>
+                            )}
                           </CardDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2">
@@ -821,6 +874,7 @@ export default function Leads() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead>Projeto</TableHead>
+                    {isGestor && <TableHead>Corretor</TableHead>}
                     <TableHead>Status</TableHead>
                     <TableHead>Aguardando</TableHead>
                     <TableHead>Último Contato</TableHead>
@@ -845,6 +899,7 @@ export default function Leads() {
                         </TableCell>
                         <TableCell>{lead.telefone}</TableCell>
                         <TableCell>{project?.nome || "-"}</TableCell>
+                        {isGestor && <TableCell>{lead.corretorNome || "-"}</TableCell>}
                         <TableCell>
                           <Badge variant={getStatusVariant(lead.status)}>
                             {statusLabels[lead.status]}

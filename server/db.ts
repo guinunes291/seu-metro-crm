@@ -773,6 +773,7 @@ export async function getAllLeads(options?: {
   status?: string;
   projectId?: number;
   origem?: string;
+  corretorId?: number;
   dataInicio?: string;
   dataFim?: string;
 }) {
@@ -811,6 +812,11 @@ export async function getAllLeads(options?: {
   // Filtro por origem
   if (options?.origem) {
     conditions.push(eq(leads.origem, options.origem));
+  }
+  
+  // Filtro por corretor
+  if (options?.corretorId) {
+    conditions.push(eq(leads.corretorId, options.corretorId));
   }
   
   // Filtro por data

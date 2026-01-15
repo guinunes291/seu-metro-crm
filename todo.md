@@ -2953,3 +2953,14 @@
 - [x] Investigar endpoint do Kanban para verificar limite de paginação (limit: 50 por padrão)
 - [x] Corrigir query para retornar todos os leads do corretor sem limite (limit: 9999)
 - [x] Testar Kanban com contagem completa de leads
+
+
+## Melhorias para Gestor: Filtros e Visualização (15/01/2026)
+- [x] Backend: Adicionar filtro de corretorId no endpoint leads.list
+- [x] Backend: Atualizar função getAllLeads para aceitar corretorId
+- [x] Frontend: Adicionar nome do corretor nos cards de Meus Leads (apenas para gestor)
+- [x] Frontend: Adicionar nome do corretor nos cards do Kanban (apenas para gestor)
+- [x] Frontend: Adicionar filtro de corretor em Meus Leads
+- [x] Frontend: Adicionar filtros de data inicial e final em Meus Leads
+- [x] Garantir busca por nome, telefone e email funciona corretamente (já implementado no backend)
+- [x] Testar todos os filtros combinados

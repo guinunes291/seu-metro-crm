@@ -257,6 +257,7 @@ export const appRouter = router({
         status: z.string().optional(),
         projectId: z.number().optional(),
         origem: z.string().optional(),
+        corretorId: z.number().optional(),
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
@@ -267,6 +268,7 @@ export const appRouter = router({
         const status = input?.status;
         const projectId = input?.projectId;
         const origem = input?.origem;
+        const corretorId = input?.corretorId;
         const dataInicio = input?.dataInicio;
         const dataFim = input?.dataFim;
         
@@ -279,6 +281,7 @@ export const appRouter = router({
             status, 
             projectId, 
             origem, 
+            corretorId, 
             dataInicio, 
             dataFim 
           });
