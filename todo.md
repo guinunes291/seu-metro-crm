@@ -3204,8 +3204,8 @@
 - [x] Testar performance após índices
 
 ### Fase 2: Correção de Queries N+1 (2h)
-- [ ] Corrigir query N+1 no dashboard de corretores
-- [ ] Corrigir query N+1 na listagem de leads
+- [x] Corrigir query N+1 no dashboard de corretores
+- [x] Corrigir query N+1 na listagem de leads
 - [ ] Corrigir query N+1 nos relatórios de performance
 - [ ] Corrigir query N+1 na distribuição de leads
 - [ ] Testar performance das páginas corrigidas

@@ -1588,31 +1588,41 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const corretores = await db.select()
+  // Query 1: Buscar todos os corretores
+  const corretores = await db.select({
+    id: users.id,
+    nome: users.name,
+    status: users.status,
+  })
     .from(users)
     .where(eq(users.role, 'corretor'));
   
-  const result = await Promise.all(corretores.map(async (corretor) => {
-    const conditions: any[] = [eq(leads.corretorId, corretor.id)];
-    
-    if (filtros?.dataInicio) {
-      conditions.push(gte(leads.createdAt, filtros.dataInicio));
-    }
-    
-    if (filtros?.dataFim) {
-      conditions.push(lte(leads.createdAt, filtros.dataFim));
-    }
-    
-    const totalLeads = await db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(and(...conditions));
-    
-    return {
-      id: corretor.id,
-      nome: corretor.name || 'Sem nome',
-      status: corretor.status,
-      totalLeads: Number(totalLeads[0]?.count || 0),
-    };
+  // Query 2: Contar leads por corretor em uma única query com GROUP BY
+  const leadsConditions: any[] = [];
+  if (filtros?.dataInicio) {
+    leadsConditions.push(gte(leads.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    leadsConditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  
+  const leadsCounts = await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`count(*)`
+  })
+    .from(leads)
+    .where(leadsConditions.length > 0 ? and(...leadsConditions) : undefined)
+    .groupBy(leads.corretorId);
+  
+  // Criar map de contagens para lookup O(1)
+  const countsMap = new Map(leadsCounts.map(lc => [lc.corretorId, Number(lc.count)]));
+  
+  // Combinar resultados
+  const result = corretores.map(corretor => ({
+    id: corretor.id,
+    nome: corretor.nome || 'Sem nome',
+    status: corretor.status,
+    totalLeads: countsMap.get(corretor.id) || 0,
   }));
   
   return result.filter(c => c.status === 'presente').sort((a, b) => b.totalLeads - a.totalLeads);
@@ -1622,33 +1632,39 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const corretores = await db.select()
+  // Query 1: Buscar todos os corretores
+  const corretores = await db.select({
+    id: users.id,
+    nome: users.name,
+    status: users.status,
+  })
     .from(users)
     .where(eq(users.role, 'corretor'));
   
-  const result = await Promise.all(corretores.map(async (corretor) => {
-    const conditions: any[] = [
-      eq(agendamentos.corretorId, corretor.id)
-    ];
-    
-    if (filtros?.dataInicio) {
-      conditions.push(gte(agendamentos.createdAt, filtros.dataInicio));
-    }
-    
-    if (filtros?.dataFim) {
-      conditions.push(lte(agendamentos.createdAt, filtros.dataFim));
-    }
-    
-    const agendados = await db.select({ count: sql<number>`count(*)` })
-      .from(agendamentos)
-      .where(and(...conditions));
-    
-    return {
-      id: corretor.id,
-      nome: corretor.name || 'Sem nome',
-      status: corretor.status,
-      agendados: Number(agendados[0]?.count || 0),
-    };
+  // Query 2: Contar agendamentos por corretor com GROUP BY
+  const agendamentosConditions: any[] = [];
+  if (filtros?.dataInicio) {
+    agendamentosConditions.push(gte(agendamentos.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    agendamentosConditions.push(lte(agendamentos.createdAt, filtros.dataFim));
+  }
+  
+  const agendamentosCounts = await db.select({
+    corretorId: agendamentos.corretorId,
+    count: sql<number>`count(*)`
+  })
+    .from(agendamentos)
+    .where(agendamentosConditions.length > 0 ? and(...agendamentosConditions) : undefined)
+    .groupBy(agendamentos.corretorId);
+  
+  const countsMap = new Map(agendamentosCounts.map(ac => [ac.corretorId, Number(ac.count)]));
+  
+  const result = corretores.map(corretor => ({
+    id: corretor.id,
+    nome: corretor.nome || 'Sem nome',
+    status: corretor.status,
+    agendados: countsMap.get(corretor.id) || 0,
   }));
   
   return result.filter(c => c.status === 'presente').sort((a, b) => b.agendados - a.agendados);
@@ -1658,33 +1674,39 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const corretores = await db.select()
+  // Query 1: Buscar todos os corretores
+  const corretores = await db.select({
+    id: users.id,
+    nome: users.name,
+    status: users.status,
+  })
     .from(users)
     .where(eq(users.role, 'corretor'));
   
-  const result = await Promise.all(corretores.map(async (corretor) => {
-    const conditions: any[] = [
-      eq(visitas.corretorId, corretor.id)
-    ];
-    
-    if (filtros?.dataInicio) {
-      conditions.push(gte(visitas.createdAt, filtros.dataInicio));
-    }
-    
-    if (filtros?.dataFim) {
-      conditions.push(lte(visitas.createdAt, filtros.dataFim));
-    }
-    
-    const visitasCount = await db.select({ count: sql<number>`count(*)` })
-      .from(visitas)
-      .where(and(...conditions));
-    
-    return {
-      id: corretor.id,
-      nome: corretor.name || 'Sem nome',
-      status: corretor.status,
-      visitas: Number(visitasCount[0]?.count || 0),
-    };
+  // Query 2: Contar visitas por corretor com GROUP BY
+  const visitasConditions: any[] = [];
+  if (filtros?.dataInicio) {
+    visitasConditions.push(gte(visitas.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    visitasConditions.push(lte(visitas.createdAt, filtros.dataFim));
+  }
+  
+  const visitasCounts = await db.select({
+    corretorId: visitas.corretorId,
+    count: sql<number>`count(*)`
+  })
+    .from(visitas)
+    .where(visitasConditions.length > 0 ? and(...visitasConditions) : undefined)
+    .groupBy(visitas.corretorId);
+  
+  const countsMap = new Map(visitasCounts.map(vc => [vc.corretorId, Number(vc.count)]));
+  
+  const result = corretores.map(corretor => ({
+    id: corretor.id,
+    nome: corretor.nome || 'Sem nome',
+    status: corretor.status,
+    visitas: countsMap.get(corretor.id) || 0,
   }));
   
   return result.filter(c => c.status === 'presente').sort((a, b) => b.visitas - a.visitas);
@@ -1694,45 +1716,49 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const corretores = await db.select()
+  // Query 1: Buscar todos os corretores
+  const corretores = await db.select({
+    id: users.id,
+    nome: users.name,
+    status: users.status,
+  })
     .from(users)
     .where(eq(users.role, 'corretor'));
   
-  const result = await Promise.all(corretores.map(async (corretor) => {
-    const conditions: any[] = [
-      eq(leads.corretorId, corretor.id),
-      eq(leads.status, 'contrato_fechado')
-    ];
-    
-    if (filtros?.dataInicio) {
-      conditions.push(gte(leads.createdAt, filtros.dataInicio));
-    }
-    
-    if (filtros?.dataFim) {
-      conditions.push(lte(leads.createdAt, filtros.dataFim));
-    }
-    
-    // Quantidade de contratos fechados
-    const vendas = await db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(and(...conditions));
-    
-    // VGV do corretor (soma dos valores dos projetos)
-    const vgvResult = await db.select({ 
-      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
-    })
-      .from(leads)
-      .leftJoin(projects, eq(leads.projectId, projects.id))
-      .where(and(...conditions));
-    
+  // Query 2: Contar vendas e somar VGV por corretor em uma única query
+  const vendasConditions: any[] = [eq(leads.status, 'contrato_fechado')];
+  if (filtros?.dataInicio) {
+    vendasConditions.push(gte(leads.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    vendasConditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  
+  const vendasData = await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`count(*)`,
+    vgv: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
+  })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(and(...vendasConditions))
+    .groupBy(leads.corretorId);
+  
+  const vendasMap = new Map(vendasData.map(vd => [
+    vd.corretorId, 
+    { vendas: Number(vd.count), vgv: Number(vd.vgv) }
+  ]));
+  
+  const result = corretores.map(corretor => {
+    const data = vendasMap.get(corretor.id) || { vendas: 0, vgv: 0 };
     return {
       id: corretor.id,
-      nome: corretor.name || 'Sem nome',
+      nome: corretor.nome || 'Sem nome',
       status: corretor.status,
-      vendas: Number(vendas[0]?.count || 0),
-      vgv: Number(vgvResult[0]?.total || 0),
+      vendas: data.vendas,
+      vgv: data.vgv,
     };
-  }));
+  });
   
   return result.filter(c => c.status === 'presente').sort((a, b) => b.vgv - a.vgv);
 }
