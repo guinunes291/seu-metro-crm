@@ -413,65 +413,83 @@ export const systemRouter = router({
       let erros = 0;
       const leadsPerdidos: number[] = [];
       
-      // 4. Redistribuir cada lead
+      // 4. Redistribuir cada lead com transação para evitar race condition
       for (const lead of leadsElegiveis) {
         try {
-          // Buscar histórico de atribuições deste lead
-          const historico = await db
-            .select({ corretorId: historicoAtribuicoes.corretorId })
-            .from(historicoAtribuicoes)
-            .where(eq(historicoAtribuicoes.leadId, lead.id));
-          
-          const corretoresJaTrabalharam = historico.map(h => h.corretorId);
-          
-          // Filtrar corretores que ainda não trabalharam este lead e têm cota
-          const corretoresDisponiveis = todosCorretores.filter(
-            c => !corretoresJaTrabalharam.includes(c.id) && quotas[c.id] > 0
-          );
-          
-          if (corretoresDisponiveis.length === 0) {
-            // Nenhum corretor disponível - mover para perdido
-            leadsPerdidos.push(lead.id);
-            perdidos++;
-            continue;
-          }
-          
-          // Selecionar corretor com maior cota disponível
-          const corretorSelecionado = corretoresDisponiveis.reduce((prev, curr) =>
-            quotas[curr.id] > quotas[prev.id] ? curr : prev
-          );
-          
-          // Atualizar lead
-          await db
-            .update(leads)
-            .set({
+          await db.transaction(async (tx) => {
+            // SELECT FOR UPDATE: lock pessimista no lead
+            const leadLocked = await tx.execute(
+              sql`SELECT * FROM ${leads} WHERE id = ${lead.id} FOR UPDATE`
+            );
+            
+            if (!leadLocked.rows || leadLocked.rows.length === 0) {
+              throw new Error("Lead não encontrado");
+            }
+            
+            const leadData = leadLocked.rows[0] as any;
+            
+            // Verificar se o lead ainda está no corretor original (pode ter sido redistribuído)
+            if (leadData.corretorId !== lead.corretorId) {
+              throw new Error("Lead já foi redistribuído");
+            }
+            
+            // Buscar histórico de atribuições deste lead
+            const historico = await tx
+              .select({ corretorId: historicoAtribuicoes.corretorId })
+              .from(historicoAtribuicoes)
+              .where(eq(historicoAtribuicoes.leadId, lead.id));
+            
+            const corretoresJaTrabalharam = historico.map(h => h.corretorId);
+            
+            // Filtrar corretores que ainda não trabalharam este lead e têm cota
+            const corretoresDisponiveis = todosCorretores.filter(
+              c => !corretoresJaTrabalharam.includes(c.id) && quotas[c.id] > 0
+            );
+            
+            if (corretoresDisponiveis.length === 0) {
+              // Nenhum corretor disponível - mover para perdido
+              leadsPerdidos.push(lead.id);
+              perdidos++;
+              return;
+            }
+            
+            // Selecionar corretor com maior cota disponível
+            const corretorSelecionado = corretoresDisponiveis.reduce((prev, curr) =>
+              quotas[curr.id] > quotas[prev.id] ? curr : prev
+            );
+            
+            // Atualizar lead (dentro da transação)
+            await tx
+              .update(leads)
+              .set({
+                corretorId: corretorSelecionado.id,
+                dataDistribuicao: new Date(),
+              })
+              .where(eq(leads.id, lead.id));
+            
+            // Registrar no histórico
+            await tx.insert(historicoAtribuicoes).values({
+              leadId: lead.id,
               corretorId: corretorSelecionado.id,
-              dataDistribuicao: new Date(),
-            })
-            .where(eq(leads.id, lead.id));
-          
-          // Registrar no histórico
-          await db.insert(historicoAtribuicoes).values({
-            leadId: lead.id,
-            corretorId: corretorSelecionado.id,
-            tipoAtribuicao: "redistribuicao_manual",
-            dataAtribuicao: new Date(),
-            observacoes: "Redistribuído por inatividade (2+ dias sem interação) - Página de Distribuição",
+              tipoAtribuicao: "redistribuicao_manual",
+              dataAtribuicao: new Date(),
+              observacoes: "Redistribuído por inatividade (2+ dias sem interação) - Página de Distribuição",
+            });
+            
+            // Registrar no log de transferências
+            await tx.insert(logTransferencias).values({
+              leadId: lead.id,
+              corretorOrigemId: lead.corretorId,
+              corretorDestinoId: corretorSelecionado.id,
+              motivo: "2 dias sem interação",
+              statusFinal: "transferido",
+              dataTransferencia: new Date(),
+            });
+            
+            // Decrementar cota
+            quotas[corretorSelecionado.id]--;
+            redistribuidos++;
           });
-          
-          // Registrar no log de transferências
-          await db.insert(logTransferencias).values({
-            leadId: lead.id,
-            corretorOrigemId: lead.corretorId,
-            corretorDestinoId: corretorSelecionado.id,
-            motivo: "2 dias sem interação",
-            statusFinal: "transferido",
-            dataTransferencia: new Date(),
-          });
-          
-          // Decrementar cota
-          quotas[corretorSelecionado.id]--;
-          redistribuidos++;
         } catch (error: any) {
           console.error(`[REDISTRIBUIÇÃO] Erro ao redistribuir lead ${lead.id}:`, {
             leadId: lead.id,

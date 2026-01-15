@@ -220,20 +220,7 @@ export async function distribuirLeadAutomatico(
     return { success: false, message: "Database não disponível" };
   }
 
-  // Buscar informações do lead
-  const lead = await db
-    .select()
-    .from(leads)
-    .where(eq(leads.id, leadId))
-    .limit(1);
-
-  if (!lead.length) {
-    return { success: false, message: "Lead não encontrado" };
-  }
-
-  const leadData = lead[0];
-
-  // Verificar se o lead pertence ao gestor
+  // Buscar gestor ID fora da transação (não muda)
   const gestores = await db
     .select()
     .from(users)
@@ -246,60 +233,77 @@ export async function distribuirLeadAutomatico(
 
   const gestorId = gestores[0].id;
 
-  // Só distribui se o lead pertence ao gestor
-  if (leadData.corretorId !== gestorId) {
-    return { success: false, message: "Lead não pertence ao gestor" };
-  }
-
-  // Buscar corretores elegíveis
-  const corretoresElegiveis = await getCorretoresElegiveis(
-    leadData.projectId || undefined,
-    leadData.origem || undefined
-  );
-
-  // Se não houver corretores disponíveis, adicionar ao estoque
-  if (corretoresElegiveis.length === 0) {
-    await db.insert(leadEstoque).values({
-      leadId: leadId,
-      tipoFila: "normal",
-      motivoEstoque: "Nenhum corretor elegível disponível",
-      tentativasDistribuicao: 0,
-    });
-    
-    return { 
-      success: false, 
-      message: "Nenhum corretor disponível. Lead adicionado ao estoque para distribuição posterior." 
-    };
-  }
-
-  // Selecionar o melhor corretor (primeiro da lista ordenada)
-  const melhorCorretor = corretoresElegiveis[0];
-
-  // Atualizar lead
-  await db
-    .update(leads)
-    .set({
-      corretorId: melhorCorretor,
-      dataDistribuicao: new Date(),
-      status: "aguardando_atendimento",
-    })
-    .where(eq(leads.id, leadId));
-
-  // Registrar no log de distribuição
-  await db.insert(distributionLog).values({
-    leadId: leadId,
-    corretorId: melhorCorretor,
-    tipo: "automatica",
-  });
-
-  // Enviar notificação para o corretor
+  // Usar transação com SELECT FOR UPDATE para evitar race condition
   try {
-    await notifyLeadDistribuido(melhorCorretor, leadId, leadData.nome);
-  } catch (error) {
-    console.error("Erro ao enviar notificação:", error);
-  }
+    const result = await db.transaction(async (tx) => {
+      // SELECT FOR UPDATE: lock pessimista no lead
+      const leadLocked = await tx.execute(
+        sql`SELECT * FROM ${leads} WHERE id = ${leadId} FOR UPDATE`
+      );
 
-  return { success: true, corretorId: melhorCorretor };
+      if (!leadLocked.rows || leadLocked.rows.length === 0) {
+        throw new Error("Lead não encontrado");
+      }
+
+      const leadData = leadLocked.rows[0] as any;
+
+      // Verificar se o lead ainda pertence ao gestor (pode ter sido distribuído)
+      if (leadData.corretorId !== gestorId) {
+        throw new Error("Lead já foi distribuído");
+      }
+
+      // Buscar corretores elegíveis (fora da transação para não travar)
+      const corretoresElegiveis = await getCorretoresElegiveis(
+        leadData.projectId || undefined,
+        leadData.origem || undefined
+      );
+
+      // Se não houver corretores disponíveis, adicionar ao estoque
+      if (corretoresElegiveis.length === 0) {
+        await tx.insert(leadEstoque).values({
+          leadId: leadId,
+          tipoFila: "normal",
+          motivoEstoque: "Nenhum corretor elegível disponível",
+          tentativasDistribuicao: 0,
+        });
+        
+        throw new Error("Nenhum corretor disponível. Lead adicionado ao estoque.");
+      }
+
+      // Selecionar o melhor corretor
+      const melhorCorretor = corretoresElegiveis[0];
+
+      // Atualizar lead (dentro da transação)
+      await tx
+        .update(leads)
+        .set({
+          corretorId: melhorCorretor,
+          dataDistribuicao: new Date(),
+          status: "aguardando_atendimento",
+        })
+        .where(eq(leads.id, leadId));
+
+      // Registrar no log de distribuição
+      await tx.insert(distributionLog).values({
+        leadId: leadId,
+        corretorId: melhorCorretor,
+        tipo: "automatica",
+      });
+
+      return { corretorId: melhorCorretor, nome: leadData.nome };
+    });
+
+    // Enviar notificação fora da transação (não crítico)
+    try {
+      await notifyLeadDistribuido(result.corretorId, leadId, result.nome);
+    } catch (error) {
+      console.error("Erro ao enviar notificação:", error);
+    }
+
+    return { success: true, corretorId: result.corretorId };
+  } catch (error: any) {
+    return { success: false, message: error.message };
+  }
 }
 
 /**
