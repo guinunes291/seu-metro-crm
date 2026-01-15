@@ -1,0 +1,106 @@
+{
+  "query": "SELECT id, name, email, role FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "gestor"
+    },
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "5052575",
+      "name": "Leticia Castro",
+      "email": "leticiaccastro2@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "5053030",
+      "name": "Breno Brunelli",
+      "email": "imoveis.brunelli@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes ",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6183990",
+      "name": "Manus Gestor Teste",
+      "email": "manus.gestor@teste.com",
+      "role": "gestor"
+    },
+    {
+      "id": "6364694",
+      "name": "ivenspagule",
+      "email": "ivenspagule@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6368447",
+      "name": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6396243",
+      "name": "Igor Nigro",
+      "email": "igor.nigro09@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6399794",
+      "name": "Kamila Silva",
+      "email": "millakamila42@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6600095",
+      "name": "Aline Silva",
+      "email": "alinee.tsilvaa@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6600098",
+      "name": "Hellen Rodrigues",
+      "email": "hellen.rs0710@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6621455",
+      "name": "Paula Akahoshi",
+      "email": "paula.akahoshi92@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "6851110",
+      "name": "Mikael Alves",
+      "email": "mikaelalves2000@gmail.com",
+      "role": "corretor"
+    },
+    {
+      "id": "7357913",
+      "name": "sheldonbarbosaa",
+      "email": "sheldonbarbosaa@gmail.com",
+      "role": "corretor"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n1\tGuilherme Nunes\tguilherme_97fm@outlook.com\tgestor\n4236208\tAndrew\tandrewformigoni.corretor@gmail.com\tcorretor\n4236243\tkauanthyago34\tkauanthyago34@gmail.com\tcorretor\n5052575\tLeticia Castro\tleticiaccastro2@gmail.com\tcorretor\n5053030\tBreno Brunelli\timoveis.brunelli@gmail.com\tcorretor\n5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tcorretor\n6183990\tManus Gestor Teste\tmanus.gestor@teste.com\tgestor\n6364694\tivenspagule\tivenspagule@gmail.com\tcorretor\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\n6396243\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\n6399794\tKamila Silva\tmillakamila42@gmail.com\tcorretor\n6600095\tAline Silva\talinee.tsilvaa@gmail.com\tcorretor\n6600098\tHellen Rodrigues\thellen.rs0710@gmail.com\tcorretor\n6621455\tPaula Akahoshi\tpaula.akahoshi92@gmail.com\tcorretor\n6851110\tMikael Alves\tmikaelalves2000@gmail.com\tcorretor\n7357913\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tcorretor\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

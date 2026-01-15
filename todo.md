@@ -3008,3 +3008,8 @@
 - [ ] Adicionar botões de ação para mudar status (Realizado/Cancelado)
 - [ ] Exibir detalhes completos: nome, telefone, projeto, data/horário, corretor
 - [ ] Testar fluxo completo de mudança de status
+
+## Bug: Follow-up não aparece na lista
+- [ ] Investigar por que contador mostra 0/1 mas lista está vazia
+- [ ] Corrigir query ou lógica de exibição de follow-ups
+- [ ] Testar com cliente movido para "Em Atendimento"

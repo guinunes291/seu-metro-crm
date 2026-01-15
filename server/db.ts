@@ -3354,24 +3354,25 @@ export async function getFollowUpsPendentes(corretorId: number) {
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
-    tentativaAtual: followUps.tentativaAtual,
-    maxTentativas: followUps.maxTentativas,
-    proximaTentativa: followUps.proximaTentativa,
-    ultimaTentativa: followUps.ultimaTentativa,
+    dataFollowUp: followUps.dataFollowUp,
+    dataRegistro: followUps.dataRegistro,
+    resultado: followUps.resultado,
+    observacao: followUps.observacao,
     status: followUps.status,
     leadNome: leads.nome,
     leadTelefone: leads.telefone,
     leadEmail: leads.email,
     leadStatus: leads.status,
+    diasFollowupConsecutivos: leads.diasFollowupConsecutivos,
   })
     .from(followUps)
     .innerJoin(leads, eq(followUps.leadId, leads.id))
     .where(and(
       eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "ativo"),
-      lte(followUps.proximaTentativa, agora)
+      eq(followUps.status, "pendente"),
+      lte(followUps.dataFollowUp, agora)
     ))
-    .orderBy(followUps.proximaTentativa);
+    .orderBy(followUps.dataFollowUp);
 }
 
 export async function getFollowUpsDoDia(corretorId: number) {

@@ -1,0 +1,106 @@
+{
+  "query": "SELECT * FROM follow_ups WHERE status = 'pendente' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT * FROM follow_ups WHERE status = 'pendente' LIMIT 10;",
+  "rows": [
+    {
+      "id": "3584",
+      "leadId": "480776",
+      "corretorId": "5055943",
+      "dataFollowUp": "2026-01-15 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 00:00:11",
+      "updatedAt": "2026-01-15 00:00:11",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "3585",
+      "leadId": "1260011",
+      "corretorId": "6396243",
+      "dataFollowUp": "2026-01-15 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 00:11:37",
+      "updatedAt": "2026-01-15 00:11:37",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "3586",
+      "leadId": "1260012",
+      "corretorId": "6600095",
+      "dataFollowUp": "2026-01-15 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 00:33:45",
+      "updatedAt": "2026-01-15 00:33:45",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "3587",
+      "leadId": "1260030",
+      "corretorId": "6364694",
+      "dataFollowUp": "2026-01-15 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 02:01:34",
+      "updatedAt": "2026-01-15 02:01:34",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "3588",
+      "leadId": "1260031",
+      "corretorId": "6600098",
+      "dataFollowUp": "2026-01-15 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 02:32:46",
+      "updatedAt": "2026-01-15 02:32:46",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "3589",
+      "leadId": "1260032",
+      "corretorId": "6600095",
+      "dataFollowUp": "2026-01-16 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 03:10:50",
+      "updatedAt": "2026-01-15 03:10:50",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "30001",
+      "leadId": "1290001",
+      "corretorId": "6364694",
+      "dataFollowUp": "2026-01-16 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 05:14:30",
+      "updatedAt": "2026-01-15 05:14:30",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    },
+    {
+      "id": "30002",
+      "leadId": "1290002",
+      "corretorId": "6600098",
+      "dataFollowUp": "2026-01-16 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente",
+      "createdAt": "2026-01-15 12:24:08",
+      "updatedAt": "2026-01-15 12:24:08",
+      "resultado": "NULL",
+      "observacao": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tleadId\tcorretorId\tdataFollowUp\tdataRegistro\tstatus\tcreatedAt\tupdatedAt\tresultado\tobservacao\n3584\t480776\t5055943\t2026-01-15 09:00:00\tNULL\tpendente\t2026-01-15 00:00:11\t2026-01-15 00:00:11\tNULL\tNULL\n3585\t1260011\t6396243\t2026-01-15 09:00:00\tNULL\tpendente\t2026-01-15 00:11:37\t2026-01-15 00:11:37\tNULL\tNULL\n3586\t1260012\t6600095\t2026-01-15 09:00:00\tNULL\tpendente\t2026-01-15 00:33:45\t2026-01-15 00:33:45\tNULL\tNULL\n3587\t1260030\t6364694\t2026-01-15 09:00:00\tNULL\tpendente\t2026-01-15 02:01:34\t2026-01-15 02:01:34\tNULL\tNULL\n3588\t1260031\t6600098\t2026-01-15 09:00:00\tNULL\tpendente\t2026-01-15 02:32:46\t2026-01-15 02:32:46\tNULL\tNULL\n3589\t1260032\t6600095\t2026-01-16 09:00:00\tNULL\tpendente\t2026-01-15 03:10:50\t2026-01-15 03:10:50\tNULL\tNULL\n30001\t1290001\t6364694\t2026-01-16 09:00:00\tNULL\tpendente\t2026-01-15 05:14:30\t2026-01-15 05:14:30\tNULL\tNULL\n30002\t1290002\t6600098\t2026-01-16 09:00:00\tNULL\tpendente\t2026-01-15 12:24:08\t2026-01-15 12:24:08\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}
