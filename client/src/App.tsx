@@ -97,7 +97,7 @@ function Router() {
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
       <Route path="/controle-limites" component={ControleLimites} />
       <Route path="/projeto-foco" component={ProjetoFoco} />
-      <Route path="/log-transferencias" component={LogTransferencias} />
+      <Route path="/sistema/log-transferencias" component={LogTransferencias} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

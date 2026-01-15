@@ -13,16 +13,16 @@ import { ptBR } from "date-fns/locale";
 export default function LogTransferencias() {
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
-  const [motivo, setMotivo] = useState<"2_dias_sem_interacao" | "sem_corretores_disponiveis" | "">("");
-  const [statusFinal, setStatusFinal] = useState<"transferido" | "perdido" | "">("");
+  const [motivo, setMotivo] = useState<"2_dias_sem_interacao" | "sem_corretores_disponiveis" | "todos">("todos");
+  const [statusFinal, setStatusFinal] = useState<"transferido" | "perdido" | "todos">("todos");
   const [page, setPage] = useState(0);
   const limit = 50;
 
   const { data: logs, isLoading, refetch } = trpc.logTransferencias.list.useQuery({
     dataInicio: dataInicio || undefined,
     dataFim: dataFim || undefined,
-    motivo: motivo || undefined,
-    statusFinal: statusFinal || undefined,
+    motivo: motivo === "todos" ? undefined : motivo,
+    statusFinal: statusFinal === "todos" ? undefined : statusFinal,
     limit,
     offset: page * limit,
   });
@@ -30,8 +30,8 @@ export default function LogTransferencias() {
   const { data: totalCount } = trpc.logTransferencias.count.useQuery({
     dataInicio: dataInicio || undefined,
     dataFim: dataFim || undefined,
-    motivo: motivo || undefined,
-    statusFinal: statusFinal || undefined,
+    motivo: motivo === "todos" ? undefined : motivo,
+    statusFinal: statusFinal === "todos" ? undefined : statusFinal,
   });
 
   const totalPages = Math.ceil((totalCount || 0) / limit);
@@ -39,8 +39,8 @@ export default function LogTransferencias() {
   const handleLimparFiltros = () => {
     setDataInicio("");
     setDataFim("");
-    setMotivo("");
-    setStatusFinal("");
+    setMotivo("todos");
+    setStatusFinal("todos");
     setPage(0);
   };
 
@@ -130,7 +130,7 @@ export default function LogTransferencias() {
                   <SelectValue placeholder="Todos os motivos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os motivos</SelectItem>
+                  <SelectItem value="todos">Todos os motivos</SelectItem>
                   <SelectItem value="2_dias_sem_interacao">2 dias sem interação</SelectItem>
                   <SelectItem value="sem_corretores_disponiveis">Sem corretores disponíveis</SelectItem>
                 </SelectContent>
@@ -145,7 +145,7 @@ export default function LogTransferencias() {
                   <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="todos">Todos os status</SelectItem>
                   <SelectItem value="transferido">Transferido</SelectItem>
                   <SelectItem value="perdido">Perdido</SelectItem>
                 </SelectContent>

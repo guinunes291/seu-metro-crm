@@ -3087,3 +3087,8 @@
 - [x] Sincronizar ultimaInteracao de todos os leads com histórico
 - [x] Verificar job de transferência para usar ultimaInteracao
 - [ ] Testar com lead que tem interações recentes
+
+## Correção de Erro na Página Log de Transferências
+- [x] Verificar logs do servidor para identificar erro
+- [x] Corrigir erro na página LogTransferencias.tsx
+- [x] Testar acesso à página
