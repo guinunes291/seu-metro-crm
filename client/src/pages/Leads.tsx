@@ -43,6 +43,8 @@ import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
+import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
+import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -100,8 +102,16 @@ export default function Leads() {
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [origemFilter, setOrigemFilter] = useState<string>("all");
   const [corretorFilter, setCorretorFilter] = useState<string>("all");
-  const [dataInicioFilter, setDataInicioFilter] = useState<string>("");
-  const [dataFimFilter, setDataFimFilter] = useState<string>("");
+  const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("all");
+  const [customDateStart, setCustomDateStart] = useState<Date | undefined>();
+  const [customDateEnd, setCustomDateEnd] = useState<Date | undefined>();
+  
+  // Calcular datas baseado no preset
+  const { dataInicio: dataInicioFilter, dataFim: dataFimFilter } = getDateRangeFromPreset(
+    dateRangePreset,
+    customDateStart,
+    customDateEnd
+  );
   
   // Debounce para busca (evita queries excessivas)
   useEffect(() => {
@@ -539,24 +549,18 @@ export default function Leads() {
               </div>
             )}
 
-            {/* Filtros de Data */}
+            {/* Filtro de Período */}
             <div className="space-y-2">
-              <Label htmlFor="dataInicio">Data Início</Label>
-              <Input
-                id="dataInicio"
-                type="date"
-                value={dataInicioFilter}
-                onChange={(e) => setDataInicioFilter(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dataFim">Data Fim</Label>
-              <Input
-                id="dataFim"
-                type="date"
-                value={dataFimFilter}
-                onChange={(e) => setDataFimFilter(e.target.value)}
+              <Label>Período</Label>
+              <DateRangeFilter
+                value={dateRangePreset}
+                customStart={customDateStart}
+                customEnd={customDateEnd}
+                onChange={(preset, start, end) => {
+                  setDateRangePreset(preset);
+                  setCustomDateStart(start);
+                  setCustomDateEnd(end);
+                }}
               />
             </div>
           </div>

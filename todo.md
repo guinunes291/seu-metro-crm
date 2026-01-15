@@ -2967,3 +2967,10 @@
 
 ## Bug: Filtro de Corretor Não Carrega Lista
 - [x] Corrigir filtro de corretor que não está carregando lista de corretores no dropdown
+
+## Nova Feature: Filtro de Período Padronizado
+- [x] Criar componente DateRangeFilter reutilizável
+- [x] Implementar opções: Todo o período, Hoje, Ontem, Esta semana, Semana passada, Este mês, Mês passado, Este ano, Personalizado
+- [x] Adicionar calendário para opção Personalizado
+- [x] Garantir timezone de São Paulo em todos os cálculos
+- [x] Substituir filtros de data em Leads
