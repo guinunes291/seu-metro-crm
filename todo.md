@@ -3058,3 +3058,9 @@
 ## Remover Badge de Follow-up dos Cards
 - [x] Encontrar componente que renderiza badge "Follow-up: Dia X/5"
 - [x] Remover badge dos cards de leads
+
+## Badge de Alerta de Inatividade
+- [x] Calcular dias sem interação baseado em ultimaInteracao
+- [x] Adicionar badge "⚠️ Sem interação há X dias" nos cards
+- [x] Badge amarelo para 1 dia, laranja para 2+ dias
+- [x] Mostrar apenas para leads "Em Atendimento"

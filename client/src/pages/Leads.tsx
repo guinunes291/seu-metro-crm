@@ -657,7 +657,12 @@ export default function Leads() {
             <div className="grid gap-4">
               {filteredLeads.map((lead) => {
                 const project = projects?.find(p => p.id === lead.projectId);
-                // Badge de follow-up removido - novo fluxo não usa contador de dias
+                
+                // Calcular dias sem interação
+                const diasSemInteracao = lead.ultimaInteracao 
+                  ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / (1000 * 60 * 60 * 24))
+                  : null;
+                const mostrarAlertaInatividade = lead.status === "em_atendimento" && diasSemInteracao !== null && diasSemInteracao >= 1;
                 
                 return (
                   <Card key={lead.id} className={`hover:shadow-md transition-shadow ${
@@ -673,7 +678,15 @@ export default function Leads() {
                                 🔥 FACEBOOK ADS - URGENTE
                               </Badge>
                             )}
-
+                            {mostrarAlertaInatividade && (
+                              <Badge 
+                                variant="outline" 
+                                className={diasSemInteracao === 1 ? "text-yellow-600 border-yellow-600" : "text-orange-600 border-orange-600"}
+                              >
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                ⚠️ Sem interação há {diasSemInteracao} {diasSemInteracao === 1 ? 'dia' : 'dias'}
+                              </Badge>
+                            )}
                           </div>
                           <CardDescription className="mt-1">
                             {lead.origem && `Origem: ${lead.origem}`}
