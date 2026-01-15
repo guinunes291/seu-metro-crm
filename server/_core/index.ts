@@ -100,6 +100,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de limpeza de links:", err);
     });
+    
+    // Inicializar job de transferência automática de leads
+    import("../transferenciaAutomaticaJob").then(({ agendarTransferenciaAutomatica }) => {
+      agendarTransferenciaAutomatica();
+      console.log("[Job] Transferência automática de leads inicializada (diariamente à meia-noite SP)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de transferência automática:", err);
+    });
   });
 }
 

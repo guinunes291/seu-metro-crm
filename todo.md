@@ -3048,9 +3048,9 @@
 - [x] Criar follow-up automaticamente ao mudar para "Em Atendimento"
 - [x] Ajustar registro de follow-up: Respondeu → novo follow-up próximo dia
 - [x] Ajustar registro de follow-up: Não Respondeu → volta para base sem follow-up
-- [ ] Criar job diário de transferência após 2 dias sem interação
-- [ ] Leads captacao_corretor são exceção (não transferem)
-- [ ] Ao passar por todos corretores → Perdido + Lixeira
+- [x] Criar job diário de transferência após 2 dias sem interação
+- [x] Leads captacao_corretor são exceção (não transferem)
+- [x] Ao passar por todos corretores → Perdido + Lixeira
 - [ ] Adicionar badge visual "Sem interação há X dias"
 - [ ] Adicionar log de transferências automáticas
 - [ ] Testar fluxo completo
