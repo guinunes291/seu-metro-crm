@@ -414,19 +414,22 @@ export const systemRouter = router({
       const leadsPerdidos: number[] = [];
       
       // 4. Redistribuir cada lead com transação para evitar race condition
+      console.log(`[REDISTRIBUIÇÃO] Iniciando redistribuição de ${leadsElegiveis.length} leads entre ${todosCorretores.length} corretores`);
       for (const lead of leadsElegiveis) {
         try {
           await db.transaction(async (tx) => {
             // SELECT FOR UPDATE: lock pessimista no lead
-            const leadLocked = await tx.execute(
-              sql`SELECT * FROM ${leads} WHERE id = ${lead.id} FOR UPDATE`
-            );
+            const leadLockedResult = await tx
+              .select()
+              .from(leads)
+              .where(eq(leads.id, lead.id))
+              .for('update');
             
-            if (!leadLocked.rows || leadLocked.rows.length === 0) {
+            if (!leadLockedResult || leadLockedResult.length === 0) {
               throw new Error("Lead não encontrado");
             }
             
-            const leadData = leadLocked.rows[0] as any;
+            const leadData = leadLockedResult[0];
             
             // Verificar se o lead ainda está no corretor original (pode ter sido redistribuído)
             if (leadData.corretorId !== lead.corretorId) {
@@ -445,6 +448,8 @@ export const systemRouter = router({
             const corretoresDisponiveis = todosCorretores.filter(
               c => !corretoresJaTrabalharam.includes(c.id) && quotas[c.id] > 0
             );
+            
+            console.log(`[REDISTRIBUIÇÃO] Lead ${lead.id}: ${corretoresJaTrabalharam.length} corretores já trabalharam, ${corretoresDisponiveis.length} disponíveis`);
             
             if (corretoresDisponiveis.length === 0) {
               // Nenhum corretor disponível - mover para perdido

@@ -310,6 +310,7 @@ export default function Propostas() {
       // Criar nova proposta
       createProposta.mutate({
         ...novaProposta,
+        tabelaPagamento: novaProposta.tabelaPagamento || undefined,
         imagensSelecionadas: imagensUrls,
         plantasSelecionadas: plantasUrls,
         validoAte: novaProposta.validoAte || undefined

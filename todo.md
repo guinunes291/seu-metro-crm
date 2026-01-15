@@ -3221,3 +3221,9 @@
 - [ ] Testar todas as funcionalidades críticas
 - [ ] Verificar performance do sistema
 - [ ] Salvar checkpoint final
+
+## Bug: Redistribuição de Leads Parados
+
+- [ ] Corrigir exibição de mensagem de resultado da redistribuição (mensagem cortada)
+
+- [x] Corrigir exibição da tabela de pagamento customizada pelo corretor no PDF e link compartilhado
