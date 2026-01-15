@@ -1,0 +1,9 @@
+{
+  "query": "CREATE INDEX IF NOT EXISTS lead_cpf_idx ON leads(cpf);\nCREATE INDEX IF NOT EXISTS lead_email_idx ON leads(email);\nCREATE INDEX IF NOT EXISTS lead_lixeira_idx ON leads(naLixeira);\nCREATE INDEX IF NOT EXISTS lead_proximo_followup_idx ON leads(proximoFollowup);\nCREATE INDEX IF NOT EXISTS lead_ultima_interacao_idx ON leads(ultimaInteracao);\nCREATE INDEX IF NOT EXISTS lead_corretor_status_idx ON leads(corretorId, status);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE INDEX IF NOT EXISTS lead_cpf_idx ON leads(cpf);\nCREATE INDEX IF NOT EXISTS lead_email_idx ON leads(email);\nCREATE INDEX IF NOT EXISTS lead_lixeira_idx ON leads(naLixeira);\nCREATE INDEX IF NOT EXISTS lead_proximo_followup_idx ON leads(proximoFollowup);\nCREATE INDEX IF NOT EXISTS lead_ultima_interacao_idx ON leads(ultimaInteracao);\nCREATE INDEX IF NOT EXISTS lead_corretor_status_idx ON leads(corretorId, status);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 4697
+}

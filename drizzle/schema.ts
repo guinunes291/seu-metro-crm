@@ -66,7 +66,14 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índices para performance
+  emailIdx: index("user_email_idx").on(table.email),
+  cpfIdx: index("user_cpf_idx").on(table.cpf),
+  roleIdx: index("user_role_idx").on(table.role),
+  statusIdx: index("user_status_idx").on(table.status),
+  situacaoIdx: index("user_situacao_idx").on(table.situacao),
+}));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -112,7 +119,14 @@ export const projects = mysqlTable("projects", {
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, (table) => ({
+  // Índices para performance de busca e filtros
+  statusIdx: index("project_status_idx").on(table.status),
+  tipoIdx: index("project_tipo_idx").on(table.tipo),
+  zonaIdx: index("project_zona_idx").on(table.zona),
+  cidadeIdx: index("project_cidade_idx").on(table.cidade),
+  nomeIdx: index("project_nome_idx").on(table.nome),
+}));
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
@@ -267,10 +281,21 @@ export const leads = mysqlTable("leads", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
+  // Índices existentes
   telefoneIdx: index("telefone_idx").on(table.telefone),
   corretorIdx: index("corretor_idx").on(table.corretorId),
   statusIdx: index("status_idx").on(table.status),
   projectIdx: index("project_idx").on(table.projectId),
+  
+  // Novos índices para performance
+  cpfIdx: index("lead_cpf_idx").on(table.cpf),
+  emailIdx: index("lead_email_idx").on(table.email),
+  naLixeiraIdx: index("lead_lixeira_idx").on(table.naLixeira),
+  proximoFollowupIdx: index("lead_proximo_followup_idx").on(table.proximoFollowup),
+  ultimaInteracaoIdx: index("lead_ultima_interacao_idx").on(table.ultimaInteracao),
+  
+  // Índice composto para dashboard de corretores (query mais comum)
+  corretorStatusIdx: index("lead_corretor_status_idx").on(table.corretorId, table.status),
 }));
 
 export type Lead = typeof leads.$inferSelect;

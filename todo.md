@@ -3192,3 +3192,32 @@
 
 - [x] Corrigir lógica de redistribuição de leads parados (agora aceita qualquer corretor)
 - [ ] Corrigir toast de notificação que não aparece após redistribuição
+
+## Melhorias de Performance e Estabilidade (Opção B - Seguro)
+
+### Fase 1: Índices no Banco de Dados (1h)
+- [x] Adicionar índices em users (email, status, role, cpf, situacao)
+- [x] Adicionar índices em projects (status, tipo, zona, cidade, nome)
+- [x] Adicionar índices em leads (telefone, cpf, email, corretor, status, project)
+- [x] Adicionar índice composto em leads (corretorId + status)
+- [x] Adicionar índices em properties (projectId, status, composto)
+- [x] Testar performance após índices
+
+### Fase 2: Correção de Queries N+1 (2h)
+- [ ] Corrigir query N+1 no dashboard de corretores
+- [ ] Corrigir query N+1 na listagem de leads
+- [ ] Corrigir query N+1 nos relatórios de performance
+- [ ] Corrigir query N+1 na distribuição de leads
+- [ ] Testar performance das páginas corrigidas
+
+### Fase 3: Race Conditions (4h)
+- [ ] Corrigir race condition em distribuirLeadsDoEstoqueAutomaticamente
+- [ ] Corrigir race condition em countLeadsRecebidosHoje
+- [ ] Adicionar transações com SELECT FOR UPDATE
+- [ ] Adicionar testes de concorrência
+- [ ] Testar distribuição com múltiplas execuções simultâneas
+
+### Fase 4: Testes e Checkpoint
+- [ ] Testar todas as funcionalidades críticas
+- [ ] Verificar performance do sistema
+- [ ] Salvar checkpoint final
