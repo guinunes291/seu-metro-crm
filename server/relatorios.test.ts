@@ -213,3 +213,228 @@ describe("Relatórios e Analytics", () => {
     expect(statsComFiltro.totalLeads).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe("Novos Relatórios Avançados", () => {
+  beforeEach(async () => {
+    await cleanupTestData();
+  });
+
+  it("deve retornar funil de conversão geral", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const funil = await caller.relatorios.funilConversao({});
+
+    expect(Array.isArray(funil)).toBe(true);
+    if (funil.length > 0) {
+      expect(funil[0]).toHaveProperty('status');
+      expect(funil[0]).toHaveProperty('count');
+      expect(funil[0]).toHaveProperty('taxaConversao');
+    }
+  });
+
+  it("deve retornar taxa de conversão por corretor", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const taxas = await caller.relatorios.taxaConversaoPorCorretor({});
+
+    expect(Array.isArray(taxas)).toBe(true);
+    if (taxas.length > 0) {
+      expect(taxas[0]).toHaveProperty('corretorId');
+      expect(taxas[0]).toHaveProperty('corretorNome');
+      expect(taxas[0]).toHaveProperty('totalLeads');
+      expect(taxas[0]).toHaveProperty('leadsFechados');
+      expect(taxas[0]).toHaveProperty('taxaConversao');
+    }
+  });
+
+  it("deve retornar tempo médio por etapa", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const tempos = await caller.relatorios.tempoMedioPorEtapa({});
+
+    expect(Array.isArray(tempos)).toBe(true);
+    if (tempos.length > 0) {
+      expect(tempos[0]).toHaveProperty('status');
+      expect(tempos[0]).toHaveProperty('tempoMedioDias');
+    }
+  });
+
+  it("deve retornar evolução de vendas com diferentes agrupamentos", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const dataInicio = new Date('2024-01-01');
+    const dataFim = new Date('2024-12-31');
+
+    const porDia = await caller.relatorios.evolucaoVendas({
+      dataInicio,
+      dataFim,
+      agrupamento: 'dia'
+    });
+
+    const porSemana = await caller.relatorios.evolucaoVendas({
+      dataInicio,
+      dataFim,
+      agrupamento: 'semana'
+    });
+
+    const porMes = await caller.relatorios.evolucaoVendas({
+      dataInicio,
+      dataFim,
+      agrupamento: 'mes'
+    });
+
+    expect(Array.isArray(porDia)).toBe(true);
+    expect(Array.isArray(porSemana)).toBe(true);
+    expect(Array.isArray(porMes)).toBe(true);
+  });
+
+  it("deve retornar distribuição de vendas por projeto", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const distribuicao = await caller.relatorios.distribuicaoVendasPorProjeto({});
+
+    expect(Array.isArray(distribuicao)).toBe(true);
+    if (distribuicao.length > 0) {
+      expect(distribuicao[0]).toHaveProperty('projetoId');
+      expect(distribuicao[0]).toHaveProperty('projetoNome');
+      expect(distribuicao[0]).toHaveProperty('quantidade');
+      expect(distribuicao[0]).toHaveProperty('vgv');
+    }
+  });
+
+  it("deve retornar origem de leads mais efetiva", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const origens = await caller.relatorios.origemLeadsMaisEfetiva({});
+
+    expect(Array.isArray(origens)).toBe(true);
+    if (origens.length > 0) {
+      expect(origens[0]).toHaveProperty('origem');
+      expect(origens[0]).toHaveProperty('totalLeads');
+      expect(origens[0]).toHaveProperty('leadsFechados');
+      expect(origens[0]).toHaveProperty('taxaConversao');
+    }
+  });
+
+  it("deve retornar leads por horário de entrada com validação de ranges", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const horarios = await caller.relatorios.leadsPorHorarioEntrada({});
+
+    expect(Array.isArray(horarios)).toBe(true);
+    if (horarios.length > 0) {
+      expect(horarios[0]).toHaveProperty('diaSemana');
+      expect(horarios[0]).toHaveProperty('hora');
+      expect(horarios[0]).toHaveProperty('quantidade');
+      
+      // Validar ranges
+      expect(horarios[0].diaSemana).toBeGreaterThanOrEqual(1);
+      expect(horarios[0].diaSemana).toBeLessThanOrEqual(7);
+      expect(horarios[0].hora).toBeGreaterThanOrEqual(0);
+      expect(horarios[0].hora).toBeLessThan(24);
+    }
+  });
+
+  it("deve retornar ranking completo de corretores", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const ranking = await caller.relatorios.rankingCorretores({});
+
+    expect(Array.isArray(ranking)).toBe(true);
+    if (ranking.length > 0) {
+      expect(ranking[0]).toHaveProperty('corretorId');
+      expect(ranking[0]).toHaveProperty('corretorNome');
+      expect(ranking[0]).toHaveProperty('leadsAtendidos');
+      expect(ranking[0]).toHaveProperty('leadsFechados');
+      expect(ranking[0]).toHaveProperty('taxaConversao');
+      expect(ranking[0]).toHaveProperty('vgvGerado');
+    }
+  });
+
+  it("deve retornar produtividade por corretor", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const produtividade = await caller.relatorios.produtividadePorCorretor({});
+
+    expect(Array.isArray(produtividade)).toBe(true);
+    if (produtividade.length > 0) {
+      expect(produtividade[0]).toHaveProperty('corretorId');
+      expect(produtividade[0]).toHaveProperty('corretorNome');
+      expect(produtividade[0]).toHaveProperty('emAtendimento');
+      expect(produtividade[0]).toHaveProperty('agendados');
+      expect(produtividade[0]).toHaveProperty('visitasRealizadas');
+      expect(produtividade[0]).toHaveProperty('analiseCredito');
+    }
+  });
+
+  it("deve retornar comparativo mensal de corretores", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const comparativo = await caller.relatorios.comparativoMensalCorretores({
+      anoInicio: 2024,
+      anoFim: 2024
+    });
+
+    expect(Array.isArray(comparativo)).toBe(true);
+    if (comparativo.length > 0) {
+      expect(comparativo[0]).toHaveProperty('corretorId');
+      expect(comparativo[0]).toHaveProperty('corretorNome');
+      expect(comparativo[0]).toHaveProperty('mes');
+      expect(comparativo[0]).toHaveProperty('vendas');
+    }
+  });
+
+  it("deve retornar carga de trabalho com capacidade ideal", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const carga = await caller.relatorios.cargaTrabalho();
+
+    expect(Array.isArray(carga)).toBe(true);
+    if (carga.length > 0) {
+      expect(carga[0]).toHaveProperty('corretorId');
+      expect(carga[0]).toHaveProperty('corretorNome');
+      expect(carga[0]).toHaveProperty('leadsAtivos');
+      expect(carga[0]).toHaveProperty('capacidadeIdeal');
+      expect(carga[0].capacidadeIdeal).toBe(50); // Capacidade padrão
+    }
+  });
+
+  it("deve retornar previsão de vendas com pipeline ponderado", async () => {
+    const ctx = createGestorContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const previsao = await caller.relatorios.previsaoVendas();
+
+    expect(previsao).toBeDefined();
+    expect(previsao).toHaveProperty('previsaoVGV');
+    expect(previsao).toHaveProperty('taxaConversaoHistorica');
+    expect(previsao).toHaveProperty('pipeline');
+    expect(Array.isArray(previsao.pipeline)).toBe(true);
+
+    if (previsao.pipeline.length > 0) {
+      expect(previsao.pipeline[0]).toHaveProperty('status');
+      expect(previsao.pipeline[0]).toHaveProperty('quantidade');
+      expect(previsao.pipeline[0]).toHaveProperty('vgvPotencial');
+      expect(previsao.pipeline[0]).toHaveProperty('peso');
+      expect(previsao.pipeline[0]).toHaveProperty('vgvPonderado');
+
+      // Validar que VGV ponderado é menor ou igual ao potencial
+      previsao.pipeline.forEach(item => {
+        expect(item.vgvPonderado).toBeLessThanOrEqual(item.vgvPotencial);
+        expect(item.peso).toBeGreaterThanOrEqual(0);
+        expect(item.peso).toBeLessThanOrEqual(1);
+      });
+    }
+  });
+});

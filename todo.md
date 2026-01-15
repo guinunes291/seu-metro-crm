@@ -2974,3 +2974,22 @@
 - [x] Adicionar calendário para opção Personalizado
 - [x] Garantir timezone de São Paulo em todos os cálculos
 - [x] Substituir filtros de data em Leads
+
+## Nova Página: Relatórios de Gestão
+- [ ] Criar rota e item de menu "Relatórios" em Gestão
+- [ ] Implementar endpoint: Funil de Conversão Geral
+- [ ] Implementar endpoint: Taxa de Conversão por Corretor
+- [ ] Implementar endpoint: Tempo Médio por Etapa do Funil
+- [ ] Implementar endpoint: Evolução de Vendas (VGV)
+- [ ] Implementar endpoint: Distribuição de Vendas por Projeto
+- [ ] Implementar endpoint: Origem de Leads mais Efetiva
+- [ ] Implementar endpoint: Qualidade de Leads por Origem
+- [ ] Implementar endpoint: Leads por Horário de Entrada
+- [ ] Implementar endpoint: Ranking de Corretores
+- [ ] Implementar endpoint: Produtividade por Corretor
+- [ ] Implementar endpoint: Comparativo Mensal de Corretores
+- [ ] Implementar endpoint: Carga de Trabalho
+- [ ] Implementar endpoint: Previsão de Vendas
+- [ ] Criar página Relatórios.tsx com todos os gráficos
+- [x] Implementar Criador de Relatórios Personalizados
+- [ ] Adicionar filtro de período em todos os relatórios

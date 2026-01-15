@@ -7214,3 +7214,568 @@ export async function getProximoCorretorDisponivel(corretoresQueTentaram: number
   
   return corretoresDisponiveis[0] || null;
 }
+
+// ============================================================================
+// RELATÓRIOS E ANALYTICS
+// ============================================================================
+
+/**
+ * Funil de Conversão Geral
+ * Retorna quantidade de leads em cada etapa e taxa de conversão entre etapas
+ */
+export async function getFunilConversaoGeral(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  // Buscar contagem por status
+  const statusCounts = await db
+    .select({
+      status: leads.status,
+      count: sql<number>`COUNT(*)`.as('count')
+    })
+    .from(leads)
+    .where(whereCondition)
+    .groupBy(leads.status);
+
+  // Ordenar status na sequência do funil
+  const statusOrder = [
+    'novo',
+    'aguardando_atendimento',
+    'em_atendimento',
+    'agendado',
+    'visita_realizada',
+    'analise_credito',
+    'contrato_fechado',
+    'perdido'
+  ];
+
+  const funil = statusOrder.map(status => {
+    const found = statusCounts.find(s => s.status === status);
+    return {
+      status,
+      count: found ? Number(found.count) : 0
+    };
+  });
+
+  // Calcular taxas de conversão entre etapas
+  const funilComTaxas = funil.map((etapa, index) => {
+    if (index === 0) {
+      return { ...etapa, taxaConversao: 100 };
+    }
+    const etapaAnterior = funil[index - 1];
+    const taxa = etapaAnterior.count > 0 
+      ? (etapa.count / etapaAnterior.count) * 100 
+      : 0;
+    return { ...etapa, taxaConversao: Number(taxa.toFixed(2)) };
+  });
+
+  return funilComTaxas;
+}
+
+/**
+ * Taxa de Conversão por Corretor
+ * Retorna % de conversão de cada corretor (leads fechados / total de leads)
+ */
+export async function getTaxaConversaoPorCorretor(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  const stats = await db
+    .select({
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      totalLeads: sql<number>`COUNT(*)`.as('totalLeads'),
+      leadsFechados: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`.as('leadsFechados')
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(whereCondition)
+    .groupBy(leads.corretorId, users.name);
+
+  return stats.map(stat => ({
+    corretorId: stat.corretorId,
+    corretorNome: stat.corretorNome || 'Não atribuído',
+    totalLeads: Number(stat.totalLeads),
+    leadsFechados: Number(stat.leadsFechados),
+    taxaConversao: Number(stat.totalLeads) > 0 
+      ? Number(((Number(stat.leadsFechados) / Number(stat.totalLeads)) * 100).toFixed(2))
+      : 0
+  }));
+}
+
+/**
+ * Tempo Médio por Etapa do Funil
+ * Calcula tempo médio que leads permanecem em cada status
+ */
+export async function getTempoMedioPorEtapa(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leadStatusTransitions.transitionAt, dataInicio),
+      lte(leadStatusTransitions.transitionAt, dataFim)
+    );
+  }
+
+  // Buscar transições de status
+  const transitions = await db
+    .select()
+    .from(leadStatusTransitions)
+    .where(whereCondition)
+    .orderBy(asc(leadStatusTransitions.leadId), asc(leadStatusTransitions.transitionAt));
+
+  // Calcular tempo em cada status
+  const temposPorStatus: Record<string, number[]> = {};
+
+  let currentLeadId: number | null = null;
+  let currentStatus: string | null = null;
+  let currentTime: Date | null = null;
+
+  for (const transition of transitions) {
+    if (transition.leadId !== currentLeadId) {
+      // Novo lead
+      currentLeadId = transition.leadId;
+      currentStatus = transition.toStatus;
+      currentTime = transition.transitionAt;
+    } else if (currentStatus && currentTime) {
+      // Calcular tempo no status anterior
+      const tempoEmHoras = (transition.transitionAt.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+      
+      if (!temposPorStatus[currentStatus]) {
+        temposPorStatus[currentStatus] = [];
+      }
+      temposPorStatus[currentStatus].push(tempoEmHoras);
+
+      currentStatus = transition.toStatus;
+      currentTime = transition.transitionAt;
+    }
+  }
+
+  // Calcular médias
+  return Object.entries(temposPorStatus).map(([status, tempos]) => ({
+    status,
+    tempoMedioHoras: Number((tempos.reduce((a, b) => a + b, 0) / tempos.length).toFixed(2)),
+    tempoMedioDias: Number(((tempos.reduce((a, b) => a + b, 0) / tempos.length) / 24).toFixed(2)),
+    quantidadeLeads: tempos.length
+  }));
+}
+
+/**
+ * Evolução de Vendas (VGV)
+ * Mostra valor total de vendas por período
+ */
+export async function getEvolucaoVendas(
+  dataInicio: Date,
+  dataFim: Date,
+  agrupamento: 'dia' | 'semana' | 'mes' = 'dia'
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let dateFormat: string;
+  switch (agrupamento) {
+    case 'dia':
+      dateFormat = '%Y-%m-%d';
+      break;
+    case 'semana':
+      dateFormat = '%Y-%u'; // Ano-Semana
+      break;
+    case 'mes':
+      dateFormat = '%Y-%m';
+      break;
+  }
+
+  // Valor médio estimado por venda (R$ 300.000)
+  const valorMedioPorVenda = 300000;
+
+  const vendas = await db
+    .select({
+      periodo: sql<string>`DATE_FORMAT(${leads.createdAt}, ${dateFormat})`.as('periodo'),
+      vgv: sql<number>`SUM(${valorMedioPorVenda})`.as('vgv'),
+      quantidade: sql<number>`COUNT(*)`.as('quantidade')
+    })
+    .from(leads)
+    .where(
+      and(
+        eq(leads.status, 'contrato_fechado'),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim)
+      )
+    )
+    .groupBy(sql`periodo`)
+    .orderBy(sql`periodo`);
+
+  return vendas.map(v => ({
+    periodo: v.periodo,
+    vgv: Number(v.vgv),
+    quantidade: Number(v.quantidade)
+  }));
+}
+
+/**
+ * Distribuição de Vendas por Projeto
+ * Mostra % de vendas de cada empreendimento
+ */
+export async function getDistribuicaoVendasPorProjeto(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = and(eq(leads.status, 'contrato_fechado'));
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      whereCondition,
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  const vendas = await db
+    .select({
+      projetoId: leads.projectId,
+      projetoNome: projects.nome,
+      quantidade: sql<number>`COUNT(*)`.as('quantidade'),
+      vgv: sql<number>`SUM(300000)`.as('vgv') // Valor médio estimado por venda
+    })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projetoId, projects.id))
+    .where(whereCondition)
+    .groupBy(leads.projetoId, projects.nome);
+
+  const total = vendas.reduce((sum, v) => sum + Number(v.quantidade), 0);
+
+  return vendas.map(v => ({
+    projetoId: v.projetoId,
+    projetoNome: v.projetoNome || 'Não especificado',
+    quantidade: Number(v.quantidade),
+    vgv: Number(v.vgv),
+    percentual: total > 0 ? Number(((Number(v.quantidade) / total) * 100).toFixed(2)) : 0
+  }));
+}
+
+/**
+ * Origem de Leads mais Efetiva
+ * Compara volume e taxa de conversão por origem
+ */
+export async function getOrigemLeadsMaisEfetiva(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  const stats = await db
+    .select({
+      origem: leads.origem,
+      totalLeads: sql<number>`COUNT(*)`.as('totalLeads'),
+      leadsFechados: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`.as('leadsFechados')
+    })
+    .from(leads)
+    .where(whereCondition)
+    .groupBy(leads.origem);
+
+  return stats.map(stat => ({
+    origem: stat.origem || 'Não especificado',
+    totalLeads: Number(stat.totalLeads),
+    leadsFechados: Number(stat.leadsFechados),
+    taxaConversao: Number(stat.totalLeads) > 0 
+      ? Number(((Number(stat.leadsFechados) / Number(stat.totalLeads)) * 100).toFixed(2))
+      : 0
+  }));
+}
+
+/**
+ * Leads por Horário de Entrada
+ * Retorna matriz de dia da semana x hora do dia
+ */
+export async function getLeadsPorHorarioEntrada(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  const heatmapData = await db
+    .select({
+      diaSemana: sql<number>`DAYOFWEEK(${leads.createdAt})`.as('diaSemana'), // 1=Domingo, 7=Sábado
+      hora: sql<number>`HOUR(${leads.createdAt})`.as('hora'),
+      quantidade: sql<number>`COUNT(*)`.as('quantidade')
+    })
+    .from(leads)
+    .where(whereCondition)
+    .groupBy(sql`diaSemana`, sql`hora`);
+
+  return heatmapData.map(d => ({
+    diaSemana: Number(d.diaSemana),
+    hora: Number(d.hora),
+    quantidade: Number(d.quantidade)
+  }));
+}
+
+/**
+ * Ranking de Corretores Completo
+ * Tabela com múltiplas métricas (versão detalhada para relatórios)
+ */
+export async function getRankingCorretoresCompleto(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    );
+  }
+
+  const ranking = await db
+    .select({
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      leadsAtendidos: sql<number>`COUNT(*)`.as('leadsAtendidos'),
+      leadsFechados: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`.as('leadsFechados'),
+      vgvGerado: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 300000 ELSE 0 END)`.as('vgvGerado') // Valor médio estimado
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(whereCondition)
+    .groupBy(leads.corretorId, users.name);
+
+  // Calcular tempo médio de resposta (primeira interação)
+  const temposResposta = await db
+    .select({
+      corretorId: leadHistory.userId,
+      tempoMedioMinutos: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, ${leads.createdAt}, ${leadHistory.createdAt}))`.as('tempoMedioMinutos')
+    })
+    .from(leadHistory)
+    .innerJoin(leads, eq(leadHistory.leadId, leads.id))
+    .where(
+      and(
+        whereCondition,
+        sql`${leadHistory.createdAt} = (SELECT MIN(createdAt) FROM lead_history WHERE lead_id = ${leadHistory.leadId})`
+      )
+    )
+    .groupBy(leadHistory.userId);
+
+  return ranking.map(r => {
+    const tempoResposta = temposResposta.find(t => t.corretorId === r.corretorId);
+    const totalLeads = Number(r.leadsAtendidos);
+    const fechados = Number(r.leadsFechados);
+
+    return {
+      corretorId: r.corretorId,
+      corretorNome: r.corretorNome || 'Não atribuído',
+      leadsAtendidos: totalLeads,
+      leadsFechados: fechados,
+      taxaConversao: totalLeads > 0 ? Number(((fechados / totalLeads) * 100).toFixed(2)) : 0,
+      vgvGerado: Number(r.vgvGerado),
+      tempoMedioRespostaMinutos: tempoResposta ? Number(tempoResposta.tempoMedioMinutos) : null
+    };
+  }).sort((a, b) => b.vgvGerado - a.vgvGerado);
+}
+
+/**
+ * Produtividade por Corretor
+ * Distribuição de atividades
+ */
+export async function getProdutividadePorCorretor(dataInicio?: Date, dataFim?: Date) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereCondition = undefined;
+  if (dataInicio && dataFim) {
+    whereCondition = and(
+      gte(leads.updatedAt, dataInicio),
+      lte(leads.updatedAt, dataFim)
+    );
+  }
+
+  const produtividade = await db
+    .select({
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      emAtendimento: sql<number>`SUM(CASE WHEN ${leads.status} = 'em_atendimento' THEN 1 ELSE 0 END)`.as('emAtendimento'),
+      agendados: sql<number>`SUM(CASE WHEN ${leads.status} = 'agendado' THEN 1 ELSE 0 END)`.as('agendados'),
+      visitasRealizadas: sql<number>`SUM(CASE WHEN ${leads.status} = 'visita_realizada' THEN 1 ELSE 0 END)`.as('visitasRealizadas'),
+      analiseCredito: sql<number>`SUM(CASE WHEN ${leads.status} = 'analise_credito' THEN 1 ELSE 0 END)`.as('analiseCredito')
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(whereCondition)
+    .groupBy(leads.corretorId, users.name);
+
+  return produtividade.map(p => ({
+    corretorId: p.corretorId,
+    corretorNome: p.corretorNome || 'Não atribuído',
+    emAtendimento: Number(p.emAtendimento),
+    agendados: Number(p.agendados),
+    visitasRealizadas: Number(p.visitasRealizadas),
+    analiseCredito: Number(p.analiseCredito)
+  }));
+}
+
+/**
+ * Comparativo Mensal de Corretores
+ * Evolução de vendas mês a mês
+ */
+export async function getComparativoMensalCorretores(anoInicio: number, anoFim: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const comparativo = await db
+    .select({
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      mes: sql<string>`DATE_FORMAT(${leads.createdAt}, '%Y-%m')`.as('mes'),
+      vendas: sql<number>`COUNT(*)`.as('vendas'),
+      vgv: sql<number>`SUM(300000)`.as('vgv') // Valor médio estimado por venda
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(
+      and(
+        eq(leads.status, 'contrato_fechado'),
+        gte(leads.createdAt, new Date(`${anoInicio}-01-01`)),
+        lte(leads.createdAt, new Date(`${anoFim}-12-31`))
+      )
+    )
+    .groupBy(leads.corretorId, users.name, sql`mes`)
+    .orderBy(sql`mes`);
+
+  return comparativo.map(c => ({
+    corretorId: c.corretorId,
+    corretorNome: c.corretorNome || 'Não atribuído',
+    mes: c.mes,
+    vendas: Number(c.vendas),
+    vgv: Number(c.vgv)
+  }));
+}
+
+/**
+ * Carga de Trabalho
+ * Quantidade de leads ativos por corretor
+ */
+export async function getCargaTrabalho() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const carga = await db
+    .select({
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      leadsAtivos: sql<number>`COUNT(*)`.as('leadsAtivos')
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(
+      and(
+        notInArray(leads.status, ['contrato_fechado', 'perdido'])
+      )
+    )
+    .groupBy(leads.corretorId, users.name);
+
+  // Capacidade ideal: 50 leads ativos por corretor
+  const capacidadeIdeal = 50;
+
+  return carga.map(c => ({
+    corretorId: c.corretorId,
+    corretorNome: c.corretorNome || 'Não atribuído',
+    leadsAtivos: Number(c.leadsAtivos),
+    capacidadeIdeal,
+    percentualCapacidade: Number(((Number(c.leadsAtivos) / capacidadeIdeal) * 100).toFixed(2))
+  }));
+}
+
+/**
+ * Previsão de Vendas
+ * Projeção baseada em pipeline e taxa de conversão
+ */
+export async function getPrevisaoVendas() {
+  const db = await getDb();
+  if (!db) return { previsao: 0, pipeline: [] };
+
+  // Buscar leads no pipeline (não fechados nem perdidos)
+  const pipeline = await db
+    .select({
+      status: leads.status,
+      quantidade: sql<number>`COUNT(*)`.as('quantidade'),
+      vgvPotencial: sql<number>`SUM(300000)`.as('vgvPotencial') // Valor médio estimado por venda
+    })
+    .from(leads)
+    .where(
+      and(
+        notInArray(leads.status, ['contrato_fechado', 'perdido'])
+      )
+    )
+    .groupBy(leads.status);
+
+  // Calcular taxa de conversão histórica
+  const totalLeads = await db
+    .select({
+      total: sql<number>`COUNT(*)`.as('total'),
+      fechados: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`.as('fechados')
+    })
+    .from(leads);
+
+  const taxaConversaoHistorica = Number(totalLeads[0]?.total) > 0
+    ? Number(totalLeads[0].fechados) / Number(totalLeads[0].total)
+    : 0.1; // 10% default
+
+  // Pesos por status (probabilidade de conversão)
+  const pesosPorStatus: Record<string, number> = {
+    'novo': 0.05,
+    'aguardando_atendimento': 0.1,
+    'em_atendimento': 0.2,
+    'agendado': 0.4,
+    'visita_realizada': 0.6,
+    'analise_credito': 0.8
+  };
+
+  let previsaoVGV = 0;
+  const pipelineDetalhado = pipeline.map(p => {
+    const peso = pesosPorStatus[p.status] || 0.1;
+    const vgvPonderado = Number(p.vgvPotencial) * peso;
+    previsaoVGV += vgvPonderado;
+
+    return {
+      status: p.status,
+      quantidade: Number(p.quantidade),
+      vgvPotencial: Number(p.vgvPotencial),
+      peso,
+      vgvPonderado
+    };
+  });
+
+  return {
+    previsaoVGV: Number(previsaoVGV.toFixed(2)),
+    taxaConversaoHistorica: Number((taxaConversaoHistorica * 100).toFixed(2)),
+    pipeline: pipelineDetalhado
+  };
+}
