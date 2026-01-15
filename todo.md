@@ -2947,3 +2947,9 @@
 - [x] Remover logs de debug do código
 - [x] Sistema pronto para criar follow-ups automaticamente ao mudar status
 - [x] Página Tarefas do Dia limpa e pronta para receber novos follow-ups
+
+
+## Bug: Kanban Mostra Apenas 45 Leads ao Invés de 100 (14/01/2026)
+- [x] Investigar endpoint do Kanban para verificar limite de paginação (limit: 50 por padrão)
+- [x] Corrigir query para retornar todos os leads do corretor sem limite (limit: 9999)
+- [x] Testar Kanban com contagem completa de leads

@@ -36,7 +36,8 @@ export default function Kanban() {
   const { user } = useAuth();
   
   // Buscar leads - corretor vê apenas seus leads, gestor vê todos
-  const { data, isLoading, refetch } = trpc.leads.list.useQuery();
+  // Kanban precisa de TODOS os leads sem paginação
+  const { data, isLoading, refetch } = trpc.leads.list.useQuery({ limit: 9999 });
   const leads = data?.leads || [];
   
   // Mutation para atualizar status do lead
