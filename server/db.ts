@@ -183,7 +183,13 @@ export async function getAllCorretores() {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(users).where(eq(users.role, "corretor"));
+  const corretores = await db.select().from(users).where(eq(users.role, "corretor"));
+  
+  // Mapear 'name' para 'nome' para compatibilidade com o frontend
+  return corretores.map(c => ({
+    ...c,
+    nome: c.name
+  }));
 }
 
 export async function getCorretoresPresentes() {

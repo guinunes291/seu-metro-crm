@@ -2964,3 +2964,6 @@
 - [x] Frontend: Adicionar filtros de data inicial e final em Meus Leads
 - [x] Garantir busca por nome, telefone e email funciona corretamente (já implementado no backend)
 - [x] Testar todos os filtros combinados
+
+## Bug: Filtro de Corretor Não Carrega Lista
+- [x] Corrigir filtro de corretor que não está carregando lista de corretores no dropdown
