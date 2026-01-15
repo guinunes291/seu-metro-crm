@@ -3112,3 +3112,13 @@
 - [x] Adicionar botão "Executar Teste" na página de Log de Transferências
 - [x] Testar transferência e verificar registros na tabela
 - [x] Adicionar feedback visual (toast) após execução
+
+## Implementação de Sistema de 3 Roles (Admin, Gestor, Corretor)
+- [x] Atualizar enum de roles no schema do banco (admin, gestor, corretor)
+- [x] Executar migração do banco de dados
+- [x] Criar middleware `adminProcedure` para procedures exclusivas de admin
+- [x] Criar middleware `gestorProcedure` para procedures de gestores
+- [x] Atualizar usuário principal (guilherme_97fm@outlook.com) para role "admin"
+- [x] Revisar permissões de páginas e procedures existentes
+- [x] Atualizar interface para refletir novas permissões
+- [x] Testar acesso com cada role

@@ -36,6 +36,13 @@
       "when": 1768488238128,
       "tag": "0004_brown_oracle",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1768490730628,
+      "tag": "0005_tiny_inertia",
+      "breakpoints": true
     }
   ]
 }
