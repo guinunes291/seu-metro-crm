@@ -1,6 +1,8 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./notification";
-import { adminProcedure, publicProcedure, router } from "./trpc";
+import { adminProcedure, publicProcedure, protectedProcedure, router } from "./trpc";
+import { verificarTransferenciasAutomaticas } from "../transferenciaAutomaticaJob";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -25,5 +27,18 @@ export const systemRouter = router({
       return {
         success: delivered,
       } as const;
+    }),
+
+  // Endpoint de teste para executar transferência automática manualmente
+  executarTransferenciaAutomatica: protectedProcedure
+    .use(async ({ ctx, next }) => {
+      if (ctx.user.role !== 'admin' && ctx.user.role !== 'gestor') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores e gestores podem executar este teste' });
+      }
+      return next({ ctx });
+    })
+    .mutation(async () => {
+      const resultado = await verificarTransferenciasAutomaticas();
+      return resultado;
     }),
 });

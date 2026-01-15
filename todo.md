@@ -3106,3 +3106,9 @@
 - [x] Adicionar rota alternativa /log-transferencias que aponta para a mesma página
 - [x] Verificar link no menu lateral
 - [x] Testar ambas as URLs
+
+## Endpoint de Teste para Transferência Automática
+- [x] Criar procedure tRPC para executar job de transferência manualmente
+- [x] Adicionar botão "Executar Teste" na página de Log de Transferências
+- [x] Testar transferência e verificar registros na tabela
+- [x] Adicionar feedback visual (toast) após execução

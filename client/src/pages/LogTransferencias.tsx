@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, Filter, RefreshCw, AlertTriangle, CheckCircle, XCircle, Play } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function LogTransferencias() {
   const [dataInicio, setDataInicio] = useState("");
@@ -35,6 +37,19 @@ export default function LogTransferencias() {
   });
 
   const totalPages = Math.ceil((totalCount || 0) / limit);
+
+  const { user } = useAuth();
+  const executarTesteMutation = trpc.system.executarTransferenciaAutomatica.useMutation({
+    onSuccess: (resultado) => {
+      toast.success(
+        `Transferência executada! ${resultado.transferidos} transferidos, ${resultado.perdidos} perdidos, ${resultado.erros} erros`
+      );
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao executar transferência: ${error.message}`);
+    },
+  });
 
   const handleLimparFiltros = () => {
     setDataInicio("");
@@ -161,6 +176,17 @@ export default function LogTransferencias() {
             <Button onClick={handleLimparFiltros} variant="ghost" size="sm">
               Limpar Filtros
             </Button>
+            {(user?.role === "admin" || user?.role === "gestor") && (
+              <Button 
+                onClick={() => executarTesteMutation.mutate()} 
+                variant="default" 
+                size="sm"
+                disabled={executarTesteMutation.isPending}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                {executarTesteMutation.isPending ? "Executando..." : "Executar Teste"}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
