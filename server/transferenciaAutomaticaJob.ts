@@ -37,7 +37,7 @@ export async function verificarTransferenciasAutomaticas() {
           eq(leads.status, "em_atendimento"),
           lt(leads.ultimaInteracao, dataLimite),
           ne(leads.origem, "captacao_corretor"), // Exceção: não transferir leads de captação própria
-          eq(leads.deletedAt, null) // Não processar leads na lixeira
+          eq(leads.naLixeira, false) // Não processar leads na lixeira
         )
       );
 
@@ -56,8 +56,7 @@ export async function verificarTransferenciasAutomaticas() {
           .where(
             and(
               eq(users.role, "corretor"),
-              ne(users.id, lead.corretorId || 0),
-              eq(users.deletedAt, null)
+              ne(users.id, lead.corretorId || 0)
             )
           );
 
@@ -86,7 +85,8 @@ export async function verificarTransferenciasAutomaticas() {
             .update(leads)
             .set({
               status: "perdido",
-              deletedAt: agora(),
+              naLixeira: true,
+              dataMovidoLixeira: agora(),
               updatedAt: agora(),
             })
             .where(eq(leads.id, lead.id));

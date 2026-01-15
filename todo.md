@@ -3054,3 +3054,7 @@
 - [ ] Adicionar badge visual "Sem interação há X dias"
 - [ ] Adicionar log de transferências automáticas
 - [ ] Testar fluxo completo
+
+## Remover Badge de Follow-up dos Cards
+- [x] Encontrar componente que renderiza badge "Follow-up: Dia X/5"
+- [x] Remover badge dos cards de leads

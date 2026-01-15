@@ -657,7 +657,7 @@ export default function Leads() {
             <div className="grid gap-4">
               {filteredLeads.map((lead) => {
                 const project = projects?.find(p => p.id === lead.projectId);
-                const needsFollowup = lead.diasFollowupConsecutivos < 5 && lead.status !== "contrato_fechado" && lead.status !== "perdido";
+                // Badge de follow-up removido - novo fluxo não usa contador de dias
                 
                 return (
                   <Card key={lead.id} className={`hover:shadow-md transition-shadow ${
@@ -673,12 +673,7 @@ export default function Leads() {
                                 🔥 FACEBOOK ADS - URGENTE
                               </Badge>
                             )}
-                            {needsFollowup && (
-                              <Badge variant="outline" className="text-orange-600 border-orange-600">
-                                <AlertCircle className="h-3 w-3 mr-1" />
-                                Follow-up: Dia {lead.diasFollowupConsecutivos}/5
-                              </Badge>
-                            )}
+
                           </div>
                           <CardDescription className="mt-1">
                             {lead.origem && `Origem: ${lead.origem}`}
