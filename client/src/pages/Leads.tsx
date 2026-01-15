@@ -662,7 +662,7 @@ export default function Leads() {
                 const diasSemInteracao = lead.ultimaInteracao 
                   ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / (1000 * 60 * 60 * 24))
                   : null;
-                const mostrarAlertaInatividade = lead.status === "em_atendimento" && diasSemInteracao !== null && diasSemInteracao >= 1;
+                const mostrarAlertaInatividade = lead.status === "em_atendimento" && diasSemInteracao !== null && diasSemInteracao >= 2;
                 
                 return (
                   <Card key={lead.id} className={`hover:shadow-md transition-shadow ${
@@ -681,10 +681,10 @@ export default function Leads() {
                             {mostrarAlertaInatividade && (
                               <Badge 
                                 variant="outline" 
-                                className={diasSemInteracao === 1 ? "text-yellow-600 border-yellow-600" : "text-orange-600 border-orange-600"}
+                                className="text-orange-600 border-orange-600"
                               >
                                 <AlertCircle className="h-3 w-3 mr-1" />
-                                ⚠️ Sem interação há {diasSemInteracao} {diasSemInteracao === 1 ? 'dia' : 'dias'}
+                                Lead será descartado hoje às 00:00 por falta de interação
                               </Badge>
                             )}
                           </div>

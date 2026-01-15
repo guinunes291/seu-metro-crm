@@ -3092,3 +3092,12 @@
 - [x] Verificar logs do servidor para identificar erro
 - [x] Corrigir erro na página LogTransferencias.tsx
 - [x] Testar acesso à página
+
+## Ajuste do Badge de Inatividade
+- [x] Modificar lógica para mostrar badge apenas quando lead tiver 2+ dias completos sem interação (prestes a ser transferido)
+- [x] Remover badge quando lead tiver menos de 2 dias sem interação
+- [x] Testar que badge desaparece após registro de interação
+
+## Alteração do Texto do Badge de Inatividade
+- [x] Alterar texto do badge para "Lead será descartado hoje às 00:00 por falta de interação"
+- [x] Testar visualização do novo texto
