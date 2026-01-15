@@ -950,6 +950,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
             <tr>
               <th>Descrição</th>
               <th>Qtd</th>
+              <th>Data</th>
               <th>Valor Unit.</th>
               <th>Total</th>
             </tr>
@@ -960,6 +961,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
                 <tr>
                   <td>${p.nome}</td>
                   <td>${p.quantidade}x</td>
+                  <td style="text-align: center; font-size: 9pt;">${p.dataPagamento ? new Date(p.dataPagamento).toLocaleDateString('pt-BR') : '-'}</td>
                   <td>${formatCurrency(p.valorUnitario)}</td>
                   <td>${formatCurrency(p.total)}</td>
                 </tr>
@@ -967,18 +969,20 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
                 <tr>
                   <td>Financiamento</td>
                   <td>1x</td>
+                  <td style="text-align: center; font-size: 9pt;">-</td>
                   <td>${formatCurrency(dados.valorFinanciamento || 0)}</td>
                   <td>${formatCurrency(dados.valorFinanciamento || 0)}</td>
                 </tr>
                 <tr>
                   <td>Entrada</td>
                   <td>1x</td>
+                  <td style="text-align: center; font-size: 9pt;">-</td>
                   <td>${formatCurrency(dados.valorEntrada || 0)}</td>
                   <td>${formatCurrency(dados.valorEntrada || 0)}</td>
                 </tr>
               `}
             <tr class="total">
-              <td colspan="3"><strong>TOTAL</strong></td>
+              <td colspan="4"><strong>TOTAL</strong></td>
               <td><strong>${formatCurrency(totalPagamento > 0 ? totalPagamento : dados.valorImovel)}</strong></td>
             </tr>
           </tbody>
@@ -1002,7 +1006,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       <div class="secao-conteudo">
         ${dados.valorParcela ? `
         <div class="simulacao-box">
-          <div class="simulacao-titulo">Primeira Parcela</div>
+          <div class="simulacao-titulo">Primeira Parcela <span style="font-size: 10pt; color: #64748b; font-weight: 400;">(parcela morando)</span></div>
           <div class="simulacao-valor">${formatCurrency(dados.valorParcela)}</div>
           <div class="simulacao-detalhe">${dados.parcelas ? dados.parcelas + ' parcelas' : ''} ${dados.taxaJuros ? '• ' + dados.taxaJuros : ''}</div>
         </div>
@@ -1141,10 +1145,12 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
         <div class="corretor-info">
           <div class="corretor-nome">${dados.corretor.name || 'Corretor'}</div>
           <div>${dados.corretor.telefone || ''} ${dados.corretor.email ? '• ' + dados.corretor.email : ''}</div>
+          ${dados.corretor.creci ? `<div>CRECI-J ${dados.corretor.creci}</div>` : ''}
         </div>
       </div>
-      <div>
-        Proposta #${dados.id} • ${dataAtual}
+      <div style="text-align: right;">
+        <div>Proposta #${dados.id} • ${dataAtual}</div>
+        <div style="margin-top: 4px;">CNPJ: 55.579.001/0001-24</div>
       </div>
     </div>
   </div>

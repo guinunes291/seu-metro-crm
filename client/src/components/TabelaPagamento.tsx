@@ -11,6 +11,7 @@ export interface ParcelaPagamento {
   quantidade: number;
   valorUnitario: number;
   total: number;
+  dataPagamento?: string; // Data de pagamento ou início (formato YYYY-MM-DD)
 }
 
 const TIPOS_PARCELA = [
@@ -155,11 +156,12 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
         <table className="w-full border-collapse" style={{ minWidth: '600px' }}>
           <thead>
             <tr className="bg-slate-700/50">
-              <th className="p-2 text-left text-sm font-semibold text-white" style={{ width: '25%' }}>Tipo de Parcela</th>
-              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '12%' }}>Qtd</th>
-              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '20%' }}>Valor Unit.</th>
-              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '23%' }}>Total</th>
-              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '12%' }}>%</th>
+              <th className="p-2 text-left text-sm font-semibold text-white" style={{ width: '22%' }}>Tipo de Parcela</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '10%' }}>Qtd</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '15%' }}>Data</th>
+              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '18%' }}>Valor Unit.</th>
+              <th className="p-2 text-right text-sm font-semibold text-white" style={{ width: '18%' }}>Total</th>
+              <th className="p-2 text-center text-sm font-semibold text-white" style={{ width: '9%' }}>%</th>
               {!readOnly && <th className="p-2" style={{ width: '8%' }}></th>}
             </tr>
           </thead>
@@ -200,6 +202,20 @@ export default function TabelaPagamento({ parcelas, onChange, valorImovel = 0, r
                         value={parcela.quantidade}
                         onChange={(e) => updateParcela(parcela.id, "quantidade", parseInt(e.target.value) || 1)}
                         className="bg-slate-700 border-slate-600 text-white h-10 text-center font-medium w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
+                    )}
+                  </td>
+                  <td className="p-2">
+                    {readOnly ? (
+                      <span className="text-white font-medium text-center block text-sm">
+                        {parcela.dataPagamento ? new Date(parcela.dataPagamento).toLocaleDateString('pt-BR') : '-'}
+                      </span>
+                    ) : (
+                      <Input
+                        type="date"
+                        value={parcela.dataPagamento || ''}
+                        onChange={(e) => updateParcela(parcela.id, "dataPagamento", e.target.value)}
+                        className="bg-slate-700 border-slate-600 text-white h-10 text-center font-medium w-full text-sm"
                       />
                     )}
                   </td>

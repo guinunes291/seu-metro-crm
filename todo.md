@@ -3229,3 +3229,7 @@
 - [x] Corrigir exibição da tabela de pagamento customizada pelo corretor no PDF e link compartilhado
 
 - [x] Otimizar layout do PDF: remover bordas brancas excessivas, reduzir espaçamentos e evitar cortes de imagens/textos
+
+- [x] Adicionar coluna de data na tabela de pagamento mostrando quando cada parcela será paga
+- [x] Incluir CNPJ (55.579.001/0001-24) e CRECI-J (051891) no rodapé do PDF
+- [x] Adicionar "(parcela morando)" ao lado da primeira parcela na simulação de financiamento
