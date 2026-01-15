@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -3556,19 +3556,15 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
  * Query 1: Buscar follow-ups pendentes de hoje
  * Query 2: Buscar dados dos leads correspondentes
  */
-/**
- * Busca follow-ups pendentes para hoje (ABORDAGEM 4: Drizzle ORM correto)
- * Usa leftJoin, funções nativas do Drizzle e comparação de data correta
- */
 export async function getFollowUpsDoDiaExpandido(
   corretorId: number,
   ordenacao?: "mais_antigos" | "mais_recentes" | "menos_tentativas" | "mais_tentativas",
   projetoId?: number,
   origem?: string
 ) {
-  const db = await getDb();
-  if (!db) {
-    console.log("[getFollowUpsDoDiaExpandido] Erro: banco de dados não disponível");
+  const conn = await getConnection();
+  if (!conn) {
+    console.log("[getFollowUpsDoDiaExpandido] Erro: conexão não disponível");
     return [];
   }
   
@@ -3576,65 +3572,105 @@ export async function getFollowUpsDoDiaExpandido(
     // Buscar data de hoje (timezone São Paulo)
     const { inicioDoDiaHoje } = await import('./timezone');
     const hoje = inicioDoDiaHoje();
-    const amanha = new Date(hoje);
-    amanha.setDate(amanha.getDate() + 1);
+    const dataHoje = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
     
-    console.log("[getFollowUpsDoDiaExpandido] Buscando follow-ups para corretorId:", corretorId);
-    console.log("[getFollowUpsDoDiaExpandido] Período: de", hoje.toISOString(), "até", amanha.toISOString());
+    console.log("[getFollowUpsDoDiaExpandido] Iniciando busca para corretorId:", corretorId, "dataHoje:", dataHoje);
     
-    // Construir condições de filtro
-    const conditions = [
-      eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "pendente"),
-      gte(followUps.dataFollowUp, hoje),
-      lt(followUps.dataFollowUp, amanha)
-    ];
+    // ===== QUERY 1: Buscar follow-ups pendentes de hoje =====
+    const queryFollowUps = `
+      SELECT id, leadId, dataFollowUp, dataRegistro, resultado, status
+      FROM follow_ups
+      WHERE corretorId = ? 
+        AND status = 'pendente' 
+        AND DATE(dataFollowUp) = ?
+    `;
     
-    // Filtro por projeto (aplicado no lead)
+    const [followUpsRows] = await conn.query(queryFollowUps, [corretorId, dataHoje]);
+    const followUps = followUpsRows as any[];
+    
+    console.log("[getFollowUpsDoDiaExpandido] Query 1 - Follow-ups encontrados:", followUps.length);
+    
+    if (followUps.length === 0) {
+      console.log("[getFollowUpsDoDiaExpandido] Nenhum follow-up pendente para hoje");
+      return [];
+    }
+    
+    // Extrair IDs dos leads
+    const leadIds = followUps.map(f => f.leadId);
+    console.log("[getFollowUpsDoDiaExpandido] Lead IDs:", leadIds);
+    
+    // ===== QUERY 2: Buscar dados dos leads =====
+    let queryLeads = `
+      SELECT id, nome, telefone, email, status, projectId, origem, createdAt
+      FROM leads
+      WHERE id IN (${leadIds.map(() => '?').join(',')})
+    `;
+    
+    const paramsLeads: any[] = [...leadIds];
+    
+    // Filtro por projeto
     if (projetoId) {
-      conditions.push(eq(leads.projectId, projetoId));
+      queryLeads += ' AND projectId = ?';
+      paramsLeads.push(projetoId);
     }
     
-    // Filtro por origem (aplicado no lead)
+    // Filtro por origem
     if (origem) {
-      conditions.push(eq(leads.origem, origem));
+      queryLeads += ' AND origem = ?';
+      paramsLeads.push(origem);
     }
     
-    // Query com leftJoin
-    let query = db.select({
-      id: followUps.id,
-      leadId: followUps.leadId,
-      dataFollowUp: followUps.dataFollowUp,
-      dataRegistro: followUps.dataRegistro,
-      resultado: followUps.resultado,
-      status: followUps.status,
-      leadNome: leads.nome,
-      leadTelefone: leads.telefone,
-      leadEmail: leads.email,
-      leadStatus: leads.status,
-      leadProjectId: leads.projectId,
-      leadOrigem: leads.origem,
-      leadCriadoEm: leads.createdAt,
-    })
-      .from(followUps)
-      .leftJoin(leads, eq(followUps.leadId, leads.id))
-      .where(and(...conditions));
+    const [leadsRows] = await conn.query(queryLeads, paramsLeads);
+    const leads = leadsRows as any[];
+    
+    console.log("[getFollowUpsDoDiaExpandido] Query 2 - Leads encontrados:", leads.length);
+    
+    // ===== MONTAR RESULTADO FINAL =====
+    // Criar mapa de leads por ID para acesso rápido
+    const leadsMap = new Map();
+    leads.forEach(lead => {
+      leadsMap.set(lead.id, lead);
+    });
+    
+    // Combinar follow-ups com dados dos leads
+    const resultado = followUps
+      .map(followUp => {
+        const lead = leadsMap.get(followUp.leadId);
+        if (!lead) {
+          console.log("[getFollowUpsDoDiaExpandido] Lead não encontrado para followUp:", followUp.id);
+          return null;
+        }
+        
+        return {
+          id: followUp.id,
+          leadId: followUp.leadId,
+          dataFollowUp: followUp.dataFollowUp,
+          dataRegistro: followUp.dataRegistro,
+          resultado: followUp.resultado,
+          status: followUp.status,
+          leadNome: lead.nome,
+          leadTelefone: lead.telefone,
+          leadEmail: lead.email,
+          leadStatus: lead.status,
+          leadProjectId: lead.projectId,
+          leadOrigem: lead.origem,
+          leadCriadoEm: lead.createdAt,
+        };
+      })
+      .filter(item => item !== null); // Remover nulls
     
     // Aplicar ordenação
     switch (ordenacao) {
       case "mais_recentes":
-        query = query.orderBy(desc(leads.createdAt));
+        resultado.sort((a, b) => new Date(b!.leadCriadoEm).getTime() - new Date(a!.leadCriadoEm).getTime());
         break;
       case "mais_antigos":
       default:
-        query = query.orderBy(asc(leads.createdAt));
+        resultado.sort((a, b) => new Date(a!.leadCriadoEm).getTime() - new Date(b!.leadCriadoEm).getTime());
         break;
     }
     
-    const resultado = await query;
-    
-    console.log("[getFollowUpsDoDiaExpandido] Resultado: encontrados", resultado.length, "follow-ups");
-    
+    console.log("[getFollowUpsDoDiaExpandido] Retornando", resultado.length, "follow-ups");
     return resultado;
     
   } catch (error) {

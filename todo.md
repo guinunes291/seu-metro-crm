@@ -3013,3 +3013,29 @@
 - [ ] Investigar por que contador mostra 0/1 mas lista está vazia
 - [ ] Corrigir query ou lógica de exibição de follow-ups
 - [ ] Testar com cliente movido para "Em Atendimento"
+
+## Bug Crítico ATUAL: Follow-ups Não Aparecem na Aba Tarefas do Dia
+- [ ] Corrigir função getFollowUpsDoDiaExpandido - leads não aparecem na aba Tarefas do Dia (TENTADO - NÃO RESOLVIDO)
+  - Query SQL funciona diretamente no banco (retorna 1 follow-up)
+  - Função TypeScript não retorna dados para o frontend
+  - Campos corrigidos: leads.projeto → leads.projectId, leads.criadoEm → leads.createdAt
+  - Logs de debug adicionados para investigação
+  - Problema: Drizzle ORM não retorna os dados mesmo com query correta
+- [x] Reescrever função com SQL puro usando getConnection() ao invés de Drizzle ORM (TENTADO)
+- [ ] Testar solução final com usuário
+
+## Nova Abordagem: Duas Queries Separadas para Follow-ups
+- [x] Implementar Query 1: Buscar IDs dos follow-ups pendentes de hoje (TENTADO)
+- [x] Implementar Query 2: Buscar dados dos leads usando os IDs (TENTADO)
+- [x] Montar resultado final manualmente no código (TENTADO)
+- [ ] Testar com usuário
+- [ ] Salvar checkpoint se funcionar
+
+## Abordagem 4: Reescrever com Drizzle ORM Corretamente
+- [x] Revisar schema do Drizzle (drizzle/schema.ts)
+- [x] Verificar relacionamentos entre follow_ups e leads
+- [x] Usar leftJoin() ao invés de innerJoin()
+- [x] Remover sql`` template para comparação de data
+- [x] Usar funções nativas do Drizzle (gte, lte, between)
+- [ ] Testar query isoladamente
+- [ ] Testar com usuário

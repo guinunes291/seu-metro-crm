@@ -1,0 +1,129 @@
+{
+  "query": "\nSELECT id, name, role, email, openId FROM users ORDER BY id LIMIT 30;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, name, role, email, openId FROM users ORDER BY id LIMIT 30;\n",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Guilherme Nunes",
+      "role": "gestor",
+      "email": "guilherme_97fm@outlook.com",
+      "openId": "ZGmJndhAtLH26sZ7wR7gLD"
+    },
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "role": "corretor",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "openId": "Eyt79uZJL79GPtUzfLJ9Hd"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34",
+      "role": "corretor",
+      "email": "kauanthyago34@gmail.com",
+      "openId": "GmaVb6YMXJpZZH9CBpV8eb"
+    },
+    {
+      "id": "5052575",
+      "name": "Leticia Castro",
+      "role": "corretor",
+      "email": "leticiaccastro2@gmail.com",
+      "openId": "2ZGBczFch5gfKby2U3b2cw"
+    },
+    {
+      "id": "5053030",
+      "name": "Breno Brunelli",
+      "role": "corretor",
+      "email": "imoveis.brunelli@gmail.com",
+      "openId": "dt4v8VkZLTemx7aigk4Zbb"
+    },
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes ",
+      "role": "corretor",
+      "email": "guilherme.97fn@gmail.com",
+      "openId": "WwoHyMjBNUMkPz8f9gZCPm"
+    },
+    {
+      "id": "6183990",
+      "name": "Manus Gestor Teste",
+      "role": "corretor",
+      "email": "manus.gestor@teste.com",
+      "openId": "test_gestor_manus_1767283813287"
+    },
+    {
+      "id": "6364694",
+      "name": "ivenspagule",
+      "role": "corretor",
+      "email": "ivenspagule@gmail.com",
+      "openId": "S8U7kRrxMxGwJrzbU6EAnw"
+    },
+    {
+      "id": "6368447",
+      "name": "Gabriel Salles",
+      "role": "corretor",
+      "email": "biel2s7777@gmail.com",
+      "openId": "7Qw5UawydJFsd9ryowjanh"
+    },
+    {
+      "id": "6396243",
+      "name": "Igor Nigro",
+      "role": "corretor",
+      "email": "igor.nigro09@gmail.com",
+      "openId": "B7rP6jojXMRrYMdG2jVhaa"
+    },
+    {
+      "id": "6399794",
+      "name": "Kamila Silva",
+      "role": "corretor",
+      "email": "millakamila42@gmail.com",
+      "openId": "Az6hiCe2Y9d4evYt2iXMCM"
+    },
+    {
+      "id": "6600095",
+      "name": "Aline Silva",
+      "role": "corretor",
+      "email": "alinee.tsilvaa@gmail.com",
+      "openId": "UNcZU9yqpbXxoc6t2XSMhn"
+    },
+    {
+      "id": "6600098",
+      "name": "Hellen Rodrigues",
+      "role": "corretor",
+      "email": "hellen.rs0710@gmail.com",
+      "openId": "3VtukLsfU44xc5AxewfxoG"
+    },
+    {
+      "id": "6621455",
+      "name": "Paula Akahoshi",
+      "role": "corretor",
+      "email": "paula.akahoshi92@gmail.com",
+      "openId": "iVWMbcdhcadg5WpJWQEtrr"
+    },
+    {
+      "id": "6851110",
+      "name": "Mikael Alves",
+      "role": "corretor",
+      "email": "mikaelalves2000@gmail.com",
+      "openId": "9AhyLXNmRonB3Ee8MTVFVq"
+    },
+    {
+      "id": "7357913",
+      "name": "sheldonbarbosaa",
+      "role": "corretor",
+      "email": "sheldonbarbosaa@gmail.com",
+      "openId": "aqYUDgKPDBbgDi2ZNMubeR"
+    },
+    {
+      "id": "7418334",
+      "name": "Corretor Teste Follow-up",
+      "role": "corretor",
+      "email": "corretor.teste.followup@example.com",
+      "openId": "test-corretor-123"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\trole\temail\topenId\n1\tGuilherme Nunes\tgestor\tguilherme_97fm@outlook.com\tZGmJndhAtLH26sZ7wR7gLD\n4236208\tAndrew\tcorretor\tandrewformigoni.corretor@gmail.com\tEyt79uZJL79GPtUzfLJ9Hd\n4236243\tkauanthyago34\tcorretor\tkauanthyago34@gmail.com\tGmaVb6YMXJpZZH9CBpV8eb\n5052575\tLeticia Castro\tcorretor\tleticiaccastro2@gmail.com\t2ZGBczFch5gfKby2U3b2cw\n5053030\tBreno Brunelli\tcorretor\timoveis.brunelli@gmail.com\tdt4v8VkZLTemx7aigk4Zbb\n5055943\tGuilherme Nunes \tcorretor\tguilherme.97fn@gmail.com\tWwoHyMjBNUMkPz8f9gZCPm\n6183990\tManus Gestor Teste\tcorretor\tmanus.gestor@teste.com\ttest_gestor_manus_1767283813287\n6364694\tivenspagule\tcorretor\tivenspagule@gmail.com\tS8U7kRrxMxGwJrzbU6EAnw\n6368447\tGabriel Salles\tcorretor\tbiel2s7777@gmail.com\t7Qw5UawydJFsd9ryowjanh\n6396243\tIgor Nigro\tcorretor\tigor.nigro09@gmail.com\tB7rP6jojXMRrYMdG2jVhaa\n6399794\tKamila Silva\tcorretor\tmillakamila42@gmail.com\tAz6hiCe2Y9d4evYt2iXMCM\n6600095\tAline Silva\tcorretor\talinee.tsilvaa@gmail.com\tUNcZU9yqpbXxoc6t2XSMhn\n6600098\tHellen Rodrigues\tcorretor\thellen.rs0710@gmail.com\t3VtukLsfU44xc5AxewfxoG\n6621455\tPaula Akahoshi\tcorretor\tpaula.akahoshi92@gmail.com\tiVWMbcdhcadg5WpJWQEtrr\n6851110\tMikael Alves\tcorretor\tmikaelalves2000@gmail.com\t9AhyLXNmRonB3Ee8MTVFVq\n7357913\tsheldonbarbosaa\tcorretor\tsheldonbarbosaa@gmail.com\taqYUDgKPDBbgDi2ZNMubeR\n7418334\tCorretor Teste Follow-up\tcorretor\tcorretor.teste.followup@example.com\ttest-corretor-123\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

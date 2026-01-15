@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
+import { eq, and, desc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -3551,92 +3551,74 @@ export async function criarFollowUpsAutomaticos(corretorId: number) {
  * Busca follow-ups pendentes para hoje (novo fluxo de 1 dia)
  * Retorna leads que têm follow-up agendado para hoje e ainda não foi registrado
  */
-/**
- * Busca follow-ups pendentes para hoje (ABORDAGEM 3: Duas queries separadas)
- * Query 1: Buscar follow-ups pendentes de hoje
- * Query 2: Buscar dados dos leads correspondentes
- */
-/**
- * Busca follow-ups pendentes para hoje (ABORDAGEM 4: Drizzle ORM correto)
- * Usa leftJoin, funções nativas do Drizzle e comparação de data correta
- */
 export async function getFollowUpsDoDiaExpandido(
   corretorId: number,
   ordenacao?: "mais_antigos" | "mais_recentes" | "menos_tentativas" | "mais_tentativas",
   projetoId?: number,
   origem?: string
 ) {
-  const db = await getDb();
-  if (!db) {
-    console.log("[getFollowUpsDoDiaExpandido] Erro: banco de dados não disponível");
-    return [];
-  }
+  const conn = await getConnection();
+  if (!conn) return [];
   
   try {
-    // Buscar data de hoje (timezone São Paulo)
+    // Buscar follow-ups pendentes com dataFollowUp de hoje (timezone São Paulo)
     const { inicioDoDiaHoje } = await import('./timezone');
     const hoje = inicioDoDiaHoje();
-    const amanha = new Date(hoje);
-    amanha.setDate(amanha.getDate() + 1);
+    const dataHoje = hoje.toISOString().split('T')[0]; // YYYY-MM-DD
     
-    console.log("[getFollowUpsDoDiaExpandido] Buscando follow-ups para corretorId:", corretorId);
-    console.log("[getFollowUpsDoDiaExpandido] Período: de", hoje.toISOString(), "até", amanha.toISOString());
+    console.log("[getFollowUpsDoDiaExpandido] corretorId:", corretorId, "dataHoje:", dataHoje);
     
-    // Construir condições de filtro
-    const conditions = [
-      eq(followUps.corretorId, corretorId),
-      eq(followUps.status, "pendente"),
-      gte(followUps.dataFollowUp, hoje),
-      lt(followUps.dataFollowUp, amanha)
-    ];
+    // Construir query SQL pura
+    let query = `
+      SELECT 
+        f.id, 
+        f.leadId, 
+        f.dataFollowUp, 
+        f.dataRegistro, 
+        f.resultado, 
+        f.status,
+        l.nome as leadNome, 
+        l.telefone as leadTelefone, 
+        l.email as leadEmail, 
+        l.status as leadStatus, 
+        l.projectId as leadProjectId, 
+        l.origem as leadOrigem,
+        l.createdAt as leadCriadoEm
+      FROM follow_ups f
+      INNER JOIN leads l ON f.leadId = l.id
+      WHERE f.corretorId = ? 
+        AND f.status = 'pendente' 
+        AND DATE(f.dataFollowUp) = ?
+    `;
     
-    // Filtro por projeto (aplicado no lead)
+    const params: any[] = [corretorId, dataHoje];
+    
+    // Filtro por projeto
     if (projetoId) {
-      conditions.push(eq(leads.projectId, projetoId));
+      query += ' AND l.projectId = ?';
+      params.push(projetoId);
     }
     
-    // Filtro por origem (aplicado no lead)
+    // Filtro por origem
     if (origem) {
-      conditions.push(eq(leads.origem, origem));
+      query += ' AND l.origem = ?';
+      params.push(origem);
     }
-    
-    // Query com leftJoin
-    let query = db.select({
-      id: followUps.id,
-      leadId: followUps.leadId,
-      dataFollowUp: followUps.dataFollowUp,
-      dataRegistro: followUps.dataRegistro,
-      resultado: followUps.resultado,
-      status: followUps.status,
-      leadNome: leads.nome,
-      leadTelefone: leads.telefone,
-      leadEmail: leads.email,
-      leadStatus: leads.status,
-      leadProjectId: leads.projectId,
-      leadOrigem: leads.origem,
-      leadCriadoEm: leads.createdAt,
-    })
-      .from(followUps)
-      .leftJoin(leads, eq(followUps.leadId, leads.id))
-      .where(and(...conditions));
     
     // Aplicar ordenação
     switch (ordenacao) {
       case "mais_recentes":
-        query = query.orderBy(desc(leads.createdAt));
+        query += ' ORDER BY l.createdAt DESC';
         break;
       case "mais_antigos":
       default:
-        query = query.orderBy(asc(leads.createdAt));
+        query += ' ORDER BY l.createdAt ASC';
         break;
     }
     
-    const resultado = await query;
-    
-    console.log("[getFollowUpsDoDiaExpandido] Resultado: encontrados", resultado.length, "follow-ups");
-    
-    return resultado;
-    
+    const [rows] = await conn.query(query, params);
+    console.log("[getFollowUpsDoDiaExpandido] Retornando", (rows as any[]).length, "follow-ups");
+    return rows as any[];
   } catch (error) {
     console.error('[getFollowUpsDoDiaExpandido] Erro:', error);
     return [];

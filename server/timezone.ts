@@ -1,58 +1,104 @@
 /**
  * Utilitários de timezone para garantir que todas as operações de data
- * usem o fuso horário de São Paulo (America/Sao_Paulo)
+ * usem o fuso horário de São Paulo (America/Sao_Paulo = UTC-3)
+ * 
+ * IMPORTANTE: O banco de dados armazena timestamps em UTC, mas todas as
+ * operações de comparação e cálculo devem ser feitas no timezone de SP.
  */
 
 const TIMEZONE = 'America/Sao_Paulo';
+const OFFSET_SP_HORAS = -3; // São Paulo é UTC-3
 
 /**
  * Retorna a data/hora atual no fuso de São Paulo
+ * Converte UTC do servidor para SP
  */
 export function agora(): Date {
-  return new Date(new Date().toLocaleString('en-US', { timeZone: TIMEZONE }));
+  const agoraUTC = new Date();
+  // Converter para SP: adicionar offset de -3 horas
+  const agoraSP = new Date(agoraUTC.getTime() + (OFFSET_SP_HORAS * 60 * 60 * 1000));
+  return agoraSP;
 }
 
 /**
  * Retorna o início do dia atual em São Paulo (00:00:00)
+ * CRÍTICO: Retorna timestamp UTC que representa 00:00:00 em SP
  */
 export function inicioDoDiaHoje(): Date {
-  const hoje = agora();
-  hoje.setHours(0, 0, 0, 0);
-  return hoje;
+  // Pegar data/hora atual em SP
+  const agoraSP = agora();
+  
+  // Criar data para 00:00:00 de hoje em SP
+  const ano = agoraSP.getFullYear();
+  const mes = agoraSP.getMonth();
+  const dia = agoraSP.getDate();
+  
+  // Criar Date em UTC que representa 00:00:00 SP
+  // 00:00:00 SP = 03:00:00 UTC (SP está 3h atrás)
+  const inicioDia = new Date(Date.UTC(ano, mes, dia, 3, 0, 0, 0));
+  
+  return inicioDia;
 }
 
 /**
  * Retorna o fim do dia atual em São Paulo (23:59:59.999)
+ * CRÍTICO: Retorna timestamp UTC que representa 23:59:59.999 em SP
  */
 export function fimDoDiaHoje(): Date {
-  const hoje = agora();
-  hoje.setHours(23, 59, 59, 999);
-  return hoje;
+  // Pegar data/hora atual em SP
+  const agoraSP = agora();
+  
+  // Criar data para 23:59:59.999 de hoje em SP
+  const ano = agoraSP.getFullYear();
+  const mes = agoraSP.getMonth();
+  const dia = agoraSP.getDate();
+  
+  // Criar Date em UTC que representa 23:59:59.999 SP
+  // 23:59:59 SP = 02:59:59 UTC do dia seguinte
+  const fimDia = new Date(Date.UTC(ano, mes, dia, 26, 59, 59, 999)); // 26h = 02h do dia seguinte
+  
+  return fimDia;
 }
 
 /**
  * Retorna o início de um dia específico em São Paulo (00:00:00)
  */
 export function inicioDoDia(data: Date): Date {
-  const dataSP = new Date(data.toLocaleString('en-US', { timeZone: TIMEZONE }));
-  dataSP.setHours(0, 0, 0, 0);
-  return dataSP;
+  // Converter data UTC para SP
+  const dataSP = new Date(data.getTime() + (OFFSET_SP_HORAS * 60 * 60 * 1000));
+  
+  const ano = dataSP.getFullYear();
+  const mes = dataSP.getMonth();
+  const dia = dataSP.getDate();
+  
+  // Criar Date em UTC que representa 00:00:00 SP
+  const inicioDia = new Date(Date.UTC(ano, mes, dia, 3, 0, 0, 0));
+  
+  return inicioDia;
 }
 
 /**
  * Retorna o fim de um dia específico em São Paulo (23:59:59.999)
  */
 export function fimDoDia(data: Date): Date {
-  const dataSP = new Date(data.toLocaleString('en-US', { timeZone: TIMEZONE }));
-  dataSP.setHours(23, 59, 59, 999);
-  return dataSP;
+  // Converter data UTC para SP
+  const dataSP = new Date(data.getTime() + (OFFSET_SP_HORAS * 60 * 60 * 1000));
+  
+  const ano = dataSP.getFullYear();
+  const mes = dataSP.getMonth();
+  const dia = dataSP.getDate();
+  
+  // Criar Date em UTC que representa 23:59:59.999 SP
+  const fimDia = new Date(Date.UTC(ano, mes, dia, 26, 59, 59, 999));
+  
+  return fimDia;
 }
 
 /**
  * Converte uma data UTC para o fuso de São Paulo
  */
 export function paraFusoSaoPaulo(dataUTC: Date): Date {
-  return new Date(dataUTC.toLocaleString('en-US', { timeZone: TIMEZONE }));
+  return new Date(dataUTC.getTime() + (OFFSET_SP_HORAS * 60 * 60 * 1000));
 }
 
 /**
@@ -68,9 +114,9 @@ export function parsearDataISO(dataISO: string): Date {
   // Separar ano, mês e dia
   const [ano, mes, dia] = dataISO.split('-').map(Number);
   
-  // Criar data localmente (não UTC)
-  // Usar Date constructor com componentes individuais cria data no timezone local
-  const data = new Date(ano, mes - 1, dia, 0, 0, 0, 0);
+  // Criar data em UTC que representa 00:00:00 SP
+  // 00:00:00 SP = 03:00:00 UTC
+  const data = new Date(Date.UTC(ano, mes - 1, dia, 3, 0, 0, 0));
   
   return data;
 }
@@ -80,7 +126,10 @@ export function parsearDataISO(dataISO: string): Date {
  */
 export function formatarDataBR(data: Date): string {
   const dataSP = paraFusoSaoPaulo(data);
-  return dataSP.toLocaleDateString('pt-BR');
+  const dia = String(dataSP.getDate()).padStart(2, '0');
+  const mes = String(dataSP.getMonth() + 1).padStart(2, '0');
+  const ano = dataSP.getFullYear();
+  return `${dia}/${mes}/${ano}`;
 }
 
 /**
@@ -88,13 +137,12 @@ export function formatarDataBR(data: Date): string {
  */
 export function formatarDataHoraBR(data: Date): string {
   const dataSP = paraFusoSaoPaulo(data);
-  return dataSP.toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const dia = String(dataSP.getDate()).padStart(2, '0');
+  const mes = String(dataSP.getMonth() + 1).padStart(2, '0');
+  const ano = dataSP.getFullYear();
+  const hora = String(dataSP.getHours()).padStart(2, '0');
+  const minuto = String(dataSP.getMinutes()).padStart(2, '0');
+  return `${dia}/${mes}/${ano} ${hora}:${minuto}`;
 }
 
 /**
