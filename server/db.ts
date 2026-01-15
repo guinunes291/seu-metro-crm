@@ -3587,7 +3587,8 @@ export async function getFollowUpsDoDiaExpandido(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, hoje),
-      lt(followUps.dataFollowUp, amanha)
+      lt(followUps.dataFollowUp, amanha),
+      eq(leads.status, "em_atendimento") // APENAS leads Em Atendimento aparecem em Tarefas do Dia
     ];
     
     // Filtro por projeto (aplicado no lead)

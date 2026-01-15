@@ -241,6 +241,7 @@ export const leads = mysqlTable("leads", {
   proximoFollowup: timestamp("proximoFollowup"),
   diasFollowupConsecutivos: int("diasFollowupConsecutivos").default(0).notNull(),
   ultimoContato: timestamp("ultimoContato"),
+  ultimaInteracao: timestamp("ultimaInteracao"), // Rastreia qualquer interação (registro, mudança status, agendamento, etc)
   
   // Observações
   observacoes: text("observacoes"),

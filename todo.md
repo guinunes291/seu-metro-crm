@@ -3039,3 +3039,18 @@
 - [x] Usar funções nativas do Drizzle (gte, lte, between)
 - [ ] Testar query isoladamente
 - [ ] Testar com usuário
+
+## Novo Fluxo de Follow-up (IMPLEMENTAÇÃO COMPLETA)
+- [x] Corrigir filtro de Tarefas do Dia para mostrar APENAS leads com status "Em Atendimento"
+- [x] Remover leads "Aguardando Atendimento" da aba Tarefas do Dia
+- [x] Adicionar campo ultimaInteracao na tabela leads
+- [x] Migrar banco de dados com novo campo
+- [ ] Criar follow-up automaticamente ao mudar para "Em Atendimento"
+- [ ] Ajustar registro de follow-up: Respondeu → novo follow-up próximo dia
+- [ ] Ajustar registro de follow-up: Não Respondeu → volta para base sem follow-up
+- [ ] Criar job diário de transferência após 2 dias sem interação
+- [ ] Leads captacao_corretor são exceção (não transferem)
+- [ ] Ao passar por todos corretores → Perdido + Lixeira
+- [ ] Adicionar badge visual "Sem interação há X dias"
+- [ ] Adicionar log de transferências automáticas
+- [ ] Testar fluxo completo
