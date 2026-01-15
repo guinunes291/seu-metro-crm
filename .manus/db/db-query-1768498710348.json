@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Remover leads com telefones sequenciais\nDELETE FROM leads\nWHERE \n  telefone LIKE '%00000%'\n  OR telefone LIKE '%11111%'\n  OR telefone LIKE '%22222%'\n  OR telefone LIKE '%33333%'\n  OR telefone LIKE '%44444%'\n  OR telefone LIKE '%55555%'\n  OR telefone LIKE '%66666%'\n  OR telefone LIKE '%77777%'\n  OR telefone LIKE '%88888%'\n  OR telefone LIKE '%99999%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Remover leads com telefones sequenciais\nDELETE FROM leads\nWHERE \n  telefone LIKE '%00000%'\n  OR telefone LIKE '%11111%'\n  OR telefone LIKE '%22222%'\n  OR telefone LIKE '%33333%'\n  OR telefone LIKE '%44444%'\n  OR telefone LIKE '%55555%'\n  OR telefone LIKE '%66666%'\n  OR telefone LIKE '%77777%'\n  OR telefone LIKE '%88888%'\n  OR telefone LIKE '%99999%';\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 103
+}
