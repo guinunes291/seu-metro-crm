@@ -21,6 +21,7 @@ function LeadsParadosSection() {
   // Mutation para redistribuição
   const redistribuir = trpc.system.redistribuirLeadsParadosDistribuicao.useMutation({
     onSuccess: (data) => {
+      console.log("Redistribuição sucesso:", data);
       toast.success("✅ Redistribuição Concluída", {
         description: data.mensagem,
       });
@@ -28,6 +29,7 @@ function LeadsParadosSection() {
       setEstatisticas(null);
     },
     onError: (error) => {
+      console.error("Redistribuição erro:", error);
       toast.error("❌ Erro na Redistribuição", {
         description: error.message,
       });
@@ -56,8 +58,12 @@ function LeadsParadosSection() {
   };
 
   const handleRedistribuir = () => {
+    console.log("handleRedistribuir chamado", { estatisticas, levantamentoRealizado });
     if (window.confirm(`Confirma a redistribuição de ${estatisticas?.total || 0} leads parados?`)) {
+      console.log("Confirmação aceita, chamando redistribuir.mutate()");
       redistribuir.mutate();
+    } else {
+      console.log("Confirmação cancelada");
     }
   };
 

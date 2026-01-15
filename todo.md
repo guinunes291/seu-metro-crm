@@ -3187,3 +3187,8 @@
 - [x] Executar limpeza de projetos de teste
 - [x] Verificar integridade dos dados reais após limpeza
 
+
+## Bug: Redistribuição de Leads Parados
+
+- [x] Corrigir lógica de redistribuição de leads parados (agora aceita qualquer corretor)
+- [ ] Corrigir toast de notificação que não aparece após redistribuição

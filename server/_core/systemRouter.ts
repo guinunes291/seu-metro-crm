@@ -383,17 +383,22 @@ export const systemRouter = router({
         };
       }
       
-      // 2. Buscar todos os corretores ativos
+      // 2. Buscar todos os corretores (sem filtro de elegibilidade para leads parados)
       const todosCorretores = await db
         .select({ id: users.id, name: users.name })
         .from(users)
         .where(eq(users.role, "corretor"));
       
       if (todosCorretores.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Nenhum corretor disponível para redistribuição",
-        });
+        return {
+          sucesso: false,
+          totalLeads: leadsElegiveis.length,
+          corretoresAfetados: 0,
+          redistribuidos: 0,
+          perdidos: 0,
+          erros: 0,
+          mensagem: `Nenhum corretor disponível para redistribuir ${leadsElegiveis.length} leads.`,
+        };
       }
       
       // 3. Calcular cota por corretor (distribuição equilibrada)
@@ -467,8 +472,13 @@ export const systemRouter = router({
           // Decrementar cota
           quotas[corretorSelecionado.id]--;
           redistribuidos++;
-        } catch (error) {
-          console.error(`Erro ao redistribuir lead ${lead.id}:`, error);
+        } catch (error: any) {
+          console.error(`[REDISTRIBUIÇÃO] Erro ao redistribuir lead ${lead.id}:`, {
+            leadId: lead.id,
+            corretorAtual: lead.corretorId,
+            erro: error.message,
+            stack: error.stack,
+          });
           erros++;
         }
       }
