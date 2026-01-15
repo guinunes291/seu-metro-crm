@@ -7904,7 +7904,33 @@ export async function getLogTransferencias(filters: LogTransferenciasFilters) {
     .limit(limit)
     .offset(offset);
 
-  return results;
+  // Buscar nomes dos corretores
+  const corretorIds = new Set<number>();
+  for (const log of results) {
+    if (log.corretorOrigemId) corretorIds.add(log.corretorOrigemId);
+    if (log.corretorDestinoId) corretorIds.add(log.corretorDestinoId);
+  }
+  
+  const corretoresMap = new Map<number, string>();
+  if (corretorIds.size > 0) {
+    const corretores = await db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(inArray(users.id, Array.from(corretorIds)));
+    
+    for (const corretor of corretores) {
+      corretoresMap.set(corretor.id, corretor.name || 'Sem nome');
+    }
+  }
+  
+  // Adicionar nomes aos resultados
+  const resultsWithNames = results.map(log => ({
+    ...log,
+    corretorOrigemNome: log.corretorOrigemId ? corretoresMap.get(log.corretorOrigemId) || null : null,
+    corretorDestinoNome: log.corretorDestinoId ? corretoresMap.get(log.corretorDestinoId) || null : null,
+  }));
+
+  return resultsWithNames;
 }
 
 export async function countLogTransferencias(filters: Omit<LogTransferenciasFilters, 'limit' | 'offset'>) {

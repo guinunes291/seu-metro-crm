@@ -46,8 +46,8 @@ export const systemRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const { db } = await import("../db");
-      const { leads, users } = await import("../../drizzle/schema");
-      const { eq, and, lt, sql, ne } = await import("drizzle-orm");
+      const { leads, users, historicoAtribuicoes } = await import("../../drizzle/schema");
+      const { eq, and, lt, sql, ne, notInArray, inArray } = await import("drizzle-orm");
       
       // 1. Buscar leads elegíveis para redistribuição
       const dataLimite = new Date();
@@ -69,63 +69,191 @@ export const systemRouter = router({
           )
         );
       
-      if (input.simular) {
-        // Modo simulação: apenas retornar estatísticas
-        const corretoresAfetados = new Set(leadsElegiveis.map(l => l.corretorId)).size;
+      if (leadsElegiveis.length === 0) {
         return {
           sucesso: true,
-          simulacao: true,
-          totalLeads: leadsElegiveis.length,
-          corretoresAfetados,
+          simulacao: input.simular,
+          totalLeads: 0,
+          corretoresAfetados: 0,
           redistribuidos: 0,
           erros: 0,
+          mensagem: "Nenhum lead elegível para redistribuição",
         };
       }
       
-      // 2. Buscar corretores disponíveis para receber leads
-      const corretoresDisponiveis = await db
+      // 2. Buscar corretores disponíveis (apenas corretores ativos)
+      const todosCorretores = await db
         .select({
           id: users.id,
           name: users.name,
         })
         .from(users)
-        .where(eq(users.role, "corretor"));
+        .where(
+          and(
+            eq(users.role, "corretor"),
+            eq(users.situacao, "ativo")
+          )
+        );
       
-      if (corretoresDisponiveis.length === 0) {
+      if (todosCorretores.length === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Nenhum corretor disponível para redistribuição",
         });
       }
       
-      // 3. Redistribuir leads usando algoritmo round-robin
+      // 3. Para cada lead, buscar histórico de atribuições
+      const leadIds = leadsElegiveis.map(l => l.id);
+      const historico = await db
+        .select({
+          leadId: historicoAtribuicoes.leadId,
+          corretorId: historicoAtribuicoes.corretorId,
+        })
+        .from(historicoAtribuicoes)
+        .where(inArray(historicoAtribuicoes.leadId, leadIds));
+      
+      // Criar mapa de leads -> corretores que já trabalharam
+      const leadParaCorretoresAntigos = new Map<number, Set<number>>();
+      for (const h of historico) {
+        if (!leadParaCorretoresAntigos.has(h.leadId)) {
+          leadParaCorretoresAntigos.set(h.leadId, new Set());
+        }
+        leadParaCorretoresAntigos.get(h.leadId)!.add(h.corretorId);
+      }
+      
+      // Adicionar corretor atual ao histórico
+      for (const lead of leadsElegiveis) {
+        if (!leadParaCorretoresAntigos.has(lead.id)) {
+          leadParaCorretoresAntigos.set(lead.id, new Set());
+        }
+        if (lead.corretorId) {
+          leadParaCorretoresAntigos.get(lead.id)!.add(lead.corretorId);
+        }
+      }
+      
+      if (input.simular) {
+        // Modo simulação: calcular distribuição sem executar
+        const corretoresAfetados = new Set(leadsElegiveis.map(l => l.corretorId)).size;
+        const leadsParaRedistribuir = leadsElegiveis.length;
+        const corretoresDisponiveis = todosCorretores.length;
+        const leadsPorCorretor = Math.floor(leadsParaRedistribuir / corretoresDisponiveis);
+        const leadsRestantes = leadsParaRedistribuir % corretoresDisponiveis;
+        
+        return {
+          sucesso: true,
+          simulacao: true,
+          totalLeads: leadsParaRedistribuir,
+          corretoresAfetados,
+          redistribuidos: 0,
+          erros: 0,
+          mensagem: `${leadsParaRedistribuir} leads seriam redistribuídos entre ${corretoresDisponiveis} corretores (~${leadsPorCorretor} leads por corretor, ${leadsRestantes} corretores receberão +1 lead)`,
+        };
+      }
+      
+      // 4. Distribuição equilibrada: calcular quantos leads cada corretor deve receber
+      const totalLeads = leadsElegiveis.length;
+      const totalCorretores = todosCorretores.length;
+      const leadsPorCorretor = Math.floor(totalLeads / totalCorretores);
+      const leadsRestantes = totalLeads % totalCorretores;
+      
+      // Criar fila de distribuição: cada corretor tem uma cota
+      const cotasPorCorretor = new Map<number, number>();
+      for (let i = 0; i < todosCorretores.length; i++) {
+        const corretor = todosCorretores[i];
+        // Primeiros N corretores recebem +1 lead (onde N = leadsRestantes)
+        const cota = leadsPorCorretor + (i < leadsRestantes ? 1 : 0);
+        cotasPorCorretor.set(corretor.id, cota);
+      }
+      
+      // 5. Redistribuir leads respeitando cotas e histórico
       let redistribuidos = 0;
+      let perdidos = 0;
       let erros = 0;
-      let corretorIndex = 0;
+      const redistribuicoes: Array<{ leadId: number; corretorId: number }> = [];
+      const leadsPerdidos: Array<number> = [];
       
       for (const lead of leadsElegiveis) {
         try {
-          const novoCorretor = corretoresDisponiveis[corretorIndex];
+          const corretoresJaTrabalhou = leadParaCorretoresAntigos.get(lead.id) || new Set();
           
-          // Evitar redistribuir para o mesmo corretor
-          if (novoCorretor.id === lead.corretorId) {
-            corretorIndex = (corretorIndex + 1) % corretoresDisponiveis.length;
+          // Encontrar corretor com cota disponível que não trabalhou este lead
+          let corretorEscolhido: typeof todosCorretores[0] | null = null;
+          
+          for (const corretor of todosCorretores) {
+            const cotaAtual = cotasPorCorretor.get(corretor.id) || 0;
+            
+            // Verificar se corretor tem cota e não trabalhou este lead
+            if (cotaAtual > 0 && !corretoresJaTrabalhou.has(corretor.id)) {
+              corretorEscolhido = corretor;
+              break;
+            }
+          }
+          
+          // Se não encontrou corretor (todos já trabalharam), mover para Perdido + Lixeira
+          if (!corretorEscolhido) {
+            console.log(`Lead ${lead.id} será movido para Perdido (todos os corretores já trabalharam)`);
+            leadsPerdidos.push(lead.id);
+            perdidos++;
             continue;
           }
           
+          // Registrar redistribuição
+          redistribuicoes.push({
+            leadId: lead.id,
+            corretorId: corretorEscolhido.id,
+          });
+          
+          // Decrementar cota
+          cotasPorCorretor.set(
+            corretorEscolhido.id,
+            (cotasPorCorretor.get(corretorEscolhido.id) || 0) - 1
+          );
+          
+          redistribuidos++;
+        } catch (error) {
+          console.error(`Erro ao processar lead ${lead.id}:`, error);
+          erros++;
+        }
+      }
+      
+      // 6. Executar redistribuições no banco
+      for (const { leadId, corretorId } of redistribuicoes) {
+        try {
           // Atualizar lead
           await db
             .update(leads)
             .set({
-              corretorId: novoCorretor.id,
+              corretorId,
               dataDistribuicao: new Date(),
             })
-            .where(eq(leads.id, lead.id));
+            .where(eq(leads.id, leadId));
           
-          redistribuidos++;
-          corretorIndex = (corretorIndex + 1) % corretoresDisponiveis.length;
+          // Registrar no histórico
+          await db.insert(historicoAtribuicoes).values({
+            leadId,
+            corretorId,
+            tipoAtribuicao: "redistribuicao_manual",
+            dataAtribuicao: new Date(),
+            observacoes: `Redistribuído por inatividade (${input.diasParado}+ dias sem interação)`,
+          });
         } catch (error) {
-          console.error(`Erro ao redistribuir lead ${lead.id}:`, error);
+          console.error(`Erro ao redistribuir lead ${leadId}:`, error);
+          erros++;
+        }
+      }
+      
+      // 7. Mover leads perdidos para Perdido + Lixeira
+      for (const leadId of leadsPerdidos) {
+        try {
+          await db
+            .update(leads)
+            .set({
+              status: "perdido",
+              lixeira: true,
+            })
+            .where(eq(leads.id, leadId));
+        } catch (error) {
+          console.error(`Erro ao mover lead ${leadId} para perdido:`, error);
           erros++;
         }
       }
@@ -136,7 +264,9 @@ export const systemRouter = router({
         totalLeads: leadsElegiveis.length,
         corretoresAfetados: new Set(leadsElegiveis.map(l => l.corretorId)).size,
         redistribuidos,
+        perdidos,
         erros,
+        mensagem: `${redistribuidos} leads redistribuídos equilibradamente entre ${todosCorretores.length} corretores${perdidos > 0 ? `, ${perdidos} leads movidos para Perdido (todos os corretores já trabalharam)` : ''}`,
       };
     }),
 });

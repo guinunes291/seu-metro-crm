@@ -1618,3 +1618,41 @@ export const leadEstoque = mysqlTable("lead_estoque", {
 
 export type LeadEstoque = typeof leadEstoque.$inferSelect;
 export type InsertLeadEstoque = typeof leadEstoque.$inferInsert;
+
+// ============================================================================
+// HISTÓRICO DE ATRIBUIÇÕES DE LEADS
+// ============================================================================
+
+/**
+ * Tabela para registrar todos os corretores que já trabalharam cada lead.
+ * Usado para evitar que um lead retorne para um corretor que já o trabalhou.
+ * Essencial para redistribuição equilibrada e justa.
+ */
+export const historicoAtribuicoes = mysqlTable("historico_atribuicoes", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead e corretor
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Data da atribuição
+  dataAtribuicao: timestamp("dataAtribuicao").defaultNow().notNull(),
+  
+  // Tipo de atribuição
+  tipoAtribuicao: mysqlEnum("tipoAtribuicao", [
+    "distribuicao_inicial",
+    "redistribuicao_automatica",
+    "redistribuicao_manual",
+    "transferencia_inatividade"
+  ]).notNull(),
+  
+  // Metadata
+  observacoes: text("observacoes"),
+}, (table) => ({
+  leadCorretorIdx: index("historico_atribuicoes_lead_corretor_idx").on(table.leadId, table.corretorId),
+  leadIdx: index("historico_atribuicoes_lead_idx").on(table.leadId),
+  corretorIdx: index("historico_atribuicoes_corretor_idx").on(table.corretorId),
+}));
+
+export type HistoricoAtribuicao = typeof historicoAtribuicoes.$inferSelect;
+export type InsertHistoricoAtribuicao = typeof historicoAtribuicoes.$inferInsert;

@@ -3142,3 +3142,20 @@
 - [x] Registrar redistribuições no log
 - [x] Testar redistribuição
 - [x] Salvar checkpoint
+
+## Ajuste da Lógica de Redistribuição de Leads
+- [x] Criar tabela `historico_atribuicoes` para registrar todos os corretores que já trabalharam cada lead
+- [ ] Atualizar lógica de redistribuição para distribuição equilibrada (mesma quantidade por corretor)
+- [ ] Implementar verificação de histórico antes de redistribuir (evitar retorno ao mesmo corretor)
+- [ ] Verificar limites diários de recebimento de leads por corretor
+- [ ] Garantir que sobrecarga só ocorra via sistema de reabastecimento (60%+ trabalhados)
+- [ ] Atualizar procedure `redistribuirLeadsParados` com nova lógica
+- [ ] Testar redistribuição com cenário real (123 leads / 15 corretores = ~8 leads por corretor)
+- [ ] Salvar checkpoint
+
+## Correção da Exibição do Corretor Destino no Log de Transferências
+- [x] Identificar query que busca logs de transferência
+- [x] Adicionar JOIN para buscar nome do corretor destino
+- [x] Corrigir fallback: leads sem corretores disponíveis devem ir para Perdido + Lixeira
+- [x] Testar exibição na interface
+- [x] Salvar checkpoint
