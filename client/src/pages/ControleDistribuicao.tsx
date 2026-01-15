@@ -7,6 +7,155 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, UserCheck, UserX, CheckCircle2, XCircle, Play, History, Clock, Package, AlertTriangle } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "sonner";
+
+function LeadsParadosSection() {
+  const [levantamentoRealizado, setLevantamentoRealizado] = useState(false);
+  const [estatisticas, setEstatisticas] = useState<any>(null);
+
+  // Query para levantamento
+  const levantamento = trpc.system.levantarLeadsParadosDistribuicao.useQuery(undefined, {
+    enabled: false,
+  });
+
+  // Mutation para redistribuição
+  const redistribuir = trpc.system.redistribuirLeadsParadosDistribuicao.useMutation({
+    onSuccess: (data) => {
+      toast.success("✅ Redistribuição Concluída", {
+        description: data.mensagem,
+      });
+      setLevantamentoRealizado(false);
+      setEstatisticas(null);
+    },
+    onError: (error) => {
+      toast.error("❌ Erro na Redistribuição", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleLevantamento = async () => {
+    try {
+      const resultado = await levantamento.refetch();
+      if (resultado.data) {
+        setEstatisticas(resultado.data);
+        setLevantamentoRealizado(true);
+        toast.success("📊 Levantamento Concluído", {
+          description: `${resultado.data.total} leads encontrados sem interação nos últimos 2 dias`,
+        });
+      } else if (resultado.error) {
+        toast.error("❌ Erro no Levantamento", {
+          description: resultado.error.message,
+        });
+      }
+    } catch (error: any) {
+      toast.error("❌ Erro no Levantamento", {
+        description: error.message || "Erro desconhecido",
+      });
+    }
+  };
+
+  const handleRedistribuir = () => {
+    if (window.confirm(`Confirma a redistribuição de ${estatisticas?.total || 0} leads parados?`)) {
+      redistribuir.mutate();
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Botões de Ação */}
+      <div className="flex gap-3">
+        <Button
+          onClick={handleLevantamento}
+          disabled={levantamento.isFetching}
+          variant="outline"
+          className="flex-1"
+        >
+          {levantamento.isFetching ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Analisando...
+            </>
+          ) : (
+            <>
+              <Package className="mr-2 h-4 w-4" />
+              1. Fazer Levantamento
+            </>
+          )}
+        </Button>
+        <Button
+          onClick={handleRedistribuir}
+          disabled={!levantamentoRealizado || redistribuir.isPending || !estatisticas || estatisticas.total === 0}
+          className="flex-1"
+        >
+          {redistribuir.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Redistribuindo...
+            </>
+          ) : (
+            <>
+              <Play className="mr-2 h-4 w-4" />
+              2. Redistribuir Leads
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Estatísticas do Levantamento */}
+      {levantamentoRealizado && estatisticas && (
+        <Alert className="bg-white border-orange-200">
+          <AlertDescription>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-lg">Total de Leads Parados:</span>
+                <Badge variant="destructive" className="text-lg px-3 py-1">
+                  {estatisticas.total}
+                </Badge>
+              </div>
+
+              {/* Por Status */}
+              {estatisticas.porStatus && Object.keys(estatisticas.porStatus).length > 0 && (
+                <div>
+                  <p className="font-medium mb-2 text-sm">Por Status:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(estatisticas.porStatus)
+                      .sort((a: any, b: any) => b[1] - a[1])
+                      .slice(0, 6)
+                      .map(([status, count]: any) => (
+                        <div key={status} className="flex justify-between text-sm bg-orange-50 px-2 py-1 rounded">
+                          <span className="capitalize">{status.replace(/_/g, ' ')}</span>
+                          <span className="font-medium">{count}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Por Corretor */}
+              {estatisticas.porCorretor && Object.keys(estatisticas.porCorretor).length > 0 && (
+                <div>
+                  <p className="font-medium mb-2 text-sm">Por Corretor (Top 5):</p>
+                  <div className="space-y-1">
+                    {Object.entries(estatisticas.porCorretor)
+                      .sort((a: any, b: any) => b[1] - a[1])
+                      .slice(0, 5)
+                      .map(([corretor, count]: any) => (
+                        <div key={corretor} className="flex justify-between text-sm bg-orange-50 px-2 py-1 rounded">
+                          <span>{corretor}</span>
+                          <span className="font-medium">{count}</span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
 
 export default function ControleDistribuicao() {
   const [resultado, setResultado] = useState<{
@@ -414,6 +563,22 @@ export default function ControleDistribuicao() {
               Nenhuma distribuição realizada ainda
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Seção de Redistribuição de Leads Parados */}
+      <Card className="border-orange-200 bg-orange-50/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-orange-900">
+            <AlertTriangle className="h-5 w-5" />
+            Redistribuição de Leads Parados
+          </CardTitle>
+          <CardDescription>
+            Identifique e redistribua leads sem interação nos últimos 2 dias
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <LeadsParadosSection />
         </CardContent>
       </Card>
 

@@ -45,7 +45,9 @@ export const systemRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const { db } = await import("../db");
+      const { getDb } = await import("../db");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
       const { leads, users, historicoAtribuicoes } = await import("../../drizzle/schema");
       const { eq, and, lt, sql, ne, notInArray, inArray } = await import("drizzle-orm");
       
@@ -267,6 +269,236 @@ export const systemRouter = router({
         perdidos,
         erros,
         mensagem: `${redistribuidos} leads redistribuídos equilibradamente entre ${todosCorretores.length} corretores${perdidos > 0 ? `, ${perdidos} leads movidos para Perdido (todos os corretores já trabalharam)` : ''}`,
+      };
+    }),
+
+  // Levantamento de leads parados para página de Distribuição
+  levantarLeadsParadosDistribuicao: gestorProcedure
+    .query(async () => {
+      const { getDb } = await import("../db");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const { leads, users } = await import("../../drizzle/schema");
+      const { sql, lt, and, eq, ne, isNull, or } = await import("drizzle-orm");
+      
+      // Data limite: 2 dias atrás
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() - 2);
+      
+      // Buscar leads sem interação nos últimos 2 dias
+      const leadsParados = await db
+        .select({
+          id: leads.id,
+          nome: leads.nome,
+          telefone: leads.telefone,
+          email: leads.email,
+          status: leads.status,
+          origem: leads.origem,
+          corretorId: leads.corretorId,
+          corretorNome: users.name,
+          ultimaInteracao: leads.ultimaInteracao,
+          ultimoContato: leads.ultimoContato,
+          createdAt: leads.createdAt,
+        })
+        .from(leads)
+        .leftJoin(users, eq(leads.corretorId, users.id))
+        .where(
+          and(
+            eq(leads.naLixeira, false),
+            ne(leads.origem, "captacao_corretor"),
+            or(
+              isNull(leads.ultimaInteracao),
+              lt(leads.ultimaInteracao, dataLimite)
+            ),
+            or(
+              isNull(leads.ultimoContato),
+              lt(leads.ultimoContato, dataLimite)
+            )
+          )
+        );
+      
+      // Agrupar por status
+      const porStatus: Record<string, number> = {};
+      const porCorretor: Record<string, number> = {};
+      const porOrigem: Record<string, number> = {};
+      
+      for (const lead of leadsParados) {
+        porStatus[lead.status] = (porStatus[lead.status] || 0) + 1;
+        const corretor = lead.corretorNome || "Sem corretor";
+        porCorretor[corretor] = (porCorretor[corretor] || 0) + 1;
+        const origem = lead.origem || "Sem origem";
+        porOrigem[origem] = (porOrigem[origem] || 0) + 1;
+      }
+      
+      return {
+        total: leadsParados.length,
+        porStatus,
+        porCorretor,
+        porOrigem,
+        leads: leadsParados.slice(0, 50), // Retornar apenas os primeiros 50 para preview
+      };
+    }),
+
+  // Redistribuir leads parados da página de Distribuição
+  redistribuirLeadsParadosDistribuicao: gestorProcedure
+    .mutation(async () => {
+      const { getDb } = await import("../db");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+      const { leads, users, historicoAtribuicoes, logTransferencias } = await import("../../drizzle/schema");
+      const { sql, lt, and, eq, ne, isNull, or, notInArray } = await import("drizzle-orm");
+      
+      // 1. Buscar leads elegíveis
+      const dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() - 2);
+      
+      const leadsElegiveis = await db
+        .select({
+          id: leads.id,
+          corretorId: leads.corretorId,
+        })
+        .from(leads)
+        .where(
+          and(
+            eq(leads.naLixeira, false),
+            ne(leads.origem, "captacao_corretor"),
+            or(
+              isNull(leads.ultimaInteracao),
+              lt(leads.ultimaInteracao, dataLimite)
+            ),
+            or(
+              isNull(leads.ultimoContato),
+              lt(leads.ultimoContato, dataLimite)
+            )
+          )
+        );
+      
+      if (leadsElegiveis.length === 0) {
+        return {
+          sucesso: true,
+          totalLeads: 0,
+          redistribuidos: 0,
+          perdidos: 0,
+          mensagem: "Nenhum lead elegível para redistribuição",
+        };
+      }
+      
+      // 2. Buscar todos os corretores ativos
+      const todosCorretores = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(eq(users.role, "corretor"));
+      
+      if (todosCorretores.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Nenhum corretor disponível para redistribuição",
+        });
+      }
+      
+      // 3. Calcular cota por corretor (distribuição equilibrada)
+      const quotaPorCorretor = Math.ceil(leadsElegiveis.length / todosCorretores.length);
+      const quotas: Record<number, number> = {};
+      todosCorretores.forEach(c => {
+        quotas[c.id] = quotaPorCorretor;
+      });
+      
+      let redistribuidos = 0;
+      let perdidos = 0;
+      let erros = 0;
+      const leadsPerdidos: number[] = [];
+      
+      // 4. Redistribuir cada lead
+      for (const lead of leadsElegiveis) {
+        try {
+          // Buscar histórico de atribuições deste lead
+          const historico = await db
+            .select({ corretorId: historicoAtribuicoes.corretorId })
+            .from(historicoAtribuicoes)
+            .where(eq(historicoAtribuicoes.leadId, lead.id));
+          
+          const corretoresJaTrabalharam = historico.map(h => h.corretorId);
+          
+          // Filtrar corretores que ainda não trabalharam este lead e têm cota
+          const corretoresDisponiveis = todosCorretores.filter(
+            c => !corretoresJaTrabalharam.includes(c.id) && quotas[c.id] > 0
+          );
+          
+          if (corretoresDisponiveis.length === 0) {
+            // Nenhum corretor disponível - mover para perdido
+            leadsPerdidos.push(lead.id);
+            perdidos++;
+            continue;
+          }
+          
+          // Selecionar corretor com maior cota disponível
+          const corretorSelecionado = corretoresDisponiveis.reduce((prev, curr) =>
+            quotas[curr.id] > quotas[prev.id] ? curr : prev
+          );
+          
+          // Atualizar lead
+          await db
+            .update(leads)
+            .set({
+              corretorId: corretorSelecionado.id,
+              dataDistribuicao: new Date(),
+            })
+            .where(eq(leads.id, lead.id));
+          
+          // Registrar no histórico
+          await db.insert(historicoAtribuicoes).values({
+            leadId: lead.id,
+            corretorId: corretorSelecionado.id,
+            tipoAtribuicao: "redistribuicao_manual",
+            dataAtribuicao: new Date(),
+            observacoes: "Redistribuído por inatividade (2+ dias sem interação) - Página de Distribuição",
+          });
+          
+          // Registrar no log de transferências
+          await db.insert(logTransferencias).values({
+            leadId: lead.id,
+            corretorOrigemId: lead.corretorId,
+            corretorDestinoId: corretorSelecionado.id,
+            motivo: "2 dias sem interação",
+            statusFinal: "transferido",
+            dataTransferencia: new Date(),
+          });
+          
+          // Decrementar cota
+          quotas[corretorSelecionado.id]--;
+          redistribuidos++;
+        } catch (error) {
+          console.error(`Erro ao redistribuir lead ${lead.id}:`, error);
+          erros++;
+        }
+      }
+      
+      // 5. Mover leads perdidos para Perdido + Lixeira
+      for (const leadId of leadsPerdidos) {
+        try {
+          await db
+            .update(leads)
+            .set({
+              status: "perdido",
+              naLixeira: true,
+              dataMovidoLixeira: new Date(),
+              motivoPerdido: "Todos os corretores já trabalharam este lead",
+            })
+            .where(eq(leads.id, leadId));
+        } catch (error) {
+          console.error(`Erro ao mover lead ${leadId} para perdido:`, error);
+          erros++;
+        }
+      }
+      
+      return {
+        sucesso: true,
+        totalLeads: leadsElegiveis.length,
+        corretoresAfetados: todosCorretores.length,
+        redistribuidos,
+        perdidos,
+        erros,
+        mensagem: `${redistribuidos} leads redistribuídos equilibradamente entre ${todosCorretores.length} corretores${perdidos > 0 ? `, ${perdidos} leads movidos para Perdido (todos os corretores já trabalharam)` : ''}${erros > 0 ? `, ${erros} erros` : ''}`,
       };
     }),
 });

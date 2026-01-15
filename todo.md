@@ -3159,3 +3159,16 @@
 - [x] Corrigir fallback: leads sem corretores disponíveis devem ir para Perdido + Lixeira
 - [x] Testar exibição na interface
 - [x] Salvar checkpoint
+
+## Levantamento de Leads Sem Interação
+- [x] Consultar banco de dados para identificar leads sem interação há 2+ dias
+- [x] Categorizar por status, corretor e origem
+- [x] Gerar relatório detalhado com estatísticas
+
+## Seção de Redistribuição de Leads Parados na Página de Distribuição
+- [ ] Criar procedure tRPC para levantamento de leads parados (sem interação 2+ dias, sem mudança de status, último contato 2+ dias)
+- [ ] Criar procedure tRPC para redistribuição equilibrada destes leads
+- [ ] Adicionar seção na página de Distribuição com os dois botões
+- [ ] Implementar feedback visual com estatísticas do levantamento
+- [ ] Testar levantamento e redistribuição
+- [ ] Salvar checkpoint
