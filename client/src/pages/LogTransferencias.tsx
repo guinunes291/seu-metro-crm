@@ -51,6 +51,35 @@ export default function LogTransferencias() {
     },
   });
 
+  const redistribuirLeadsMutation = trpc.system.redistribuirLeadsParados.useMutation({
+    onSuccess: (resultado) => {
+      if (resultado.simulacao) {
+        toast.info(
+          `Simulação: ${resultado.totalLeads} leads de ${resultado.corretoresAfetados} corretores seriam redistribuídos`
+        );
+      } else {
+        toast.success(
+          `Redistribuição concluída! ${resultado.redistribuidos} leads redistribuídos, ${resultado.erros} erros`
+        );
+        refetch();
+      }
+    },
+    onError: (error) => {
+      toast.error(`Erro ao redistribuir leads: ${error.message}`);
+    },
+  });
+
+  const handleRedistribuir = (simular: boolean = false) => {
+    if (!simular) {
+      if (!confirm(
+        "Tem certeza que deseja redistribuir todos os leads em 'aguardando_atendimento' há mais de 2 dias? Esta ação não pode ser desfeita."
+      )) {
+        return;
+      }
+    }
+    redistribuirLeadsMutation.mutate({ diasParado: 2, simular });
+  };
+
   const handleLimparFiltros = () => {
     setDataInicio("");
     setDataFim("");
@@ -177,15 +206,35 @@ export default function LogTransferencias() {
               Limpar Filtros
             </Button>
             {(user?.role === "admin" || user?.role === "gestor") && (
-              <Button 
-                onClick={() => executarTesteMutation.mutate()} 
-                variant="default" 
-                size="sm"
-                disabled={executarTesteMutation.isPending}
-              >
-                <Play className="w-4 h-4 mr-2" />
-                {executarTesteMutation.isPending ? "Executando..." : "Executar Teste"}
-              </Button>
+              <>
+                <Button 
+                  onClick={() => executarTesteMutation.mutate()} 
+                  variant="default" 
+                  size="sm"
+                  disabled={executarTesteMutation.isPending}
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  {executarTesteMutation.isPending ? "Executando..." : "Executar Teste"}
+                </Button>
+                <Button 
+                  onClick={() => handleRedistribuir(true)} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={redistribuirLeadsMutation.isPending}
+                >
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  {redistribuirLeadsMutation.isPending ? "Simulando..." : "Simular Redistribuição"}
+                </Button>
+                <Button 
+                  onClick={() => handleRedistribuir(false)} 
+                  variant="destructive" 
+                  size="sm"
+                  disabled={redistribuirLeadsMutation.isPending}
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  {redistribuirLeadsMutation.isPending ? "Redistribuindo..." : "Redistribuir Leads Parados"}
+                </Button>
+              </>
             )}
           </div>
         </CardContent>

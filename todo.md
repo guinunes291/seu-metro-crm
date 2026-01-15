@@ -3133,3 +3133,12 @@
 - [x] Limpar projetos de teste (nenhum encontrado)
 - [x] Validar integridade dos dados restantes
 - [x] Salvar checkpoint pós-limpeza
+
+## Sistema de Redistribuição de Leads Parados
+- [x] Identificar leads em "aguardando_atendimento" há mais de 2 dias (123 leads elegíveis)
+- [x] Criar procedure tRPC para redistribuição automática
+- [x] Adicionar botão no dashboard do gestor (3 botões: Executar Teste, Simular, Redistribuir)
+- [x] Implementar lógica de seleção de corretor destino (round-robin)
+- [x] Registrar redistribuições no log
+- [x] Testar redistribuição
+- [x] Salvar checkpoint
