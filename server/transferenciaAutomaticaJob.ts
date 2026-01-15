@@ -1,5 +1,5 @@
-import { getDb } from "./db";
-import { leads, users } from "../drizzle/schema";
+import { db } from "./db";
+import { leads, users, logTransferencias } from "../drizzle/schema";
 import { eq, and, lt, ne, isNull, or } from "drizzle-orm";
 import { agora } from "./timezone";
 
@@ -63,23 +63,35 @@ export async function verificarTransferenciasAutomaticas() {
         if (corretoresDisponiveis.length > 0) {
           // Transferir para o próximo corretor (round-robin simples)
           const novoCorretor = corretoresDisponiveis[0];
-          
-          await db
+                  await db
             .update(leads)
             .set({
               corretorId: novoCorretor.id,
-              status: "aguardando_atendimento", // Volta para aguardando atendimento
-              ultimaInteracao: agora(),
+              dataDistribuicao: agora(),
+              timestampRecebimento: agora(),
+              status: "aguardando_atendimento",
               updatedAt: agora(),
             })
             .where(eq(leads.id, lead.id));
 
+          // Registrar log de transferência
+          await db.insert(logTransferencias).values({
+            leadId: lead.id,
+            leadNome: lead.nome,
+            corretorOrigemId: lead.corretorId || null,
+            corretorOrigemNome: null, // Buscar nome depois se necessário
+            corretorDestinoId: novoCorretor.id,
+            corretorDestinoNome: novoCorretor.nome,
+            motivo: "2_dias_sem_interacao",
+            statusFinal: "transferido",
+            dataTransferencia: agora(),
+          });
+
           console.log(
-            `[Transferência Automática] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretor.id} (${novoCorretor.name})`
+            `[Transferência Automática] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretor.id} (${novoCorretor.nome})`
           );
           
-          transferidos++;
-        } else {
+          transferidos++;   } else {
           // Não há mais corretores disponíveis → marcar como perdido e mover para lixeira
           await db
             .update(leads)
@@ -90,6 +102,19 @@ export async function verificarTransferenciasAutomaticas() {
               updatedAt: agora(),
             })
             .where(eq(leads.id, lead.id));
+
+          // Registrar log de transferência (perdido)
+          await db.insert(logTransferencias).values({
+            leadId: lead.id,
+            leadNome: lead.nome,
+            corretorOrigemId: lead.corretorId || null,
+            corretorOrigemNome: null,
+            corretorDestinoId: null,
+            corretorDestinoNome: null,
+            motivo: "sem_corretores_disponiveis",
+            statusFinal: "perdido",
+            dataTransferencia: agora(),
+          });
 
           console.log(
             `[Transferência Automática] Lead ${lead.id} (${lead.nome}) movido para PERDIDO (sem corretores disponíveis)`

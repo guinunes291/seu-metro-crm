@@ -32,7 +32,8 @@ import {
   conversasChatbot, InsertConversaChatbot, ConversaChatbot,
   faqChatbot, InsertFaqChatbot, FaqChatbot,
   propostas, InsertProposta, Proposta,
-  propostasVisitantes, InsertPropostaVisitante, PropostaVisitante
+  propostasVisitantes, InsertPropostaVisitante, PropostaVisitante,
+  logTransferencias
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -7827,4 +7828,127 @@ export async function getPrevisaoVendas() {
     taxaConversaoHistorica: Number((taxaConversaoHistorica * 100).toFixed(2)),
     pipeline: pipelineDetalhado
   };
+}
+
+// ============================================================================
+// LOGS DE TRANSFERÊNCIAS AUTOMÁTICAS
+// ============================================================================
+
+interface LogTransferenciasFilters {
+  dataInicio?: string;
+  dataFim?: string;
+  corretorOrigemId?: number;
+  corretorDestinoId?: number;
+  motivo?: "2_dias_sem_interacao" | "sem_corretores_disponiveis";
+  statusFinal?: "transferido" | "perdido";
+  limit?: number;
+  offset?: number;
+}
+
+export async function getLogTransferencias(filters: LogTransferenciasFilters) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const { 
+    dataInicio, 
+    dataFim, 
+    corretorOrigemId, 
+    corretorDestinoId, 
+    motivo, 
+    statusFinal,
+    limit = 100,
+    offset = 0 
+  } = filters;
+
+  let query = db.select().from(logTransferencias);
+
+  const conditions = [];
+  
+  if (dataInicio) {
+    conditions.push(gte(logTransferencias.dataTransferencia, new Date(dataInicio)));
+  }
+  
+  if (dataFim) {
+    const dataFimDate = new Date(dataFim);
+    dataFimDate.setHours(23, 59, 59, 999); // Incluir todo o dia final
+    conditions.push(lte(logTransferencias.dataTransferencia, dataFimDate));
+  }
+  
+  if (corretorOrigemId) {
+    conditions.push(eq(logTransferencias.corretorOrigemId, corretorOrigemId));
+  }
+  
+  if (corretorDestinoId) {
+    conditions.push(eq(logTransferencias.corretorDestinoId, corretorDestinoId));
+  }
+  
+  if (motivo) {
+    conditions.push(eq(logTransferencias.motivo, motivo));
+  }
+  
+  if (statusFinal) {
+    conditions.push(eq(logTransferencias.statusFinal, statusFinal));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+
+  const results = await query
+    .orderBy(desc(logTransferencias.dataTransferencia))
+    .limit(limit)
+    .offset(offset);
+
+  return results;
+}
+
+export async function countLogTransferencias(filters: Omit<LogTransferenciasFilters, 'limit' | 'offset'>) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const { 
+    dataInicio, 
+    dataFim, 
+    corretorOrigemId, 
+    corretorDestinoId, 
+    motivo, 
+    statusFinal 
+  } = filters;
+
+  const conditions = [];
+  
+  if (dataInicio) {
+    conditions.push(gte(logTransferencias.dataTransferencia, new Date(dataInicio)));
+  }
+  
+  if (dataFim) {
+    const dataFimDate = new Date(dataFim);
+    dataFimDate.setHours(23, 59, 59, 999);
+    conditions.push(lte(logTransferencias.dataTransferencia, dataFimDate));
+  }
+  
+  if (corretorOrigemId) {
+    conditions.push(eq(logTransferencias.corretorOrigemId, corretorOrigemId));
+  }
+  
+  if (corretorDestinoId) {
+    conditions.push(eq(logTransferencias.corretorDestinoId, corretorDestinoId));
+  }
+  
+  if (motivo) {
+    conditions.push(eq(logTransferencias.motivo, motivo));
+  }
+  
+  if (statusFinal) {
+    conditions.push(eq(logTransferencias.statusFinal, statusFinal));
+  }
+
+  let query = db.select({ count: sql<number>`count(*)` }).from(logTransferencias);
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions)) as any;
+  }
+
+  const result = await query;
+  return result[0]?.count || 0;
 }

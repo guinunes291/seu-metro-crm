@@ -740,6 +740,27 @@ export type Tarefa = typeof tarefas.$inferSelect;
 export type InsertTarefa = typeof tarefas.$inferInsert;
 
 // ============================================================================
+// TABELA DE LOG DE TRANSFERÊNCIAS AUTOMÁTICAS
+// ============================================================================
+
+export const logTransferencias = mysqlTable("log_transferencias", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  leadNome: varchar("leadNome", { length: 255 }).notNull(),
+  corretorOrigemId: int("corretorOrigemId"),
+  corretorOrigemNome: varchar("corretorOrigemNome", { length: 255 }),
+  corretorDestinoId: int("corretorDestinoId"),
+  corretorDestinoNome: varchar("corretorDestinoNome", { length: 255 }),
+  motivo: varchar("motivo", { length: 255 }).notNull(), // "2_dias_sem_interacao", "sem_corretores_disponiveis"
+  statusFinal: varchar("statusFinal", { length: 50 }).notNull(), // "transferido", "perdido"
+  dataTransferencia: timestamp("dataTransferencia").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type LogTransferencia = typeof logTransferencias.$inferSelect;
+export type InsertLogTransferencia = typeof logTransferencias.$inferInsert;
+
+// ============================================================================
 // TABELA DE FOLLOW-UPS AUTOMÁTICOS
 // ============================================================================
 

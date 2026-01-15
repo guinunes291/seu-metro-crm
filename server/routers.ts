@@ -4702,5 +4702,39 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }),
   }),
 
+  // ============================================================================
+  // LOGS DE TRANSFERÊNCIAS AUTOMÁTICAS
+  // ============================================================================
+  
+  logTransferencias: router({
+    list: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorOrigemId: z.number().optional(),
+        corretorDestinoId: z.number().optional(),
+        motivo: z.enum(["2_dias_sem_interacao", "sem_corretores_disponiveis"]).optional(),
+        statusFinal: z.enum(["transferido", "perdido"]).optional(),
+        limit: z.number().default(100),
+        offset: z.number().default(0),
+      }))
+      .query(async ({ input }) => {
+        return await db.getLogTransferencias(input);
+      }),
+    
+    count: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorOrigemId: z.number().optional(),
+        corretorDestinoId: z.number().optional(),
+        motivo: z.enum(["2_dias_sem_interacao", "sem_corretores_disponiveis"]).optional(),
+        statusFinal: z.enum(["transferido", "perdido"]).optional(),
+      }))
+      .query(async ({ input }) => {
+        return await db.countLogTransferencias(input);
+      }),
+  }),
+
 });
 export type AppRouter = typeof appRouter;

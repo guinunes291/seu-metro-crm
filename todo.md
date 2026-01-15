@@ -3064,3 +3064,11 @@
 - [x] Adicionar badge "⚠️ Sem interação há X dias" nos cards
 - [x] Badge amarelo para 1 dia, laranja para 2+ dias
 - [x] Mostrar apenas para leads "Em Atendimento"
+
+## Página de Log de Transferências Automáticas (Apenas Gestor)
+- [x] Criar tabela log_transferencias no banco de dados
+- [x] Atualizar job de transferência para registrar logs
+- [x] Criar endpoints tRPC para buscar logs com filtros
+- [ ] Criar página LogTransferencias.tsx com tabela e filtros
+- [ ] Adicionar rota no menu Sistema (apenas gestor)
+- [ ] Testar funcionalidade completa
