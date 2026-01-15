@@ -3101,3 +3101,8 @@
 ## Alteração do Texto do Badge de Inatividade
 - [x] Alterar texto do badge para "Lead será descartado hoje às 00:00 por falta de interação"
 - [x] Testar visualização do novo texto
+
+## Correção da Rota de Log de Transferências
+- [x] Adicionar rota alternativa /log-transferencias que aponta para a mesma página
+- [x] Verificar link no menu lateral
+- [x] Testar ambas as URLs
