@@ -2993,3 +2993,10 @@
 - [ ] Criar página Relatórios.tsx com todos os gráficos
 - [x] Implementar Criador de Relatórios Personalizados
 - [ ] Adicionar filtro de período em todos os relatórios
+
+## Correção de Erro de Renderização - Página de Relatórios
+
+- [ ] Diagnosticar erro de renderização no console do navegador
+- [ ] Corrigir problemas de import e dependências dos componentes
+- [ ] Testar renderização de todos os gráficos
+- [ ] Validar funcionamento de todas as abas
