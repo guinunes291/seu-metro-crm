@@ -3122,3 +3122,14 @@
 - [x] Revisar permissões de páginas e procedures existentes
 - [x] Atualizar interface para refletir novas permissões
 - [x] Testar acesso com cada role
+
+## Limpeza de Dados de Teste
+- [x] Identificar dados de teste vs dados operacionais reais
+- [x] Criar backup de segurança antes da limpeza
+- [x] Limpar leads de teste (22 removidos)
+- [x] Limpar corretores de teste (24 removidos)
+- [x] Limpar agendamentos de teste (1 removido)
+- [x] Limpar interações de teste (3 removidas)
+- [x] Limpar projetos de teste (nenhum encontrado)
+- [x] Validar integridade dos dados restantes
+- [x] Salvar checkpoint pós-limpeza
