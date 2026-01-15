@@ -155,7 +155,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 15mm;
+      padding: 10mm 12mm;
       margin: 0 auto;
       background: #fff;
       page-break-after: always;
@@ -249,14 +249,15 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     /* ===== SEÇÕES ===== */
     .secao {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+      page-break-inside: avoid;
     }
     
     .secao-header {
       display: flex;
       align-items: center;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
       border-bottom: 2px solid #f59e0b;
     }
     
@@ -283,6 +284,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
     
     .secao-conteudo {
       padding-left: 44px;
+      margin-bottom: 0;
     }
     
     /* ===== RESUMO EXECUTIVO ===== */
@@ -325,6 +327,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       object-fit: cover;
       border-radius: 8px;
       margin-bottom: 12px;
+      page-break-inside: avoid;
     }
     
     .apresentacao-descricao {
@@ -367,6 +370,7 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       overflow: hidden;
       aspect-ratio: 16/10;
       background: #f1f5f9;
+      page-break-inside: avoid;
     }
     
     .galeria-item img {
@@ -415,6 +419,8 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       max-height: 280px;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      page-break-inside: avoid;
+      display: block;
     }
     
     .planta-legenda {
@@ -429,6 +435,10 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       border-collapse: collapse;
       margin-bottom: 15px;
       font-size: 10pt;
+    }
+    
+    .tabela-pagamento {
+      page-break-inside: avoid;
     }
     
     .tabela-pagamento th {
@@ -747,15 +757,15 @@ export function gerarHTMLProposta(dados: DadosProposta): string {
       
       .page {
         margin: 0;
-        padding: 12mm;
+        padding: 8mm 10mm;
         width: 100%;
         min-height: auto;
         page-break-after: always;
       }
       
       .capa {
-        margin: -12mm;
-        padding: 20mm;
+        margin: -8mm -10mm;
+        padding: 15mm;
       }
     }
   </style>

@@ -3227,3 +3227,5 @@
 - [ ] Corrigir exibição de mensagem de resultado da redistribuição (mensagem cortada)
 
 - [x] Corrigir exibição da tabela de pagamento customizada pelo corretor no PDF e link compartilhado
+
+- [x] Otimizar layout do PDF: remover bordas brancas excessivas, reduzir espaçamentos e evitar cortes de imagens/textos
