@@ -451,8 +451,8 @@ export default function ControleDistribuicao() {
                   let motivo = "";
                   if (corretor.status !== "presente") {
                     motivo = "Ausente";
-                  } else if (corretor.totalLeads >= 30 && corretor.taxaTrabalho < 0.6) {
-                    motivo = "Taxa < 60%";
+                  } else if (corretor.totalLeads >= 30 && corretor.taxaTrabalho < 0.9) {
+                    motivo = "Taxa < 90%";
                   } else {
                     motivo = "Outro";
                   }
@@ -609,9 +609,9 @@ export default function ControleDistribuicao() {
           <div className="flex items-start gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
-              <p className="font-medium">Taxa de Trabalho de 60%</p>
+              <p className="font-medium">Taxa de Trabalho de 90%</p>
               <p className="text-sm text-muted-foreground">
-                Corretores com 30+ leads devem ter trabalhado pelo menos 60% deles
+                Corretores com 30+ leads devem ter trabalhado pelo menos 90% deles
               </p>
             </div>
           </div>

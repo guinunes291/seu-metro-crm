@@ -3172,3 +3172,9 @@
 - [ ] Implementar feedback visual com estatísticas do levantamento
 - [ ] Testar levantamento e redistribuição
 - [ ] Salvar checkpoint
+
+## Bug: Inconsistência de Taxa de Elegibilidade (Frontend vs Backend)
+- [x] Atualizar frontend para mostrar regra de 90% em vez de 60%
+- [x] Corrigir mensagem 'Outro' para 'Taxa < 90%' quando aplicável
+- [x] Atualizar texto das Regras de Elegibilidade na página de Controle de Distribuição
+
