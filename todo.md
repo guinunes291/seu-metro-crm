@@ -3000,3 +3000,11 @@
 - [ ] Corrigir problemas de import e dependências dos componentes
 - [ ] Testar renderização de todos os gráficos
 - [ ] Validar funcionamento de todas as abas
+
+## Reformulação da Página de Agendamentos
+- [ ] Adicionar campo status na tabela agendamentos (pendente, realizado, cancelado)
+- [ ] Criar endpoint para atualizar status do agendamento
+- [ ] Reformular cards de agendamento com detalhes expandíveis
+- [ ] Adicionar botões de ação para mudar status (Realizado/Cancelado)
+- [ ] Exibir detalhes completos: nome, telefone, projeto, data/horário, corretor
+- [ ] Testar fluxo completo de mudança de status

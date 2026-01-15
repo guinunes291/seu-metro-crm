@@ -51,7 +51,11 @@ import {
   Loader2,
   MapPin,
   List,
-  CalendarDays
+  CalendarDays,
+  ChevronDown,
+  ChevronUp,
+  Check,
+  X
 } from "lucide-react";
 import CalendarioAgendamentos from "@/components/CalendarioAgendamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -98,17 +102,13 @@ const STATUS_CONFIG = {
   reagendado: { label: "Reagendado", color: "bg-orange-500", icon: AlertCircle },
 };
 
-export default function Agendamentos() {
+export default function AgendamentosPage() {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [useCustomProject, setUseCustomProject] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("calendar");
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  
-  // Form state
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [formData, setFormData] = useState({
     projectId: "",
     projetoCustom: "",
@@ -119,23 +119,20 @@ export default function Agendamentos() {
   });
 
   // Queries
-  const { data: agendamentos, isLoading, refetch } = trpc.agendamentos.list.useQuery();
+  const { data: agendamentos, isLoading } = trpc.agendamentos.list.useQuery();
   const { data: agendamentosHoje } = trpc.agendamentos.hoje.useQuery();
+  const { data: leads } = trpc.leads.list.useQuery();
   const { data: projetos } = trpc.projects.list.useQuery();
-  
-  // Search leads
-  const { data: searchResults, isLoading: isSearching } = trpc.searchLeads.byIdentifier.useQuery(
-    { query: searchQuery },
-    { enabled: searchQuery.length >= 3 }
-  );
 
   // Mutations
+  const utils = trpc.useUtils();
   const createAgendamento = trpc.agendamentos.create.useMutation({
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
       setIsModalOpen(false);
       resetForm();
-      refetch();
+      utils.agendamentos.list.invalidate();
+      utils.agendamentos.hoje.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao criar agendamento");
@@ -144,17 +141,35 @@ export default function Agendamentos() {
 
   const updateStatus = trpc.agendamentos.updateStatus.useMutation({
     onSuccess: () => {
-      toast.success("Status atualizado!");
-      refetch();
+      toast.success("Status atualizado com sucesso!");
+      utils.agendamentos.list.invalidate();
+      utils.agendamentos.hoje.invalidate();
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao atualizar status");
     },
   });
 
+  // Filtrar leads pela busca
+  const leadsArray = Array.isArray(leads) ? leads : (leads?.leads || []);
+  const filteredLeads = leadsArray.filter((lead: Lead) =>
+    lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.telefone.includes(searchTerm)
+  );
+
+  // Agrupar agendamentos por data
+  const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
+    const data = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
+    if (!acc[data]) acc[data] = [];
+    acc[data].push(ag);
+    return acc;
+  }, {});
+
+  const datasOrdenadas = Object.keys(agendamentosPorData).sort();
+
   const resetForm = () => {
     setSelectedLead(null);
-    setSearchQuery("");
+    setSearchTerm("");
     setUseCustomProject(false);
     setFormData({
       projectId: "",
@@ -168,15 +183,22 @@ export default function Agendamentos() {
 
   const handleSubmit = () => {
     if (!selectedLead) {
-      toast.error("Selecione um lead");
+      toast.error("Selecione um cliente");
       return;
     }
+
     if (!formData.dataAgendamento || !formData.horaAgendamento) {
-      toast.error("Preencha a data e hora do agendamento");
+      toast.error("Preencha data e hora do agendamento");
       return;
     }
+
     if (!useCustomProject && !formData.projectId) {
-      toast.error("Selecione um projeto ou digite manualmente");
+      toast.error("Selecione um projeto ou digite um nome customizado");
+      return;
+    }
+
+    if (useCustomProject && !formData.projetoCustom) {
+      toast.error("Digite o nome do projeto");
       return;
     }
 
@@ -191,24 +213,7 @@ export default function Agendamentos() {
     });
   };
 
-  const handleProjectSelect = (projectId: string) => {
-    if (projectId === "custom") {
-      setUseCustomProject(true);
-      setFormData({ ...formData, projectId: "" });
-    } else {
-      setUseCustomProject(false);
-      const projeto = projetos?.find((p: Project) => p.id.toString() === projectId);
-      setFormData({
-        ...formData,
-        projectId,
-        construtora: projeto?.construtora || "",
-      });
-    }
-  };
-
-  // Abrir modal com data pré-selecionada do calendário
   const handleCreateFromCalendar = (date: Date) => {
-    setSelectedDate(date);
     setFormData({
       ...formData,
       dataAgendamento: format(date, "yyyy-MM-dd"),
@@ -216,185 +221,114 @@ export default function Agendamentos() {
     setIsModalOpen(true);
   };
 
-  // Agrupar agendamentos por data
-  const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
-    // Extrair data sem conversão de timezone
-    let data: string;
-    if (typeof ag.dataAgendamento === 'string') {
-      data = ag.dataAgendamento.split('T')[0];
-    } else {
-      const date = new Date(ag.dataAgendamento);
-      data = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    }
-    if (!acc[data]) acc[data] = [];
-    acc[data].push(ag);
-    return acc;
-  }, {});
-
-  // Ordenar datas
-  const datasOrdenadas = Object.keys(agendamentosPorData).sort((a, b) => 
-    new Date(b).getTime() - new Date(a).getTime()
-  );
+  if (!user) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Agendamentos</h1>
-            <p className="text-muted-foreground">Gerencie suas visitas agendadas</p>
+            <h1 className="text-3xl font-bold">Agendamentos</h1>
+            <p className="text-muted-foreground">
+              Gerencie seus agendamentos de visitas
+            </p>
           </div>
-          
+
+          {/* Botão Criar Agendamento */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
                 Criar Agendamento
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Novo Agendamento</DialogTitle>
+                <DialogTitle>Criar Novo Agendamento</DialogTitle>
                 <DialogDescription>
-                  Agende uma visita para um cliente
+                  Preencha os dados para agendar uma visita com o cliente
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                {/* Busca de Lead */}
+                {/* Buscar Cliente */}
                 <div className="space-y-2">
-                  <Label>Cliente (buscar por telefone, email, CPF ou nome)</Label>
-                  {selectedLead ? (
-                    <div className="flex items-center gap-2 p-3 border rounded-md bg-muted/50">
-                      <User className="h-4 w-4 text-primary" />
-                      <div className="flex-1">
-                        <span className="font-medium">{selectedLead.nome}</span>
-                        <span className="text-muted-foreground ml-2">({selectedLead.telefone})</span>
-                      </div>
+                  <Label>Cliente *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedLead(null);
-                          setSearchQuery("");
-                        }}
+                        variant="outline"
+                        role="combobox"
+                        className="w-full justify-between"
                       >
-                        <XCircle className="h-4 w-4" />
+                        {selectedLead ? selectedLead.nome : "Buscar cliente..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Digite telefone, email, CPF ou nome..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                      {/* Lista de resultados */}
-                      {searchQuery.length >= 3 && (
-                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-[300px] overflow-auto">
-                          {isSearching ? (
-                            <div className="p-4 text-center">
-                              <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                              <span className="text-sm text-muted-foreground">Buscando...</span>
-                            </div>
-                          ) : searchResults && searchResults.length > 0 ? (
-                            <div className="py-1">
-                              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b">
-                                {searchResults.length} resultado(s) encontrado(s)
-                              </div>
-                              {searchResults.map((lead: Lead) => {
-                                const projetoLead = projetos?.find((p: Project) => p.id === lead.projectId);
-                                return (
-                                  <div
-                                    key={lead.id}
-                                    className="px-4 py-3 hover:bg-accent cursor-pointer border-b last:border-b-0 transition-colors"
-                                    onClick={() => {
-                                      setSelectedLead(lead);
-                                      setSearchQuery("");
-                                      // Preencher projeto automaticamente se o lead tiver um
-                                      if (lead.projectId) {
-                                        setFormData(prev => ({
-                                          ...prev,
-                                          projectId: lead.projectId?.toString() || "",
-                                          construtora: projetoLead?.construtora || ""
-                                        }));
-                                        setUseCustomProject(false);
-                                      }
-                                    }}
-                                  >
-                                    <div className="flex items-start gap-3">
-                                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                        <User className="h-5 w-5 text-primary" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-foreground">{lead.nome}</div>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                          <Phone className="h-3 w-3 flex-shrink-0" />
-                                          <span>{lead.telefone}</span>
-                                        </div>
-                                        {lead.email && (
-                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <span className="text-xs">✉️</span>
-                                            <span className="truncate">{lead.email}</span>
-                                          </div>
-                                        )}
-                                        {projetoLead && (
-                                          <div className="flex items-center gap-2 text-sm mt-1">
-                                            <Building2 className="h-3 w-3 text-blue-500 flex-shrink-0" />
-                                            <span className="text-blue-600 font-medium truncate">
-                                              {projetoLead.nome}
-                                            </span>
-                                          </div>
-                                        )}
-                                        {lead.cpf && (
-                                          <div className="text-xs text-muted-foreground mt-1">CPF: {lead.cpf}</div>
-                                        )}
-                                      </div>
-                                      <Badge variant="outline" className="flex-shrink-0 text-xs">
-                                        {lead.status === 'novo' ? 'Novo' : 
-                                         lead.status === 'em_atendimento' ? 'Em Atendimento' :
-                                         lead.status === 'agendado' ? 'Agendado' :
-                                         lead.status === 'aguardando_atendimento' ? 'Aguardando' :
-                                         lead.status}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                              Nenhum cliente encontrado
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {searchQuery.length > 0 && searchQuery.length < 3 && (
-                        <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-center text-sm text-muted-foreground">
-                          Digite pelo menos 3 caracteres para buscar
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Digite nome ou telefone..."
+                          value={searchTerm}
+                          onValueChange={setSearchTerm}
+                        />
+                        <CommandList>
+                          <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                          <CommandGroup>
+                            {filteredLeads.slice(0, 10).map((lead: Lead) => (
+                              <CommandItem
+                                key={lead.id}
+                                onSelect={() => {
+                                  setSelectedLead(lead);
+                                  setSearchTerm("");
+                                }}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{lead.nome}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {lead.telefone}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {/* Projeto */}
                 <div className="space-y-2">
-                  <Label>Projeto / Empreendimento</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Projeto *</Label>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => setUseCustomProject(!useCustomProject)}
+                    >
+                      {useCustomProject ? "Selecionar da lista" : "Digitar manualmente"}
+                    </Button>
+                  </div>
+
                   <Select
-                    value={useCustomProject ? "custom" : formData.projectId}
-                    onValueChange={handleProjectSelect}
+                    value={formData.projectId}
+                    onValueChange={(value) => setFormData({ ...formData, projectId: value })}
+                    disabled={useCustomProject}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um projeto" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="custom">
-                        <span className="text-muted-foreground">✏️ Digitar manualmente</span>
-                      </SelectItem>
                       {projetos?.map((projeto: Project) => (
                         <SelectItem key={projeto.id} value={projeto.id.toString()}>
                           {projeto.nome}
@@ -434,7 +368,7 @@ export default function Agendamentos() {
                 {/* Data e Hora */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Data</Label>
+                    <Label>Data *</Label>
                     <Input
                       type="date"
                       value={formData.dataAgendamento}
@@ -442,7 +376,7 @@ export default function Agendamentos() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Hora</Label>
+                    <Label>Hora *</Label>
                     <Input
                       type="time"
                       value={formData.horaAgendamento}
@@ -575,7 +509,7 @@ export default function Agendamentos() {
   );
 }
 
-// Componente de Card de Agendamento
+// Componente de Card de Agendamento com Detalhes Expandíveis
 function AgendamentoCard({ 
   agendamento, 
   onUpdateStatus 
@@ -583,92 +517,123 @@ function AgendamentoCard({
   agendamento: Agendamento;
   onUpdateStatus: (status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado') => void;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const { data: lead } = trpc.leads.getById.useQuery({ id: agendamento.leadId });
+  const { data: corretor } = trpc.users.getById.useQuery({ id: agendamento.corretorId });
+  const { data: projeto } = trpc.projects.getById.useQuery(
+    { id: agendamento.projectId! },
+    { enabled: !!agendamento.projectId }
+  );
+  
   const statusConfig = STATUS_CONFIG[agendamento.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pendente;
   const StatusIcon = statusConfig.icon;
 
+  const nomeProjeto = projeto?.nome || agendamento.projetoCustom || "Projeto não especificado";
+
   return (
-    <Card>
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+        {/* Header do Card - Sempre Visível */}
+        <div 
+          className="flex items-start justify-between gap-4 cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
           <div className="flex-1 space-y-2">
-            {/* Cliente */}
-            <div className="flex items-center gap-2">
+            {/* Cliente e Hora */}
+            <div className="flex items-center gap-3">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="font-medium">{lead?.nome || "Carregando..."}</span>
-              {lead?.telefone && (
-                <span className="text-sm text-muted-foreground">
-                  ({lead.telefone})
-                </span>
-              )}
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                {agendamento.horaAgendamento}
+              </div>
             </div>
 
             {/* Projeto */}
             <div className="flex items-center gap-2 text-sm">
               <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span>{agendamento.projetoCustom || "Projeto não especificado"}</span>
-              {agendamento.construtora && (
-                <span className="text-muted-foreground">
-                  • {agendamento.construtora}
-                </span>
-              )}
+              <span>{nomeProjeto}</span>
             </div>
-
-            {/* Hora */}
-            <div className="flex items-center gap-2 text-sm">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{agendamento.horaAgendamento}</span>
-            </div>
-
-            {/* Observações */}
-            {agendamento.observacoes && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {agendamento.observacoes}
-              </p>
-            )}
           </div>
 
-          {/* Status e Ações */}
-          <div className="flex flex-col items-end gap-2">
+          {/* Status e Botão Expandir */}
+          <div className="flex items-center gap-2">
             <Badge className={`${statusConfig.color} text-white`}>
               <StatusIcon className="h-3 w-3 mr-1" />
               {statusConfig.label}
             </Badge>
+            {isExpanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+        </div>
 
+        {/* Detalhes Expandidos */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t space-y-4">
+            {/* Informações Completas */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground">Telefone:</span>
+                <div className="font-medium">{lead?.telefone || "-"}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Corretor:</span>
+                <div className="font-medium">{corretor?.name || "-"}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Construtora:</span>
+                <div className="font-medium">{agendamento.construtora || "-"}</div>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Data:</span>
+                <div className="font-medium">
+                  {format(new Date(agendamento.dataAgendamento), "dd/MM/yyyy")}
+                </div>
+              </div>
+            </div>
+
+            {/* Observações */}
+            {agendamento.observacoes && (
+              <div>
+                <span className="text-sm text-muted-foreground">Observações:</span>
+                <p className="text-sm mt-1">{agendamento.observacoes}</p>
+              </div>
+            )}
+
+            {/* Botões de Ação - Apenas para Pendente */}
             {agendamento.status === 'pendente' && (
-              <div className="flex gap-1">
+              <div className="flex gap-2 pt-2">
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="text-green-600 hover:text-green-700"
-                  onClick={() => onUpdateStatus('confirmado')}
+                  variant="default"
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateStatus('realizado');
+                  }}
                 >
-                  Confirmar
+                  <Check className="h-4 w-4 mr-1" />
+                  Marcar como Realizado
                 </Button>
                 <Button
                   size="sm"
-                  variant="outline"
-                  className="text-red-600 hover:text-red-700"
-                  onClick={() => onUpdateStatus('cancelado')}
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateStatus('cancelado');
+                  }}
                 >
+                  <X className="h-4 w-4 mr-1" />
                   Cancelar
                 </Button>
               </div>
             )}
-
-            {agendamento.status === 'confirmado' && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-600 hover:text-green-700"
-                onClick={() => onUpdateStatus('realizado')}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Marcar Realizado
-              </Button>
-            )}
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

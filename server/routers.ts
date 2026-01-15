@@ -2813,7 +2813,7 @@ export const appRouter = router({
         
         return await db.createAgendamento({
           leadId: input.leadId,
-          corretorId: lead.corretorId || ctx.user.id,
+          corretorId: ctx.user.id,
           projectId: input.projectId,
           projetoCustom: input.projetoCustom,
           construtora: input.construtora,
