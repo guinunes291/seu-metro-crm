@@ -1,0 +1,910 @@
+{
+  "query": "\n-- Buscar leads com padrões de teste\nSELECT id, nome, telefone, email, status, corretorId, createdAt\nFROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR email LIKE '%webhook%'\nORDER BY createdAt DESC\nLIMIT 100;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Buscar leads com padrões de teste\nSELECT id, nome, telefone, email, status, corretorId, createdAt\nFROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR email LIKE '%webhook%'\nORDER BY createdAt DESC\nLIMIT 100;\n",
+  "rows": [
+    {
+      "id": "1290363",
+      "nome": "Lead para Roleta",
+      "telefone": "11777777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-15 15:34:30"
+    },
+    {
+      "id": "1290362",
+      "nome": "Lead via Webhook",
+      "telefone": "11888888888",
+      "email": "lead@webhook.com",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-15 15:34:27"
+    },
+    {
+      "id": "1290331",
+      "nome": "Lead Rank C2 9",
+      "telefone": "11992999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290330",
+      "nome": "Lead Rank C2 8",
+      "telefone": "11992888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290329",
+      "nome": "Lead Rank C2 7",
+      "telefone": "11992777777",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290328",
+      "nome": "Lead Rank C2 6",
+      "telefone": "11992666666",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290327",
+      "nome": "Lead Rank C2 5",
+      "telefone": "11992555555",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290326",
+      "nome": "Lead Rank C2 4",
+      "telefone": "11992444444",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290325",
+      "nome": "Lead Rank C2 3",
+      "telefone": "11992333333",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290324",
+      "nome": "Lead Rank C2 2",
+      "telefone": "11992222222",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290323",
+      "nome": "Lead Rank C2 1",
+      "telefone": "11992111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290322",
+      "nome": "Lead Rank C2 0",
+      "telefone": "11992000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431326",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290321",
+      "nome": "Lead Rank C1 9",
+      "telefone": "11991999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290320",
+      "nome": "Lead Rank C1 8",
+      "telefone": "11991888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290319",
+      "nome": "Lead Rank C1 7",
+      "telefone": "11991777777",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290318",
+      "nome": "Lead Rank C1 6",
+      "telefone": "11991666666",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290317",
+      "nome": "Lead Rank C1 5",
+      "telefone": "11991555555",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290316",
+      "nome": "Lead Rank C1 4",
+      "telefone": "11991444444",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290315",
+      "nome": "Lead Rank C1 3",
+      "telefone": "11991333333",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290314",
+      "nome": "Lead Rank C1 2",
+      "telefone": "11991222222",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290313",
+      "nome": "Lead Rank C1 1",
+      "telefone": "11991111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290312",
+      "nome": "Lead Rank C1 0",
+      "telefone": "11991000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431325",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290311",
+      "nome": "Lead Rank C0 9",
+      "telefone": "11990999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290310",
+      "nome": "Lead Rank C0 8",
+      "telefone": "11990888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290309",
+      "nome": "Lead Rank C0 7",
+      "telefone": "11990777777",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290308",
+      "nome": "Lead Rank C0 6",
+      "telefone": "11990666666",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290307",
+      "nome": "Lead Rank C0 5",
+      "telefone": "11990555555",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290306",
+      "nome": "Lead Rank C0 4",
+      "telefone": "11990444444",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290305",
+      "nome": "Lead Rank C0 3",
+      "telefone": "11990333333",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290304",
+      "nome": "Lead Rank C0 2",
+      "telefone": "11990222222",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290303",
+      "nome": "Lead Rank C0 1",
+      "telefone": "11990111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290302",
+      "nome": "Lead Rank C0 0",
+      "telefone": "11990000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431324",
+      "createdAt": "2026-01-15 15:34:21"
+    },
+    {
+      "id": "1290138",
+      "nome": "Lead Rank C2 9",
+      "telefone": "11992999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290136",
+      "nome": "Lead Rank C2 8",
+      "telefone": "11992888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290135",
+      "nome": "Lead Rank C2 7",
+      "telefone": "11992777777",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290133",
+      "nome": "Lead Rank C2 6",
+      "telefone": "11992666666",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290131",
+      "nome": "Lead Rank C2 5",
+      "telefone": "11992555555",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290129",
+      "nome": "Lead Rank C2 4",
+      "telefone": "11992444444",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290127",
+      "nome": "Lead Rank C2 3",
+      "telefone": "11992333333",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290125",
+      "nome": "Lead Rank C2 2",
+      "telefone": "11992222222",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290123",
+      "nome": "Lead Rank C2 1",
+      "telefone": "11992111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290121",
+      "nome": "Lead Rank C2 0",
+      "telefone": "11992000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431266",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290117",
+      "nome": "Lead Rank C1 9",
+      "telefone": "11991999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290115",
+      "nome": "Lead Rank C1 8",
+      "telefone": "11991888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290113",
+      "nome": "Lead Rank C1 7",
+      "telefone": "11991777777",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290111",
+      "nome": "Lead Rank C1 6",
+      "telefone": "11991666666",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290109",
+      "nome": "Lead Rank C1 5",
+      "telefone": "11991555555",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290107",
+      "nome": "Lead Rank C1 4",
+      "telefone": "11991444444",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290105",
+      "nome": "Lead Rank C1 3",
+      "telefone": "11991333333",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290103",
+      "nome": "Lead Rank C1 2",
+      "telefone": "11991222222",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290101",
+      "nome": "Lead Rank C1 1",
+      "telefone": "11991111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290100",
+      "nome": "Lead Rank C1 0",
+      "telefone": "11991000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431264",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290099",
+      "nome": "Lead Rank C0 9",
+      "telefone": "11990999999",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290098",
+      "nome": "Lead Rank C0 8",
+      "telefone": "11990888888",
+      "email": "NULL",
+      "status": "em_atendimento",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290097",
+      "nome": "Lead Rank C0 7",
+      "telefone": "11990777777",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290095",
+      "nome": "Lead Rank C0 6",
+      "telefone": "11990666666",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290093",
+      "nome": "Lead Rank C0 5",
+      "telefone": "11990555555",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290091",
+      "nome": "Lead Rank C0 4",
+      "telefone": "11990444444",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290089",
+      "nome": "Lead Rank C0 3",
+      "telefone": "11990333333",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290087",
+      "nome": "Lead Rank C0 2",
+      "telefone": "11990222222",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290085",
+      "nome": "Lead Rank C0 1",
+      "telefone": "11990111111",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "1290083",
+      "nome": "Lead Rank C0 0",
+      "telefone": "11990000000",
+      "email": "NULL",
+      "status": "contrato_fechado",
+      "corretorId": "7431262",
+      "createdAt": "2026-01-15 15:34:01"
+    },
+    {
+      "id": "510129",
+      "nome": "Lead Rank C2 9",
+      "telefone": "11992999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510127",
+      "nome": "Lead Rank C2 8",
+      "telefone": "11992888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510125",
+      "nome": "Lead Rank C2 7",
+      "telefone": "11992777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510123",
+      "nome": "Lead Rank C2 6",
+      "telefone": "11992666666",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510121",
+      "nome": "Lead Rank C2 5",
+      "telefone": "11992555555",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510119",
+      "nome": "Lead Rank C2 4",
+      "telefone": "11992444444",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510117",
+      "nome": "Lead Rank C2 3",
+      "telefone": "11992333333",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510115",
+      "nome": "Lead Rank C2 2",
+      "telefone": "11992222222",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510107",
+      "nome": "Lead Rank C1 9",
+      "telefone": "11991999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510105",
+      "nome": "Lead Rank C1 8",
+      "telefone": "11991888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510103",
+      "nome": "Lead Rank C1 7",
+      "telefone": "11991777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510101",
+      "nome": "Lead Rank C1 6",
+      "telefone": "11991666666",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510099",
+      "nome": "Lead Rank C1 5",
+      "telefone": "11991555555",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510085",
+      "nome": "Lead Rank C0 9",
+      "telefone": "11990999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "510084",
+      "nome": "Lead Rank C0 8",
+      "telefone": "11990888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 22:25:09"
+    },
+    {
+      "id": "480897",
+      "nome": "Lead Rank C2 9",
+      "telefone": "11992999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480895",
+      "nome": "Lead Rank C2 8",
+      "telefone": "11992888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480893",
+      "nome": "Lead Rank C2 7",
+      "telefone": "11992777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480891",
+      "nome": "Lead Rank C2 6",
+      "telefone": "11992666666",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480889",
+      "nome": "Lead Rank C2 5",
+      "telefone": "11992555555",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480887",
+      "nome": "Lead Rank C2 4",
+      "telefone": "11992444444",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480884",
+      "nome": "Lead Rank C2 3",
+      "telefone": "11992333333",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480882",
+      "nome": "Lead Rank C2 2",
+      "telefone": "11992222222",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480875",
+      "nome": "Lead Rank C1 9",
+      "telefone": "11991999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480873",
+      "nome": "Lead Rank C1 8",
+      "telefone": "11991888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480871",
+      "nome": "Lead Rank C1 7",
+      "telefone": "11991777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480869",
+      "nome": "Lead Rank C1 6",
+      "telefone": "11991666666",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480867",
+      "nome": "Lead Rank C1 5",
+      "telefone": "11991555555",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480861",
+      "nome": "Lead Rank C0 9",
+      "telefone": "11990999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480860",
+      "nome": "Lead Rank C0 8",
+      "telefone": "11990888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 16:11:33"
+    },
+    {
+      "id": "480666",
+      "nome": "Lead Rank C2 9",
+      "telefone": "11992999999",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480665",
+      "nome": "Lead Rank C2 8",
+      "telefone": "11992888888",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480664",
+      "nome": "Lead Rank C2 7",
+      "telefone": "11992777777",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480663",
+      "nome": "Lead Rank C2 6",
+      "telefone": "11992666666",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480662",
+      "nome": "Lead Rank C2 5",
+      "telefone": "11992555555",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480661",
+      "nome": "Lead Rank C2 4",
+      "telefone": "11992444444",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480660",
+      "nome": "Lead Rank C2 3",
+      "telefone": "11992333333",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    },
+    {
+      "id": "480659",
+      "nome": "Lead Rank C2 2",
+      "telefone": "11992222222",
+      "email": "NULL",
+      "status": "aguardando_atendimento",
+      "corretorId": "4236208",
+      "createdAt": "2026-01-01 14:27:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\temail\tstatus\tcorretorId\tcreatedAt\n1290363\tLead para Roleta\t11777777777\tNULL\taguardando_atendimento\t4236208\t2026-01-15 15:34:30\n1290362\tLead via Webhook\t11888888888\tlead@webhook.com\taguardando_atendimento\t4236208\t2026-01-15 15:34:27\n1290331\tLead Rank C2 9\t11992999999\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290330\tLead Rank C2 8\t11992888888\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290329\tLead Rank C2 7\t11992777777\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290328\tLead Rank C2 6\t11992666666\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290327\tLead Rank C2 5\t11992555555\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290326\tLead Rank C2 4\t11992444444\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290325\tLead Rank C2 3\t11992333333\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290324\tLead Rank C2 2\t11992222222\tNULL\tem_atendimento\t7431326\t2026-01-15 15:34:21\n1290323\tLead Rank C2 1\t11992111111\tNULL\tcontrato_fechado\t7431326\t2026-01-15 15:34:21\n1290322\tLead Rank C2 0\t11992000000\tNULL\tcontrato_fechado\t7431326\t2026-01-15 15:34:21\n1290321\tLead Rank C1 9\t11991999999\tNULL\tem_atendimento\t7431325\t2026-01-15 15:34:21\n1290320\tLead Rank C1 8\t11991888888\tNULL\tem_atendimento\t7431325\t2026-01-15 15:34:21\n1290319\tLead Rank C1 7\t11991777777\tNULL\tem_atendimento\t7431325\t2026-01-15 15:34:21\n1290318\tLead Rank C1 6\t11991666666\tNULL\tem_atendimento\t7431325\t2026-01-15 15:34:21\n1290317\tLead Rank C1 5\t11991555555\tNULL\tem_atendimento\t7431325\t2026-01-15 15:34:21\n1290316\tLead Rank C1 4\t11991444444\tNULL\tcontrato_fechado\t7431325\t2026-01-15 15:34:21\n1290315\tLead Rank C1 3\t11991333333\tNULL\tcontrato_fechado\t7431325\t2026-01-15 15:34:21\n1290314\tLead Rank C1 2\t11991222222\tNULL\tcontrato_fechado\t7431325\t2026-01-15 15:34:21\n1290313\tLead Rank C1 1\t11991111111\tNULL\tcontrato_fechado\t7431325\t2026-01-15 15:34:21\n1290312\tLead Rank C1 0\t11991000000\tNULL\tcontrato_fechado\t7431325\t2026-01-15 15:34:21\n1290311\tLead Rank C0 9\t11990999999\tNULL\tem_atendimento\t7431324\t2026-01-15 15:34:21\n1290310\tLead Rank C0 8\t11990888888\tNULL\tem_atendimento\t7431324\t2026-01-15 15:34:21\n1290309\tLead Rank C0 7\t11990777777\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290308\tLead Rank C0 6\t11990666666\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290307\tLead Rank C0 5\t11990555555\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290306\tLead Rank C0 4\t11990444444\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290305\tLead Rank C0 3\t11990333333\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290304\tLead Rank C0 2\t11990222222\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290303\tLead Rank C0 1\t11990111111\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290302\tLead Rank C0 0\t11990000000\tNULL\tcontrato_fechado\t7431324\t2026-01-15 15:34:21\n1290138\tLead Rank C2 9\t11992999999\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290136\tLead Rank C2 8\t11992888888\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290135\tLead Rank C2 7\t11992777777\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290133\tLead Rank C2 6\t11992666666\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290131\tLead Rank C2 5\t11992555555\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290129\tLead Rank C2 4\t11992444444\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290127\tLead Rank C2 3\t11992333333\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290125\tLead Rank C2 2\t11992222222\tNULL\tem_atendimento\t7431266\t2026-01-15 15:34:01\n1290123\tLead Rank C2 1\t11992111111\tNULL\tcontrato_fechado\t7431266\t2026-01-15 15:34:01\n1290121\tLead Rank C2 0\t11992000000\tNULL\tcontrato_fechado\t7431266\t2026-01-15 15:34:01\n1290117\tLead Rank C1 9\t11991999999\tNULL\tem_atendimento\t7431264\t2026-01-15 15:34:01\n1290115\tLead Rank C1 8\t11991888888\tNULL\tem_atendimento\t7431264\t2026-01-15 15:34:01\n1290113\tLead Rank C1 7\t11991777777\tNULL\tem_atendimento\t7431264\t2026-01-15 15:34:01\n1290111\tLead Rank C1 6\t11991666666\tNULL\tem_atendimento\t7431264\t2026-01-15 15:34:01\n1290109\tLead Rank C1 5\t11991555555\tNULL\tem_atendimento\t7431264\t2026-01-15 15:34:01\n1290107\tLead Rank C1 4\t11991444444\tNULL\tcontrato_fechado\t7431264\t2026-01-15 15:34:01\n1290105\tLead Rank C1 3\t11991333333\tNULL\tcontrato_fechado\t7431264\t2026-01-15 15:34:01\n1290103\tLead Rank C1 2\t11991222222\tNULL\tcontrato_fechado\t7431264\t2026-01-15 15:34:01\n1290101\tLead Rank C1 1\t11991111111\tNULL\tcontrato_fechado\t7431264\t2026-01-15 15:34:01\n1290100\tLead Rank C1 0\t11991000000\tNULL\tcontrato_fechado\t7431264\t2026-01-15 15:34:01\n1290099\tLead Rank C0 9\t11990999999\tNULL\tem_atendimento\t7431262\t2026-01-15 15:34:01\n1290098\tLead Rank C0 8\t11990888888\tNULL\tem_atendimento\t7431262\t2026-01-15 15:34:01\n1290097\tLead Rank C0 7\t11990777777\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290095\tLead Rank C0 6\t11990666666\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290093\tLead Rank C0 5\t11990555555\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290091\tLead Rank C0 4\t11990444444\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290089\tLead Rank C0 3\t11990333333\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290087\tLead Rank C0 2\t11990222222\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290085\tLead Rank C0 1\t11990111111\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n1290083\tLead Rank C0 0\t11990000000\tNULL\tcontrato_fechado\t7431262\t2026-01-15 15:34:01\n510129\tLead Rank C2 9\t11992999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510127\tLead Rank C2 8\t11992888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510125\tLead Rank C2 7\t11992777777\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510123\tLead Rank C2 6\t11992666666\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510121\tLead Rank C2 5\t11992555555\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510119\tLead Rank C2 4\t11992444444\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510117\tLead Rank C2 3\t11992333333\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510115\tLead Rank C2 2\t11992222222\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510107\tLead Rank C1 9\t11991999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510105\tLead Rank C1 8\t11991888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510103\tLead Rank C1 7\t11991777777\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510101\tLead Rank C1 6\t11991666666\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510099\tLead Rank C1 5\t11991555555\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510085\tLead Rank C0 9\t11990999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n510084\tLead Rank C0 8\t11990888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 22:25:09\n480897\tLead Rank C2 9\t11992999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480895\tLead Rank C2 8\t11992888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480893\tLead Rank C2 7\t11992777777\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480891\tLead Rank C2 6\t11992666666\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480889\tLead Rank C2 5\t11992555555\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480887\tLead Rank C2 4\t11992444444\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480884\tLead Rank C2 3\t11992333333\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480882\tLead Rank C2 2\t11992222222\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480875\tLead Rank C1 9\t11991999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480873\tLead Rank C1 8\t11991888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480871\tLead Rank C1 7\t11991777777\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480869\tLead Rank C1 6\t11991666666\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480867\tLead Rank C1 5\t11991555555\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480861\tLead Rank C0 9\t11990999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480860\tLead Rank C0 8\t11990888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 16:11:33\n480666\tLead Rank C2 9\t11992999999\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480665\tLead Rank C2 8\t11992888888\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480664\tLead Rank C2 7\t11992777777\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480663\tLead Rank C2 6\t11992666666\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480662\tLead Rank C2 5\t11992555555\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480661\tLead Rank C2 4\t11992444444\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480660\tLead Rank C2 3\t11992333333\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n480659\tLead Rank C2 2\t11992222222\tNULL\taguardando_atendimento\t4236208\t2026-01-01 14:27:53\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

@@ -3178,3 +3178,12 @@
 - [x] Corrigir mensagem 'Outro' para 'Taxa < 90%' quando aplicável
 - [x] Atualizar texto das Regras de Elegibilidade na página de Controle de Distribuição
 
+
+## Limpeza de Dados de Teste
+- [x] Identificar leads de teste no banco de dados
+- [x] Identificar projetos de teste no banco de dados
+- [x] Criar script SQL de limpeza segura
+- [x] Executar limpeza de leads de teste
+- [x] Executar limpeza de projetos de teste
+- [x] Verificar integridade dos dados reais após limpeza
+
