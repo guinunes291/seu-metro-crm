@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  a.id,\n  a.leadId,\n  a.corretorId,\n  a.createdAt,\n  a.dataAgendamento,\n  u.name as corretorNome,\n  l.name as leadNome\nFROM agendamentos a\nJOIN users u ON a.corretorId = u.id\nJOIN leads l ON a.leadId = l.id\nWHERE u.name LIKE '%Leticia%'\n  AND DATE(a.createdAt) = CURDATE()\nORDER BY a.createdAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  a.id,\n  a.leadId,\n  a.corretorId,\n  a.createdAt,\n  a.dataAgendamento,\n  u.name as corretorNome,\n  l.name as leadNome\nFROM agendamentos a\nJOIN users u ON a.corretorId = u.id\nJOIN leads l ON a.leadId = l.id\nWHERE u.name LIKE '%Leticia%'\n  AND DATE(a.createdAt) = CURDATE()\nORDER BY a.createdAt DESC;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'l.name' in 'field list'"
+  ]
+}

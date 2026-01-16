@@ -3748,8 +3748,15 @@ export async function getOrCreateAtividadeDiaria(corretorId: number, data?: Date
   const db = await getDb();
   if (!db) return null;
   
-  const dataRef = data || new Date();
-  dataRef.setHours(0, 0, 0, 0);
+  // Usar timezone de São Paulo se data não for fornecida
+  let dataRef: Date;
+  if (data) {
+    dataRef = new Date(data);
+    dataRef.setHours(0, 0, 0, 0);
+  } else {
+    const { inicioDoDiaHoje } = await import('./timezone');
+    dataRef = inicioDoDiaHoje();
+  }
   
   // Buscar registro existente
   const existing = await db.select()
@@ -8135,10 +8142,10 @@ export async function sincronizarAgendamentosDoDia() {
   const db = await getDb();
   if (!db) return;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const fimDia = new Date(hoje);
-  fimDia.setHours(23, 59, 59, 999);
+  // Usar timezone de São Paulo
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const hoje = inicioDoDiaHoje();
+  const fimDia = fimDoDiaHoje();
   
   // Buscar todos os agendamentos criados hoje
   const agendamentosHoje = await db.select({
@@ -8154,15 +8161,18 @@ export async function sincronizarAgendamentosDoDia() {
   
   // Atualizar atividades diárias de cada corretor
   for (const { corretorId, count } of agendamentosHoje) {
+    // Garantir que existe registro para hoje
     await getOrCreateAtividadeDiaria(corretorId, hoje);
     
     // Atualizar diretamente o campo agendamentosConfirmados
-    await db.update(atividadesDiarias)
-      .set({ agendamentosConfirmados: count })
-      .where(and(
-        eq(atividadesDiarias.corretorId, corretorId),
-        eq(atividadesDiarias.data, hoje)
-      ));
+    // Usar DATE() para garantir comparação correta independente de timezone
+    await db.execute(sql`
+      UPDATE atividades_diarias 
+      SET agendamentosConfirmados = ${count}
+      WHERE corretorId = ${corretorId} 
+        AND DATE(data) = DATE(${hoje})
+      LIMIT 1
+    `);
     
     // Recalcular pontuação
     await calcularPontuacaoDiaria(corretorId);

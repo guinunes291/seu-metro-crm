@@ -3243,3 +3243,5 @@
 - [x] Implementar modal de confirmação com campo obrigatório "Motivo da Perda" quando corretor marca lead como Perdido
 
 - [x] Corrigir contabilização de agendamentos na tabela de performance: usar data de criação do agendamento e não depender do status atual do lead
+
+- [x] Corrigir contagem de agendamentos: mostrando 6 ao invés de 2 - verificar filtro de data de criação
