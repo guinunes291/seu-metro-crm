@@ -3283,3 +3283,12 @@
 - [x] Testar todas as métricas no dashboard de Produtividade Diária
 - [x] Validar que todas as métricas aparecem corretamente para todos os corretores
 - [x] Salvar checkpoint final com todas as correções
+
+## Bug: Erros nas Métricas de Produtividade Diária
+- [x] Investigar por que a pontuação da Letícia está 90 pontos acima do esperado (846 ao invés de 756)
+- [x] Investigar contagem incorreta de ligações e mensagens de hoje
+- [x] Verificar se há métricas ocultas ou duplicadas sendo contabilizadas
+- [x] Identificar duplicação: documentacoesRecolhidas e analiseCreditoEnviadas estavam sendo contadas 2x
+- [x] Corrigir lógica de cálculo de pontuação (usar Math.max ao invés de somar ambos)
+- [x] Executar recalcularPontuacoes.mjs para corrigir 42 atividades históricas
+- [x] Validar que todas as métricas e pontuações estão corretas após correção

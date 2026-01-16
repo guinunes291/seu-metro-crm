@@ -4213,9 +4213,13 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
   // Pontos por visitas realizadas
   pontuacao += (atividade.visitasRealizadas || 0) * PONTOS.VISITA;
   
-  // Pontos por documentação/análise de crédito
-  pontuacao += (atividade.documentacoesRecolhidas || 0) * PONTOS.DOCUMENTACAO;
-  pontuacao += (atividade.analiseCreditoEnviadas || 0) * PONTOS.DOCUMENTACAO;
+  // Pontos por documentação/análise de crédito (contabilizar apenas uma vez)
+  // documentacoesRecolhidas e analiseCreditoEnviadas são a mesma coisa, usar o maior valor
+  const docsOuAnalise = Math.max(
+    (atividade.documentacoesRecolhidas || 0),
+    (atividade.analiseCreditoEnviadas || 0)
+  );
+  pontuacao += docsOuAnalise * PONTOS.DOCUMENTACAO;
   
   // Pontos por vendas
   pontuacao += (atividade.contratosFechados || 0) * PONTOS.VENDA;
