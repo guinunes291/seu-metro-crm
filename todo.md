@@ -3245,3 +3245,16 @@
 - [x] Corrigir contabilização de agendamentos na tabela de performance: usar data de criação do agendamento e não depender do status atual do lead
 
 - [x] Corrigir contagem de agendamentos: mostrando 6 ao invés de 2 - verificar filtro de data de criação
+
+## Auditoria Completa de Métricas de Performance
+
+- [ ] Auditar e validar contabilização de agendamentos
+- [ ] Auditar e corrigir contabilização de visitas (usar data de criação)
+- [ ] Auditar e corrigir contabilização de documentações
+- [ ] Auditar e corrigir contabilização de análises de crédito
+- [ ] Validar contabilização de ligações realizadas
+- [ ] Validar contabilização de WhatsApp enviados
+- [ ] Validar contabilização de contratos fechados
+- [ ] Criar testes automatizados para todas as métricas
+- [ ] Validar métricas do Dashboard do Gestor
+- [ ] Validar métricas do Ranking TV (Produtividade Diária)

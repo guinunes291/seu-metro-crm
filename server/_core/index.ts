@@ -117,12 +117,12 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de transferência automática:", err);
     });
     
-    // Inicializar job de sincronização de agendamentos
-    import("../agendamentosSyncJob").then(({ iniciarJobSincronizacaoAgendamentos }) => {
-      iniciarJobSincronizacaoAgendamentos();
-      console.log("[Job] Sincronização automática de agendamentos inicializada (a cada 5 minutos)");
+    // Inicializar job de sincronização de todas as métricas
+    import("../metricasSyncJob").then(({ startMetricasSyncJob }) => {
+      startMetricasSyncJob();
+      console.log("[Job] Sincronização automática de métricas inicializada (a cada 5 minutos)");
     }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de sincronização de agendamentos:", err);
+      console.error("[Job] Erro ao inicializar job de sincronização de métricas:", err);
     });
   });
 }

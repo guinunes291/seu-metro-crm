@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json, date } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json, date, decimal } from "drizzle-orm/mysql-core";
 
 /**
  * Schema do CRM Imobiliário - Seu Metro Quadrado
@@ -1681,3 +1681,128 @@ export const historicoAtribuicoes = mysqlTable("historico_atribuicoes", {
 
 export type HistoricoAtribuicao = typeof historicoAtribuicoes.$inferSelect;
 export type InsertHistoricoAtribuicao = typeof historicoAtribuicoes.$inferInsert;
+
+// ============================================================================
+// INTERAÇÕES (LIGAÇÕES E WHATSAPP)
+// ============================================================================
+
+/**
+ * Tabela para registrar todas as interações do corretor com leads.
+ * Usado para contabilizar ligações e mensagens WhatsApp pela data de criação.
+ */
+export const interacoes = mysqlTable("interacoes", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead e corretor
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Tipo de interação
+  tipo: mysqlEnum("tipo", ["ligacao", "whatsapp"]).notNull(),
+  
+  // Status da interação
+  atendida: boolean("atendida").default(false), // Para ligações: foi atendida?
+  respondida: boolean("respondida").default(false), // Para WhatsApp: foi respondido?
+  
+  // Metadata
+  observacoes: text("observacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("interacoes_lead_idx").on(table.leadId),
+  corretorIdx: index("interacoes_corretor_idx").on(table.corretorId),
+  tipoIdx: index("interacoes_tipo_idx").on(table.tipo),
+  createdAtIdx: index("interacoes_created_at_idx").on(table.createdAt),
+}));
+
+export type Interacao = typeof interacoes.$inferSelect;
+export type InsertInteracao = typeof interacoes.$inferInsert;
+
+// ============================================================================
+// DOCUMENTAÇÕES RECOLHIDAS
+// ============================================================================
+
+/**
+ * Tabela para registrar documentações recolhidas de leads.
+ * Usado para contabilizar documentações pela data de criação.
+ */
+export const documentacoes = mysqlTable("documentacoes", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead e corretor
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Tipo de documentação
+  tipo: varchar("tipo", { length: 100 }),
+  
+  // Metadata
+  observacoes: text("observacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("documentacoes_lead_idx").on(table.leadId),
+  corretorIdx: index("documentacoes_corretor_idx").on(table.corretorId),
+  createdAtIdx: index("documentacoes_created_at_idx").on(table.createdAt),
+}));
+
+export type Documentacao = typeof documentacoes.$inferSelect;
+export type InsertDocumentacao = typeof documentacoes.$inferInsert;
+
+// ============================================================================
+// ANÁLISES DE CRÉDITO
+// ============================================================================
+
+/**
+ * Tabela para registrar análises de crédito enviadas.
+ * Usado para contabilizar análises de crédito pela data de criação.
+ */
+export const analises_credito = mysqlTable("analises_credito", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead e corretor
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Status da análise
+  status: mysqlEnum("status", ["enviada", "aprovada", "reprovada", "pendente"]).default("enviada").notNull(),
+  
+  // Metadata
+  observacoes: text("observacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("analises_credito_lead_idx").on(table.leadId),
+  corretorIdx: index("analises_credito_corretor_idx").on(table.corretorId),
+  createdAtIdx: index("analises_credito_created_at_idx").on(table.createdAt),
+}));
+
+export type AnaliseCredito = typeof analises_credito.$inferSelect;
+export type InsertAnaliseCredito = typeof analises_credito.$inferInsert;
+
+// ============================================================================
+// CONTRATOS FECHADOS
+// ============================================================================
+
+/**
+ * Tabela para registrar contratos fechados (vendas).
+ * Usado para contabilizar vendas e VGV pela data de criação.
+ */
+export const contratos = mysqlTable("contratos", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Lead e corretor
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Valor da venda (VGV)
+  valorVenda: decimal("valorVenda", { precision: 15, scale: 2 }),
+  
+  // Metadata
+  observacoes: text("observacoes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("contratos_lead_idx").on(table.leadId),
+  corretorIdx: index("contratos_corretor_idx").on(table.corretorId),
+  createdAtIdx: index("contratos_created_at_idx").on(table.createdAt),
+}));
+
+export type Contrato = typeof contratos.$inferSelect;
+export type InsertContrato = typeof contratos.$inferInsert;

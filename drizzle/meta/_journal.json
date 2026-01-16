@@ -57,6 +57,13 @@
       "when": 1768504434972,
       "tag": "0007_majestic_ben_urich",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1768598103772,
+      "tag": "0008_plain_rockslide",
+      "breakpoints": true
     }
   ]
 }

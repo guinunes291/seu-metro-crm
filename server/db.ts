@@ -33,7 +33,11 @@ import {
   faqChatbot, InsertFaqChatbot, FaqChatbot,
   propostas, InsertProposta, Proposta,
   propostasVisitantes, InsertPropostaVisitante, PropostaVisitante,
-  logTransferencias
+  logTransferencias,
+  interacoes, InsertInteracao, Interacao,
+  documentacoes, InsertDocumentacao, Documentacao,
+  analises_credito, InsertAnaliseCredito, AnaliseCredito,
+  contratos, InsertContrato, Contrato
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -4128,44 +4132,22 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
     .where(eq(atividadesDiarias.id, atividade.id));
 }
 
-// Registrar atividade automaticamente baseado em mudança de status do lead
+// DEPRECATED: Esta função não é mais usada.
+// Todas as métricas agora são registradas pela data de criação nas tabelas dedicadas:
+// - interacoes (ligações/WhatsApp)
+// - agendamentos
+// - visitas
+// - documentacoes
+// - analises_credito
+// - contratos
 export async function registrarAtividadePorStatus(
   corretorId: number, 
   statusAnterior: string | null, 
   statusNovo: string,
   valorVenda?: number
 ) {
-  // Alterações de status são registradas automaticamente pelo sistema
-  
-  // Mapear mudanças de status para atividades específicas
-  if (statusNovo === 'em_atendimento' && statusAnterior === 'aguardando_atendimento') {
-    await incrementarAtividade(corretorId, 'ligacoesRealizadas');
-    await incrementarAtividade(corretorId, 'ligacoesAtendidas');
-  }
-  
-  // REMOVIDO: Agendamentos agora são contados pela data de criação na tabela agendamentos
-  // if (statusNovo === 'agendado') {
-  //   await incrementarAtividade(corretorId, 'agendamentosConfirmados');
-  // }
-  
-  if (statusNovo === 'visita_realizada') {
-    await incrementarAtividade(corretorId, 'visitasRealizadas');
-  }
-  
-  if (statusNovo === 'analise_credito') {
-    await incrementarAtividade(corretorId, 'documentacoesRecolhidas');
-    await incrementarAtividade(corretorId, 'analiseCreditoEnviadas');
-  }
-  
-  if (statusNovo === 'contrato_fechado') {
-    await incrementarAtividade(corretorId, 'contratosFechados');
-    if (valorVenda) {
-      await adicionarVgvDia(corretorId, valorVenda);
-    }
-  }
-  
-  // Recalcular pontuação
-  await calcularPontuacaoDiaria(corretorId);
+  // Esta função foi desativada. Métricas são sincronizadas automaticamente via jobs periódicos.
+  console.log('[DEPRECATED] registrarAtividadePorStatus chamada - esta função não faz mais nada');
 }
 
 // Registrar cliente cadastrado pelo corretor (5 pontos)
@@ -8177,4 +8159,371 @@ export async function sincronizarAgendamentosDoDia() {
     // Recalcular pontuação
     await calcularPontuacaoDiaria(corretorId);
   }
+}
+
+// ============================================================================
+// SINCRONIZAÇÃO DE MÉTRICAS PELA DATA DE CRIAÇÃO
+// ============================================================================
+
+/**
+ * Helper para obter intervalo de hoje (início e fim) no timezone de São Paulo
+ */
+function obterIntervaloHoje() {
+  const now = new Date();
+  const saoPauloOffset = -3 * 60; // GMT-3 em minutos
+  const localOffset = now.getTimezoneOffset();
+  const offsetDiff = (saoPauloOffset - localOffset) * 60 * 1000;
+  
+  const saoPauloNow = new Date(now.getTime() + offsetDiff);
+  
+  // Início do dia (00:00:00)
+  const inicioHoje = new Date(saoPauloNow);
+  inicioHoje.setHours(0, 0, 0, 0);
+  
+  // Fim do dia (23:59:59)
+  const fimHoje = new Date(saoPauloNow);
+  fimHoje.setHours(23, 59, 59, 999);
+  
+  // Data para comparação no banco (formato YYYY-MM-DD)
+  const hoje = new Date(saoPauloNow);
+  hoje.setHours(0, 0, 0, 0);
+  
+  return { inicioHoje, fimHoje, hoje };
+}
+
+/**
+ * Sincroniza interações (ligações e WhatsApp) criadas hoje
+ * Conta pela data de criação (createdAt), não pela mudança de status
+ */
+export async function sincronizarInteracoesDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  const { inicioHoje, fimHoje } = obterIntervaloHoje();
+  
+  // Buscar todas as interações criadas hoje agrupadas por corretor e tipo
+  const interacoesHoje = await db
+    .select({
+      corretorId: interacoes.corretorId,
+      tipo: interacoes.tipo,
+      total: sql<number>`COUNT(*)`,
+      atendidas: sql<number>`SUM(CASE WHEN ${interacoes.atendida} = 1 THEN 1 ELSE 0 END)`,
+      respondidas: sql<number>`SUM(CASE WHEN ${interacoes.respondida} = 1 THEN 1 ELSE 0 END)`,
+    })
+    .from(interacoes)
+    .where(
+      and(
+        gte(interacoes.createdAt, inicioHoje),
+        lte(interacoes.createdAt, fimHoje)
+      )
+    )
+    .groupBy(interacoes.corretorId, interacoes.tipo);
+  
+  // Atualizar contadores para cada corretor
+  const corretoresMap = new Map<number, { ligacoes: number, ligacoesAtendidas: number, whatsapp: number, whatsappRespondidos: number }>();
+  
+  for (const interacao of interacoesHoje) {
+    if (!corretoresMap.has(interacao.corretorId)) {
+      corretoresMap.set(interacao.corretorId, { ligacoes: 0, ligacoesAtendidas: 0, whatsapp: 0, whatsappRespondidos: 0 });
+    }
+    
+    const corretor = corretoresMap.get(interacao.corretorId)!;
+    
+    if (interacao.tipo === 'ligacao') {
+      corretor.ligacoes = interacao.total;
+      corretor.ligacoesAtendidas = interacao.atendidas;
+    } else if (interacao.tipo === 'whatsapp') {
+      corretor.whatsapp = interacao.total;
+      corretor.whatsappRespondidos = interacao.respondidas;
+    }
+  }
+  
+  // Atualizar banco de dados
+  for (const [corretorId, contadores] of corretoresMap.entries()) {
+    await db
+      .update(atividadesDiarias)
+      .set({
+        ligacoesRealizadas: contadores.ligacoes,
+        ligacoesAtendidas: contadores.ligacoesAtendidas,
+        whatsappEnviados: contadores.whatsapp,
+        whatsappRespondidos: contadores.whatsappRespondidos,
+      })
+      .where(
+        and(
+          eq(atividadesDiarias.corretorId, corretorId),
+          eq(atividadesDiarias.data, hoje)
+        )
+      );
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(corretorId);
+  }
+  
+  console.log(`[Sync] Sincronizadas ${interacoesHoje.length} interações de ${corretoresMap.size} corretores`);
+}
+
+/**
+ * Sincroniza visitas criadas hoje
+ * Conta pela data de criação (createdAt), não pela mudança de status
+ */
+export async function sincronizarVisitasDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  
+  // Buscar todas as visitas criadas hoje agrupadas por corretor
+  const visitasHoje = await db
+    .select({
+      corretorId: visitas.corretorId,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(visitas)
+    .where(
+      and(
+        gte(visitas.createdAt, inicioHoje),
+        lte(visitas.createdAt, fimHoje)
+      )
+    )
+    .groupBy(visitas.corretorId);
+  
+  // Atualizar contadores para cada corretor
+  for (const visita of visitasHoje) {
+    await db
+      .update(atividadesDiarias)
+      .set({
+        visitasRealizadas: visita.total,
+      })
+      .where(
+        and(
+          eq(atividadesDiarias.corretorId, visita.corretorId),
+          eq(atividadesDiarias.data, hoje)
+        )
+      );
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(visita.corretorId);
+  }
+  
+  console.log(`[Sync] Sincronizadas ${visitasHoje.length} visitas`);
+}
+
+/**
+ * Sincroniza documentações criadas hoje
+ * Conta pela data de criação (createdAt), não pela mudança de status
+ */
+export async function sincronizarDocumentacoesDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  
+  // Buscar todas as documentações criadas hoje agrupadas por corretor
+  const documentacoesHoje = await db
+    .select({
+      corretorId: documentacoes.corretorId,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(documentacoes)
+    .where(
+      and(
+        gte(documentacoes.createdAt, inicioHoje),
+        lte(documentacoes.createdAt, fimHoje)
+      )
+    )
+    .groupBy(documentacoes.corretorId);
+  
+  // Atualizar contadores para cada corretor
+  for (const doc of documentacoesHoje) {
+    await db
+      .update(atividadesDiarias)
+      .set({
+        documentacoesRecolhidas: doc.total,
+      })
+      .where(
+        and(
+          eq(atividadesDiarias.corretorId, doc.corretorId),
+          eq(atividadesDiarias.data, hoje)
+        )
+      );
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(doc.corretorId);
+  }
+  
+  console.log(`[Sync] Sincronizadas ${documentacoesHoje.length} documentações`);
+}
+
+/**
+ * Sincroniza análises de crédito criadas hoje
+ * Conta pela data de criação (createdAt), não pela mudança de status
+ */
+export async function sincronizarAnalisesCreditoDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  
+  // Buscar todas as análises de crédito criadas hoje agrupadas por corretor
+  const analisesHoje = await db
+    .select({
+      corretorId: analises_credito.corretorId,
+      total: sql<number>`COUNT(*)`,
+    })
+    .from(analises_credito)
+    .where(
+      and(
+        gte(analises_credito.createdAt, inicioHoje),
+        lte(analises_credito.createdAt, fimHoje)
+      )
+    )
+    .groupBy(analises_credito.corretorId);
+  
+  // Atualizar contadores para cada corretor
+  for (const analise of analisesHoje) {
+    await db
+      .update(atividadesDiarias)
+      .set({
+        analiseCreditoEnviadas: analise.total,
+      })
+      .where(
+        and(
+          eq(atividadesDiarias.corretorId, analise.corretorId),
+          eq(atividadesDiarias.data, hoje)
+        )
+      );
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(analise.corretorId);
+  }
+  
+  console.log(`[Sync] Sincronizadas ${analisesHoje.length} análises de crédito`);
+}
+
+/**
+ * Sincroniza contratos fechados hoje
+ * Conta pela data de criação (createdAt), não pela mudança de status
+ */
+export async function sincronizarContratosDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  
+  // Buscar todos os contratos criados hoje agrupados por corretor
+  const contratosHoje = await db
+    .select({
+      corretorId: contratos.corretorId,
+      total: sql<number>`COUNT(*)`,
+      vgvTotal: sql<number>`SUM(COALESCE(${contratos.valorVenda}, 0))`,
+    })
+    .from(contratos)
+    .where(
+      and(
+        gte(contratos.createdAt, inicioHoje),
+        lte(contratos.createdAt, fimHoje)
+      )
+    )
+    .groupBy(contratos.corretorId);
+  
+  // Atualizar contadores para cada corretor
+  for (const contrato of contratosHoje) {
+    await db
+      .update(atividadesDiarias)
+      .set({
+        contratosFechados: contrato.total,
+        vgv: contrato.vgvTotal.toString(),
+      })
+      .where(
+        and(
+          eq(atividadesDiarias.corretorId, contrato.corretorId),
+          eq(atividadesDiarias.data, hoje)
+        )
+      );
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(contrato.corretorId);
+  }
+  
+  console.log(`[Sync] Sincronizados ${contratosHoje.length} contratos`);
+}
+
+/**
+ * Sincroniza todas as métricas do dia
+ * Executa todas as sincronizações em sequência
+ */
+export async function sincronizarTodasMetricasDoDia() {
+  console.log('[Sync] Iniciando sincronização de todas as métricas...');
+  
+  try {
+    await sincronizarInteracoesDoDia();
+    await sincronizarAgendamentosDoDia();
+    await sincronizarVisitasDoDia();
+    await sincronizarDocumentacoesDoDia();
+    await sincronizarAnalisesCreditoDoDia();
+    await sincronizarContratosDoDia();
+    
+    console.log('[Sync] Sincronização completa!');
+  } catch (error) {
+    console.error('[Sync] Erro na sincronização:', error);
+  }
+}
+
+// ============================================================================
+// FUNÇÕES PARA INSERIR REGISTROS NAS NOVAS TABELAS
+// ============================================================================
+
+/**
+ * Criar registro de interação (ligação ou WhatsApp)
+ */
+export async function createInteracao(data: InsertInteracao): Promise<Interacao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(interacoes).values(data);
+  const insertId = result[0].insertId;
+  
+  const interacao = await db.select().from(interacoes).where(eq(interacoes.id, insertId)).limit(1);
+  return interacao[0] || null;
+}
+
+/**
+ * Criar registro de documentação recolhida
+ */
+export async function createDocumentacao(data: InsertDocumentacao): Promise<Documentacao | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(documentacoes).values(data);
+  const insertId = result[0].insertId;
+  
+  const doc = await db.select().from(documentacoes).where(eq(documentacoes.id, insertId)).limit(1);
+  return doc[0] || null;
+}
+
+/**
+ * Criar registro de análise de crédito
+ */
+export async function createAnaliseCredito(data: InsertAnaliseCredito): Promise<AnaliseCredito | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(analises_credito).values(data);
+  const insertId = result[0].insertId;
+  
+  const analise = await db.select().from(analises_credito).where(eq(analises_credito.id, insertId)).limit(1);
+  return analise[0] || null;
+}
+
+/**
+ * Criar registro de contrato fechado
+ */
+export async function createContrato(data: InsertContrato): Promise<Contrato | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.insert(contratos).values(data);
+  const insertId = result[0].insertId;
+  
+  const contrato = await db.select().from(contratos).where(eq(contratos.id, insertId)).limit(1);
+  return contrato[0] || null;
 }
