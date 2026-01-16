@@ -101,6 +101,14 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de limpeza de links:", err);
     });
     
+    // Inicializar job de limpeza de follow-ups órfãos
+    import("../followupCleanupJob").then(({ agendarLimpezaFollowUps }) => {
+      agendarLimpezaFollowUps();
+      console.log("[Job] Limpeza automática de follow-ups órfãos inicializada (a cada 1 hora)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de limpeza de follow-ups:", err);
+    });
+    
     // Inicializar job de transferência automática de leads
     import("../transferenciaAutomaticaJob").then(({ agendarTransferenciaAutomatica }) => {
       agendarTransferenciaAutomatica();

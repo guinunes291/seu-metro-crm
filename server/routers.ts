@@ -438,6 +438,11 @@ export const appRouter = router({
           await db.criarFollowUpParaLead(input.id, lead.corretorId || ctx.user.id);
         }
         
+        // Se o status mudou para qualquer outro que não seja "em_atendimento", cancelar follow-ups pendentes
+        if (input.data.status && input.data.status !== 'em_atendimento' && lead.status === 'em_atendimento') {
+          await db.cancelarFollowUpsPendentes(input.id);
+        }
+        
         // Se o status for "perdido", tentar transferir para outro corretor
         if (input.data.status === 'perdido') {
           // Adicionar corretor atual à lista de quem já tentou

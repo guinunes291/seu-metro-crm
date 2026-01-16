@@ -3235,3 +3235,5 @@
 - [x] Adicionar "(parcela morando)" ao lado da primeira parcela na simulação de financiamento
 
 - [x] Corrigir bug de contagem de follow-ups: sistema bloqueia corretor com "6 follow-ups pendentes" mas não mostra tarefas na página "Tarefas do Dia"
+
+- [x] Implementar rotina de limpeza automática para cancelar follow-ups pendentes de leads que mudaram de status

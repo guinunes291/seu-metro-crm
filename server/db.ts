@@ -8013,3 +8013,118 @@ export async function countLogTransferencias(filters: Omit<LogTransferenciasFilt
   const result = await query;
   return result[0]?.count || 0;
 }
+
+
+/**
+ * Cancela follow-ups pendentes de um lead quando ele muda de status
+ * para qualquer status diferente de "em_atendimento"
+ * 
+ * @param leadId ID do lead
+ * @returns Número de follow-ups cancelados
+ */
+export async function cancelarFollowUpsPendentes(leadId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  
+  try {
+    // Buscar lead para verificar status atual
+    const lead = await db.select().from(leads).where(eq(leads.id, leadId)).limit(1);
+    
+    if (!lead[0]) {
+      console.log(`[cancelarFollowUpsPendentes] Lead ${leadId} não encontrado`);
+      return 0;
+    }
+    
+    // Se lead está "em_atendimento", não cancela follow-ups
+    if (lead[0].status === 'em_atendimento') {
+      console.log(`[cancelarFollowUpsPendentes] Lead ${leadId} está em atendimento, mantendo follow-ups`);
+      return 0;
+    }
+    
+    // Cancelar todos os follow-ups pendentes deste lead
+    const resultado = await db
+      .update(followUps)
+      .set({ 
+        status: 'cancelado',
+        observacao: `Cancelado automaticamente: lead mudou para status "${lead[0].status}"`
+      })
+      .where(and(
+        eq(followUps.leadId, leadId),
+        eq(followUps.status, 'pendente')
+      ));
+    
+    console.log(`[cancelarFollowUpsPendentes] Lead ${leadId}: ${resultado.rowsAffected || 0} follow-ups cancelados`);
+    return resultado.rowsAffected || 0;
+    
+  } catch (error) {
+    console.error('[cancelarFollowUpsPendentes] Erro:', error);
+    return 0;
+  }
+}
+
+/**
+ * Job de limpeza periódica: cancela follow-ups pendentes de leads
+ * que não estão mais com status "em_atendimento"
+ * 
+ * @returns Estatísticas da limpeza
+ */
+export async function limparFollowUpsOrfaos() {
+  const db = await getDb();
+  if (!db) return { total: 0, cancelados: 0 };
+  
+  try {
+    console.log('[limparFollowUpsOrfaos] Iniciando limpeza de follow-ups órfãos...');
+    
+    // Buscar todos os follow-ups pendentes com seus leads
+    const followUpsPendentes = await db
+      .select({
+        followUpId: followUps.id,
+        leadId: followUps.leadId,
+        leadStatus: leads.status,
+      })
+      .from(followUps)
+      .leftJoin(leads, eq(followUps.leadId, leads.id))
+      .where(eq(followUps.status, 'pendente'));
+    
+    console.log(`[limparFollowUpsOrfaos] Encontrados ${followUpsPendentes.length} follow-ups pendentes`);
+    
+    // Filtrar follow-ups de leads que não estão "em_atendimento"
+    const orfaos = followUpsPendentes.filter(f => f.leadStatus !== 'em_atendimento');
+    
+    if (orfaos.length === 0) {
+      console.log('[limparFollowUpsOrfaos] Nenhum follow-up órfão encontrado');
+      return { total: followUpsPendentes.length, cancelados: 0 };
+    }
+    
+    console.log(`[limparFollowUpsOrfaos] Encontrados ${orfaos.length} follow-ups órfãos para cancelar`);
+    
+    // Cancelar cada follow-up órfão
+    let cancelados = 0;
+    for (const orfao of orfaos) {
+      try {
+        await db
+          .update(followUps)
+          .set({ 
+            status: 'cancelado',
+            observacao: `Cancelado automaticamente: lead com status "${orfao.leadStatus}"`
+          })
+          .where(eq(followUps.id, orfao.followUpId));
+        
+        cancelados++;
+      } catch (error) {
+        console.error(`[limparFollowUpsOrfaos] Erro ao cancelar follow-up ${orfao.followUpId}:`, error);
+      }
+    }
+    
+    console.log(`[limparFollowUpsOrfaos] Limpeza concluída: ${cancelados} follow-ups cancelados`);
+    
+    return {
+      total: followUpsPendentes.length,
+      cancelados,
+    };
+    
+  } catch (error) {
+    console.error('[limparFollowUpsOrfaos] Erro:', error);
+    return { total: 0, cancelados: 0 };
+  }
+}
