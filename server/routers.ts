@@ -445,14 +445,18 @@ export const appRouter = router({
         
         // Se o status for "perdido", tentar transferir para outro corretor
         if (input.data.status === 'perdido') {
+          console.log(`[updateLead] Lead ${input.id} marcado como perdido. Status anterior: ${lead.status}, Corretor: ${lead.corretorId}`);
+          
           // Adicionar corretor atual à lista de quem já tentou
           const corretoresQueTentaram = lead.corretoresQueTentaram ? JSON.parse(lead.corretoresQueTentaram) : [];
           if (lead.corretorId && !corretoresQueTentaram.includes(lead.corretorId)) {
             corretoresQueTentaram.push(lead.corretorId);
           }
+          console.log(`[updateLead] Corretores que já tentaram: ${JSON.stringify(corretoresQueTentaram)}`);
           
           // Buscar próximo corretor disponível (presente e que não tentou ainda)
           const proximoCorretor = await db.getProximoCorretorDisponivel(corretoresQueTentaram);
+          console.log(`[updateLead] Próximo corretor encontrado: ${proximoCorretor ? proximoCorretor.name : 'nenhum'}`);
           
           if (proximoCorretor) {
             // Transferir para próximo corretor

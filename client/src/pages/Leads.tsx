@@ -329,10 +329,14 @@ export default function Leads() {
   const handleUpdateStatus = async (leadId: number, newStatus: string, currentStatus?: string) => {
     // Se o status atual é 'novo' ou 'aguardando_atendimento' e está mudando para outro,
     // obrigar a especificar o tipo de contato (ligação ou WhatsApp)
+    // EXCETO quando o novo status é 'perdido' (não faz sentido perguntar tipo de contato ao descartar lead)
     const statusAtual = currentStatus || leads?.find(l => l.id === leadId)?.status;
     const statusQueExigemContato = ['novo', 'aguardando_atendimento'];
+    const statusQueNaoExigemContato = ['perdido']; // Statuses que não exigem tipo de contato
     
-    if (statusQueExigemContato.includes(statusAtual || '') && !statusQueExigemContato.includes(newStatus)) {
+    if (statusQueExigemContato.includes(statusAtual || '') && 
+        !statusQueExigemContato.includes(newStatus) && 
+        !statusQueNaoExigemContato.includes(newStatus)) {
       // Mostrar modal para escolher tipo de contato
       setPendingStatusChange({ leadId, newStatus, currentStatus: statusAtual || '' });
       setContactTypeDialog(true);

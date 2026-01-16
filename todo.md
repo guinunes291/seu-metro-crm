@@ -3237,3 +3237,5 @@
 - [x] Corrigir bug de contagem de follow-ups: sistema bloqueia corretor com "6 follow-ups pendentes" mas não mostra tarefas na página "Tarefas do Dia"
 
 - [x] Implementar rotina de limpeza automática para cancelar follow-ups pendentes de leads que mudaram de status
+
+- [x] Corrigir bug: leads marcados como "Perdido" não são transferidos automaticamente e modal de tipo de contato aparece indevidamente
