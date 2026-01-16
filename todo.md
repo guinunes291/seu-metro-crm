@@ -3233,3 +3233,5 @@
 - [x] Adicionar coluna de data na tabela de pagamento mostrando quando cada parcela será paga
 - [x] Incluir CNPJ (55.579.001/0001-24) e CRECI-J (051891) no rodapé do PDF
 - [x] Adicionar "(parcela morando)" ao lado da primeira parcela na simulação de financiamento
+
+- [x] Corrigir bug de contagem de follow-ups: sistema bloqueia corretor com "6 follow-ups pendentes" mas não mostra tarefas na página "Tarefas do Dia"

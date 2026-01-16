@@ -7203,6 +7203,8 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
   // Buscar follow-ups pendentes do dia atual (hoje)
   // Novo fluxo: apenas follow-ups com status "pendente" e dataFollowUp de hoje
   
+  // IMPORTANTE: Filtrar apenas leads com status "em_atendimento"
+  // para ser consistente com getFollowUpsDoDiaExpandido
   return await db.select({
     id: followUps.id,
     leadId: followUps.leadId,
@@ -7212,11 +7214,13 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
     status: followUps.status,
   })
     .from(followUps)
+    .leftJoin(leads, eq(followUps.leadId, leads.id))
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, inicioDeHoje),
-      lte(followUps.dataFollowUp, fimDeHoje)
+      lte(followUps.dataFollowUp, fimDeHoje),
+      eq(leads.status, "em_atendimento") // APENAS leads Em Atendimento
     ));
 }
 
