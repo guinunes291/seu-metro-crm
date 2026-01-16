@@ -3241,3 +3241,5 @@
 - [x] Corrigir bug: leads marcados como "Perdido" não são transferidos automaticamente e modal de tipo de contato aparece indevidamente
 
 - [x] Implementar modal de confirmação com campo obrigatório "Motivo da Perda" quando corretor marca lead como Perdido
+
+- [x] Corrigir contabilização de agendamentos na tabela de performance: usar data de criação do agendamento e não depender do status atual do lead

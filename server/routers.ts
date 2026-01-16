@@ -2820,7 +2820,7 @@ export const appRouter = router({
         // Importar função de timezone
         const { parsearDataISO } = await import('./timezone');
         
-        return await db.createAgendamento({
+        const agendamento = await db.createAgendamento({
           leadId: input.leadId,
           corretorId: ctx.user.id,
           projectId: input.projectId,
@@ -2831,6 +2831,11 @@ export const appRouter = router({
           observacoes: input.observacoes,
           criadoPorId: ctx.user.id,
         });
+        
+        // Sincronizar agendamentos do dia com atividades diárias
+        await db.sincronizarAgendamentosDoDia();
+        
+        return agendamento;
       }),
     
     // Listar agendamentos do corretor
@@ -3442,6 +3447,9 @@ export const appRouter = router({
         
         // Incrementar contador do link
         await db.incrementarAgendamentosLink(link.id);
+        
+        // Sincronizar agendamentos do dia com atividades diárias
+        await db.sincronizarAgendamentosDoDia();
         
         // Desativar link se for exclusivo (com leadId)
         if (link.leadId) {

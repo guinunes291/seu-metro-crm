@@ -4136,9 +4136,10 @@ export async function registrarAtividadePorStatus(
     await incrementarAtividade(corretorId, 'ligacoesAtendidas');
   }
   
-  if (statusNovo === 'agendado') {
-    await incrementarAtividade(corretorId, 'agendamentosConfirmados');
-  }
+  // REMOVIDO: Agendamentos agora são contados pela data de criação na tabela agendamentos
+  // if (statusNovo === 'agendado') {
+  //   await incrementarAtividade(corretorId, 'agendamentosConfirmados');
+  // }
   
   if (statusNovo === 'visita_realizada') {
     await incrementarAtividade(corretorId, 'visitasRealizadas');
@@ -8126,5 +8127,44 @@ export async function limparFollowUpsOrfaos() {
   } catch (error) {
     console.error('[limparFollowUpsOrfaos] Erro:', error);
     return { total: 0, cancelados: 0 };
+  }
+}
+
+// Sincronizar agendamentos criados hoje com atividades diárias
+export async function sincronizarAgendamentosDoDia() {
+  const db = await getDb();
+  if (!db) return;
+  
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const fimDia = new Date(hoje);
+  fimDia.setHours(23, 59, 59, 999);
+  
+  // Buscar todos os agendamentos criados hoje
+  const agendamentosHoje = await db.select({
+    corretorId: agendamentos.corretorId,
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(agendamentos)
+    .where(and(
+      gte(agendamentos.createdAt, hoje),
+      lte(agendamentos.createdAt, fimDia)
+    ))
+    .groupBy(agendamentos.corretorId);
+  
+  // Atualizar atividades diárias de cada corretor
+  for (const { corretorId, count } of agendamentosHoje) {
+    await getOrCreateAtividadeDiaria(corretorId, hoje);
+    
+    // Atualizar diretamente o campo agendamentosConfirmados
+    await db.update(atividadesDiarias)
+      .set({ agendamentosConfirmados: count })
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretorId),
+        eq(atividadesDiarias.data, hoje)
+      ));
+    
+    // Recalcular pontuação
+    await calcularPontuacaoDiaria(corretorId);
   }
 }
