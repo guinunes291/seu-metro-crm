@@ -3292,3 +3292,12 @@
 - [x] Corrigir lógica de cálculo de pontuação (usar Math.max ao invés de somar ambos)
 - [x] Executar recalcularPontuacoes.mjs para corrigir 42 atividades históricas
 - [x] Validar que todas as métricas e pontuações estão corretas após correção
+
+## Bug: Calendário de Agendamentos - Divergência de Data e Contraste
+- [x] Corrigir divergência: dia 17 selecionado no calendário mostra como "16 de janeiro" no painel direito
+- [x] Identificado problema: new Date(string) interpreta como UTC e converte para GMT-3, causando dia anterior
+- [x] Solução: usar parseISO() do date-fns ao invés de new Date()
+- [x] Melhorar contraste de cores: texto verde claro sobre fundo cinza escuro difícil de ler
+- [x] Ajustar cores dos cards de status (Pendentes, Confirmados, Realizados, Cancelados) para melhor legibilidade
+- [x] Aumentar opacidade dos fundos de 10% para 20% e clarear textos de 400 para 300
+- [x] Testar e validar correções

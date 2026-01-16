@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, ChevronLeft, ChevronRight, Users, Clock, MapPin, Phone, Loader2 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const MESES = [
@@ -100,28 +100,28 @@ export default function CalendarioGestor() {
                 <div className="text-sm text-slate-400">Total</div>
               </CardContent>
             </Card>
-            <Card className="bg-amber-500/10 border-amber-500/30">
+            <Card className="bg-amber-500/20 border-amber-500/40">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-amber-400">{stats.porStatus.pendente}</div>
-                <div className="text-sm text-slate-400">Pendentes</div>
+                <div className="text-2xl font-bold text-amber-300">{stats.porStatus.pendente}</div>
+                <div className="text-sm text-slate-300 font-medium">Pendentes</div>
               </CardContent>
             </Card>
-            <Card className="bg-blue-500/10 border-blue-500/30">
+            <Card className="bg-blue-500/20 border-blue-500/40">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-400">{stats.porStatus.confirmado}</div>
-                <div className="text-sm text-slate-400">Confirmados</div>
+                <div className="text-2xl font-bold text-blue-300">{stats.porStatus.confirmado}</div>
+                <div className="text-sm text-slate-300 font-medium">Confirmados</div>
               </CardContent>
             </Card>
-            <Card className="bg-green-500/10 border-green-500/30">
+            <Card className="bg-green-500/20 border-green-500/40">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-400">{stats.porStatus.realizado}</div>
-                <div className="text-sm text-slate-400">Realizados</div>
+                <div className="text-2xl font-bold text-green-300">{stats.porStatus.realizado}</div>
+                <div className="text-sm text-slate-300 font-medium">Realizados</div>
               </CardContent>
             </Card>
-            <Card className="bg-red-500/10 border-red-500/30">
+            <Card className="bg-red-500/20 border-red-500/40">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-400">{stats.porStatus.cancelado}</div>
-                <div className="text-sm text-slate-400">Cancelados</div>
+                <div className="text-2xl font-bold text-red-300">{stats.porStatus.cancelado}</div>
+                <div className="text-sm text-slate-300 font-medium">Cancelados</div>
               </CardContent>
             </Card>
           </div>
@@ -204,10 +204,10 @@ export default function CalendarioGestor() {
                           </div>
                           {totalDia > 0 && (
                             <div className="mt-1">
-                              <div className={`text-xs px-1.5 py-0.5 rounded ${
-                                totalDia >= 5 ? 'bg-red-500/20 text-red-400' :
-                                totalDia >= 3 ? 'bg-amber-500/20 text-amber-400' :
-                                'bg-green-500/20 text-green-400'
+                              <div className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                                totalDia >= 5 ? 'bg-red-500/30 text-red-300' :
+                                totalDia >= 3 ? 'bg-amber-500/30 text-amber-300' :
+                                'bg-green-500/30 text-green-300'
                               }`}>
                                 {totalDia} {totalDia === 1 ? 'visita' : 'visitas'}
                               </div>
@@ -228,7 +228,7 @@ export default function CalendarioGestor() {
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-amber-500" />
                 {selectedDay 
-                  ? format(new Date(selectedDay), "dd 'de' MMMM", { locale: ptBR })
+                  ? format(parseISO(selectedDay), "dd 'de' MMMM", { locale: ptBR })
                   : 'Selecione um dia'
                 }
               </CardTitle>
