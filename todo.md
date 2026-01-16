@@ -3239,3 +3239,5 @@
 - [x] Implementar rotina de limpeza automática para cancelar follow-ups pendentes de leads que mudaram de status
 
 - [x] Corrigir bug: leads marcados como "Perdido" não são transferidos automaticamente e modal de tipo de contato aparece indevidamente
+
+- [x] Implementar modal de confirmação com campo obrigatório "Motivo da Perda" quando corretor marca lead como Perdido

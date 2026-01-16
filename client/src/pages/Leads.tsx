@@ -186,6 +186,12 @@ export default function Leads() {
   const [pendingStatusChange, setPendingStatusChange] = useState<{leadId: number, newStatus: string, currentStatus: string} | null>(null);
   const [selectedContactType, setSelectedContactType] = useState<'ligacao' | 'whatsapp' | ''>('');
 
+  // Estado para o dialog de motivo de perda
+  const [motivoPerdidoDialog, setMotivoPerdidoDialog] = useState(false);
+  const [pendingLossChange, setPendingLossChange] = useState<{leadId: number} | null>(null);
+  const [motivoPerdido, setMotivoPerdido] = useState('');
+  const [outroMotivo, setOutroMotivo] = useState('');
+
   // Estado para o dialog de agendamento
   const [agendamentoDialog, setAgendamentoDialog] = useState(false);
   const [agendamentoForm, setAgendamentoForm] = useState({
@@ -327,16 +333,20 @@ export default function Leads() {
   };
 
   const handleUpdateStatus = async (leadId: number, newStatus: string, currentStatus?: string) => {
+    // Se o status for 'perdido', mostrar modal de motivo da perda
+    if (newStatus === 'perdido') {
+      setPendingLossChange({ leadId });
+      setMotivoPerdidoDialog(true);
+      return;
+    }
+    
     // Se o status atual é 'novo' ou 'aguardando_atendimento' e está mudando para outro,
     // obrigar a especificar o tipo de contato (ligação ou WhatsApp)
-    // EXCETO quando o novo status é 'perdido' (não faz sentido perguntar tipo de contato ao descartar lead)
     const statusAtual = currentStatus || leads?.find(l => l.id === leadId)?.status;
     const statusQueExigemContato = ['novo', 'aguardando_atendimento'];
-    const statusQueNaoExigemContato = ['perdido']; // Statuses que não exigem tipo de contato
     
     if (statusQueExigemContato.includes(statusAtual || '') && 
-        !statusQueExigemContato.includes(newStatus) && 
-        !statusQueNaoExigemContato.includes(newStatus)) {
+        !statusQueExigemContato.includes(newStatus)) {
       // Mostrar modal para escolher tipo de contato
       setPendingStatusChange({ leadId, newStatus, currentStatus: statusAtual || '' });
       setContactTypeDialog(true);
@@ -347,11 +357,18 @@ export default function Leads() {
     await executeStatusUpdate(leadId, newStatus);
   };
 
-  const executeStatusUpdate = async (leadId: number, newStatus: string, contactType?: 'ligacao' | 'whatsapp') => {
+  const executeStatusUpdate = async (leadId: number, newStatus: string, contactType?: 'ligacao' | 'whatsapp', motivoPerdido?: string) => {
     try {
+      const updateData: any = { status: newStatus as any };
+      
+      // Se foi fornecido motivo da perda, incluir no update
+      if (motivoPerdido) {
+        updateData.motivoPerdido = motivoPerdido;
+      }
+      
       await updateLeadMutation.mutateAsync({
         id: leadId,
-        data: { status: newStatus as any },
+        data: updateData,
       });
 
       // Se foi especificado tipo de contato, registrar a atividade
@@ -1555,6 +1572,104 @@ export default function Leads() {
                   </>
                 ) : (
                   'Confirmar e Atualizar Status'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Motivo da Perda - Obrigatório ao marcar como 'perdido' */}
+        <Dialog open={motivoPerdidoDialog} onOpenChange={(open) => {
+          if (!open) {
+            setMotivoPerdidoDialog(false);
+            setPendingLossChange(null);
+            setMotivoPerdido('');
+            setOutroMotivo('');
+          }
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-destructive" />
+                Motivo da Perda do Lead
+              </DialogTitle>
+              <DialogDescription>
+                Para marcar este lead como perdido, é necessário informar o motivo. Isso ajuda na análise gerencial.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="motivo">Motivo da Perda *</Label>
+                <Select value={motivoPerdido} onValueChange={setMotivoPerdido}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sem_interesse">Sem Interesse</SelectItem>
+                    <SelectItem value="sem_credito">Sem Crédito / Não Aprovado</SelectItem>
+                    <SelectItem value="comprou_concorrente">Comprou com Concorrente</SelectItem>
+                    <SelectItem value="preco_alto">Preço Muito Alto</SelectItem>
+                    <SelectItem value="localizacao">Localização Não Atende</SelectItem>
+                    <SelectItem value="nao_atende">Não Atende / Não Responde</SelectItem>
+                    <SelectItem value="desistiu">Desistiu da Compra</SelectItem>
+                    <SelectItem value="outro">Outro Motivo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {motivoPerdido === 'outro' && (
+                <div className="space-y-2">
+                  <Label htmlFor="outro-motivo">Especifique o Motivo *</Label>
+                  <Textarea
+                    id="outro-motivo"
+                    placeholder="Descreva o motivo da perda..."
+                    value={outroMotivo}
+                    onChange={(e) => setOutroMotivo(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setMotivoPerdidoDialog(false);
+                setPendingLossChange(null);
+                setMotivoPerdido('');
+                setOutroMotivo('');
+              }}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={async () => {
+                  if (!motivoPerdido) {
+                    toast.error('Selecione o motivo da perda');
+                    return;
+                  }
+                  if (motivoPerdido === 'outro' && !outroMotivo.trim()) {
+                    toast.error('Especifique o motivo da perda');
+                    return;
+                  }
+                  
+                  if (pendingLossChange) {
+                    const motivoFinal = motivoPerdido === 'outro' ? outroMotivo : motivoPerdido;
+                    await executeStatusUpdate(pendingLossChange.leadId, 'perdido', undefined, motivoFinal);
+                    setMotivoPerdidoDialog(false);
+                    setPendingLossChange(null);
+                    setMotivoPerdido('');
+                    setOutroMotivo('');
+                  }
+                }}
+                disabled={!motivoPerdido || (motivoPerdido === 'outro' && !outroMotivo.trim()) || updateLeadMutation.isPending}
+                className="gap-2"
+                variant="destructive"
+              >
+                {updateLeadMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Marcando como Perdido...
+                  </>
+                ) : (
+                  'Confirmar e Marcar como Perdido'
                 )}
               </Button>
             </DialogFooter>
