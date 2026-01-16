@@ -8194,14 +8194,15 @@ function obterIntervaloHoje() {
 /**
  * Sincroniza interações (ligações e WhatsApp) criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
+ * FALLBACK: Se tabela interacoes estiver vazia, busca do leadHistory
  */
 export async function sincronizarInteracoesDoDia() {
   const db = await getDb();
   if (!db) return;
-  const { inicioHoje, fimHoje } = obterIntervaloHoje();
+  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Buscar todas as interações criadas hoje agrupadas por corretor e tipo
-  const interacoesHoje = await db
+  // Primeiro, tentar buscar da tabela interacoes
+  let interacoesHoje = await db
     .select({
       corretorId: interacoes.corretorId,
       tipo: interacoes.tipo,
@@ -8217,6 +8218,34 @@ export async function sincronizarInteracoesDoDia() {
       )
     )
     .groupBy(interacoes.corretorId, interacoes.tipo);
+  
+  // FALLBACK: Se tabela interacoes estiver vazia, buscar do leadHistory
+  if (interacoesHoje.length === 0) {
+    console.log('[Sync] Tabela interacoes vazia, usando fallback do leadHistory');
+    
+    const historicoHoje = await db
+      .select({
+        corretorId: leadHistory.corretorId,
+        tipo: leadHistory.tipo,
+        total: sql<number>`COUNT(*)`,
+        atendidas: sql<number>`SUM(CASE WHEN ${leadHistory.resultado} = 'contato_realizado' THEN 1 ELSE 0 END)`,
+        respondidas: sql<number>`SUM(CASE WHEN ${leadHistory.resultado} = 'contato_realizado' THEN 1 ELSE 0 END)`,
+      })
+      .from(leadHistory)
+      .where(
+        and(
+          gte(leadHistory.createdAt, inicioHoje),
+          lte(leadHistory.createdAt, fimHoje),
+          or(
+            eq(leadHistory.tipo, 'ligacao'),
+            eq(leadHistory.tipo, 'whatsapp')
+          )
+        )
+      )
+      .groupBy(leadHistory.corretorId, leadHistory.tipo);
+    
+    interacoesHoje = historicoHoje as any;
+  }
   
   // Atualizar contadores para cada corretor
   const corretoresMap = new Map<number, { ligacoes: number, ligacoesAtendidas: number, whatsapp: number, whatsappRespondidos: number }>();

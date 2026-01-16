@@ -3258,3 +3258,9 @@
 - [ ] Criar testes automatizados para todas as métricas
 - [ ] Validar métricas do Dashboard do Gestor
 - [ ] Validar métricas do Ranking TV (Produtividade Diária)
+
+## Bug Crítico: Métricas de Contatos Zeradas Após Sincronização
+- [x] Diagnosticar causa raiz (funções de sincronização buscando de tabelas vazias)
+- [x] Implementar fallback para buscar do leadHistory quando tabelas novas estiverem vazias
+- [x] Testar e validar que métricas voltaram aos valores corretos
+- [x] Confirmar que todos os corretores têm dados de ligações e WhatsApp
