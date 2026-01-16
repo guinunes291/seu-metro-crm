@@ -3264,3 +3264,22 @@
 - [x] Implementar fallback para buscar do leadHistory quando tabelas novas estiverem vazias
 - [x] Testar e validar que métricas voltaram aos valores corretos
 - [x] Confirmar que todos os corretores têm dados de ligações e WhatsApp
+
+## Nova Tarefa: Implementar Fallback nas Outras Funções de Sincronização
+- [ ] Implementar fallback para sincronizarVisitasDoDia (buscar do leadHistory quando tabela visitas vazia)
+- [ ] Implementar fallback para sincronizarDocumentacoesDoDia (buscar do leadHistory quando tabela documentacoes vazia)
+- [ ] Implementar fallback para sincronizarAnalisesCreditoDoDia (buscar do leadHistory quando tabela analises_credito vazia)
+- [ ] Implementar fallback para sincronizarContratosDoDia (buscar do leadHistory quando tabela contratos vazia)
+- [ ] Testar todas as métricas no dashboard e tela de produtividade
+- [ ] Validar que todos os corretores têm dados corretos
+
+## Implementação Completa: Fallback para Todas as Métricas de Sincronização
+- [x] Implementar fallback para sincronizarInteracoesDoDia (ligações e WhatsApp)
+- [x] Implementar fallback para sincronizarVisitasDoDia
+- [x] Implementar fallback para sincronizarDocumentacoesDoDia
+- [x] Implementar fallback para sincronizarAnalisesCreditoDoDia
+- [x] Implementar fallback para sincronizarContratosDoDia
+- [x] Corrigir campos de status (statusNovo ao invés de novoStatus)
+- [x] Testar todas as métricas no dashboard de Produtividade Diária
+- [x] Validar que todas as métricas aparecem corretamente para todos os corretores
+- [x] Salvar checkpoint final com todas as correções
