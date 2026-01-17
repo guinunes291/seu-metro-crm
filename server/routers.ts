@@ -3005,7 +3005,8 @@ export const appRouter = router({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
         }
         
-        return await db.createVisita({
+        // Criar registro de visita
+        const visita = await db.createVisita({
           leadId: input.leadId,
           corretorId: lead.corretorId || ctx.user.id,
           agendamentoId: input.agendamentoId,
@@ -3018,6 +3019,15 @@ export const appRouter = router({
           observacoes: input.observacoes,
           registradoPorId: ctx.user.id,
         });
+        
+        // Atualizar status do lead para "visita_realizada" automaticamente
+        if (lead.status !== 'visita_realizada') {
+          await db.updateLead(input.leadId, {
+            status: 'visita_realizada',
+          });
+        }
+        
+        return visita;
       }),
     
     // Listar visitas do corretor

@@ -4,10 +4,11 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Mail, GripVertical, MessageCircle } from "lucide-react";
+import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LeadTimer from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
+import { ModalRegistrarVisita } from "@/components/ModalRegistrarVisita";
 
 // Definição das colunas do Kanban baseadas nos status do lead
 const KANBAN_COLUMNS = [
@@ -50,6 +51,10 @@ export default function Kanban() {
   // Estado para drag and drop
   const [draggedLead, setDraggedLead] = useState<Lead | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  
+  // Estado do modal de registro de visita
+  const [modalVisitaOpen, setModalVisitaOpen] = useState(false);
+  const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null);
 
   // Agrupar leads por status
   const leadsByStatus = KANBAN_COLUMNS.reduce((acc, column) => {
@@ -214,6 +219,23 @@ export default function Kanban() {
                               )}
                             </div>
                           </div>
+                          
+                          {/* Botão Registrar Visita para leads agendados */}
+                          {(column.id === 'agendado' || column.id === 'visita_realizada') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full mt-2 h-7 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLeadSelecionado(lead);
+                                setModalVisitaOpen(true);
+                              }}
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Registrar Visita
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -239,6 +261,19 @@ export default function Kanban() {
           </div>
         )}
       </div>
+      
+      {/* Modal de Registro de Visita */}
+      {leadSelecionado && (
+        <ModalRegistrarVisita
+          open={modalVisitaOpen}
+          onOpenChange={setModalVisitaOpen}
+          leadId={leadSelecionado.id}
+          leadNome={leadSelecionado.nome}
+          onSuccess={() => {
+            refetch(); // Recarregar leads após registrar visita
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }

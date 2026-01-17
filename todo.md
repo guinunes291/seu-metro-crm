@@ -3386,3 +3386,15 @@
 - [x] Corrigir contagem de "Contrato Fechado" para usar tabela contratos (histórico) ao invés de status atual
 - [x] Criar testes unitários para validar que contagens não diminuem quando lead avança de etapa (7 testes passando)
 - [x] Validar no dashboard que números refletem histórico acumulado
+
+## Nova Funcionalidade: Registro de Visitas Realizadas
+- [x] Analisar schema da tabela visitas e identificar campos necessários
+- [x] Verificar fluxo atual de mudança de status para "visita_realizada"
+- [x] Criar procedure tRPC para registrar visita (visitas.create) - Já existia
+- [x] Criar modal/formulário de registro de visita na interface
+- [x] Adicionar botão "Registrar Visita" no kanban de leads
+- [x] Integrar registro de visita com atualização automática de status
+- [x] Validar que registro cria entrada na tabela visitas
+- [x] Validar que dashboard reflete o novo registro
+- [ ] Criar testes unitários para procedure de registro de visitas
+- [ ] Testar fluxo completo end-to-end (próximo passo)
