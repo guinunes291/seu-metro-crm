@@ -3372,3 +3372,8 @@
 - [x] Aplicar parseISO() em todas as conversões de data (linhas 162, 490, 593)
 - [x] Criar testes automatizados para validar correção (5 testes passando)
 - [x] Validar que agendamentos aparecem nos mesmos dias que no Calendário Geral (gestor)
+
+## Melhoria Visual: Cores do Calendário do Gestor
+- [x] Alterar cor de fundo do calendário de cinza (slate) para azul marinho/navy
+- [x] Alterar cor de fundo do painel "Selecione um dia" de cinza para azul marinho/navy
+- [x] Validar contraste e legibilidade dos textos

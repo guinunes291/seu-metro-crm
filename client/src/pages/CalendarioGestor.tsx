@@ -94,7 +94,7 @@ export default function CalendarioGestor() {
         {/* Estatísticas */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className="bg-slate-900 border-slate-800">
               <CardContent className="p-4 text-center">
                 <div className="text-2xl font-bold text-white">{stats.total}</div>
                 <div className="text-sm text-slate-400">Total</div>
@@ -129,7 +129,7 @@ export default function CalendarioGestor() {
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Calendário */}
-          <Card className="lg:col-span-2 bg-slate-800/50 border-slate-700">
+          <Card className="lg:col-span-2 bg-slate-900 border-slate-800">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-amber-500" />
@@ -193,8 +193,8 @@ export default function CalendarioGestor() {
                             selecionado 
                               ? 'bg-amber-500/20 border-2 border-amber-500' 
                               : isToday(dia)
-                                ? 'bg-slate-700/50 border border-slate-600'
-                                : 'bg-slate-800/30 hover:bg-slate-700/50'
+                                 ? 'bg-slate-800 border border-slate-700'
+                                : 'bg-slate-800/80 hover:bg-slate-700'
                           }`}
                         >
                           <div className={`text-sm font-medium ${
@@ -223,7 +223,7 @@ export default function CalendarioGestor() {
           </Card>
 
           {/* Lista de agendamentos do dia */}
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-slate-900 border-slate-800">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-amber-500" />
@@ -250,7 +250,7 @@ export default function CalendarioGestor() {
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {agendamentosFiltrados.map(ag => (
-                    <div key={ag.id} className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                    <div key={ag.id} className="p-3 bg-slate-800 rounded-lg border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-medium text-white">{ag.leadNome}</div>
@@ -293,7 +293,7 @@ export default function CalendarioGestor() {
 
         {/* Ranking de corretores */}
         {stats && stats.porCorretor.length > 0 && (
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="bg-slate-900 border-slate-800">
             <CardHeader>
               <CardTitle className="text-white">Agendamentos por Corretor</CardTitle>
               <CardDescription className="text-slate-400">
@@ -305,7 +305,7 @@ export default function CalendarioGestor() {
                 {stats.porCorretor
                   .sort((a, b) => b.total - a.total)
                   .map((corretor, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
+                    <div key={i} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                           i === 0 ? 'bg-amber-500 text-white' :
