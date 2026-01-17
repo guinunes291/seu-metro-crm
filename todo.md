@@ -3414,3 +3414,13 @@
 - [ ] Implementar rotação de backups (manter últimos 30 dias, deletar antigos) - Pendente
 - [x] Adicionar logs de backup para auditoria
 - [ ] Testar backup manual via endpoint (próximo passo)
+
+## Nova Funcionalidade: Fluxo de Fechamento de Contrato
+- [x] Analisar schema da tabela contratos e campos necessários
+- [x] Verificar procedure backend existente (contratos.create) - Criada procedure completa
+- [x] Criar modal ModalFecharContrato com formulário completo
+- [x] Adicionar botão "Fechar Contrato" no Kanban para leads em análise de crédito
+- [x] Integrar registro de contrato com atualização automática de status
+- [x] Atualizar cálculo de VGV no dashboard para usar tabela contratos
+- [x] Adicionar pontuação ao corretor por fechamento de contrato
+- [ ] Testar fluxo completo end-to-end

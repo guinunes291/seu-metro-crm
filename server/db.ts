@@ -1576,14 +1576,12 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
   ]);
   
-  // VGV - soma dos valores dos projetos dos contratos fechados
-  // Calcular baseado no valorMinimo dos projetos vinculados aos contratos
+  // VGV - soma dos valores dos contratos fechados
+  // Calcular baseado no valorVenda da tabela contratos
   const vgvResult = await db.select({ 
-    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
+    total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)` 
   })
     .from(contratos)
-    .leftJoin(leads, eq(contratos.leadId, leads.id))
-    .leftJoin(projects, eq(leads.projectId, projects.id))
     .where(filtros?.dataInicio || filtros?.dataFim ? and(
       ...(filtros.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
       ...(filtros.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : [])
@@ -8453,7 +8451,7 @@ export async function sincronizarContratosDoDia() {
     .select({
       corretorId: contratos.corretorId,
       total: sql<number>`COUNT(*)`,
-      vgvTotal: sql<number>`COALESCE(SUM(${contratos.valor}), 0)`,
+      vgvTotal: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
     })
     .from(contratos)
     .where(

@@ -3086,6 +3086,149 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // CONTRATOS (FECHAMENTO DE VENDAS)
+  // ============================================================================
+  contratos: router({
+    // Criar novo contrato (fechar venda)
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        projectId: z.number().optional(),
+        valorVenda: z.number().positive(),
+        dataAssinatura: z.string(), // ISO date string
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se o lead pertence ao corretor (ou se é gestor)
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
+        }
+        
+        // Criar registro de contrato
+        const { getDb } = await import("./db");
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { contratos, leads } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const [contrato] = await database.insert(contratos).values({
+          leadId: input.leadId,
+          corretorId: lead.corretorId || ctx.user.id,
+          valorVenda: input.valorVenda.toString(),
+          observacoes: input.observacoes,
+          createdAt: new Date(input.dataAssinatura),
+        }).$returningId();
+        
+        // Atualizar status do lead para "contrato_fechado"
+        await database
+          .update(leads)
+          .set({ 
+            status: "contrato_fechado",
+            ultimaInteracao: new Date(),
+          })
+          .where(eq(leads.id, input.leadId));
+        
+        // Registrar pontos para o corretor (fechamento de contrato = 50 pontos)
+        try {
+          const { registrarAtividade } = await import("./gamificacao");
+          await registrarAtividade({
+            corretorId: lead.corretorId || ctx.user.id,
+            tipo: "contrato_fechado",
+            pontos: 50,
+            descricao: `Contrato fechado - ${lead.nome} - R$ ${input.valorVenda.toLocaleString('pt-BR')}`,
+          });
+        } catch (error) {
+          console.error("Erro ao registrar pontos:", error);
+        }
+        
+        return { success: true, contratoId: contrato.id };
+      }),
+    
+    // Listar contratos do corretor
+    list: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { contratos, leads, projects } = await import("../drizzle/schema");
+        const { eq, and, gte, lte } = await import("drizzle-orm");
+        
+        const conditions = [eq(contratos.corretorId, ctx.user.id)];
+        if (input?.dataInicio) {
+          conditions.push(gte(contratos.createdAt, new Date(input.dataInicio)));
+        }
+        if (input?.dataFim) {
+          conditions.push(lte(contratos.createdAt, new Date(input.dataFim)));
+        }
+        
+        return await database
+          .select({
+            id: contratos.id,
+            leadId: contratos.leadId,
+            leadNome: leads.nome,
+            leadTelefone: leads.telefone,
+            valorVenda: contratos.valorVenda,
+            observacoes: contratos.observacoes,
+            dataAssinatura: contratos.createdAt,
+          })
+          .from(contratos)
+          .leftJoin(leads, eq(contratos.leadId, leads.id))
+          .where(and(...conditions));
+      }),
+    
+    // Listar todos os contratos (gestor)
+    listAll: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+        corretorId: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { contratos, leads, users } = await import("../drizzle/schema");
+        const { eq, and, gte, lte } = await import("drizzle-orm");
+        
+        const conditions = [];
+        if (input?.corretorId) {
+          conditions.push(eq(contratos.corretorId, input.corretorId));
+        }
+        if (input?.dataInicio) {
+          conditions.push(gte(contratos.createdAt, new Date(input.dataInicio)));
+        }
+        if (input?.dataFim) {
+          conditions.push(lte(contratos.createdAt, new Date(input.dataFim)));
+        }
+        
+        return await database
+          .select({
+            id: contratos.id,
+            leadId: contratos.leadId,
+            leadNome: leads.nome,
+            leadTelefone: leads.telefone,
+            corretorId: contratos.corretorId,
+            corretorNome: users.name,
+            valorVenda: contratos.valorVenda,
+            observacoes: contratos.observacoes,
+            dataAssinatura: contratos.createdAt,
+          })
+          .from(contratos)
+          .leftJoin(leads, eq(contratos.leadId, leads.id))
+          .leftJoin(users, eq(contratos.corretorId, users.id))
+          .where(conditions.length > 0 ? and(...conditions) : undefined);
+      }),
+  }),
+
+  // ============================================================================
   // BUSCA DE LEADS (para autocomplete)
   // ============================================================================
   searchLeads: router({

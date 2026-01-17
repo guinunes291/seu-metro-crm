@@ -4,11 +4,12 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LeadTimer from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
 import { ModalRegistrarVisita } from "@/components/ModalRegistrarVisita";
+import { ModalFecharContrato } from "@/components/ModalFecharContrato";
 
 // Definição das colunas do Kanban baseadas nos status do lead
 const KANBAN_COLUMNS = [
@@ -55,6 +56,10 @@ export default function Kanban() {
   // Estado do modal de registro de visita
   const [modalVisitaOpen, setModalVisitaOpen] = useState(false);
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null);
+  
+  // Estado do modal de fechamento de contrato
+  const [modalContratoOpen, setModalContratoOpen] = useState(false);
+  const [leadContratoSelecionado, setLeadContratoSelecionado] = useState<Lead | null>(null);
 
   // Agrupar leads por status
   const leadsByStatus = KANBAN_COLUMNS.reduce((acc, column) => {
@@ -236,6 +241,23 @@ export default function Kanban() {
                               Registrar Visita
                             </Button>
                           )}
+                          
+                          {/* Botão Fechar Contrato para leads em análise de crédito */}
+                          {column.id === 'analise_credito' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full mt-2 h-7 text-xs bg-green-50 hover:bg-green-100 border-green-300 text-green-700"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLeadContratoSelecionado(lead);
+                                setModalContratoOpen(true);
+                              }}
+                            >
+                              <FileCheck className="h-3 w-3 mr-1" />
+                              Fechar Contrato
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -271,6 +293,19 @@ export default function Kanban() {
           leadNome={leadSelecionado.nome}
           onSuccess={() => {
             refetch(); // Recarregar leads após registrar visita
+          }}
+        />
+      )}
+      
+      {/* Modal de Fechamento de Contrato */}
+      {leadContratoSelecionado && (
+        <ModalFecharContrato
+          isOpen={modalContratoOpen}
+          onClose={() => setModalContratoOpen(false)}
+          leadId={leadContratoSelecionado.id}
+          leadNome={leadContratoSelecionado.nome}
+          onSuccess={() => {
+            refetch(); // Recarregar leads após fechar contrato
           }}
         />
       )}
