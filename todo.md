@@ -3359,3 +3359,16 @@
 - [x] Trocar cores dos indicadores de visitas nos dias do calendário (bg-*-900/70)
 - [x] Trocar cores dos badges de status nos agendamentos (bg-*-900/70 com bordas)
 - [x] Testar e validar todas as novas cores no navegador - todas as cores funcionando perfeitamente
+
+## Bug: Timezone no Calendário de Agendamentos do Corretor
+- [ ] Identificar componente do calendário do corretor (Agendamentos.tsx)
+- [ ] Localizar onde datas estão sendo convertidas incorretamente (agendamentos 1 dia antes)
+- [ ] Aplicar parseISO() em todas as conversões de data
+- [ ] Testar e validar que agendamentos aparecem nos mesmos dias que no Calendário Geral (gestor)
+
+## Bug Corrigido: Timezone no Calendário de Agendamentos do Corretor
+- [x] Identificar componente do calendário do corretor (Agendamentos.tsx)
+- [x] Localizar onde datas estão sendo convertidas incorretamente (agendamentos 1 dia antes)
+- [x] Aplicar parseISO() em todas as conversões de data (linhas 162, 490, 593)
+- [x] Criar testes automatizados para validar correção (5 testes passando)
+- [x] Validar que agendamentos aparecem nos mesmos dias que no Calendário Geral (gestor)

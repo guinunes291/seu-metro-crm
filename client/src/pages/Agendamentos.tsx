@@ -60,7 +60,7 @@ import {
 import CalendarioAgendamentos from "@/components/CalendarioAgendamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Lead = {
@@ -159,7 +159,7 @@ export default function AgendamentosPage() {
 
   // Agrupar agendamentos por data
   const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
-    const data = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
+    const data = format(parseISO(ag.dataAgendamento), "yyyy-MM-dd");
     if (!acc[data]) acc[data] = [];
     acc[data].push(ag);
     return acc;
@@ -487,7 +487,7 @@ export default function AgendamentosPage() {
                 {datasOrdenadas.map((data) => (
                   <div key={data}>
                     <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      {format(new Date(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: ptBR })}
+                      {format(parseISO(data + "T12:00:00"), "EEEE, d 'de' MMMM", { locale: ptBR })}
                     </h3>
                     <div className="grid gap-3">
                       {agendamentosPorData[data].map((ag: Agendamento) => (
@@ -590,7 +590,7 @@ function AgendamentoCard({
               <div>
                 <span className="text-muted-foreground">Data:</span>
                 <div className="font-medium">
-                  {format(new Date(agendamento.dataAgendamento), "dd/MM/yyyy")}
+                  {format(parseISO(agendamento.dataAgendamento), "dd/MM/yyyy")}
                 </div>
               </div>
             </div>
