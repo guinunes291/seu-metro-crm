@@ -3405,3 +3405,12 @@
 - [x] Mapear emails dos corretores antigos para novos IDs - Impossível (corretores deletados)
 - [x] Reatribuir leads aos corretores corretos - 1035 leads redistribuídos
 - [x] Validar que todos os leads foram reatribuídos corretamente - 0 órfãos restantes
+
+## Sistema de Backup Automático de Dados
+- [x] Criar serviço de backup (`server/backup.ts`) com export de tabelas críticas
+- [x] Implementar upload de backups para S3 com nomenclatura por data/hora
+- [x] Criar job agendado de backup diário automático (execução às 3h da manhã)
+- [x] Criar endpoint tRPC para backup manual sob demanda (trpc.system.executarBackupManual)
+- [ ] Implementar rotação de backups (manter últimos 30 dias, deletar antigos) - Pendente
+- [x] Adicionar logs de backup para auditoria
+- [ ] Testar backup manual via endpoint (próximo passo)

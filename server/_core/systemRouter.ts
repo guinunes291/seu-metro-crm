@@ -534,4 +534,26 @@ export const systemRouter = router({
         mensagem: `${redistribuidos} leads redistribuídos equilibradamente entre ${todosCorretores.length} corretores${perdidos > 0 ? `, ${perdidos} leads movidos para Perdido (todos os corretores já trabalharam)` : ''}${erros > 0 ? `, ${erros} erros` : ''}`,
       };
     }),
+
+  // Endpoint para executar backup manual sob demanda
+  executarBackupManual: gestorProcedure
+    .mutation(async () => {
+      const { performBackup } = await import("../backup");
+      const resultado = await performBackup();
+      
+      if (!resultado.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: resultado.error || "Erro ao executar backup",
+        });
+      }
+      
+      return {
+        success: true,
+        filename: resultado.filename,
+        url: resultado.url,
+        timestamp: resultado.timestamp,
+        tables: resultado.tables,
+      };
+    }),
 });

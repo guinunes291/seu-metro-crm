@@ -124,6 +124,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de sincronização de métricas:", err);
     });
+    
+    // Inicializar job de backup automático
+    import("../backupJob").then(({ startBackupJob }) => {
+      startBackupJob();
+      console.log("[Job] Backup automático inicializado (diário às 3h)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de backup:", err);
+    });
   });
 }
 
