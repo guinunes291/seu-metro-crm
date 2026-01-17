@@ -3229,6 +3229,103 @@ export const appRouter = router({
   }),
 
   // ============================================================================
+  // ANÁLISES DE CRÉDITO
+  // ============================================================================
+  analises: router({
+    // Criar nova análise de crédito
+    create: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        status: z.enum(["enviada", "aprovada", "reprovada", "pendente"]).default("enviada"),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verificar se o lead pertence ao corretor (ou se é gestor)
+        const lead = await db.getLeadById(input.leadId);
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead não pertence a você' });
+        }
+        
+        // Criar registro de análise de crédito
+        const { getDb } = await import("./db");
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { analises_credito, leads } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        const [analise] = await database.insert(analises_credito).values({
+          leadId: input.leadId,
+          corretorId: lead.corretorId || ctx.user.id,
+          status: input.status || "enviada",
+          observacoes: input.observacoes,
+        }).$returningId();
+        
+        // Atualizar status do lead para "analise_credito"
+        await database
+          .update(leads)
+          .set({ 
+            status: "analise_credito",
+            ultimaInteracao: new Date(),
+          })
+          .where(eq(leads.id, input.leadId));
+        
+        // Registrar pontos para o corretor (análise de crédito = 15 pontos)
+        try {
+          const { registrarAtividade } = await import("./gamificacao");
+          await registrarAtividade({
+            corretorId: lead.corretorId || ctx.user.id,
+            tipo: "analise_credito",
+            pontos: 15,
+            descricao: `Análise de crédito enviada - ${lead.nome}`,
+          });
+        } catch (error) {
+          console.error("Erro ao registrar pontos:", error);
+        }
+        
+        return { success: true, analiseId: analise.id };
+      }),
+    
+    // Listar análises do corretor
+    list: corretorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+        const { analises_credito, leads } = await import("../drizzle/schema");
+        const { eq, and, gte, lte } = await import("drizzle-orm");
+        
+        const conditions = [eq(analises_credito.corretorId, ctx.user.id)];
+        if (input?.dataInicio) {
+          conditions.push(gte(analises_credito.createdAt, new Date(input.dataInicio)));
+        }
+        if (input?.dataFim) {
+          conditions.push(lte(analises_credito.createdAt, new Date(input.dataFim)));
+        }
+        
+        return await database
+          .select({
+            id: analises_credito.id,
+            leadId: analises_credito.leadId,
+            leadNome: leads.nome,
+            leadTelefone: leads.telefone,
+            status: analises_credito.status,
+            observacoes: analises_credito.observacoes,
+            dataEnvio: analises_credito.createdAt,
+          })
+          .from(analises_credito)
+          .leftJoin(leads, eq(analises_credito.leadId, leads.id))
+          .where(and(...conditions));
+      }),
+  }),
+
+  // ============================================================================
   // BUSCA DE LEADS (para autocomplete)
   // ============================================================================
   searchLeads: router({

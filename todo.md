@@ -3424,3 +3424,12 @@
 - [x] Atualizar cálculo de VGV no dashboard para usar tabela contratos
 - [x] Adicionar pontuação ao corretor por fechamento de contrato
 - [ ] Testar fluxo completo end-to-end
+
+## Nova Funcionalidade: Registro de Análise de Crédito
+- [x] Analisar schema da tabela analises_credito e identificar campos necessários
+- [x] Verificar procedure backend existente (analises.create) - Criada procedure completa
+- [x] Criar modal ModalRegistrarAnaliseCredito com formulário completo
+- [x] Adicionar botão "Registrar Análise" no Kanban para leads em visita realizada
+- [x] Integrar registro de análise com atualização automática de status
+- [x] Validar que dashboard reflete contagem real da tabela analises_credito
+- [ ] Testar fluxo completo end-to-end
