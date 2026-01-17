@@ -1547,33 +1547,47 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     db.select({ count: sql<number>`count(*)` })
       .from(leads)
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'em_atendimento')) : eq(leads.status, 'em_atendimento')),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'agendado')) : eq(leads.status, 'agendado')),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'visita_realizada')) : eq(leads.status, 'visita_realizada')),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'analise_credito')) : eq(leads.status, 'analise_credito')),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'contrato_fechado')) : eq(leads.status, 'contrato_fechado')),
+    db.select({ count: sql<number>`count(DISTINCT ${agendamentos.id})` })
+      .from(agendamentos)
+      .where(filtros?.dataInicio || filtros?.dataFim ? and(
+        ...(filtros.dataInicio ? [gte(agendamentos.createdAt, filtros.dataInicio)] : []),
+        ...(filtros.dataFim ? [lte(agendamentos.createdAt, filtros.dataFim)] : [])
+      ) : undefined),
+    db.select({ count: sql<number>`count(DISTINCT ${visitas.id})` })
+      .from(visitas)
+      .where(filtros?.dataInicio || filtros?.dataFim ? and(
+        ...(filtros.dataInicio ? [gte(visitas.createdAt, filtros.dataInicio)] : []),
+        ...(filtros.dataFim ? [lte(visitas.createdAt, filtros.dataFim)] : [])
+      ) : undefined),
+    db.select({ count: sql<number>`count(DISTINCT ${analises_credito.id})` })
+      .from(analises_credito)
+      .where(filtros?.dataInicio || filtros?.dataFim ? and(
+        ...(filtros.dataInicio ? [gte(analises_credito.createdAt, filtros.dataInicio)] : []),
+        ...(filtros.dataFim ? [lte(analises_credito.createdAt, filtros.dataFim)] : [])
+      ) : undefined),
+    db.select({ count: sql<number>`count(DISTINCT ${contratos.id})` })
+      .from(contratos)
+      .where(filtros?.dataInicio || filtros?.dataFim ? and(
+        ...(filtros.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
+        ...(filtros.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : [])
+      ) : undefined),
     db.select({ count: sql<number>`count(*)` })
       .from(leads)
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
   ]);
   
-  // VGV - soma dos valores dos projetos dos leads com contrato fechado
-  // Por enquanto, vamos calcular baseado no valorMinimo dos projetos
+  // VGV - soma dos valores dos projetos dos contratos fechados
+  // Calcular baseado no valorMinimo dos projetos vinculados aos contratos
   const vgvResult = await db.select({ 
     total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
   })
-    .from(leads)
+    .from(contratos)
+    .leftJoin(leads, eq(contratos.leadId, leads.id))
     .leftJoin(projects, eq(leads.projectId, projects.id))
-    .where(conditions.length > 0 
-      ? and(...conditions, eq(leads.status, 'contrato_fechado')) 
-      : eq(leads.status, 'contrato_fechado'));
+    .where(filtros?.dataInicio || filtros?.dataFim ? and(
+      ...(filtros.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
+      ...(filtros.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : [])
+    ) : undefined);
   
   return {
     total: Number(totalResult[0]?.count || 0),

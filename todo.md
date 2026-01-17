@@ -3377,3 +3377,12 @@
 - [x] Alterar cor de fundo do calendário de cinza (slate) para azul marinho/navy
 - [x] Alterar cor de fundo do painel "Selecione um dia" de cinza para azul marinho/navy
 - [x] Validar contraste e legibilidade dos textos
+
+## Bug Crítico: Contagem Incorreta de Etapas do Funil no Dashboard do Gestor
+- [x] Identificar procedures que calculam estatísticas do dashboard (getStats)
+- [x] Corrigir contagem de "Agendado" para usar tabela agendamentos (histórico) ao invés de status atual
+- [x] Corrigir contagem de "Visita Realizada" para usar tabela visitas (histórico) ao invés de status atual
+- [x] Corrigir contagem de "Análise de Crédito" para usar tabela analises_credito (histórico) ao invés de status atual
+- [x] Corrigir contagem de "Contrato Fechado" para usar tabela contratos (histórico) ao invés de status atual
+- [x] Criar testes unitários para validar que contagens não diminuem quando lead avança de etapa (7 testes passando)
+- [x] Validar no dashboard que números refletem histórico acumulado
