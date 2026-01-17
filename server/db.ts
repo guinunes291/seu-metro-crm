@@ -8219,15 +8219,14 @@ function obterIntervaloHoje() {
 /**
  * Sincroniza interações (ligações e WhatsApp) criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
- * FALLBACK: Se tabela interacoes estiver vazia, busca do leadHistory
  */
 export async function sincronizarInteracoesDoDia() {
   const db = await getDb();
   if (!db) return;
   const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Primeiro, tentar buscar da tabela interacoes
-  let interacoesHoje = await db
+  // Buscar da tabela interacoes
+  const interacoesHoje = await db
     .select({
       corretorId: interacoes.corretorId,
       tipo: interacoes.tipo,
@@ -8243,34 +8242,6 @@ export async function sincronizarInteracoesDoDia() {
       )
     )
     .groupBy(interacoes.corretorId, interacoes.tipo);
-  
-  // FALLBACK: Se tabela interacoes estiver vazia, buscar do leadHistory
-  if (interacoesHoje.length === 0) {
-    console.log('[Sync] Tabela interacoes vazia, usando fallback do leadHistory');
-    
-    const historicoHoje = await db
-      .select({
-        corretorId: leadHistory.corretorId,
-        tipo: leadHistory.tipo,
-        total: sql<number>`COUNT(*)`,
-        atendidas: sql<number>`SUM(CASE WHEN ${leadHistory.resultado} = 'contato_realizado' THEN 1 ELSE 0 END)`,
-        respondidas: sql<number>`SUM(CASE WHEN ${leadHistory.resultado} = 'contato_realizado' THEN 1 ELSE 0 END)`,
-      })
-      .from(leadHistory)
-      .where(
-        and(
-          gte(leadHistory.createdAt, inicioHoje),
-          lte(leadHistory.createdAt, fimHoje),
-          or(
-            eq(leadHistory.tipo, 'ligacao'),
-            eq(leadHistory.tipo, 'whatsapp')
-          )
-        )
-      )
-      .groupBy(leadHistory.corretorId, leadHistory.tipo);
-    
-    interacoesHoje = historicoHoje as any;
-  }
   
   // Atualizar contadores para cada corretor
   const corretoresMap = new Map<number, { ligacoes: number, ligacoesAtendidas: number, whatsapp: number, whatsappRespondidos: number }>();
@@ -8318,7 +8289,6 @@ export async function sincronizarInteracoesDoDia() {
 /**
  * Sincroniza visitas criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
- * FALLBACK: Se tabela visitas estiver vazia, busca do leadHistory
  */
 export async function sincronizarVisitasDoDia() {
   const db = await getDb();
@@ -8326,8 +8296,8 @@ export async function sincronizarVisitasDoDia() {
   
   const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Primeiro, tentar buscar da tabela visitas
-  let visitasHoje = await db
+  // Buscar da tabela visitas
+  const visitasHoje = await db
     .select({
       corretorId: visitas.corretorId,
       total: sql<number>`COUNT(*)`,
@@ -8340,28 +8310,6 @@ export async function sincronizarVisitasDoDia() {
       )
     )
     .groupBy(visitas.corretorId);
-  
-  // FALLBACK: Se tabela visitas estiver vazia, buscar do leadHistory
-  if (visitasHoje.length === 0) {
-    console.log('[Sync] Tabela visitas vazia, usando fallback do leadHistory');
-    
-    const historicoHoje = await db
-      .select({
-        corretorId: leadHistory.corretorId,
-        total: sql<number>`COUNT(DISTINCT ${leadHistory.leadId})`,
-      })
-      .from(leadHistory)
-      .where(
-        and(
-          gte(leadHistory.createdAt, inicioHoje),
-          lte(leadHistory.createdAt, fimHoje),
-          eq(leadHistory.statusNovo, 'visita_realizada')
-        )
-      )
-      .groupBy(leadHistory.corretorId);
-    
-    visitasHoje = historicoHoje as any;
-  }
   
   // Atualizar contadores para cada corretor
   for (const visita of visitasHoje) {
@@ -8387,7 +8335,6 @@ export async function sincronizarVisitasDoDia() {
 /**
  * Sincroniza documentações criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
- * FALLBACK: Se tabela documentacoes estiver vazia, busca do leadHistory
  */
 export async function sincronizarDocumentacoesDoDia() {
   const db = await getDb();
@@ -8395,8 +8342,8 @@ export async function sincronizarDocumentacoesDoDia() {
   
   const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Primeiro, tentar buscar da tabela documentacoes
-  let documentacoesHoje = await db
+  // Buscar da tabela documentacoes
+  const documentacoesHoje = await db
     .select({
       corretorId: documentacoes.corretorId,
       total: sql<number>`COUNT(*)`,
@@ -8409,28 +8356,6 @@ export async function sincronizarDocumentacoesDoDia() {
       )
     )
     .groupBy(documentacoes.corretorId);
-  
-  // FALLBACK: Se tabela documentacoes estiver vazia, buscar do leadHistory
-  if (documentacoesHoje.length === 0) {
-    console.log('[Sync] Tabela documentacoes vazia, usando fallback do leadHistory');
-    
-    const historicoHoje = await db
-      .select({
-        corretorId: leadHistory.corretorId,
-        total: sql<number>`COUNT(DISTINCT ${leadHistory.leadId})`,
-      })
-      .from(leadHistory)
-      .where(
-        and(
-          gte(leadHistory.createdAt, inicioHoje),
-          lte(leadHistory.createdAt, fimHoje),
-          eq(leadHistory.statusNovo, 'documentacao_enviada')
-        )
-      )
-      .groupBy(leadHistory.corretorId);
-    
-    documentacoesHoje = historicoHoje as any;
-  }
   
   // Atualizar contadores para cada corretor
   for (const doc of documentacoesHoje) {
@@ -8456,7 +8381,6 @@ export async function sincronizarDocumentacoesDoDia() {
 /**
  * Sincroniza análises de crédito criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
- * FALLBACK: Se tabela analises_credito estiver vazia, busca do leadHistory
  */
 export async function sincronizarAnalisesCreditoDoDia() {
   const db = await getDb();
@@ -8464,8 +8388,8 @@ export async function sincronizarAnalisesCreditoDoDia() {
   
   const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Primeiro, tentar buscar da tabela analises_credito
-  let analisesHoje = await db
+  // Buscar da tabela analises_credito
+  const analisesHoje = await db
     .select({
       corretorId: analises_credito.corretorId,
       total: sql<number>`COUNT(*)`,
@@ -8478,28 +8402,6 @@ export async function sincronizarAnalisesCreditoDoDia() {
       )
     )
     .groupBy(analises_credito.corretorId);
-  
-  // FALLBACK: Se tabela analises_credito estiver vazia, buscar do leadHistory
-  if (analisesHoje.length === 0) {
-    console.log('[Sync] Tabela analises_credito vazia, usando fallback do leadHistory');
-    
-    const historicoHoje = await db
-      .select({
-        corretorId: leadHistory.corretorId,
-        total: sql<number>`COUNT(DISTINCT ${leadHistory.leadId})`,
-      })
-      .from(leadHistory)
-      .where(
-        and(
-          gte(leadHistory.createdAt, inicioHoje),
-          lte(leadHistory.createdAt, fimHoje),
-          eq(leadHistory.statusNovo, 'analise_credito')
-        )
-      )
-      .groupBy(leadHistory.corretorId);
-    
-    analisesHoje = historicoHoje as any;
-  }
   
   // Atualizar contadores para cada corretor
   for (const analise of analisesHoje) {
@@ -8525,7 +8427,6 @@ export async function sincronizarAnalisesCreditoDoDia() {
 /**
  * Sincroniza contratos fechados hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
- * FALLBACK: Se tabela contratos estiver vazia, busca do leadHistory
  */
 export async function sincronizarContratosDoDia() {
   const db = await getDb();
@@ -8533,12 +8434,12 @@ export async function sincronizarContratosDoDia() {
   
   const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
   
-  // Primeiro, tentar buscar da tabela contratos
-  let contratosHoje = await db
+  // Buscar da tabela contratos
+  const contratosHoje = await db
     .select({
       corretorId: contratos.corretorId,
       total: sql<number>`COUNT(*)`,
-      vgvTotal: sql<number>`SUM(COALESCE(${contratos.valorVenda}, 0))`,
+      vgvTotal: sql<number>`COALESCE(SUM(${contratos.valor}), 0)`,
     })
     .from(contratos)
     .where(
@@ -8548,29 +8449,6 @@ export async function sincronizarContratosDoDia() {
       )
     )
     .groupBy(contratos.corretorId);
-  
-  // FALLBACK: Se tabela contratos estiver vazia, buscar do leadHistory
-  if (contratosHoje.length === 0) {
-    console.log('[Sync] Tabela contratos vazia, usando fallback do leadHistory');
-    
-    const historicoHoje = await db
-      .select({
-        corretorId: leadHistory.corretorId,
-        total: sql<number>`COUNT(DISTINCT ${leadHistory.leadId})`,
-        vgvTotal: sql<number>`0`, // VGV não está disponível no leadHistory
-      })
-      .from(leadHistory)
-      .where(
-        and(
-          gte(leadHistory.createdAt, inicioHoje),
-          lte(leadHistory.createdAt, fimHoje),
-          eq(leadHistory.statusNovo, 'contrato_fechado')
-        )
-      )
-      .groupBy(leadHistory.corretorId);
-    
-    contratosHoje = historicoHoje as any;
-  }
   
   // Atualizar contadores para cada corretor
   for (const contrato of contratosHoje) {
