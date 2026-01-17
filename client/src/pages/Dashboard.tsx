@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from "date-fns";
+import { format, parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, subMonths, startOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   LineChart,
@@ -788,7 +788,7 @@ export default function Dashboard() {
                         />
                         <YAxis fontSize={12} />
                         <Tooltip 
-                          labelFormatter={(label) => format(new Date(label), "dd/MM/yyyy", { locale: ptBR })}
+                          labelFormatter={(label) => format(parseISO(label), "dd/MM/yyyy", { locale: ptBR })}
                         />
                         <Legend />
                         <Line 

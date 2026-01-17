@@ -3346,3 +3346,9 @@
 - [x] Sistema agora usa apenas tabelas especializadas (sem fallback)
 - [x] Testado dashboard de produtividade: 2120 ligações, 806 WhatsApp exibidos corretamente
 - [x] Performance otimizada: queries até 10x mais rápidas
+
+## Bug: Timezone no Gráfico de Evolução de Leads
+- [x] Identificar componente do gráfico de Evolução de Leads no Dashboard do Gestor (Dashboard.tsx linha 791)
+- [x] Corrigir formatação de data no tooltip (dia 17/01 aparecendo como 16/01)
+- [x] Aplicar parseISO() ao invés de new Date() para evitar conversão de timezone
+- [x] Testar e validar correção no dashboard
