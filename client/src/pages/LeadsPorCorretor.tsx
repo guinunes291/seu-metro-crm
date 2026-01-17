@@ -22,14 +22,13 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 
-type LeadStatus = 'novo' | 'aguardando_atendimento' | 'em_atendimento' | 'agendado' | 'visita_realizada' | 'analise_credito' | 'contrato_fechado' | 'perdido';
+type LeadStatus = 'novo' | 'aguardando_atendimento' | 'em_atendimento' | 'analise_credito' | 'contrato_fechado' | 'perdido';
 
 const statusLabels: Record<LeadStatus, string> = {
   novo: "Novo",
   aguardando_atendimento: "Aguardando",
   em_atendimento: "Em Atendimento",
-  agendado: "Agendado",
-  visita_realizada: "Visita Realizada",
+  // agendado e visita_realizada são automáticos (não selecionáveis manualmente)
   analise_credito: "Análise de Crédito",
   contrato_fechado: "Contrato Fechado",
   perdido: "Perdido",
@@ -39,8 +38,6 @@ const statusColors: Record<LeadStatus, string> = {
   novo: "bg-blue-100 text-blue-800",
   aguardando_atendimento: "bg-yellow-100 text-yellow-800",
   em_atendimento: "bg-purple-100 text-purple-800",
-  agendado: "bg-orange-100 text-orange-800",
-  visita_realizada: "bg-cyan-100 text-cyan-800",
   analise_credito: "bg-indigo-100 text-indigo-800",
   contrato_fechado: "bg-green-100 text-green-800",
   perdido: "bg-red-100 text-red-800",

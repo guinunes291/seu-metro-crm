@@ -3301,3 +3301,27 @@
 - [x] Ajustar cores dos cards de status (Pendentes, Confirmados, Realizados, Cancelados) para melhor legibilidade
 - [x] Aumentar opacidade dos fundos de 10% para 20% e clarear textos de 400 para 300
 - [x] Testar e validar correções
+
+## Feature: Automatizar Mudança de Status Agendado e Visita Realizada
+- [ ] Remover "Agendado" e "Visita Realizada" das opções de status selecionáveis manualmente
+- [ ] Implementar trigger automático: ao criar agendamento → mudar lead para status "Agendado"
+- [ ] Implementar trigger automático: ao marcar agendamento como "realizado" → mudar lead para status "Visita Realizada"
+- [ ] Testar fluxo completo: criar agendamento e confirmar visita
+- [ ] Validar que status não aparecem mais nas opções manuais
+
+## Feature: Automatizar Mudança de Status Agendado e Visita Realizada
+- [ ] Remover "Agendado" e "Visita Realizada" das opções de status selecionáveis manualmente
+- [ ] Implementar trigger automático: ao criar agendamento → mudar lead para status "Agendado"
+- [ ] Implementar trigger automático: ao marcar agendamento como "realizado" → mudar lead para status "Visita Realizada"
+- [ ] Testar fluxo completo: criar agendamento e confirmar visita
+- [ ] Validar que status não aparecem mais nas opções manuais
+- [ ] Garantir que data/hora do agendamento sempre seja registrada no sistema
+
+## Feature: Automatizar Mudança de Status do Lead
+- [x] Remover "Agendado" e "Visita Realizada" das opções manuais de status (Leads.tsx e LeadsPorCorretor.tsx)
+- [x] Implementar trigger: ao criar agendamento → mudar lead para "agendado" automaticamente (routers.ts linha 2835)
+- [x] Implementar trigger no autoagendamento também (routers.ts linha 3439)
+- [x] Implementar trigger: ao marcar agendamento como "realizado" → mudar lead para "visita_realizada" automaticamente (updateStatus, update e updateAgendamentoStatus)
+- [x] Registrar mudanças de status no histórico do lead usando registrarAlteracaoStatus
+- [x] Criar testes unitários para validar automações (2 testes principais passando)
+- [x] Validar funcionamento no sistema (12 leads agendados, 1 visita realizada)

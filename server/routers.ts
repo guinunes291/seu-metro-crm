@@ -2832,6 +2832,18 @@ export const appRouter = router({
           criadoPorId: ctx.user.id,
         });
         
+        // Mudar status do lead para "agendado" automaticamente
+        if (lead.status !== 'agendado') {
+          await db.updateLead(input.leadId, { status: 'agendado' });
+          await db.registrarAlteracaoStatus({
+            leadId: input.leadId,
+            corretorId: ctx.user.id,
+            statusAnterior: lead.status,
+            statusNovo: 'agendado',
+            observacoes: `Status alterado automaticamente ao criar agendamento para ${input.dataAgendamento} às ${input.horaAgendamento}`
+          });
+        }
+        
         // Sincronizar agendamentos do dia com atividades diárias
         await db.sincronizarAgendamentosDoDia();
         
@@ -2888,8 +2900,32 @@ export const appRouter = router({
         id: z.number(),
         status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']),
       }))
-      .mutation(async ({ input }) => {
-        return await db.updateAgendamentoStatus(input.id, input.status);
+      .mutation(async ({ ctx, input }) => {
+        // Buscar agendamento para obter leadId
+        const agendamento = await db.getAgendamentoById(input.id);
+        if (!agendamento) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Agendamento não encontrado' });
+        }
+        
+        // Atualizar status do agendamento
+        const resultado = await db.updateAgendamentoStatus(input.id, input.status);
+        
+        // Se status mudou para "realizado", mudar lead para "visita_realizada" automaticamente
+        if (input.status === 'realizado') {
+          const lead = await db.getLeadById(agendamento.leadId);
+          if (lead && lead.status !== 'visita_realizada') {
+            await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            await db.registrarAlteracaoStatus({
+              leadId: agendamento.leadId,
+              corretorId: ctx.user.id,
+              statusAnterior: lead.status,
+              statusNovo: 'visita_realizada',
+              observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
+            });
+          }
+        }
+        
+        return resultado;
       }),
     
     // Atualizar agendamento
@@ -2901,12 +2937,37 @@ export const appRouter = router({
         observacoes: z.string().optional(),
         status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
-        return await db.updateAgendamento(id, {
+        
+        // Buscar agendamento para obter leadId
+        const agendamento = await db.getAgendamentoById(id);
+        if (!agendamento) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Agendamento não encontrado' });
+        }
+        
+        // Atualizar agendamento
+        const resultado = await db.updateAgendamento(id, {
           ...data,
           dataAgendamento: data.dataAgendamento ? new Date(data.dataAgendamento) : undefined,
         });
+        
+        // Se status mudou para "realizado", mudar lead para "visita_realizada" automaticamente
+        if (input.status === 'realizado') {
+          const lead = await db.getLeadById(agendamento.leadId);
+          if (lead && lead.status !== 'visita_realizada') {
+            await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            await db.registrarAlteracaoStatus({
+              leadId: agendamento.leadId,
+              corretorId: ctx.user.id,
+              statusAnterior: lead.status,
+              statusNovo: 'visita_realizada',
+              observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
+            });
+          }
+        }
+        
+        return resultado;
       }),
     
     // Excluir agendamento
@@ -3410,6 +3471,9 @@ export const appRouter = router({
           }
         }
         
+        // Buscar lead para verificar status anterior
+        const leadAntes = await db.getLeadById(leadId);
+        
         // Atualizar status do lead para "agendado" se ainda não estiver
         // Criar data corretamente para evitar problemas de fuso horário
         const [anoFollowup, mesFollowup, diaFollowup] = input.data.split('-').map(Number);
@@ -3420,6 +3484,17 @@ export const appRouter = router({
           status: 'agendado',
           proximoFollowup: dataFollowup
         });
+        
+        // Registrar alteração de status se mudou
+        if (leadAntes && leadAntes.status !== 'agendado') {
+          await db.registrarAlteracaoStatus({
+            leadId,
+            corretorId: link.corretorId,
+            statusAnterior: leadAntes.status,
+            statusNovo: 'agendado',
+            observacoes: `Status alterado automaticamente ao criar agendamento via autoagendamento para ${input.data} às ${input.hora}`
+          });
+        }
         
         // Criar agendamento - usar data e hora combinadas para evitar problemas de fuso horário
         // A data vem no formato yyyy-MM-dd e a hora no formato HH:mm

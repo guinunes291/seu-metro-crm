@@ -5428,14 +5428,35 @@ export async function getAgendamentosLead(leadId: number): Promise<Agendamento[]
  */
 export async function updateAgendamentoStatus(
   id: number,
-  status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado'
+  status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado',
+  corretorId?: number
 ): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
   
+  // Buscar agendamento para obter leadId e corretorId
+  const agendamento = await getAgendamentoById(id);
+  if (!agendamento) return false;
+  
+  // Atualizar status do agendamento
   await db.update(agendamentos)
     .set({ status, updatedAt: new Date() })
     .where(eq(agendamentos.id, id));
+  
+  // Se status mudou para "realizado", mudar lead para "visita_realizada" automaticamente
+  if (status === 'realizado') {
+    const lead = await getLeadById(agendamento.leadId);
+    if (lead && lead.status !== 'visita_realizada') {
+      await updateLead(agendamento.leadId, { status: 'visita_realizada' });
+      await registrarAlteracaoStatus({
+        leadId: agendamento.leadId,
+        corretorId: corretorId || agendamento.corretorId,
+        statusAnterior: lead.status,
+        statusNovo: 'visita_realizada',
+        observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
+      });
+    }
+  }
   
   return true;
 }
