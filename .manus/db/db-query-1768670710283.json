@@ -1,0 +1,28 @@
+{
+  "query": "\n-- Verificar dados operacionais preservados\nSELECT \n  (SELECT COUNT(*) FROM users WHERE role = 'corretor') as corretores_operacionais,\n  (SELECT COUNT(*) FROM users WHERE role = 'gestor') as gestores_operacionais,\n  (SELECT COUNT(*) FROM leads WHERE origem != 'teste') as leads_operacionais,\n  (SELECT COUNT(*) FROM agendamentos) as agendamentos_operacionais,\n  (SELECT COUNT(*) FROM visitas) as visitas_operacionais,\n  (SELECT COUNT(*) FROM projects) as projetos;\n\n-- Verificar se ainda existem dados de teste\nSELECT \n  (SELECT COUNT(*) FROM users WHERE email LIKE '%test%' OR name LIKE '%test%') as users_test_remaining,\n  (SELECT COUNT(*) FROM leads WHERE email LIKE '%test%' OR nome LIKE '%test%') as leads_test_remaining;\n\n-- Listar corretores operacionais\nSELECT id, name, email, role, status FROM users WHERE role = 'corretor' ORDER BY name LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Verificar dados operacionais preservados\nSELECT \n  (SELECT COUNT(*) FROM users WHERE role = 'corretor') as corretores_operacionais,\n  (SELECT COUNT(*) FROM users WHERE role = 'gestor') as gestores_operacionais,\n  (SELECT COUNT(*) FROM leads WHERE origem != 'teste') as leads_operacionais,\n  (SELECT COUNT(*) FROM agendamentos) as agendamentos_operacionais,\n  (SELECT COUNT(*) FROM visitas) as visitas_operacionais,\n  (SELECT COUNT(*) FROM projects) as projetos;\n\n-- Verificar se ainda existem dados de teste\nSELECT \n  (SELECT COUNT(*) FROM users WHERE email LIKE '%test%' OR name LIKE '%test%') as users_test_remaining,\n  (SELECT COUNT(*) FROM leads WHERE email LIKE '%test%' OR nome LIKE '%test%') as leads_test_remaining;\n\n-- Listar corretores operacionais\nSELECT id, name, email, role, status FROM users WHERE role = 'corretor' ORDER BY name LIMIT 10;\n",
+  "rows": [
+    {
+      "corretores_operacionais": "6",
+      "gestores_operacionais": "0",
+      "leads_operacionais": "240",
+      "agendamentos_operacionais": "18",
+      "visitas_operacionais": "1",
+      "projetos": "288"
+    }
+  ],
+  "messages": [
+    "users_test_remaining\tleads_test_remaining",
+    "0\t0",
+    "id\tname\temail\trole\tstatus",
+    "6368447\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\tausente",
+    "7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tcorretor\tausente",
+    "5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tcorretor\tausente",
+    "6396243\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\tpresente",
+    "6364694\tivenspagule\tivenspagule@gmail.com\tcorretor\tpresente",
+    "7438593\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tcorretor\tausente"
+  ],
+  "stdout": "corretores_operacionais\tgestores_operacionais\tleads_operacionais\tagendamentos_operacionais\tvisitas_operacionais\tprojetos\n6\t0\t240\t18\t1\t288\nusers_test_remaining\tleads_test_remaining\n0\t0\nid\tname\temail\trole\tstatus\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\tausente\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tcorretor\tausente\n5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tcorretor\tausente\n6396243\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\tpresente\n6364694\tivenspagule\tivenspagule@gmail.com\tcorretor\tpresente\n7438593\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tcorretor\tausente\n",
+  "stderr": "",
+  "execution_time_ms": 81
+}

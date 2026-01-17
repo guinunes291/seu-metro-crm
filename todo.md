@@ -3398,3 +3398,11 @@
 - [x] Validar que dashboard reflete o novo registro
 - [ ] Criar testes unitários para procedure de registro de visitas
 - [ ] Testar fluxo completo end-to-end (próximo passo)
+
+## Limpeza de Dados de Teste
+- [x] Identificar padrões de dados de teste (prefixos test, _T_, emails @test.com, etc.)
+- [x] Criar script de limpeza que preserva dados operacionais
+- [x] Executar limpeza de corretores de teste
+- [x] Executar limpeza de leads de teste
+- [x] Validar que dados operacionais foram preservados - 6 corretores e 5795 leads preservados
+- [x] Verificar integridade referencial após limpeza - 18 agendamentos preservados

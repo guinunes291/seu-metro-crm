@@ -1,0 +1,19 @@
+{
+  "query": "\n-- Usuários de teste\nSELECT COUNT(*) as total_test_users FROM users \nWHERE email LIKE '%test%' \n   OR email LIKE '%@test.com%'\n   OR name LIKE '%test%'\n   OR name LIKE '%Test%'\n   OR name LIKE '%_T_%'\n   OR openId LIKE '%test%'\n   OR openId LIKE '%_T_%';\n\n-- Leads de teste  \nSELECT COUNT(*) as total_test_leads FROM leads\nWHERE email LIKE '%test%'\n   OR email LIKE '%@test.com%'\n   OR nome LIKE '%test%'\n   OR nome LIKE '%Test%'\n   OR nome LIKE '%_T_%'\n   OR nome LIKE '%Lead Teste%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Usuários de teste\nSELECT COUNT(*) as total_test_users FROM users \nWHERE email LIKE '%test%' \n   OR email LIKE '%@test.com%'\n   OR name LIKE '%test%'\n   OR name LIKE '%Test%'\n   OR name LIKE '%_T_%'\n   OR openId LIKE '%test%'\n   OR openId LIKE '%_T_%';\n\n-- Leads de teste  \nSELECT COUNT(*) as total_test_leads FROM leads\nWHERE email LIKE '%test%'\n   OR email LIKE '%@test.com%'\n   OR nome LIKE '%test%'\n   OR nome LIKE '%Test%'\n   OR nome LIKE '%_T_%'\n   OR nome LIKE '%Lead Teste%';\n",
+  "rows": [
+    {
+      "total_test_users": "29"
+    },
+    {
+      "total_test_users": "total_test_leads"
+    },
+    {
+      "total_test_users": "1103"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_test_users\n29\ntotal_test_leads\n1103\n",
+  "stderr": "",
+  "execution_time_ms": 136
+}
