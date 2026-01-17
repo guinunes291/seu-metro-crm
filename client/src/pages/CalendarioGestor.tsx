@@ -100,28 +100,28 @@ export default function CalendarioGestor() {
                 <div className="text-sm text-slate-400">Total</div>
               </CardContent>
             </Card>
-            <Card className="bg-amber-500/20 border-amber-500/40">
+            <Card className="bg-amber-900/60 border-amber-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-amber-300">{stats.porStatus.pendente}</div>
-                <div className="text-sm text-slate-300 font-medium">Pendentes</div>
+                <div className="text-2xl font-bold text-amber-200">{stats.porStatus.pendente}</div>
+                <div className="text-sm text-slate-200 font-medium">Pendentes</div>
               </CardContent>
             </Card>
-            <Card className="bg-blue-500/20 border-blue-500/40">
+            <Card className="bg-blue-900/70 border-blue-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-blue-300">{stats.porStatus.confirmado}</div>
-                <div className="text-sm text-slate-300 font-medium">Confirmados</div>
+                <div className="text-2xl font-bold text-blue-200">{stats.porStatus.confirmado}</div>
+                <div className="text-sm text-slate-200 font-medium">Confirmados</div>
               </CardContent>
             </Card>
-            <Card className="bg-green-500/20 border-green-500/40">
+            <Card className="bg-green-900/60 border-green-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-green-300">{stats.porStatus.realizado}</div>
-                <div className="text-sm text-slate-300 font-medium">Realizados</div>
+                <div className="text-2xl font-bold text-green-200">{stats.porStatus.realizado}</div>
+                <div className="text-sm text-slate-200 font-medium">Realizados</div>
               </CardContent>
             </Card>
-            <Card className="bg-red-500/20 border-red-500/40">
+            <Card className="bg-red-900/60 border-red-700">
               <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-red-300">{stats.porStatus.cancelado}</div>
-                <div className="text-sm text-slate-300 font-medium">Cancelados</div>
+                <div className="text-2xl font-bold text-red-200">{stats.porStatus.cancelado}</div>
+                <div className="text-sm text-slate-200 font-medium">Cancelados</div>
               </CardContent>
             </Card>
           </div>
@@ -205,9 +205,9 @@ export default function CalendarioGestor() {
                           {totalDia > 0 && (
                             <div className="mt-1">
                               <div className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                                totalDia >= 5 ? 'bg-red-500/30 text-red-300' :
-                                totalDia >= 3 ? 'bg-amber-500/30 text-amber-300' :
-                                'bg-green-500/30 text-green-300'
+                                totalDia >= 5 ? 'bg-red-900/70 text-red-200' :
+                                totalDia >= 3 ? 'bg-amber-900/70 text-amber-200' :
+                                'bg-green-900/70 text-green-200'
                               }`}>
                                 {totalDia} {totalDia === 1 ? 'visita' : 'visitas'}
                               </div>
@@ -250,7 +250,7 @@ export default function CalendarioGestor() {
               ) : (
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {agendamentosFiltrados.map(ag => (
-                    <div key={ag.id} className="p-3 bg-slate-700/50 rounded-lg">
+                    <div key={ag.id} className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-medium text-white">{ag.leadNome}</div>
@@ -270,11 +270,11 @@ export default function CalendarioGestor() {
                           )}
                         </div>
                         <div className="text-right">
-                          <div className={`text-xs px-2 py-1 rounded ${
-                            ag.status === 'realizado' ? 'bg-green-500/20 text-green-400' :
-                            ag.status === 'cancelado' ? 'bg-red-500/20 text-red-400' :
-                            ag.status === 'confirmado' ? 'bg-blue-500/20 text-blue-400' :
-                            'bg-amber-500/20 text-amber-400'
+                          <div className={`text-xs px-2 py-1 rounded font-medium ${
+                            ag.status === 'realizado' ? 'bg-green-900/70 text-green-200 border border-green-700' :
+                            ag.status === 'cancelado' ? 'bg-red-900/70 text-red-200 border border-red-700' :
+                            ag.status === 'confirmado' ? 'bg-blue-900/70 text-blue-200 border border-blue-700' :
+                            'bg-amber-900/70 text-amber-200 border border-amber-700'
                           }`}>
                             {ag.status}
                           </div>

@@ -3352,3 +3352,10 @@
 - [x] Corrigir formatação de data no tooltip (dia 17/01 aparecendo como 16/01)
 - [x] Aplicar parseISO() ao invés de new Date() para evitar conversão de timezone
 - [x] Testar e validar correção no dashboard
+
+## Melhoria: Cores dos Cards de Status no Calendário
+- [x] Trocar cores claras dos cards de status no topo (pendentes, confirmados, realizados, cancelados) por tons mais escuros
+- [x] Trocar cores dos cards de agendamentos individuais no painel direito (bg-slate-800/80 com borda)
+- [x] Trocar cores dos indicadores de visitas nos dias do calendário (bg-*-900/70)
+- [x] Trocar cores dos badges de status nos agendamentos (bg-*-900/70 com bordas)
+- [x] Testar e validar todas as novas cores no navegador - todas as cores funcionando perfeitamente
