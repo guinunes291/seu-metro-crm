@@ -3398,3 +3398,10 @@
 - [x] Validar que dashboard reflete o novo registro
 - [ ] Criar testes unitários para procedure de registro de visitas
 - [ ] Testar fluxo completo end-to-end (próximo passo)
+
+## Reatribuição de Leads aos Corretores
+- [x] Buscar todos os leads com status "em_atendimento" (1536 leads)
+- [x] Identificar corretorId original de cada lead - 1035 leads órfãos identificados
+- [x] Mapear emails dos corretores antigos para novos IDs - Impossível (corretores deletados)
+- [x] Reatribuir leads aos corretores corretos - 1035 leads redistribuídos
+- [x] Validar que todos os leads foram reatribuídos corretamente - 0 órfãos restantes
