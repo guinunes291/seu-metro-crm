@@ -132,6 +132,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de backup:", err);
     });
+    
+    // Inicializar job de recálculo de pontuação
+    import("../pontuacaoJob").then(({ iniciarJobPontuacao }) => {
+      iniciarJobPontuacao();
+      console.log("[Job] Recálculo automático de pontuação inicializado (a cada 5 minutos)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de pontuação:", err);
+    });
   });
 }
 

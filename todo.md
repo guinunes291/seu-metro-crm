@@ -3433,3 +3433,13 @@
 - [x] Integrar registro de análise com atualização automática de status
 - [x] Validar que dashboard reflete contagem real da tabela analises_credito
 - [ ] Testar fluxo completo end-to-end
+
+## Bug Crítico: Pontuação Não Atualizada no Ranking
+- [x] Investigar dados de atividades do Gabriel no banco (32 contatos WhatsApp, 0 pontos)
+- [x] Verificar se pontos estão sendo registrados na tabela atividades_diarias para TODAS as ações
+- [x] Validar valores de pontuação contra tabela oficial (Ligação=5, WhatsApp=1, Agendamento=25, Visita=40, Análise=60, Contrato=150)
+- [x] Verificar lógica de cálculo do ranking (soma de pontos por corretor)
+- [x] Identificar onde pontos são atribuídos - Função calcularPontuacaoDiaria() nunca era chamada automaticamente
+- [x] Corrigir bugs na atribuição de pontos - Criado job automático de recálculo a cada 5 minutos
+- [x] Executar recálculo manual de todas as atividades - Gabriel agora tem 32 pontos
+- [ ] Testar ranking em tempo real no dashboard
