@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  i.id,\n  i.corretorId,\n  u.name as corretorNome,\n  i.tipo,\n  i.resultado,\n  i.createdAt\nFROM interacoes i\nLEFT JOIN users u ON i.corretorId = u.id\nWHERE DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  i.id,\n  i.corretorId,\n  u.name as corretorNome,\n  i.tipo,\n  i.resultado,\n  i.createdAt\nFROM interacoes i\nLEFT JOIN users u ON i.corretorId = u.id\nWHERE DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC\nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'i.resultado' in 'field list'"
+  ]
+}

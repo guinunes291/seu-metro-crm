@@ -3864,74 +3864,71 @@ export async function getRankingDia(data?: Date) {
   const fimDia = new Date(dataRef);
   fimDia.setHours(23, 59, 59, 999);
   
-  // Buscar atividades do dia com dados do corretor (usando intervalo de datas)
-  const atividades = await db.select({
-    id: atividadesDiarias.id,
-    corretorId: atividadesDiarias.corretorId,
+  // Buscar TODOS os corretores ativos e fazer LEFT JOIN com atividades do dia
+  const todosCorretores = await db.select({
+    corretorId: users.id,
     corretorNome: users.name,
     corretorFoto: users.fotoUrl,
-    ligacoesRealizadas: atividadesDiarias.ligacoesRealizadas,
-    ligacoesAtendidas: atividadesDiarias.ligacoesAtendidas,
-    whatsappEnviados: atividadesDiarias.whatsappEnviados,
-    whatsappRespondidos: atividadesDiarias.whatsappRespondidos,
-    agendamentosConfirmados: atividadesDiarias.agendamentosConfirmados,
-    visitasRealizadas: atividadesDiarias.visitasRealizadas,
-    propostasEnviadas: atividadesDiarias.propostasEnviadas,
-    documentacoesRecolhidas: atividadesDiarias.documentacoesRecolhidas,
-    analiseCreditoEnviadas: atividadesDiarias.analiseCreditoEnviadas,
-    contratosFechados: atividadesDiarias.contratosFechados,
-    vgvDia: atividadesDiarias.vgvDia,
-    pontuacaoTotal: atividadesDiarias.pontuacaoTotal,
   })
-    .from(atividadesDiarias)
-    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
-    .where(and(
-      gte(atividadesDiarias.data, inicioDia),
-      lte(atividadesDiarias.data, fimDia)
-    ))
-    .orderBy(desc(atividadesDiarias.pontuacaoTotal));
+    .from(users)
+    .where(eq(users.role, 'corretor'));
   
-  // Agrupar atividades por corretor (somar múltiplos registros do mesmo corretor)
-  const atividadesAgrupadas = new Map<number, typeof atividades[0]>();
-  
-  for (const atividade of atividades) {
-    const existente = atividadesAgrupadas.get(atividade.corretorId);
-    if (existente) {
-      // Somar valores
-      existente.ligacoesRealizadas += atividade.ligacoesRealizadas;
-      existente.ligacoesAtendidas += atividade.ligacoesAtendidas;
-      existente.whatsappEnviados += atividade.whatsappEnviados;
-      existente.whatsappRespondidos += atividade.whatsappRespondidos;
-      existente.agendamentosConfirmados += atividade.agendamentosConfirmados;
-      existente.visitasRealizadas += atividade.visitasRealizadas;
-      existente.propostasEnviadas += atividade.propostasEnviadas;
-      existente.documentacoesRecolhidas += atividade.documentacoesRecolhidas;
-      existente.analiseCreditoEnviadas += atividade.analiseCreditoEnviadas;
-      existente.contratosFechados += atividade.contratosFechados;
-      existente.vgvDia += atividade.vgvDia;
-      existente.pontuacaoTotal += atividade.pontuacaoTotal;
-    } else {
-      atividadesAgrupadas.set(atividade.corretorId, { ...atividade });
-    }
-  }
-  
-  // Converter Map para array e ordenar por pontuação
-  const atividadesUnicas = Array.from(atividadesAgrupadas.values())
-    .sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
-  
-  // Buscar metas de cada corretor para calcular percentuais
-  const resultado = await Promise.all(atividadesUnicas.map(async (atividade) => {
+  // Para cada corretor, buscar suas atividades do dia
+  const ranking = await Promise.all(todosCorretores.map(async (corretor) => {
+    // Buscar atividades do corretor no dia
+    const atividadesCorretor = await db.select()
+      .from(atividadesDiarias)
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretor.corretorId),
+        gte(atividadesDiarias.data, inicioDia),
+        lte(atividadesDiarias.data, fimDia)
+      ));
+    
+    // Somar todas as atividades do corretor no dia
+    const totais = atividadesCorretor.reduce((acc, ativ) => ({
+      ligacoesRealizadas: acc.ligacoesRealizadas + ativ.ligacoesRealizadas,
+      ligacoesAtendidas: acc.ligacoesAtendidas + ativ.ligacoesAtendidas,
+      whatsappEnviados: acc.whatsappEnviados + ativ.whatsappEnviados,
+      whatsappRespondidos: acc.whatsappRespondidos + ativ.whatsappRespondidos,
+      agendamentosConfirmados: acc.agendamentosConfirmados + ativ.agendamentosConfirmados,
+      visitasRealizadas: acc.visitasRealizadas + ativ.visitasRealizadas,
+      propostasEnviadas: acc.propostasEnviadas + ativ.propostasEnviadas,
+      documentacoesRecolhidas: acc.documentacoesRecolhidas + ativ.documentacoesRecolhidas,
+      analiseCreditoEnviadas: acc.analiseCreditoEnviadas + ativ.analiseCreditoEnviadas,
+      contratosFechados: acc.contratosFechados + ativ.contratosFechados,
+      vgvDia: acc.vgvDia + ativ.vgvDia,
+      pontuacaoTotal: acc.pontuacaoTotal + ativ.pontuacaoTotal,
+    }), {
+      ligacoesRealizadas: 0,
+      ligacoesAtendidas: 0,
+      whatsappEnviados: 0,
+      whatsappRespondidos: 0,
+      agendamentosConfirmados: 0,
+      visitasRealizadas: 0,
+      propostasEnviadas: 0,
+      documentacoesRecolhidas: 0,
+      analiseCreditoEnviadas: 0,
+      contratosFechados: 0,
+      vgvDia: 0,
+      pontuacaoTotal: 0,
+    });
+    
+    // Buscar metas do corretor
     const metasCorretor = await db.select()
       .from(metas)
-      .where(eq(metas.corretorId, atividade.corretorId))
+      .where(eq(metas.corretorId, corretor.corretorId))
       .limit(1);
     
     const meta = metasCorretor[0];
     
     return {
-      ...atividade,
+      id: corretor.corretorId,
+      corretorId: corretor.corretorId,
+      corretorNome: corretor.corretorNome,
+      corretorFoto: corretor.corretorFoto,
+      ...totais,
       metas: meta ? {
-        ligacoesMeta: Math.ceil(meta.metaLeads / 22) || 0, // Meta diária = mensal / 22 dias úteis
+        ligacoesMeta: Math.ceil(meta.metaLeads / 22) || 0,
         agendamentosMeta: Math.ceil(meta.metaAgendamentos / 22) || 0,
         visitasMeta: Math.ceil(meta.metaVisitas / 22) || 0,
         contratosMeta: Math.ceil(meta.metaContratos / 22) || 0,
@@ -3939,7 +3936,8 @@ export async function getRankingDia(data?: Date) {
     };
   }));
   
-  return resultado;
+  // Ordenar por pontuação (maior para menor)
+  return ranking.sort((a, b) => b.pontuacaoTotal - a.pontuacaoTotal);
 }
 
 // Obter ranking por período (com filtro de datas)
@@ -3997,25 +3995,53 @@ export async function getRankingSemanal() {
   const inicioSemana = new Date(hoje);
   inicioSemana.setDate(hoje.getDate() - hoje.getDay() + 1);
   
-  const ranking = await db.select({
-    corretorId: atividadesDiarias.corretorId,
+  // Buscar TODOS os corretores ativos
+  const todosCorretores = await db.select({
+    corretorId: users.id,
     corretorNome: users.name,
     corretorFoto: users.fotoUrl,
-    totalLigacoes: sql<number>`SUM(${atividadesDiarias.ligacoesRealizadas})`,
-    totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
-    totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
-    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
-    totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
-    totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
-    totalPontos: sql<number>`SUM(${atividadesDiarias.pontuacaoTotal})`,
   })
-    .from(atividadesDiarias)
-    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
-    .where(gte(atividadesDiarias.data, inicioSemana))
-    .groupBy(atividadesDiarias.corretorId, users.name, users.fotoUrl)
-    .orderBy(desc(sql`SUM(${atividadesDiarias.pontuacaoTotal})`));
+    .from(users)
+    .where(eq(users.role, 'corretor'));
   
-  return ranking;
+  // Para cada corretor, buscar suas atividades da semana
+  const ranking = await Promise.all(todosCorretores.map(async (corretor) => {
+    const atividadesCorretor = await db.select()
+      .from(atividadesDiarias)
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretor.corretorId),
+        gte(atividadesDiarias.data, inicioSemana)
+      ));
+    
+    // Somar todas as atividades
+    const totais = atividadesCorretor.reduce((acc, ativ) => ({
+      totalLigacoes: acc.totalLigacoes + ativ.ligacoesRealizadas,
+      totalAgendamentos: acc.totalAgendamentos + ativ.agendamentosConfirmados,
+      totalVisitas: acc.totalVisitas + ativ.visitasRealizadas,
+      totalDocumentacoes: acc.totalDocumentacoes + ativ.documentacoesRecolhidas,
+      totalContratos: acc.totalContratos + ativ.contratosFechados,
+      totalVgv: acc.totalVgv + ativ.vgvDia,
+      totalPontos: acc.totalPontos + ativ.pontuacaoTotal,
+    }), {
+      totalLigacoes: 0,
+      totalAgendamentos: 0,
+      totalVisitas: 0,
+      totalDocumentacoes: 0,
+      totalContratos: 0,
+      totalVgv: 0,
+      totalPontos: 0,
+    });
+    
+    return {
+      corretorId: corretor.corretorId,
+      corretorNome: corretor.corretorNome,
+      corretorFoto: corretor.corretorFoto,
+      ...totais,
+    };
+  }));
+  
+  // Ordenar por pontuação (maior para menor)
+  return ranking.sort((a, b) => b.totalPontos - a.totalPontos);
 }
 
 // Obter ranking mensal
@@ -4026,25 +4052,53 @@ export async function getRankingMensal() {
   const hoje = new Date();
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   
-  const ranking = await db.select({
-    corretorId: atividadesDiarias.corretorId,
+  // Buscar TODOS os corretores ativos
+  const todosCorretores = await db.select({
+    corretorId: users.id,
     corretorNome: users.name,
     corretorFoto: users.fotoUrl,
-    totalLigacoes: sql<number>`SUM(${atividadesDiarias.ligacoesRealizadas})`,
-    totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
-    totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
-    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
-    totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
-    totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
-    totalPontos: sql<number>`SUM(${atividadesDiarias.pontuacaoTotal})`,
   })
-    .from(atividadesDiarias)
-    .innerJoin(users, eq(atividadesDiarias.corretorId, users.id))
-    .where(gte(atividadesDiarias.data, inicioMes))
-    .groupBy(atividadesDiarias.corretorId, users.name, users.fotoUrl)
-    .orderBy(desc(sql`SUM(${atividadesDiarias.pontuacaoTotal})`));
+    .from(users)
+    .where(eq(users.role, 'corretor'));
   
-  return ranking;
+  // Para cada corretor, buscar suas atividades do mês
+  const ranking = await Promise.all(todosCorretores.map(async (corretor) => {
+    const atividadesCorretor = await db.select()
+      .from(atividadesDiarias)
+      .where(and(
+        eq(atividadesDiarias.corretorId, corretor.corretorId),
+        gte(atividadesDiarias.data, inicioMes)
+      ));
+    
+    // Somar todas as atividades
+    const totais = atividadesCorretor.reduce((acc, ativ) => ({
+      totalLigacoes: acc.totalLigacoes + ativ.ligacoesRealizadas,
+      totalAgendamentos: acc.totalAgendamentos + ativ.agendamentosConfirmados,
+      totalVisitas: acc.totalVisitas + ativ.visitasRealizadas,
+      totalDocumentacoes: acc.totalDocumentacoes + ativ.documentacoesRecolhidas,
+      totalContratos: acc.totalContratos + ativ.contratosFechados,
+      totalVgv: acc.totalVgv + ativ.vgvDia,
+      totalPontos: acc.totalPontos + ativ.pontuacaoTotal,
+    }), {
+      totalLigacoes: 0,
+      totalAgendamentos: 0,
+      totalVisitas: 0,
+      totalDocumentacoes: 0,
+      totalContratos: 0,
+      totalVgv: 0,
+      totalPontos: 0,
+    });
+    
+    return {
+      corretorId: corretor.corretorId,
+      corretorNome: corretor.corretorNome,
+      corretorFoto: corretor.corretorFoto,
+      ...totais,
+    };
+  }));
+  
+  // Ordenar por pontuação (maior para menor)
+  return ranking.sort((a, b) => b.totalPontos - a.totalPontos);
 }
 
 // Calcular e atualizar pontuação do corretor baseado nas metas

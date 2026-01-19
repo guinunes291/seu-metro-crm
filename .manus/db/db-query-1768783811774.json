@@ -1,0 +1,9 @@
+{
+  "query": "\nSELECT \n  ad.corretorId,\n  u.name as corretorNome,\n  u.email,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nLEFT JOIN users u ON ad.corretorId = u.id\nWHERE ad.data >= CURDATE()\nORDER BY ad.pontuacaoTotal DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  ad.corretorId,\n  u.name as corretorNome,\n  u.email,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nLEFT JOIN users u ON ad.corretorId = u.id\nWHERE ad.data >= CURDATE()\nORDER BY ad.pontuacaoTotal DESC;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 49
+}

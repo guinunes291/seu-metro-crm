@@ -3443,3 +3443,23 @@
 - [x] Corrigir bugs na atribuição de pontos - Criado job automático de recálculo a cada 5 minutos
 - [x] Executar recálculo manual de todas as atividades - Gabriel agora tem 32 pontos
 - [ ] Testar ranking em tempo real no dashboard
+
+## Bug: Ranking Mostrando Apenas 2 Corretores com 0 Pontos
+- [x] Verificar se dados do Gabriel ainda existem no banco de dados - Existem, 32 WhatsApps
+- [ ] Verificar procedure do ranking no dashboard do corretor
+- [ ] Identificar por que ranking mostra apenas 2 corretores ao invés de 17
+- [ ] Identificar por que ranking mostra 0 pontos para todos
+- [ ] Corrigir query do ranking para mostrar todos os corretores com pontuação real
+- [ ] Validar que ranking exibe todos os 17 corretores ordenados por pontos
+
+
+## Bug CRÍTICO Descoberto: Ranking Vazio para Hoje - RESOLVIDO ✅
+- [x] Investigação completa realizada
+- [x] Problema identificado: getRankingDia() usa INNER JOIN e só mostra corretores com atividades do dia
+- [x] Consequência: Se não houver atividades hoje, ranking fica vazio ou mostra apenas 2 corretores com 0 pontos
+- [x] Causa raiz: Não há interações/atividades registradas hoje (18/01/2026)
+- [x] Os 32 WhatsApps do Gabriel foram registrados em dias anteriores
+- [x] SOLUÇÃO: Modificar getRankingDia(), getRankingSemanal() e getRankingMensal() para usar LEFT JOIN
+- [x] Buscar TODOS os corretores ativos (role=corretor) e fazer LEFT JOIN com atividades_diarias
+- [x] Corretores sem atividades no período devem aparecer com 0 pontos
+- [x] Testar que ranking sempre mostra todos os corretores ordenados por pontuação - TESTADO E FUNCIONANDO!
