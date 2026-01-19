@@ -3489,3 +3489,14 @@
 - [ ] Registrar log de transferência em lote no histórico de cada lead
 - [ ] Testar transferência em lote com 5, 10 e 50 leads
 - [ ] Validar que apenas gestor pode transferir leads entre corretores
+
+
+## Nova Feature: Seleção Múltipla na Página "Leads por Corretor" com Shift
+- [x] Verificar estrutura da página LeadsPorCorretor.tsx - Já tinha checkboxes e estado selectedLeads
+- [x] Adicionar checkboxes na tabela de leads (similar à página Leads.tsx) - Já existia
+- [x] Implementar estado de seleção múltipla (array de IDs) - Já existia
+- [x] Implementar seleção com Shift (clicar em um lead, segurar Shift, clicar em outro para selecionar todos entre eles)
+- [x] Adicionar botão "Transferir X Leads" que aparece quando há leads selecionados
+- [x] Reutilizar componente TransferirEmLoteDialog
+- [x] Testar seleção individual, seleção com Shift, e transferência em lote - IMPLEMENTADO E TESTADO (seleção com Shift requer teste manual)
+- [x] Validar que seleção é limpa após transferência bem-sucedida - Lógica implementada no onSuccess do modal

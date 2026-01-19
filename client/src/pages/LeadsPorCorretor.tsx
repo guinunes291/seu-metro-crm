@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
+import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
@@ -52,7 +53,9 @@ export default function LeadsPorCorretor() {
   const [dataInicio, setDataInicio] = useState<string>("");
   const [dataFim, setDataFim] = useState<string>("");
   const [selectedLeads, setSelectedLeads] = useState<number[]>([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
 
   // Buscar corretores
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
@@ -95,12 +98,31 @@ export default function LeadsPorCorretor() {
     setDataFim("");
   };
 
-  const toggleSelectLead = (leadId: number) => {
-    setSelectedLeads(prev => 
-      prev.includes(leadId) 
-        ? prev.filter(id => id !== leadId)
-        : [...prev, leadId]
-    );
+  const toggleSelectLead = (leadId: number, index: number, shiftKey: boolean) => {
+    if (shiftKey && lastSelectedIndex !== null && leads) {
+      // Seleção com Shift: selecionar todos entre lastSelectedIndex e index
+      const start = Math.min(lastSelectedIndex, index);
+      const end = Math.max(lastSelectedIndex, index);
+      const rangeIds = leads.slice(start, end + 1).map(l => l.id);
+      
+      setSelectedLeads(prev => {
+        const newSelection = [...prev];
+        rangeIds.forEach(id => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
+    } else {
+      // Seleção normal: toggle individual
+      setSelectedLeads(prev => 
+        prev.includes(leadId) 
+          ? prev.filter(id => id !== leadId)
+          : [...prev, leadId]
+      );
+      setLastSelectedIndex(index);
+    }
   };
 
   const toggleSelectAll = () => {
@@ -144,18 +166,27 @@ export default function LeadsPorCorretor() {
           </div>
           <div className="flex gap-2">
             {selectedLeads.length > 0 && (
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteSelected}
-                disabled={deleteManyMutation.isPending}
-              >
-                {deleteManyMutation.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="mr-2 h-4 w-4" />
-                )}
-                Excluir ({selectedLeads.length})
-              </Button>
+              <>
+                <Button 
+                  variant="default" 
+                  onClick={() => setTransferirEmLoteDialog(true)}
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  Transferir {selectedLeads.length} {selectedLeads.length === 1 ? 'Lead' : 'Leads'}
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDeleteSelected}
+                  disabled={deleteManyMutation.isPending}
+                >
+                  {deleteManyMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Excluir ({selectedLeads.length})
+                </Button>
+              </>
             )}
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -327,14 +358,17 @@ export default function LeadsPorCorretor() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leads.map((lead) => (
+                    {leads.map((lead, index) => (
                       <TableRow key={lead.id} className={`${
                         selectedLeads.includes(lead.id) ? "bg-muted/50" : ""
                       } ${lead.origemWebhook ? 'bg-red-50/30 border-l-4 border-l-red-500' : ''}`}>
                         <TableCell>
                           <Checkbox
                             checked={selectedLeads.includes(lead.id)}
-                            onCheckedChange={() => toggleSelectLead(lead.id)}
+                            onCheckedChange={(checked, event) => {
+                              const shiftKey = (event as React.MouseEvent)?.shiftKey || false;
+                              toggleSelectLead(lead.id, index, shiftKey);
+                            }}
                           />
                         </TableCell>
                         <TableCell className="font-medium">
@@ -449,6 +483,18 @@ export default function LeadsPorCorretor() {
       
       {/* Popup urgente para leads Facebook Ads */}
       {webhookPopup}
+      
+      {/* Dialog de transferência em lote */}
+      <TransferirEmLoteDialog
+        open={transferirEmLoteDialog}
+        onOpenChange={setTransferirEmLoteDialog}
+        leadIds={selectedLeads}
+        onSuccess={() => {
+          refetchLeads();
+          refetchEstatisticas();
+          setSelectedLeads([]);
+        }}
+      />
     </DashboardLayout>
   );
 }
