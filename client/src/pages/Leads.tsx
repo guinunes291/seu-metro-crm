@@ -43,6 +43,7 @@ import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
+import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 
@@ -171,6 +172,10 @@ export default function Leads() {
   const [interactionDialog, setInteractionDialog] = useState(false);
   const [atribuirDialog, setAtribuirDialog] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  
+  // Estados para seleção múltipla
+  const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
+  const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
 
   const updateLeadMutation = trpc.leads.update.useMutation();
   const addInteractionMutation = trpc.leads.addInteraction.useMutation();
@@ -471,10 +476,22 @@ export default function Leads() {
               Gerencie seus contatos e acompanhe o funil de vendas
             </p>
           </div>
-          <Button onClick={() => setNewLeadDialog(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Novo Lead
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setNewLeadDialog(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Lead
+            </Button>
+            {isGestor && selectedLeadIds.length > 0 && (
+              <Button 
+                onClick={() => setTransferirEmLoteDialog(true)} 
+                variant="secondary"
+                className="gap-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                Transferir {selectedLeadIds.length} {selectedLeadIds.length === 1 ? 'Lead' : 'Leads'}
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filtros e Busca */}
@@ -903,6 +920,22 @@ export default function Leads() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {isGestor && (
+                      <TableHead className="w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedLeadIds.length === filteredLeads.length && filteredLeads.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedLeadIds(filteredLeads.map(l => l.id));
+                            } else {
+                              setSelectedLeadIds([]);
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300"
+                        />
+                      </TableHead>
+                    )}
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead>Projeto</TableHead>
@@ -919,6 +952,23 @@ export default function Leads() {
                     
                     return (
                       <TableRow key={lead.id} className={lead.origemWebhook ? 'bg-red-50/30' : ''}>
+                        {isGestor && (
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              checked={selectedLeadIds.includes(lead.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                                } else {
+                                  setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="h-4 w-4 rounded border-gray-300"
+                            />
+                          </TableCell>
+                        )}
                         <TableCell className="font-medium">
                           <div className="flex items-center gap-2">
                             {lead.nome}
@@ -1808,6 +1858,16 @@ export default function Leads() {
         onSuccess={() => {
           refetch();
           toast.success("Lead atribuído com sucesso!");
+        }}
+      />
+      
+      <TransferirEmLoteDialog
+        open={transferirEmLoteDialog}
+        onOpenChange={setTransferirEmLoteDialog}
+        leadIds={selectedLeadIds}
+        onSuccess={() => {
+          refetch();
+          setSelectedLeadIds([]);
         }}
       />
     </DashboardLayout>

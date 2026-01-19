@@ -607,6 +607,69 @@ export const appRouter = router({
         return { success: true, novoCorretor: novoCorretor.name };
       }),
     
+    // Transferir múltiplos leads em lote (apenas gestores)
+    transferirEmLote: gestorProcedure
+      .input(z.object({
+        leadIds: z.array(z.number()),
+        novoCorretorId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (input.leadIds.length === 0) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Nenhum lead selecionado' });
+        }
+        
+        // Verificar se novo corretor existe
+        const novoCorretor = await db.getUserById(input.novoCorretorId);
+        if (!novoCorretor || novoCorretor.role !== 'corretor') {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        }
+        
+        let transferidos = 0;
+        let erros = 0;
+        
+        // Transferir cada lead
+        for (const leadId of input.leadIds) {
+          try {
+            const lead = await db.getLeadById(leadId);
+            if (!lead) {
+              erros++;
+              continue;
+            }
+            
+            const corretorAnteriorId = lead.corretorId;
+            
+            // Atualizar lead com novo corretor
+            await db.updateLead(leadId, {
+              corretorId: input.novoCorretorId,
+            });
+            
+            // Registrar no histórico
+            await db.createLeadHistory({
+              leadId,
+              corretorId: ctx.user.id,
+              tipo: 'outro',
+              resultado: 'outro',
+              observacoes: `Lead transferido em lote para ${novoCorretor.name}${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
+            });
+            
+            transferidos++;
+          } catch (error) {
+            console.error(`Erro ao transferir lead ${leadId}:`, error);
+            erros++;
+          }
+        }
+        
+        // Criar follow-ups automáticos para todos os leads transferidos
+        await db.criarFollowUpsAutomaticos();
+        
+        return { 
+          success: true, 
+          transferidos, 
+          erros,
+          novoCorretor: novoCorretor.name 
+        };
+      }),
+    
     // Atribuir corretor manualmente (apenas gestores)
     atribuirCorretor: gestorProcedure
       .input(z.object({

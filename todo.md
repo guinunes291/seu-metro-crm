@@ -3463,3 +3463,29 @@
 - [x] Buscar TODOS os corretores ativos (role=corretor) e fazer LEFT JOIN com atividades_diarias
 - [x] Corretores sem atividades no período devem aparecer com 0 pontos
 - [x] Testar que ranking sempre mostra todos os corretores ordenados por pontuação - TESTADO E FUNCIONANDO!
+
+
+## Nova Feature: Seleção Múltipla de Leads para Atribuição/Transferência em Lote
+- [x] Criar procedure backend para transferir múltiplos leads de uma vez (transferirEmLote)
+- [x] Adicionar checkboxes de seleção múltipla na tabela de leads
+- [x] Implementar estado de seleção múltipla (array de IDs selecionados)
+- [x] Adicionar botão "Atribuir/Transferir Selecionados" que aparece quando há leads selecionados
+- [x] Criar modal de transferência com dropdown de corretores
+- [x] Implementar confirmação antes de executar transferência
+- [x] Exibir feedback visual de quantos leads foram selecionados
+- [x] Limpar seleção após transferência bem-sucedida
+- [x] Testar transferência em lote com 3 leads - TESTADO E FUNCIONANDO!
+- [x] Validar que apenas gestor pode transferir leads entre corretores - Checkboxes e botão só aparecem para gestor
+
+
+## Nova Feature: Seleção Múltipla de Leads para Atribuição/Transferência em Lote
+- [x] Criar procedure backend para transferir múltiplos leads de uma vez (transferirEmLote)
+- [ ] Adicionar checkboxes de seleção múltipla na tabela de leads
+- [ ] Implementar estado de seleção múltipla (array de IDs selecionados)
+- [ ] Adicionar botão "Atribuir/Transferir Selecionados" que aparece quando há leads selecionados
+- [ ] Criar modal de transferência com dropdown de corretores
+- [ ] Implementar confirmação antes de executar a transferência
+- [ ] Adicionar feedback visual de quantos leads foram selecionados
+- [ ] Registrar log de transferência em lote no histórico de cada lead
+- [ ] Testar transferência em lote com 5, 10 e 50 leads
+- [ ] Validar que apenas gestor pode transferir leads entre corretores
