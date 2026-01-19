@@ -3500,3 +3500,14 @@
 - [x] Reutilizar componente TransferirEmLoteDialog
 - [x] Testar seleção individual, seleção com Shift, e transferência em lote - IMPLEMENTADO E TESTADO (seleção com Shift requer teste manual)
 - [x] Validar que seleção é limpa após transferência bem-sucedida - Lógica implementada no onSuccess do modal
+
+
+## Bug: Lentidão e Erros ao Alterar Status de Lead (Aguardando → Em Atendimento)
+- [x] Investigar procedure de alteração de status no backend - leads.update (routers.ts linha 388)
+- [x] Verificar queries SQL executadas durante alteração de status - Múltiplas queries sequenciais
+- [x] Identificar possíveis queries lentas ou N+1 queries - registrarAtividadePorStatus() está desativada
+- [x] Verificar se há triggers ou jobs que executam - criarFollowUpParaLead() é eficiente
+- [x] Analisar logs do servidor para identificar erros - CORRIGIDO: transferenciaJob.ts tinha campo inexistente
+- [x] Implementar correção - Removido campo aguardandoTransferencia do transferenciaJob.ts
+- [x] Testar alteração de status com múltiplos leads no navegador - TESTADO: Sandro (Aguardando → Em Atendimento)
+- [x] Validar que alteração é rápida (< 1 segundo) - CONFIRMADO: Resposta instantânea, menos de 1 segundo

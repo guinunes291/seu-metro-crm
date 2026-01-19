@@ -26,14 +26,14 @@ export async function verificarTransferenciasAutomaticas() {
     const dataLimite = new Date();
     dataLimite.setDate(dataLimite.getDate() - 2);
     
-    // Buscar leads aguardando transferência há mais de 2 dias
+    // Buscar leads sem interação há mais de 2 dias (status em_atendimento)
     const leadsParaTransferir = await db.select()
       .from(leads)
       .where(and(
-        eq(leads.aguardandoTransferencia, true),
-        isNotNull(leads.dataUltimaInteracao),
-        lt(leads.dataUltimaInteracao, dataLimite),
-        eq(leads.status, "em_atendimento") // Apenas leads em atendimento
+        isNotNull(leads.ultimaInteracao),
+        lt(leads.ultimaInteracao, dataLimite),
+        eq(leads.status, "em_atendimento"), // Apenas leads em atendimento
+        isNotNull(leads.corretorId) // Apenas leads atribuídos
       ));
     
     if (leadsParaTransferir.length === 0) {
@@ -52,13 +52,8 @@ export async function verificarTransferenciasAutomaticas() {
         if (lead.origem === "captacao_corretor") {
           console.log(`[Transferência Job] Lead ${lead.id} ignorado (origem: captacao_corretor)`);
           
-          // Apenas remover flag de transferência
-          await db.update(leads)
-            .set({
-              aguardandoTransferencia: false,
-              updatedAt: new Date()
-            })
-            .where(eq(leads.id, lead.id));
+          // Lead de captação própria não é transferido
+          console.log(`[Transferência Job] Lead ${lead.id} não será transferido (captação própria)`);
           
           continue;
         }
@@ -70,13 +65,8 @@ export async function verificarTransferenciasAutomaticas() {
           transferidos++;
           console.log(`[Transferência Job] Lead ${lead.id} transferido com sucesso para corretor ${resultado.corretorId}`);
           
-          // Remover flag de transferência
-          await db.update(leads)
-            .set({
-              aguardandoTransferencia: false,
-              updatedAt: new Date()
-            })
-            .where(eq(leads.id, lead.id));
+          // Lead transferido com sucesso
+          console.log(`[Transferência Job] Lead ${lead.id} transferido com sucesso`);
         } else {
           erros++;
           console.error(`[Transferência Job] Erro ao transferir lead ${lead.id}:`, resultado.message);
