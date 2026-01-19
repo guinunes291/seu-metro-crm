@@ -159,7 +159,8 @@ export default function AgendamentosPage() {
 
   // Agrupar agendamentos por data
   const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
-    const data = format(parseISO(ag.dataAgendamento), "yyyy-MM-dd");
+    // ag.dataAgendamento já vem como Date do backend, não precisa parseISO
+    const data = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
     if (!acc[data]) acc[data] = [];
     acc[data].push(ag);
     return acc;

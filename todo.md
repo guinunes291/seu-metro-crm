@@ -3511,3 +3511,12 @@
 - [x] Implementar correção - Removido campo aguardandoTransferencia do transferenciaJob.ts
 - [x] Testar alteração de status com múltiplos leads no navegador - TESTADO: Sandro (Aguardando → Em Atendimento)
 - [x] Validar que alteração é rápida (< 1 segundo) - CONFIRMADO: Resposta instantânea, menos de 1 segundo
+
+
+## Bug: Erro "TypeError: e.split is not a function" na Página de Agendamentos
+- [x] Investigar código da página de Agendamentos (client/src/pages/Agendamentos.tsx)
+- [x] Identificar onde está sendo chamado .split() em variável não-string - Linha 162: parseISO() tentando fazer split em Date
+- [x] Verificar se é problema de dados vindos do backend ou lógica do frontend - Frontend: parseISO() espera string mas recebe Date
+- [x] Implementar correção - Removido parseISO() e usando new Date() diretamente
+- [x] Testar acesso à página de Agendamentos com diferentes usuários - TESTADO: Página carrega perfeitamente
+- [x] Validar que página carrega sem erros - CONFIRMADO: Ambas as abas (Calendário e Lista) funcionam sem erros
