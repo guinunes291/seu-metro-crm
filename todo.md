@@ -3577,3 +3577,9 @@
 - [x] Executar sincronização histórica uma vez para popular atividades_diarias retroativamente
 - [x] Validar que filtros "Este mês", "Esta semana", "Ontem" mostram dados históricos corretos
 - [x] Testar Performance TV com filtros de data e confirmar pontuação correta
+
+## Ajustes de Interface - Página Meus Leads
+- [x] Remover campo "Follow-up Consecutivo" do modal de detalhes do lead
+- [x] Adicionar nome do corretor responsável nos cards da página "Meus Leads" (visível para gestor)
+- [x] Testar visualização como gestor
+- [x] Testar visualização como corretor (deve ver apenas seus próprios leads)

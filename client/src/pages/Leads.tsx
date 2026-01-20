@@ -708,8 +708,14 @@ export default function Leads() {
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <CardTitle className="text-xl">{lead.nome}</CardTitle>
+                            {isGestor && lead.corretorNome && (
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <UserPlus className="h-3 w-3" />
+                                {lead.corretorNome}
+                              </Badge>
+                            )}
                             {lead.origemWebhook && (
                               <Badge className="bg-red-600 hover:bg-red-700 text-white">
                                 🔥 FACEBOOK ADS - URGENTE
@@ -727,11 +733,6 @@ export default function Leads() {
                           </div>
                           <CardDescription className="mt-1">
                             {lead.origem && `Origem: ${lead.origem}`}
-                            {isGestor && lead.corretorNome && (
-                              <span className="block text-sm text-muted-foreground mt-1">
-                                Corretor: {lead.corretorNome}
-                              </span>
-                            )}
                           </CardDescription>
                         </div>
                         <div className="flex flex-col items-end gap-2">
@@ -1264,10 +1265,10 @@ export default function Leads() {
 
                 <Separator />
 
-                {/* Status e Follow-up */}
+                {/* Status e Ações */}
                 <div>
-                  <h3 className="font-semibold mb-3">Status e Follow-up</h3>
-                  <div className="grid gap-3 md:grid-cols-2">
+                  <h3 className="font-semibold mb-3">Status e Ações</h3>
+                  <div>
                     <div>
                       <Label>Status Atual</Label>
                       <div className="mt-2">
@@ -1351,14 +1352,6 @@ export default function Leads() {
                             Marcar como Perdido
                           </Button>
                         )}
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Follow-up Consecutivo</Label>
-                      <div className="mt-1 p-2 border rounded-md bg-muted/50">
-                        <span className="text-sm font-medium">
-                          Dia {selectedLead.diasFollowupConsecutivos} de 5
-                        </span>
                       </div>
                     </div>
                   </div>
