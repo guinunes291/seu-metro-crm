@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
-  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus
+  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -812,21 +812,78 @@ export default function Leads() {
                         </div>
                         
                         <div className="flex flex-col gap-2">
-                          <Select
-                            value={lead.status}
-                            onValueChange={(value) => handleUpdateStatus(lead.id, value)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Object.entries(statusLabels).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {/* Badge de Status (read-only) */}
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-sm">
+                              {statusLabels[lead.status as keyof typeof statusLabels] || lead.status}
+                            </Badge>
+                          </div>
+                          
+                          {/* Botões de Ação Contextuais */}
+                          <div className="flex flex-wrap gap-2">
+                            {/* Aguardando Atendimento → Em Atendimento */}
+                            {(lead.status === 'aguardando_atendimento' || lead.status === 'novo') && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(lead.id, 'em_atendimento', lead.status)}
+                              >
+                                <Phone className="h-4 w-4 mr-1" />
+                                Iniciar Atendimento
+                              </Button>
+                            )}
+                            
+                            {/* Em Atendimento → Agendado (via criar agendamento) */}
+                            {lead.status === 'em_atendimento' && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedLead(lead);
+                                  setAgendamentoDialog(true);
+                                }}
+                              >
+                                <Calendar className="h-4 w-4 mr-1" />
+                                Criar Agendamento
+                              </Button>
+                            )}
+                            
+                            {/* Visita Realizada → Análise de Crédito */}
+                            {lead.status === 'visita_realizada' && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(lead.id, 'analise_credito')}
+                              >
+                                <FileText className="h-4 w-4 mr-1" />
+                                Enviar para Análise
+                              </Button>
+                            )}
+                            
+                            {/* Análise de Crédito → Contrato Fechado */}
+                            {lead.status === 'analise_credito' && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(lead.id, 'contrato_fechado')}
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Fechar Contrato
+                              </Button>
+                            )}
+                            
+                            {/* Marcar como Perdido (sempre disponível, exceto se já for perdido) */}
+                            {lead.status !== 'perdido' && lead.status !== 'contrato_fechado' && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(lead.id, 'perdido', lead.status)}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Marcar como Perdido
+                              </Button>
+                            )}
+                          </div>
                           
                           <div className="flex gap-2">
                             {isGestor && !lead.corretorId && (
@@ -1213,24 +1270,88 @@ export default function Leads() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
                       <Label>Status Atual</Label>
-                      <Select
-                        value={selectedLead.status}
-                        onValueChange={(value) => {
-                          handleUpdateStatus(selectedLead.id, value);
-                          setSelectedLead({ ...selectedLead, status: value });
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(statusLabels).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="mt-2">
+                        <Badge variant="outline" className="text-sm">
+                          {statusLabels[selectedLead.status as keyof typeof statusLabels] || selectedLead.status}
+                        </Badge>
+                      </div>
+                      
+                      {/* Botões de Ação Contextuais */}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {/* Aguardando Atendimento → Em Atendimento */}
+                        {(selectedLead.status === 'aguardando_atendimento' || selectedLead.status === 'novo') && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateStatus(selectedLead.id, 'em_atendimento', selectedLead.status);
+                              setSelectedLead({ ...selectedLead, status: 'em_atendimento' });
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-1" />
+                            Iniciar Atendimento
+                          </Button>
+                        )}
+                        
+                        {/* Em Atendimento → Agendado (via criar agendamento) */}
+                        {selectedLead.status === 'em_atendimento' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              setAgendamentoDialog(true);
+                            }}
+                          >
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Criar Agendamento
+                          </Button>
+                        )}
+                        
+                        {/* Visita Realizada → Análise de Crédito */}
+                        {selectedLead.status === 'visita_realizada' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateStatus(selectedLead.id, 'analise_credito');
+                              setSelectedLead({ ...selectedLead, status: 'analise_credito' });
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            Enviar para Análise
+                          </Button>
+                        )}
+                        
+                        {/* Análise de Crédito → Contrato Fechado */}
+                        {selectedLead.status === 'analise_credito' && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateStatus(selectedLead.id, 'contrato_fechado');
+                              setSelectedLead({ ...selectedLead, status: 'contrato_fechado' });
+                            }}
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Fechar Contrato
+                          </Button>
+                        )}
+                        
+                        {/* Marcar como Perdido */}
+                        {selectedLead.status !== 'perdido' && selectedLead.status !== 'contrato_fechado' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              handleUpdateStatus(selectedLead.id, 'perdido', selectedLead.status);
+                              setSelectedLead({ ...selectedLead, status: 'perdido' });
+                            }}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Marcar como Perdido
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <Label>Follow-up Consecutivo</Label>

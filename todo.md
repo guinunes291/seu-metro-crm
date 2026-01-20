@@ -3520,3 +3520,18 @@
 - [x] Implementar correção - Removido parseISO() e usando new Date() diretamente
 - [x] Testar acesso à página de Agendamentos com diferentes usuários - TESTADO: Página carrega perfeitamente
 - [x] Validar que página carrega sem erros - CONFIRMADO: Ambas as abas (Calendário e Lista) funcionam sem erros
+
+
+## Nova Feature: Automação Completa de Status de Leads
+- [x] Mapear fluxo completo de automação de status baseado nas ações do corretor
+- [x] Remover dropdown manual de status da interface (página Leads)
+- [x] Implementar transição automática: Novo → Aguardando Atendimento (quando lead é criado/distribuído) - JÁ EXISTE
+- [x] Implementar transição automática: Aguardando Atendimento → Em Atendimento (botão "Iniciar Atendimento")
+- [x] Implementar transição automática: Em Atendimento → Agendado (botão "Criar Agendamento") - JÁ EXISTE
+- [x] Implementar transição automática: Agendado → Visita Realizada (quando corretor confirma visita) - JÁ EXISTE
+- [x] Implementar transição automática: Visita Realizada → Análise de Crédito (botão "Enviar para Análise")
+- [x] Implementar transição automática: Análise de Crédito → Contrato Fechado (botão "Fechar Contrato")
+- [x] Manter apenas botão "Marcar como Perdido" como ação manual do corretor
+- [x] Adicionar badge de status (read-only) + botões contextuais no lugar do dropdown
+- [x] Testar fluxo completo de automação com lead real - TESTADO: Breno (Aguardando → Em Atendimento) funcionou perfeitamente!
+- [x] Validar que histórico de status é preservado para métricas de funil - Confirmado: executeStatusUpdate preserva histórico
