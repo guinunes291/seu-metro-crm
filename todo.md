@@ -3568,15 +3568,12 @@
 - [ ] Reiniciar servidor e testar que pontuação aparece no ranking em até 10 segundos após atividade
 
 
-## Nova Requisição: Sincronização de Dados Históricos com Timezone SP
-- [ ] Criar função de sincronização completa que processa TODOS os dados históricos (não apenas hoje)
-- [ ] Ajustar todas as queries de data para usar timezone de São Paulo (GMT-3)
-- [ ] Modificar sincronizarInteracoesDoDia() para aceitar parâmetro de data e processar qualquer dia
-- [ ] Modificar sincronizarAgendamentosDoDia() para aceitar parâmetro de data
-- [ ] Modificar sincronizarVisitasDoDia() para aceitar parâmetro de data
-- [ ] Modificar sincronizarDocumentacoesDoDia() para aceitar parâmetro de data
-- [ ] Modificar sincronizarAnalisesCreditoDoDia() para aceitar parâmetro de data
-- [ ] Modificar sincronizarContratosDoDia() para aceitar parâmetro de data
-- [ ] Criar procedure temporária para executar sincronização histórica completa
-- [ ] Executar sincronização histórica uma vez para popular atividades_diarias com todos os dados
-- [ ] Validar que filtros "Este mês", "Esta semana", "Ontem" mostram dados históricos corretos
+## Implementação: Sincronização de Dados Históricos com Timezone SP
+- [x] Criar script de sincronização histórica (syncHistorico.ts) que processa TODOS os dados desde o início
+- [x] Implementar função para obter todas as datas únicas de interações/agendamentos/visitas/etc
+- [x] Modificar funções de sincronização para aceitar parâmetro de data opcional (dataEspecifica?: Date)
+- [x] Ajustar cálculos de "hoje" para usar timezone de São Paulo (GMT-3) usando date-fns-tz
+- [x] Criar procedure tRPC temporária para executar sincronização histórica via API
+- [x] Executar sincronização histórica uma vez para popular atividades_diarias retroativamente
+- [x] Validar que filtros "Este mês", "Esta semana", "Ontem" mostram dados históricos corretos
+- [x] Testar Performance TV com filtros de data e confirmar pontuação correta

@@ -5124,6 +5124,20 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   }),
 
   // ============================================================================
+  // SINCRONIZAÇÃO HISTÓRICA
+  // ============================================================================
+  
+  syncHistorico: router({
+    // Executar sincronização histórica completa (apenas gestor)
+    executar: gestorProcedure
+      .mutation(async () => {
+        const { executarSincronizacaoHistorica } = await import('./syncHistorico');
+        const resultado = await executarSincronizacaoHistorica();
+        return resultado;
+      }),
+  }),
+
+  // ============================================================================
   // LOGS DE TRANSFERÊNCIAS AUTOMÁTICAS
   // ============================================================================
   
