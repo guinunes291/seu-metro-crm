@@ -15,8 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Search, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import { useState } from "react";
@@ -57,7 +56,6 @@ export default function LeadsPorCorretor() {
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Buscar corretores
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
@@ -74,21 +72,6 @@ export default function LeadsPorCorretor() {
       dataInicio: dataInicio || undefined,
       dataFim: dataFim || undefined,
     });
-
-  // Filtrar leads por termo de busca (nome, telefone, email)
-  const filteredLeads = leads?.filter((lead) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    const normalizedPhone = lead.telefone?.replace(/\D/g, '') || '';
-    const searchPhone = searchTerm.replace(/\D/g, '');
-    
-    return (
-      lead.nome?.toLowerCase().includes(search) ||
-      lead.email?.toLowerCase().includes(search) ||
-      normalizedPhone.includes(searchPhone)
-    );
-  }) || [];
-
 
   // Mutation para excluir múltiplos leads
   const deleteManyMutation = trpc.leads.deleteMany.useMutation({
@@ -231,20 +214,6 @@ export default function LeadsPorCorretor() {
                 </div>
               </CardHeader>
               <CardContent>
-            {/* Campo de Busca */}
-            <div className="mb-4 space-y-2">
-              <label className="text-sm font-medium">Buscar Lead</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Nome, telefone ou email..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex items-center gap-1">
                     <UserCheck className="h-4 w-4 text-green-600" />
@@ -359,7 +328,7 @@ export default function LeadsPorCorretor() {
           <CardHeader>
             <CardTitle>Leads</CardTitle>
             <CardDescription>
-              {filteredLeads.length} lead(s) encontrado(s)
+              {leads?.length || 0} lead(s) encontrado(s)
               {selectedLeads.length > 0 && ` • ${selectedLeads.length} selecionado(s)`}
             </CardDescription>
           </CardHeader>
