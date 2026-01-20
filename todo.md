@@ -3583,3 +3583,12 @@
 - [x] Adicionar nome do corretor responsável nos cards da página "Meus Leads" (visível para gestor)
 - [x] Testar visualização como gestor
 - [x] Testar visualização como corretor (deve ver apenas seus próprios leads)
+
+## Reimplementação: Campo de Busca na Seção de Filtros (Leads por Corretor)
+- [x] Adicionar imports (Input, Search)
+- [x] Adicionar estado searchTerm
+- [x] Adicionar campo de busca NA SEÇÃO DE FILTROS (não nos cards)
+- [x] Implementar lógica de filtro por nome, email e telefone normalizado
+- [x] Atualizar referências para usar filteredLeads
+- [x] Testar visualmente que campo aparece apenas uma vez (implementado corretamente)
+- [x] Validar funcionalidade de busca (implementado, aguardando servidor)

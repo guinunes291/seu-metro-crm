@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle } from "lucide-react";
+import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle, Search } from "lucide-react";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import { useState } from "react";
@@ -56,6 +57,7 @@ export default function LeadsPorCorretor() {
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Buscar corretores
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
@@ -72,6 +74,20 @@ export default function LeadsPorCorretor() {
       dataInicio: dataInicio || undefined,
       dataFim: dataFim || undefined,
     });
+
+  // Filtrar leads por termo de busca (nome, telefone, email)
+  const filteredLeads = leads?.filter((lead) => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    const normalizedPhone = lead.telefone?.replace(/\D/g, '') || '';
+    const searchPhone = searchTerm.replace(/\D/g, '');
+    
+    return (
+      lead.nome?.toLowerCase().includes(search) ||
+      lead.email?.toLowerCase().includes(search) ||
+      normalizedPhone.includes(searchPhone)
+    );
+  }) || [];
 
   // Mutation para excluir múltiplos leads
   const deleteManyMutation = trpc.leads.deleteMany.useMutation({
@@ -247,6 +263,20 @@ export default function LeadsPorCorretor() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Campo de Busca */}
+            <div className="mb-6 space-y-2">
+              <label className="text-sm font-medium">Buscar Lead</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Nome, telefone ou email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               {/* Corretor */}
               <div className="space-y-2">
@@ -328,7 +358,7 @@ export default function LeadsPorCorretor() {
           <CardHeader>
             <CardTitle>Leads</CardTitle>
             <CardDescription>
-              {leads?.length || 0} lead(s) encontrado(s)
+              {filteredLeads.length} lead(s) encontrado(s)
               {selectedLeads.length > 0 && ` • ${selectedLeads.length} selecionado(s)`}
             </CardDescription>
           </CardHeader>
@@ -337,14 +367,14 @@ export default function LeadsPorCorretor() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
               </div>
-            ) : leads && leads.length > 0 ? (
+            ) : filteredLeads.length > 0 ? (
               <div className="rounded-md border overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={leads.length > 0 && selectedLeads.length === leads.length}
+                          checked={filteredLeads.length > 0 && selectedLeads.length === filteredLeads.length}
                           onCheckedChange={toggleSelectAll}
                         />
                       </TableHead>
@@ -358,7 +388,7 @@ export default function LeadsPorCorretor() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leads.map((lead, index) => (
+                    {filteredLeads.map((lead, index) => (
                       <TableRow key={lead.id} className={`${
                         selectedLeads.includes(lead.id) ? "bg-muted/50" : ""
                       } ${lead.origemWebhook ? 'bg-red-50/30 border-l-4 border-l-red-500' : ''}`}>
