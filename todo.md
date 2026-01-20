@@ -3592,3 +3592,13 @@
 - [x] Testar visualização como gestor na página Meus Leads (validado via tabela)
 - [x] Testar visualização como gestor na página Kanban (código já existente, backend corrigido)
 - [x] Validar que corretor não vê o badge (apenas seus próprios leads)
+
+## 🚨 CRÍTICO: Leads Desapareceram Após Alteração no Backend
+- [x] Investigar por que todos os leads sumiram após adicionar JOIN com users
+- [x] Verificar logs do servidor para identificar erros SQL
+- [x] Analisar se o problema está no LEFT JOIN ou na estrutura do SELECT
+- [x] Corrigir query para restaurar visualização de todos os leads (usando queries separadas)
+- [x] Validar que leads voltaram para todos os usuários (gestor e corretores)
+- [x] Testar página Meus Leads
+- [x] Testar Kanban
+- [x] Testar Leads por Corretor

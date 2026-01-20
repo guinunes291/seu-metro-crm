@@ -849,39 +849,33 @@ export async function getAllLeads(options?: {
     .where(whereClause);
   const total = Number(countResult[0]?.count || 0);
   
-  // Buscar leads com paginação incluindo nome do corretor
+  // Buscar leads com paginação
   // Ordenar: leads webhook primeiro, depois por data de criação
-  const leadsResult = await db.select({
-    id: leads.id,
-    nome: leads.nome,
-    email: leads.email,
-    telefone: leads.telefone,
-    cpf: leads.cpf,
-    status: leads.status,
-    origem: leads.origem,
-    origemWebhook: leads.origemWebhook,
-    projectId: leads.projectId,
-    corretorId: leads.corretorId,
-    corretorNome: users.nome,
-    observacoes: leads.observacoes,
-    createdAt: leads.createdAt,
-    updatedAt: leads.updatedAt,
-    dataDistribuicao: leads.dataDistribuicao,
-    ultimoContato: leads.ultimoContato,
-    campanha: leads.campanha,
-    faixaRenda: leads.faixaRenda,
-    naLixeira: leads.naLixeira,
-    motivoDescarte: leads.motivoDescarte,
-  })
-    .from(leads)
-    .leftJoin(users, eq(leads.corretorId, users.id))
+  const leadsResult = await db.select().from(leads)
     .where(whereClause)
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)
     .offset(offset);
   
+  // Buscar nomes dos corretores para os leads retornados
+  const corretorIds = [...new Set(leadsResult.map(l => l.corretorId).filter(Boolean))];
+  const corretoresMap = new Map<number, string>();
+  
+  if (corretorIds.length > 0) {
+    const corretores = await db.select({ id: users.id, nome: users.nome })
+      .from(users)
+      .where(sql`${users.id} IN (${sql.join(corretorIds.map(id => sql`${id}`), sql`, `)})`);
+    corretores.forEach(c => corretoresMap.set(c.id, c.nome));
+  }
+  
+  // Adicionar corretorNome aos leads
+  const leadsWithCorretor = leadsResult.map(lead => ({
+    ...lead,
+    corretorNome: lead.corretorId ? (corretoresMap.get(lead.corretorId) || null) : null
+  }));
+  
   return {
-    leads: leadsResult,
+    leads: leadsWithCorretor,
     total,
     page,
     limit,
@@ -954,37 +948,30 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   
   const total = Number(countResult?.count || 0);
   
-  // Buscar leads paginados com filtros incluindo nome do corretor
-  const leadsData = await db.select({
-    id: leads.id,
-    nome: leads.nome,
-    email: leads.email,
-    telefone: leads.telefone,
-    cpf: leads.cpf,
-    status: leads.status,
-    origem: leads.origem,
-    origemWebhook: leads.origemWebhook,
-    projectId: leads.projectId,
-    corretorId: leads.corretorId,
-    corretorNome: users.nome,
-    observacoes: leads.observacoes,
-    createdAt: leads.createdAt,
-    updatedAt: leads.updatedAt,
-    dataDistribuicao: leads.dataDistribuicao,
-    ultimoContato: leads.ultimoContato,
-    campanha: leads.campanha,
-    faixaRenda: leads.faixaRenda,
-    naLixeira: leads.naLixeira,
-    motivoDescarte: leads.motivoDescarte,
-  })
-    .from(leads)
-    .leftJoin(users, eq(leads.corretorId, users.id))
+  // Buscar leads paginados com filtros
+  const leadsData = await db.select().from(leads)
     .where(and(...conditions))
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)
     .offset(offset);
   
-  return { leads: leadsData, total, page, limit, totalPages: Math.ceil(total / limit) };
+  // Buscar nome do corretor
+  let corretorNome: string | null = null;
+  if (corretorId) {
+    const corretor = await db.select({ nome: users.nome })
+      .from(users)
+      .where(eq(users.id, corretorId))
+      .limit(1);
+    corretorNome = corretor[0]?.nome || null;
+  }
+  
+  // Adicionar corretorNome a todos os leads
+  const leadsWithCorretor = leadsData.map(lead => ({
+    ...lead,
+    corretorNome
+  }));
+  
+  return { leads: leadsWithCorretor, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
 /**
