@@ -8283,6 +8283,46 @@ function obterIntervaloHoje() {
 }
 
 /**
+ * Garante que existe um registro em atividadesDiarias para o corretor na data especificada
+ * Se não existir, cria um novo registro com valores zerados
+ */
+async function garantirAtividadeDiariaExiste(corretorId: number, data: Date) {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Verificar se já existe
+  const existente = await db
+    .select()
+    .from(atividadesDiarias)
+    .where(
+      and(
+        eq(atividadesDiarias.corretorId, corretorId),
+        eq(atividadesDiarias.data, data)
+      )
+    )
+    .limit(1);
+  
+  // Se não existe, criar com valores zerados
+  if (existente.length === 0) {
+    await db.insert(atividadesDiarias).values({
+      corretorId,
+      data,
+      ligacoesRealizadas: 0,
+      ligacoesAtendidas: 0,
+      whatsappEnviados: 0,
+      whatsappRespondidos: 0,
+      agendamentosConfirmados: 0,
+      visitasRealizadas: 0,
+      documentacoesRecolhidas: 0,
+      analisesCredito: 0,
+      contratosFechados: 0,
+      pontuacao: 0,
+    });
+    console.log(`[garantirAtividadeDiariaExiste] Criado registro para corretor ${corretorId} na data ${data.toISOString().split('T')[0]}`);
+  }
+}
+
+/**
  * Sincroniza interações (ligações e WhatsApp) criadas hoje
  * Conta pela data de criação (createdAt), não pela mudança de status
  */
@@ -8330,6 +8370,9 @@ export async function sincronizarInteracoesDoDia() {
   
   // Atualizar banco de dados
   for (const [corretorId, contadores] of corretoresMap.entries()) {
+    // Garantir que existe registro antes de UPDATE
+    await garantirAtividadeDiariaExiste(corretorId, hoje);
+    
     await db
       .update(atividadesDiarias)
       .set({
@@ -8379,6 +8422,9 @@ export async function sincronizarVisitasDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const visita of visitasHoje) {
+    // Garantir que existe registro antes de UPDATE
+    await garantirAtividadeDiariaExiste(visita.corretorId, hoje);
+    
     await db
       .update(atividadesDiarias)
       .set({
@@ -8425,6 +8471,9 @@ export async function sincronizarDocumentacoesDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const doc of documentacoesHoje) {
+    // Garantir que existe registro antes de UPDATE
+    await garantirAtividadeDiariaExiste(doc.corretorId, hoje);
+    
     await db
       .update(atividadesDiarias)
       .set({
@@ -8471,6 +8520,9 @@ export async function sincronizarAnalisesCreditoDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const analise of analisesHoje) {
+    // Garantir que existe registro antes de UPDATE
+    await garantirAtividadeDiariaExiste(analise.corretorId, hoje);
+    
     await db
       .update(atividadesDiarias)
       .set({
@@ -8518,6 +8570,9 @@ export async function sincronizarContratosDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const contrato of contratosHoje) {
+    // Garantir que existe registro antes de UPDATE
+    await garantirAtividadeDiariaExiste(contrato.corretorId, hoje);
+    
     await db
       .update(atividadesDiarias)
       .set({

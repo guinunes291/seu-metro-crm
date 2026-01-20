@@ -3535,3 +3535,48 @@
 - [x] Adicionar badge de status (read-only) + botões contextuais no lugar do dropdown
 - [x] Testar fluxo completo de automação com lead real - TESTADO: Breno (Aguardando → Em Atendimento) funcionou perfeitamente!
 - [x] Validar que histórico de status é preservado para métricas de funil - Confirmado: executeStatusUpdate preserva histórico
+
+
+## Revisão Completa do Sistema de Performance e Pontuação
+- [x] Auditar página PerformanceTV.tsx e identificar problemas de cálculo/exibição - PROBLEMA CRÍTICO ENCONTRADO
+- [x] PROBLEMA CRÍTICO: Ligações e WhatsApp NÃO estão sendo contabilizados quando corretor registra primeiro contato
+- [x] Apenas agendamentos estão gerando pontos (Andrew teve 100pts com 4 agendamentos)
+- [x] CAUSA RAIZ IDENTIFICADA: sincronizarInteracoesDoDia() usa UPDATE mas não cria registro se não existir
+- [x] Sistema faz UPDATE em atividadesDiarias mas se registro não existe para aquele dia, UPDATE não faz nada
+- [x] SOLUÇÃO: Criada função garantirAtividadeDiariaExiste() e adicionada em TODAS as funções de sincronização
+- [x] sincronizarInteracoesDoDia() - CORRIGIDO
+- [x] sincronizarVisitasDoDia() - CORRIGIDO
+- [x] sincronizarDocumentacoesDoDia() - CORRIGIDO
+- [x] sincronizarAnalisesCreditoDoDia() - CORRIGIDO
+- [x] sincronizarContratosDoDia() - CORRIGIDO
+- [x] sincronizarAgendamentosDoDia() - JÁ ESTAVA CORRETO (usa getOrCreateAtividadeDiaria)
+- [ ] Reiniciar servidor e testar se pontuação está sendo calculada corretamente
+- [ ] Forçar sincronização manual para popular dados históricos
+- [ ] Confirmar regras de pontuação por atividade (Ligação=5pts, WhatsApp=1pt, Agendamento=25pts, Visita=40pts, Análise=60pts, Contrato=150pts)
+- [ ] Testar cálculo de pontuação com dados reais do banco
+- [ ] Validar que rankings diário, semanal e mensal estão calculando corretamente
+- [ ] Garantir que sistema incentiva competitividade entre corretores
+
+
+## Nova Requisição: Sincronização em Tempo Real (10 segundos)
+- [x] Alterar intervalo do job de sincronização de métricas de 5 minutos para 10 segundos
+- [x] Modificar metricasSyncJob.ts para rodar a cada 10 segundos
+- [x] Reiniciar servidor e validar que sincronização está rodando a cada 10 segundos - CONFIRMADO nos logs
+- [x] PROBLEMA CRÍTICO ENCONTRADO: addInteraction usava createLeadHistory() ao invés de createInteracao()
+- [x] Interações eram registradas em lead_history mas job busca dados de interacoes
+- [x] CORREÇÃO: Modificado addInteraction para usar createInteracao() + createLeadHistory() quando necessário
+- [ ] Reiniciar servidor e testar que pontuação aparece no ranking em até 10 segundos após atividade
+
+
+## Nova Requisição: Sincronização de Dados Históricos com Timezone SP
+- [ ] Criar função de sincronização completa que processa TODOS os dados históricos (não apenas hoje)
+- [ ] Ajustar todas as queries de data para usar timezone de São Paulo (GMT-3)
+- [ ] Modificar sincronizarInteracoesDoDia() para aceitar parâmetro de data e processar qualquer dia
+- [ ] Modificar sincronizarAgendamentosDoDia() para aceitar parâmetro de data
+- [ ] Modificar sincronizarVisitasDoDia() para aceitar parâmetro de data
+- [ ] Modificar sincronizarDocumentacoesDoDia() para aceitar parâmetro de data
+- [ ] Modificar sincronizarAnalisesCreditoDoDia() para aceitar parâmetro de data
+- [ ] Modificar sincronizarContratosDoDia() para aceitar parâmetro de data
+- [ ] Criar procedure temporária para executar sincronização histórica completa
+- [ ] Executar sincronização histórica uma vez para popular atividades_diarias com todos os dados
+- [ ] Validar que filtros "Este mês", "Esta semana", "Ontem" mostram dados históricos corretos

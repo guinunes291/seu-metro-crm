@@ -552,11 +552,27 @@ export const appRouter = router({
           });
         }
         
-        // Registrar interação
-        await db.createLeadHistory({
-          ...input,
+        // Registrar interação na tabela interacoes
+        await db.createInteracao({
+          leadId: input.leadId,
           corretorId: ctx.user.id,
+          tipo: input.tipo,
+          resultado: input.resultado,
+          observacoes: input.observacoes || '',
         });
+        
+        // Também registrar no histórico de mudanças de status se houver
+        if (input.statusAnterior && input.statusNovo) {
+          await db.createLeadHistory({
+            leadId: input.leadId,
+            corretorId: ctx.user.id,
+            tipo: input.tipo,
+            resultado: input.resultado,
+            observacoes: input.observacoes,
+            statusAnterior: input.statusAnterior,
+            statusNovo: input.statusNovo,
+          });
+        }
         
         // Atualizar último contato do lead
         await db.updateLead(input.leadId, {
