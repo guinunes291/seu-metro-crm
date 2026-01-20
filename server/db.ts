@@ -849,9 +849,32 @@ export async function getAllLeads(options?: {
     .where(whereClause);
   const total = Number(countResult[0]?.count || 0);
   
-  // Buscar leads com paginação
+  // Buscar leads com paginação incluindo nome do corretor
   // Ordenar: leads webhook primeiro, depois por data de criação
-  const leadsResult = await db.select().from(leads)
+  const leadsResult = await db.select({
+    id: leads.id,
+    nome: leads.nome,
+    email: leads.email,
+    telefone: leads.telefone,
+    cpf: leads.cpf,
+    status: leads.status,
+    origem: leads.origem,
+    origemWebhook: leads.origemWebhook,
+    projectId: leads.projectId,
+    corretorId: leads.corretorId,
+    corretorNome: users.nome,
+    observacoes: leads.observacoes,
+    createdAt: leads.createdAt,
+    updatedAt: leads.updatedAt,
+    dataDistribuicao: leads.dataDistribuicao,
+    ultimoContato: leads.ultimoContato,
+    campanha: leads.campanha,
+    faixaRenda: leads.faixaRenda,
+    naLixeira: leads.naLixeira,
+    motivoDescarte: leads.motivoDescarte,
+  })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
     .where(whereClause)
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)
@@ -931,8 +954,31 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   
   const total = Number(countResult?.count || 0);
   
-  // Buscar leads paginados com filtros
-  const leadsData = await db.select().from(leads)
+  // Buscar leads paginados com filtros incluindo nome do corretor
+  const leadsData = await db.select({
+    id: leads.id,
+    nome: leads.nome,
+    email: leads.email,
+    telefone: leads.telefone,
+    cpf: leads.cpf,
+    status: leads.status,
+    origem: leads.origem,
+    origemWebhook: leads.origemWebhook,
+    projectId: leads.projectId,
+    corretorId: leads.corretorId,
+    corretorNome: users.nome,
+    observacoes: leads.observacoes,
+    createdAt: leads.createdAt,
+    updatedAt: leads.updatedAt,
+    dataDistribuicao: leads.dataDistribuicao,
+    ultimoContato: leads.ultimoContato,
+    campanha: leads.campanha,
+    faixaRenda: leads.faixaRenda,
+    naLixeira: leads.naLixeira,
+    motivoDescarte: leads.motivoDescarte,
+  })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
     .where(and(...conditions))
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)

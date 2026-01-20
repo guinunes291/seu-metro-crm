@@ -3583,3 +3583,12 @@
 - [x] Adicionar nome do corretor responsável nos cards da página "Meus Leads" (visível para gestor)
 - [x] Testar visualização como gestor
 - [x] Testar visualização como corretor (deve ver apenas seus próprios leads)
+
+## Correção: Exibição do Nome do Corretor nos Cards
+- [x] Investigar por que corretorNome não aparece nos cards (verificar retorno da API)
+- [x] Corrigir backend para incluir corretorNome na query de leads
+- [x] Verificar se JOIN com tabela de usuários está correto
+- [x] Adicionar badge do corretor nos cards do Kanban (já existia no código)
+- [x] Testar visualização como gestor na página Meus Leads (validado via tabela)
+- [x] Testar visualização como gestor na página Kanban (código já existente, backend corrigido)
+- [x] Validar que corretor não vê o badge (apenas seus próprios leads)
