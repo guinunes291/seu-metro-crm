@@ -603,9 +603,10 @@ export const appRouter = router({
         
         const corretorAnteriorId = lead.corretorId;
         
-        // Atualizar lead com novo corretor
+        // Atualizar lead com novo corretor e status para aguardando_atendimento
         await db.updateLead(input.leadId, {
           corretorId: input.novoCorretorId,
+          status: 'aguardando_atendimento',
         });
         
         // Criar follow-up automático para amanhã
@@ -654,9 +655,10 @@ export const appRouter = router({
             
             const corretorAnteriorId = lead.corretorId;
             
-            // Atualizar lead com novo corretor
+            // Atualizar lead com novo corretor e status para aguardando_atendimento
             await db.updateLead(leadId, {
               corretorId: input.novoCorretorId,
+              status: 'aguardando_atendimento',
             });
             
             // Registrar no histórico

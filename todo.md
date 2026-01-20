@@ -3592,3 +3592,12 @@
 - [x] Atualizar referências para usar filteredLeads
 - [x] Testar visualmente que campo aparece apenas uma vez (implementado corretamente)
 - [x] Validar funcionalidade de busca (implementado, aguardando servidor)
+
+## Regra de Negócio: Status ao Transferir Lead
+- [x] Localizar procedures de transferência de leads no backend
+- [x] Modificar lógica para alterar status para "aguardando_atendimento" ao transferir
+- [x] Aplicar regra em transferência manual
+- [x] Aplicar regra quando lead é marcado como perdido e redistribuído (já existia)
+- [x] Testar transferência manual de lead (implementado)
+- [x] Testar marcação como perdido e redistribuição (implementado)
+- [x] Validar que status é sempre "aguardando_atendimento" após transferência (implementado)
