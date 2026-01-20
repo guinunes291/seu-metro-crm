@@ -857,25 +857,8 @@ export async function getAllLeads(options?: {
     .limit(limit)
     .offset(offset);
   
-  // Buscar nomes dos corretores para os leads retornados
-  const corretorIds = [...new Set(leadsResult.map(l => l.corretorId).filter(Boolean))];
-  const corretoresMap = new Map<number, string>();
-  
-  if (corretorIds.length > 0) {
-    const corretores = await db.select({ id: users.id, nome: users.nome })
-      .from(users)
-      .where(sql`${users.id} IN (${sql.join(corretorIds.map(id => sql`${id}`), sql`, `)})`);
-    corretores.forEach(c => corretoresMap.set(c.id, c.nome));
-  }
-  
-  // Adicionar corretorNome aos leads
-  const leadsWithCorretor = leadsResult.map(lead => ({
-    ...lead,
-    corretorNome: lead.corretorId ? (corretoresMap.get(lead.corretorId) || null) : null
-  }));
-  
   return {
-    leads: leadsWithCorretor,
+    leads: leadsResult,
     total,
     page,
     limit,
@@ -955,23 +938,7 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
     .limit(limit)
     .offset(offset);
   
-  // Buscar nome do corretor
-  let corretorNome: string | null = null;
-  if (corretorId) {
-    const corretor = await db.select({ nome: users.nome })
-      .from(users)
-      .where(eq(users.id, corretorId))
-      .limit(1);
-    corretorNome = corretor[0]?.nome || null;
-  }
-  
-  // Adicionar corretorNome a todos os leads
-  const leadsWithCorretor = leadsData.map(lead => ({
-    ...lead,
-    corretorNome
-  }));
-  
-  return { leads: leadsWithCorretor, total, page, limit, totalPages: Math.ceil(total / limit) };
+  return { leads: leadsData, total, page, limit, totalPages: Math.ceil(total / limit) };
 }
 
 /**
