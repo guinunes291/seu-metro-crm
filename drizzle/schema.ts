@@ -1806,3 +1806,22 @@ export const contratos = mysqlTable("contratos", {
 
 export type Contrato = typeof contratos.$inferSelect;
 export type InsertContrato = typeof contratos.$inferInsert;
+
+// ============================================================================
+// TABELA DE PUSH SUBSCRIPTIONS (Notificações Push)
+// ============================================================================
+
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Dados da subscription (JSON Web Push API)
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(), // Chave pública do cliente
+  auth: text("auth").notNull(), // Chave de autenticação
+  
+  // Metadados
+  userAgent: text("userAgent"), // Navegador/dispositivo
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
+});

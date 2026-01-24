@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { trpc } from '../lib/trpc';
 
 interface PushNotificationOptions {
   title: string;
@@ -14,6 +15,10 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  
+  const subscribeMutation = trpc.push.subscribe.useMutation();
+  const unsubscribeMutation = trpc.push.unsubscribe.useMutation();
+  const { data: vapidData } = trpc.push.getPublicKey.useQuery();
 
   useEffect(() => {
     // Verificar se notificações push são suportadas
@@ -75,20 +80,27 @@ export function usePushNotifications() {
       const hasPermission = await requestPermission();
       if (!hasPermission) return null;
 
+      // Obter VAPID public key do backend
+      if (!vapidData?.publicKey) {
+        toast.error('Erro ao obter chave de notificações');
+        return null;
+      }
+      
       // Criar inscrição
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          // VAPID public key (você precisará gerar uma chave)
-          'BEl62iUYgUivxIkv69yViEuiBIa-Ib37gp65ImLE_JGQoLQJd3YEfVXWFQYPUgqTJGqFB5M6vgZL0Qw5C-pYBCw'
-        ),
+        applicationServerKey: urlBase64ToUint8Array(vapidData.publicKey),
       });
 
-      setIsSubscribed(true);
-      toast.success('Inscrito em notificações push!');
+      // Salvar subscription no backend
+      await subscribeMutation.mutateAsync({
+        subscription: subscription.toJSON() as any,
+        userAgent: navigator.userAgent,
+      });
       
-      // Aqui você enviaria a subscription para o backend
-      console.log('[Push] Subscription:', JSON.stringify(subscription));
+      setIsSubscribed(true);
+      toast.success('Notificações ativadas com sucesso!');
+      console.log('[Push] Subscription salva no backend');
       
       return subscription;
     } catch (error) {
@@ -104,6 +116,11 @@ export function usePushNotifications() {
     try {
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
+        // Remover do backend primeiro
+        await unsubscribeMutation.mutateAsync({
+          endpoint: subscription.endpoint,
+        });
+        
         await subscription.unsubscribe();
         setIsSubscribed(false);
         toast.success('Notificações desativadas');

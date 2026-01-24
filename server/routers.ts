@@ -5010,7 +5010,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // ============================================================================
   // RELATÓRIOS E ANALYTICS
   // ============================================================================
-  relatorios: router({
+  analytics: router({
     // Funil de Conversão Geral
     funilConversao: gestorProcedure
       .input(z.object({
@@ -5170,6 +5170,60 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }))
       .query(async ({ input }) => {
         return await db.countLogTransferencias(input);
+      }),
+  }),
+
+  // ============================================================================
+  // PUSH NOTIFICATIONS
+  // ============================================================================
+  
+  push: router({
+    // Obter VAPID public key
+    getPublicKey: publicProcedure
+      .query(async () => {
+        const { getVapidPublicKey } = await import('./pushNotifications');
+        return { publicKey: getVapidPublicKey() };
+      }),
+    
+    // Salvar subscription
+    subscribe: protectedProcedure
+      .input(z.object({
+        subscription: z.object({
+          endpoint: z.string(),
+          keys: z.object({
+            p256dh: z.string(),
+            auth: z.string(),
+          }),
+        }),
+        userAgent: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { saveSubscription } = await import('./pushNotifications');
+        return await saveSubscription(ctx.user.id, input.subscription, input.userAgent);
+      }),
+    
+    // Remover subscription
+    unsubscribe: protectedProcedure
+      .input(z.object({
+        endpoint: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { removeSubscription } = await import('./pushNotifications');
+        await removeSubscription(input.endpoint);
+        return { success: true };
+      }),
+    
+    // Enviar notificação de teste
+    sendTest: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const { sendPushNotification } = await import('./pushNotifications');
+        return await sendPushNotification(ctx.user.id, {
+          title: 'Notificação de Teste',
+          body: 'Se você está vendo isso, as notificações push estão funcionando! 🎉',
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/icon-72x72.png',
+          url: '/',
+        });
       }),
   }),
 

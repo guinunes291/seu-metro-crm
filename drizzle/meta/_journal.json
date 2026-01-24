@@ -64,6 +64,13 @@
       "when": 1768598103772,
       "tag": "0008_plain_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1769270881381,
+      "tag": "0009_optimal_hercules",
+      "breakpoints": true
     }
   ]
 }

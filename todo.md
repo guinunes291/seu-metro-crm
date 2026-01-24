@@ -3601,3 +3601,14 @@
 - [x] Testar transferência manual de lead (implementado)
 - [x] Testar marcação como perdido e redistribuição (implementado)
 - [x] Validar que status é sempre "aguardando_atendimento" após transferência (implementado)
+
+## Implementação: Push Notifications em Segundo Plano (Service Workers)
+- [x] Criar Service Worker para gerenciar push notifications (já existia)
+- [ ] Configurar manifest.json com permissões necessárias
+- [ ] Implementar solicitação de permissão de notificação ao usuário
+- [x] Criar backend para gerenciar tokens de push subscription
+- [x] Implementar envio de push notifications via Web Push API
+- [ ] Adicionar interface de configuração de notificações no perfil do usuário
+- [ ] Testar notificações com navegador em segundo plano
+- [ ] Testar notificações com navegador fechado
+- [ ] Documentar limitações por navegador (Chrome, Firefox, Safari)
