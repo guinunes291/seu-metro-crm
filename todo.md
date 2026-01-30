@@ -3619,3 +3619,8 @@
 - [x] Substituir componentes Input por elementos input nativos do HTML
 - [x] Testar seleção de data/hora via calendário suspenso
 - [x] Validar que agendamento pode ser criado sem preenchimento manual
+
+## Nova Feature: Ordenação Prioritária de Leads Facebook Urgentes
+- [x] Atualizar lógica de ordenação no backend (server/db.ts) para priorizar leads Facebook + Aguardando Atendimento
+- [x] Testar ordenação na página Meus Leads
+- [x] Validar que leads mudam de posição ao alterar status para Em Atendimento

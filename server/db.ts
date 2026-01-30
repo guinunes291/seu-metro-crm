@@ -932,9 +932,17 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   const total = Number(countResult?.count || 0);
   
   // Buscar leads paginados com filtros
+  // Ordenação prioritária:
+  // 1. Leads Facebook (origem='facebook') + Status 'Aguardando Atendimento' (mais urgentes no topo)
+  // 2. Outros leads por webhook (origemWebhook=true)
+  // 3. Demais leads por data de criação
   const leadsData = await db.select().from(leads)
     .where(and(...conditions))
-    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
+    .orderBy(
+      desc(sql`CASE WHEN ${leads.origem} = 'facebook' AND ${leads.status} = 'aguardando_atendimento' THEN 1 ELSE 0 END`),
+      desc(leads.origemWebhook),
+      desc(leads.createdAt)
+    )
     .limit(limit)
     .offset(offset);
   
