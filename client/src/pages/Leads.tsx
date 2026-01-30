@@ -234,7 +234,12 @@ export default function Leads() {
       toast.error("Selecione um lead");
       return;
     }
-    if (!agendamentoForm.dataAgendamento || !agendamentoForm.horaAgendamento) {
+    
+    // Validação mais robusta que aceita strings vazias mas não valores null/undefined
+    const dataValida = agendamentoForm.dataAgendamento && agendamentoForm.dataAgendamento.trim() !== "";
+    const horaValida = agendamentoForm.horaAgendamento && agendamentoForm.horaAgendamento.trim() !== "";
+    
+    if (!dataValida || !horaValida) {
       toast.error("Preencha a data e hora do agendamento");
       return;
     }
@@ -1908,16 +1913,18 @@ export default function Leads() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Data</Label>
-                  <Input
+                  <input
                     type="date"
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={agendamentoForm.dataAgendamento}
                     onChange={(e) => setAgendamentoForm(prev => ({ ...prev, dataAgendamento: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Hora</Label>
-                  <Input
+                  <input
                     type="time"
+                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={agendamentoForm.horaAgendamento}
                     onChange={(e) => setAgendamentoForm(prev => ({ ...prev, horaAgendamento: e.target.value }))}
                   />

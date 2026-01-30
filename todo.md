@@ -3612,3 +3612,10 @@
 - [ ] Testar notificações com navegador em segundo plano
 - [ ] Testar notificações com navegador fechado
 - [ ] Documentar limitações por navegador (Chrome, Firefox, Safari)
+
+## Bug Fix: Modal de Agendamento Não Reconhece Seleção de Data/Hora via Calendário
+- [x] Investigar problema de validação no modal de agendamento
+- [x] Identificar que componente Input do shadcn/ui interferia com eventos onChange
+- [x] Substituir componentes Input por elementos input nativos do HTML
+- [x] Testar seleção de data/hora via calendário suspenso
+- [x] Validar que agendamento pode ser criado sem preenchimento manual
