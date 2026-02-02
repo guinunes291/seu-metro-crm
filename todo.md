@@ -3657,3 +3657,10 @@
 - [x] Fazer upload dos arquivos para S3 usando manus-upload-file
 - [x] Atualizar referências no código para usar URLs do CDN
 - [x] Mover arquivos locais para /home/ubuntu/webdev-static-assets/
+
+## Bug: Busca e Paginação na Página Leads por Corretor
+- [x] Investigar por que a busca por nome/telefone não está funcionando (busca já estava implementada corretamente)
+- [x] Implementar paginação adequada para exibir todos os leads (50 leads por página)
+- [x] Adicionar controles de paginação no frontend (Primeira, Anterior, Próxima, Última)
+- [x] Corrigir erro de sintaxe no backend que impedia o servidor de iniciar
+- [x] Testar busca e paginação na interface

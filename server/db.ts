@@ -1306,13 +1306,14 @@ export async function getHistoricoDistribuicoes(limit: number = 20) {
 // ============================================================================
 // LEADS POR CORRETOR COM FILTROS (PARA GESTOR)
 // ============================================================================
-
-interface FiltrosLeadsPorCorretor {
+export interface FiltrosLeadsPorCorretor {
   corretorId?: number;
   status?: string;
   projectId?: number;
   dataInicio?: string;
   dataFim?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCorretor) {
@@ -1341,6 +1342,19 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
     conditions.push(lte(leads.createdAt, new Date(filtros.dataFim)));
   }
   
+  const page = filtros?.page || 1;
+  const pageSize = filtros?.pageSize || 50;
+  const offset = (page - 1) * pageSize;
+  
+  // Contar total de leads
+  const totalResult = await db.select({ count: sql<number>`count(*)` })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  
+  const total = Number(totalResult[0]?.count || 0);
+  
   const result = await db.select({
     id: leads.id,
     nome: leads.nome,
@@ -1361,9 +1375,10 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
     .leftJoin(projects, eq(leads.projectId, projects.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(leads.createdAt))
-    .limit(100);
+    .limit(pageSize)
+    .offset(offset);
   
-  return result;
+  return { leads: result, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
 // ============================================================================

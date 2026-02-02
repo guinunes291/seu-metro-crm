@@ -58,6 +58,8 @@ export default function LeadsPorCorretor() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize] = useState<number>(50);
 
   // Buscar corretores
   const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
@@ -66,17 +68,23 @@ export default function LeadsPorCorretor() {
   const { data: estatisticas, isLoading: loadingEstatisticas, refetch: refetchEstatisticas } = 
     trpc.distribution.getEstatisticasPorCorretor.useQuery();
 
-  // Buscar leads com filtros
-  const { data: leads, isLoading: loadingLeads, refetch: refetchLeads } = 
+  // Buscar leads com filtros e paginação
+  const { data: leadsData, isLoading: loadingLeads, refetch: refetchLeads } = 
     trpc.distribution.getLeadsPorCorretor.useQuery({
       corretorId,
       status,
       dataInicio: dataInicio || undefined,
       dataFim: dataFim || undefined,
+      page: currentPage,
+      pageSize,
     });
+  
+  const leads = leadsData?.leads || [];
+  const totalLeads = leadsData?.total || 0;
+  const totalPages = leadsData?.totalPages || 1;
 
   // Filtrar leads por termo de busca (nome, telefone, email)
-  const filteredLeads = leads?.filter((lead) => {
+  const filteredLeads = leads.filter((lead) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     const normalizedPhone = lead.telefone?.replace(/\D/g, '') || '';
@@ -87,7 +95,7 @@ export default function LeadsPorCorretor() {
       lead.email?.toLowerCase().includes(search) ||
       normalizedPhone.includes(searchPhone)
     );
-  }) || [];
+  });
 
   // Mutation para excluir múltiplos leads
   const deleteManyMutation = trpc.leads.deleteMany.useMutation({
@@ -358,7 +366,7 @@ export default function LeadsPorCorretor() {
           <CardHeader>
             <CardTitle>Leads</CardTitle>
             <CardDescription>
-              {filteredLeads.length} lead(s) encontrado(s)
+              {totalLeads} lead(s) no total {searchTerm && `• ${filteredLeads.length} encontrado(s) na busca`}
               {selectedLeads.length > 0 && ` • ${selectedLeads.length} selecionado(s)`}
             </CardDescription>
           </CardHeader>
@@ -485,6 +493,52 @@ export default function LeadsPorCorretor() {
               </div>
             )}
           </CardContent>
+          
+          {/* Controles de paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {filteredLeads.length} de {totalLeads} leads (Página {currentPage} de {totalPages})
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  Primeira
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Anterior
+                </Button>
+                <span className="text-sm px-4">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  Última
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 
