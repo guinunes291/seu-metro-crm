@@ -3651,3 +3651,9 @@
 - [x] Modificar lógica para ler coluna "Projeto" e associar ao lead se projeto existir
 - [x] Adicionar detecção automática da coluna Projeto
 - [x] Testar importação com planilha contendo coluna Projeto preenchida
+
+## Bug: Timeout no Deployment
+- [x] Identificar arquivos grandes de mídia no projeto (4 logos totalizando 1.3MB)
+- [x] Fazer upload dos arquivos para S3 usando manus-upload-file
+- [x] Atualizar referências no código para usar URLs do CDN
+- [x] Mover arquivos locais para /home/ubuntu/webdev-static-assets/

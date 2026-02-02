@@ -38,7 +38,7 @@ export default function Home() {
       <div className="max-w-md w-full mx-auto px-6 text-center">
         <div className="mb-8">
           <img 
-            src="/logo-seu-metro-quadrado.png" 
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663032188321/NMeCiOnvMfUXDiaq.png" 
             alt="Seu Metro Quadrado" 
             className="h-32 mx-auto mb-4"
           />

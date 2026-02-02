@@ -170,7 +170,7 @@ export default function AgendamentoPublico() {
         {/* Header */}
         <div className="text-center mb-8">
           <img 
-            src="/logo-seu-metro-quadrado.png" 
+            src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663032188321/NMeCiOnvMfUXDiaq.png" 
             alt="Seu Metro Quadrado" 
             className="h-12 mx-auto mb-4"
             onError={(e) => {

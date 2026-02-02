@@ -397,7 +397,7 @@ function DashboardContent({
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2">
               <img
-                src="/logo.png"
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310419663032188321/nYdEnBpdRXDVWsgt.png"
                 alt="Seu Metro Quadrado"
                 className="h-8 w-8 object-contain"
               />
