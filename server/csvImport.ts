@@ -70,6 +70,7 @@ export interface CSVColumnMapping {
   email?: number;
   origem?: number;
   observacoes?: number;
+  projeto?: number;
 }
 
 /**
@@ -115,6 +116,13 @@ export function detectColumnMapping(headers: string[]): CSVColumnMapping {
     obsPatterns.some(p => h.includes(p))
   );
   if (obsIndex >= 0) mapping.observacoes = obsIndex;
+  
+  // Detectar coluna de projeto
+  const projetoPatterns = ['projeto', 'project', 'empreendimento', 'imovel'];
+  const projetoIndex = normalizedHeaders.findIndex(h => 
+    projetoPatterns.some(p => h.includes(p))
+  );
+  if (projetoIndex >= 0) mapping.projeto = projetoIndex;
   
   return mapping;
 }
@@ -239,6 +247,7 @@ export async function importLeadsFromCSV(
         const email = mapping.email !== undefined ? row[mapping.email] : '';
         const origem = mapping.origem !== undefined ? row[mapping.origem] : 'CSV';
         const observacoes = mapping.observacoes !== undefined ? row[mapping.observacoes] : '';
+        const projetoNome = mapping.projeto !== undefined ? row[mapping.projeto] : '';
         
         // Validações
         if (!nome || !telefone) {
@@ -277,6 +286,15 @@ export async function importLeadsFromCSV(
         // Normalizar telefone
         const telefoneLimpo = normalizePhone(telefone);
         
+        // Buscar projeto por nome se fornecido
+        let projectId: number | null = null;
+        if (projetoNome && projetoNome.trim()) {
+          const projeto = await db.findProjectByName(projetoNome.trim());
+          if (projeto) {
+            projectId = projeto.id;
+          }
+        }
+        
         // Inserir lead
         await db.insert(leads).values({
           nome,
@@ -284,6 +302,7 @@ export async function importLeadsFromCSV(
           email: email || null,
           origem,
           observacoes: observacoes || null,
+          projectId,
           corretorId,
           status: 'novo',
           createdAt: new Date(),

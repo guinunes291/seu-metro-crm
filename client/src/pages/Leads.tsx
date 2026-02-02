@@ -134,6 +134,9 @@ export default function Leads() {
     dataFim: dataFimFilter || undefined,
   }, {
     keepPreviousData: true, // Evita tela branca durante re-fetch
+    refetchInterval: 30000, // Atualiza automaticamente a cada 30 segundos
+    refetchOnMount: 'always', // Sempre busca dados frescos ao montar
+    refetchOnWindowFocus: true, // Atualiza quando a janela recebe foco
   });
   const leads = leadsData?.leads || [];
   const totalPages = leadsData?.totalPages || 1;
@@ -177,9 +180,22 @@ export default function Leads() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
   const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
 
-  const updateLeadMutation = trpc.leads.update.useMutation();
-  const addInteractionMutation = trpc.leads.addInteraction.useMutation();
-  const createLeadMutation = trpc.leads.createByCorretor.useMutation();
+  const utils = trpc.useUtils();
+  const updateLeadMutation = trpc.leads.update.useMutation({
+    onSuccess: () => {
+      utils.leads.list.invalidate();
+    },
+  });
+  const addInteractionMutation = trpc.leads.addInteraction.useMutation({
+    onSuccess: () => {
+      utils.leads.list.invalidate();
+    },
+  });
+  const createLeadMutation = trpc.leads.createByCorretor.useMutation({
+    onSuccess: () => {
+      utils.leads.list.invalidate();
+    },
+  });
   const { data: leadHistory } = trpc.leads.getHistory.useQuery(
     { leadId: selectedLead?.id || 0 },
     { enabled: !!selectedLead }
@@ -198,6 +214,7 @@ export default function Leads() {
 
   // Estado para o dialog de agendamento
   const [agendamentoDialog, setAgendamentoDialog] = useState(false);
+  const [isSubmittingAgendamento, setIsSubmittingAgendamento] = useState(false);
   const [agendamentoForm, setAgendamentoForm] = useState({
     projectId: "",
     projetoCustom: "",
@@ -212,6 +229,7 @@ export default function Leads() {
   const createAgendamentoMutation = trpc.agendamentos.create.useMutation({
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
+      setIsSubmittingAgendamento(false);
       setAgendamentoDialog(false);
       setAgendamentoForm({
         projectId: "",
@@ -225,11 +243,18 @@ export default function Leads() {
       refetch();
     },
     onError: (error) => {
-      toast.error(error.message || "Erro ao criar agendamento");
+      console.error("Erro ao criar agendamento:", error);
+      toast.error(error.message || "Erro ao criar agendamento. Tente novamente.");
+      setIsSubmittingAgendamento(false);
     },
   });
   
   const handleCreateAgendamento = () => {
+    // Prevenir múltiplas submissões
+    if (isSubmittingAgendamento || createAgendamentoMutation.isPending) {
+      return;
+    }
+    
     if (!selectedLead) {
       toast.error("Selecione um lead");
       return;
@@ -243,10 +268,28 @@ export default function Leads() {
       toast.error("Preencha a data e hora do agendamento");
       return;
     }
+    
+    // Validar formato da data (YYYY-MM-DD)
+    const dataRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dataRegex.test(agendamentoForm.dataAgendamento)) {
+      toast.error("Formato de data inválido. Use AAAA-MM-DD");
+      return;
+    }
+    
+    // Validar formato da hora (HH:MM)
+    const horaRegex = /^\d{2}:\d{2}$/;
+    if (!horaRegex.test(agendamentoForm.horaAgendamento)) {
+      toast.error("Formato de hora inválido. Use HH:MM");
+      return;
+    }
+    
     if (!agendamentoForm.useCustomProject && !agendamentoForm.projectId) {
       toast.error("Selecione um projeto ou digite manualmente");
       return;
     }
+    
+    // Marcar como submetendo antes de fazer a mutation
+    setIsSubmittingAgendamento(true);
     
     createAgendamentoMutation.mutate({
       leadId: selectedLead.id,
@@ -844,10 +887,19 @@ export default function Leads() {
                               <Button
                                 variant="default"
                                 size="sm"
-                                onClick={() => {
-                                  setSelectedLead(lead);
-                                  setAgendamentoDialog(true);
-                                }}
+                onClick={() => {
+                  setSelectedLead(lead);
+                  setAgendamentoForm({
+                    projectId: "",
+                    projetoCustom: "",
+                    construtora: "",
+                    dataAgendamento: "",
+                    horaAgendamento: "",
+                    observacoes: "",
+                    useCustomProject: false,
+                  });
+                  setAgendamentoDialog(true);
+                }}
                               >
                                 <Calendar className="h-4 w-4 mr-1" />
                                 Criar Agendamento
@@ -1304,9 +1356,18 @@ export default function Leads() {
                           <Button
                             variant="default"
                             size="sm"
-                            onClick={() => {
-                              setAgendamentoDialog(true);
-                            }}
+                onClick={() => {
+                  setAgendamentoForm({
+                    projectId: "",
+                    projetoCustom: "",
+                    construtora: "",
+                    dataAgendamento: "",
+                    horaAgendamento: "",
+                    observacoes: "",
+                    useCustomProject: false,
+                  });
+                  setAgendamentoDialog(true);
+                }}
                           >
                             <Calendar className="h-4 w-4 mr-1" />
                             Criar Agendamento
@@ -1948,10 +2009,10 @@ export default function Leads() {
               </Button>
               <Button 
                 onClick={handleCreateAgendamento}
-                disabled={createAgendamentoMutation.isPending}
+                disabled={isSubmittingAgendamento || createAgendamentoMutation.isPending}
                 className="gap-2"
               >
-                {createAgendamentoMutation.isPending ? (
+                {(isSubmittingAgendamento || createAgendamentoMutation.isPending) ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Criando...

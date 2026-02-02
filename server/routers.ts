@@ -1425,6 +1425,7 @@ export const appRouter = router({
           email: z.number().optional(),
           origem: z.number().optional(),
           observacoes: z.number().optional(),
+          projeto: z.number().optional(),
         }).optional(),
         delimiter: z.string().optional(),
       }))

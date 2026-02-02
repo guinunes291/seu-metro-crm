@@ -3624,3 +3624,30 @@
 - [x] Atualizar lógica de ordenação no backend (server/db.ts) para priorizar leads Facebook + Aguardando Atendimento
 - [x] Testar ordenação na página Meus Leads
 - [x] Validar que leads mudam de posição ao alterar status para Em Atendimento
+
+## Bug: Ordenação Prioritária Não Funciona Corretamente
+- [ ] Investigar por que Pollyanna (Em Atendimento) aparece antes de leads Aguardando Atendimento
+- [ ] Verificar se há leads com status aguardando_atendimento no banco
+- [ ] Corrigir lógica de ordenação para garantir prioridade absoluta
+
+## Feature: Invalidação Automática de Cache para Ordenação Prioritária
+- [x] Implementar invalidação automática de cache do tRPC após mudanças de status
+- [x] Adicionar refetchInterval para garantir atualização periódica da lista
+- [x] Adicionar refetchOnMount e refetchOnWindowFocus para dados sempre frescos
+- [x] Testar que ordenação é atualizada automaticamente sem hard refresh
+
+## Bugs: Sistema de Agendamento
+- [ ] Corrigir erro "void (0)" na primeira tentativa de criar agendamento
+- [ ] Prevenir duplicação de agendamentos quando usuário tenta novamente após erro
+- [ ] Garantir que agendamento seja criado corretamente na primeira tentativa
+
+## Bug: Busca de Leads na Página "Leads por Corretor"
+- [ ] Investigar por que a busca não filtra os leads quando digita nome (ex: "amanda")
+- [ ] Corrigir implementação da busca para filtrar corretamente por nome, telefone e email
+- [ ] Testar busca com diferentes termos
+
+## Feature: Importação de Projeto via Planilha
+- [x] Investigar código de importação de leads (csvImport.ts)
+- [x] Modificar lógica para ler coluna "Projeto" e associar ao lead se projeto existir
+- [x] Adicionar detecção automática da coluna Projeto
+- [x] Testar importação com planilha contendo coluna Projeto preenchida
