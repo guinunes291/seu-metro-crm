@@ -93,6 +93,12 @@ export async function createEquipe(data: InsertEquipe) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Promover usuário selecionado para gestor automaticamente
+  await db
+    .update(users)
+    .set({ role: 'gestor' })
+    .where(eq(users.id, data.gestorId));
+
   const result = await db.insert(equipes).values(data);
   return result[0].insertId;
 }

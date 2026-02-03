@@ -96,7 +96,8 @@ export default function GestaoEquipes() {
     }
   };
 
-  const gestores = usuarios?.filter(u => u.role === "gestor" || u.role === "admin");
+  // Mostrar todos os usuários (qualquer um pode se tornar gestor)
+  const gestores = usuarios || [];
   const corretoresSemEquipe = usuarios?.filter(u => u.role === "corretor" && !u.equipeId);
 
   if (isLoading) {

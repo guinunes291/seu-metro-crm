@@ -3695,3 +3695,7 @@
 - [ ] Implementar filtros automáticos por equipe em todas as listagens
 - [ ] Criar testes unitários para permissões
 - [ ] Documentar sistema de permissões
+
+## Ajuste: Dropdown de Gestor Mostra Todos os Usuários
+- [x] Ajustar filtro do dropdown para mostrar todos os usuários do sistema
+- [x] Implementar promoção automática de role para "gestor" ao criar equipe
