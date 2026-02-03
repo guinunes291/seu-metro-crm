@@ -140,6 +140,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de pontuação:", err);
     });
+    
+    // Inicializar job de reset de contadores diários
+    import("../resetContadoresJob").then(({ startResetContadoresJob }) => {
+      startResetContadoresJob();
+      console.log("[Job] Reset automático de contadores inicializado (diário à meia-noite SP)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de reset de contadores:", err);
+    });
   });
 }
 

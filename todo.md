@@ -3670,3 +3670,8 @@
 - [x] Corrigir lógica de criação de agendamento (try-catch na sincronização)
 - [x] Remover agendamentos duplicados existentes no banco de dados (10 duplicatas removidas)
 - [x] Testar criação de novo agendamento e validar que não duplica (12 testes passando)
+
+## Feature: Reset Automático de Contadores Diários à Meia-Noite
+- [x] Investigar onde contadores "Leads Hoje" e contadores individuais de corretores são armazenados (campo leadsRecebidosHoje na tabela fila_distribuicao)
+- [x] Implementar job agendado para resetar contadores à 00:00 (fuso SP)
+- [x] Testar reset automático dos contadores (2 testes passando)
