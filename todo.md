@@ -3749,3 +3749,8 @@
 ## Limpeza: Remover Arquivos de Teste (03/02/2026)
 - [x] Remover arquivo de teste equipes.filtro.test.ts
 - [x] Remover endpoint de simulação simularGestor
+
+## Limpeza: Remover Dados de Teste do Banco (03/02/2026)
+- [x] Identificar corretores de teste
+- [x] Identificar leads de teste
+- [x] Remover dados de teste após confirmação do usuário
