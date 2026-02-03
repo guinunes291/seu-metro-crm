@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  leadId, \n  DATE(dataAgendamento) as data, \n  horaAgendamento, \n  COUNT(*) as total\nFROM agendamentos\nGROUP BY leadId, DATE(dataAgendamento), horaAgendamento\nHAVING COUNT(*) > 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  leadId, \n  DATE(dataAgendamento) as data, \n  horaAgendamento, \n  COUNT(*) as total\nFROM agendamentos\nGROUP BY leadId, DATE(dataAgendamento), horaAgendamento\nHAVING COUNT(*) > 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 347
+}

@@ -3664,3 +3664,9 @@
 - [x] Adicionar controles de paginação no frontend (Primeira, Anterior, Próxima, Última)
 - [x] Corrigir erro de sintaxe no backend que impedia o servidor de iniciar
 - [x] Testar busca e paginação na interface
+
+## Bug Crítico: Duplicação de Agendamentos (CORRIGIDO)
+- [x] Investigar causa da duplicação (erro na função de sincronização causava falso erro)
+- [x] Corrigir lógica de criação de agendamento (try-catch na sincronização)
+- [x] Remover agendamentos duplicados existentes no banco de dados (10 duplicatas removidas)
+- [x] Testar criação de novo agendamento e validar que não duplica (12 testes passando)

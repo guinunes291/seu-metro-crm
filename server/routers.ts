@@ -2928,8 +2928,13 @@ export const appRouter = router({
           });
         }
         
-        // Sincronizar agendamentos do dia com atividades diárias
-        await db.sincronizarAgendamentosDoDia();
+        // Sincronizar agendamentos do dia com atividades diárias (não bloquear criação se falhar)
+        try {
+          await db.sincronizarAgendamentosDoDia();
+        } catch (error) {
+          console.error('[Agendamento] Erro ao sincronizar métricas:', error);
+          // Não propagar erro - agendamento foi criado com sucesso
+        }
         
         return agendamento;
       }),

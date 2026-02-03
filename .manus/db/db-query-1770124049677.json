@@ -1,0 +1,9 @@
+{
+  "query": "DELETE a1 FROM agendamentos a1\nINNER JOIN agendamentos a2 \nWHERE \n  a1.leadId = a2.leadId \n  AND DATE(a1.dataAgendamento) = DATE(a2.dataAgendamento)\n  AND a1.horaAgendamento = a2.horaAgendamento\n  AND a1.id > a2.id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE a1 FROM agendamentos a1\nINNER JOIN agendamentos a2 \nWHERE \n  a1.leadId = a2.leadId \n  AND DATE(a1.dataAgendamento) = DATE(a2.dataAgendamento)\n  AND a1.horaAgendamento = a2.horaAgendamento\n  AND a1.id > a2.id;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 358
+}

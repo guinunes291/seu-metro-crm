@@ -1,0 +1,80 @@
+{
+  "query": "SELECT \n  leadId, \n  DATE(dataAgendamento) as data, \n  horaAgendamento, \n  COUNT(*) as total,\n  GROUP_CONCAT(id ORDER BY createdAt) as ids\nFROM agendamentos\nGROUP BY leadId, DATE(dataAgendamento), horaAgendamento\nHAVING COUNT(*) > 1\nORDER BY total DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  leadId, \n  DATE(dataAgendamento) as data, \n  horaAgendamento, \n  COUNT(*) as total,\n  GROUP_CONCAT(id ORDER BY createdAt) as ids\nFROM agendamentos\nGROUP BY leadId, DATE(dataAgendamento), horaAgendamento\nHAVING COUNT(*) > 1\nORDER BY total DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "leadId": "61063",
+      "data": "2026-01-11",
+      "horaAgendamento": "10:00",
+      "total": "3",
+      "ids": "120002,120003,120004"
+    },
+    {
+      "leadId": "61071",
+      "data": "2026-01-10",
+      "horaAgendamento": "15:00",
+      "total": "2",
+      "ids": "120005,120006"
+    },
+    {
+      "leadId": "1320007",
+      "data": "2026-01-24",
+      "horaAgendamento": "09:30",
+      "total": "2",
+      "ids": "360001,360002"
+    },
+    {
+      "leadId": "720004",
+      "data": "2026-01-19",
+      "horaAgendamento": "17:30",
+      "total": "2",
+      "ids": "330001,330002"
+    },
+    {
+      "leadId": "1830003",
+      "data": "2026-01-21",
+      "horaAgendamento": "19:10",
+      "total": "2",
+      "ids": "390007,390008"
+    },
+    {
+      "leadId": "1920001",
+      "data": "2026-01-22",
+      "horaAgendamento": "10:00",
+      "total": "2",
+      "ids": "390001,390002"
+    },
+    {
+      "leadId": "1860003",
+      "data": "2026-01-22",
+      "horaAgendamento": "10:30",
+      "total": "2",
+      "ids": "390003,390004"
+    },
+    {
+      "leadId": "1230196",
+      "data": "2026-01-21",
+      "horaAgendamento": "19:00",
+      "total": "2",
+      "ids": "390005,390006"
+    },
+    {
+      "leadId": "1230186",
+      "data": "2026-01-22",
+      "horaAgendamento": "12:00",
+      "total": "2",
+      "ids": "390009,390010"
+    },
+    {
+      "leadId": "1230197",
+      "data": "2026-01-22",
+      "horaAgendamento": "10:53",
+      "total": "2",
+      "ids": "390011,390012"
+    }
+  ],
+  "messages": [],
+  "stdout": "leadId\tdata\thoraAgendamento\ttotal\tids\n61063\t2026-01-11\t10:00\t3\t120002,120003,120004\n61071\t2026-01-10\t15:00\t2\t120005,120006\n1320007\t2026-01-24\t09:30\t2\t360001,360002\n720004\t2026-01-19\t17:30\t2\t330001,330002\n1830003\t2026-01-21\t19:10\t2\t390007,390008\n1920001\t2026-01-22\t10:00\t2\t390001,390002\n1860003\t2026-01-22\t10:30\t2\t390003,390004\n1230196\t2026-01-21\t19:00\t2\t390005,390006\n1230186\t2026-01-22\t12:00\t2\t390009,390010\n1230197\t2026-01-22\t10:53\t2\t390011,390012\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}
