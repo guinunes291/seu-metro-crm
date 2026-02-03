@@ -3745,3 +3745,7 @@
 
 ## Bug Fix: Filtro de Equipe em Leads por Corretor (03/02/2026)
 - [x] Aplicar filtro de equipe na página Leads por Corretor
+
+## Limpeza: Remover Arquivos de Teste (03/02/2026)
+- [x] Remover arquivo de teste equipes.filtro.test.ts
+- [x] Remover endpoint de simulação simularGestor
