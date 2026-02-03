@@ -493,6 +493,40 @@ export async function getAllUsers() {
   return await db.select().from(users).orderBy(desc(users.createdAt));
 }
 
+/**
+ * Buscar corretores por IDs (para filtro de equipe)
+ */
+export async function getCorretoresByIds(ids: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+  if (ids.length === 0) return [];
+  
+  const corretores = await db.select().from(users)
+    .where(and(
+      eq(users.role, "corretor"),
+      inArray(users.id, ids)
+    ));
+  
+  // Mapear 'name' para 'nome' para compatibilidade com o frontend
+  return corretores.map(c => ({
+    ...c,
+    nome: c.name
+  }));
+}
+
+/**
+ * Buscar usuários por IDs (para filtro de equipe)
+ */
+export async function getUsersByIds(ids: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+  if (ids.length === 0) return [];
+  
+  return await db.select().from(users)
+    .where(inArray(users.id, ids))
+    .orderBy(desc(users.createdAt));
+}
+
 // ============================================================================
 // PROJETOS
 // ============================================================================
@@ -787,6 +821,7 @@ export async function getAllLeads(options?: {
   projectId?: number;
   origem?: string;
   corretorId?: number;
+  corretoresIds?: number[] | null; // Filtro por equipe
   dataInicio?: string;
   dataFim?: string;
 }) {
@@ -798,7 +833,12 @@ export async function getAllLeads(options?: {
   const offset = (page - 1) * limit;
   
   // Construir condições de filtro
-  const conditions = [];
+  const conditions: any[] = [];
+  
+  // Filtro por equipe (corretoresIds)
+  if (options?.corretoresIds && options.corretoresIds.length > 0) {
+    conditions.push(inArray(leads.corretorId, options.corretoresIds));
+  }
   
   // Busca por nome, telefone ou email
   if (options?.searchTerm) {
@@ -827,7 +867,7 @@ export async function getAllLeads(options?: {
     conditions.push(eq(leads.origem, options.origem));
   }
   
-  // Filtro por corretor
+  // Filtro por corretor específico (quando selecionado no dropdown)
   if (options?.corretorId) {
     conditions.push(eq(leads.corretorId, options.corretorId));
   }
@@ -5821,12 +5861,17 @@ export async function getAllVisitas(filtros?: {
   dataInicio?: Date;
   dataFim?: Date;
   corretorId?: number;
+  corretoresIds?: number[] | null; // Filtro por equipe
 }): Promise<Visita[]> {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions = [];
+  const conditions: any[] = [];
   
+  // Filtro por equipe (corretoresIds)
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(visitas.corretorId, filtros.corretoresIds));
+  }
   if (filtros?.dataInicio) {
     conditions.push(gte(visitas.dataVisita, filtros.dataInicio));
   }
@@ -7095,6 +7140,7 @@ export async function getAllAgendamentos(filters?: {
   dataInicio?: string;
   dataFim?: string;
   corretorId?: number;
+  corretoresIds?: number[] | null; // Filtro por equipe
   status?: string;
 }): Promise<Array<{
   id: number;
@@ -7142,6 +7188,10 @@ export async function getAllAgendamentos(filters?: {
   }
   if (filters?.dataFim) {
     conditions.push(lte(agendamentos.dataAgendamento, new Date(filters.dataFim)));
+  }
+  // Filtro por equipe (corretoresIds)
+  if (filters?.corretoresIds && filters.corretoresIds.length > 0) {
+    conditions.push(inArray(agendamentos.corretorId, filters.corretoresIds));
   }
   if (filters?.corretorId) {
     conditions.push(eq(agendamentos.corretorId, filters.corretorId));

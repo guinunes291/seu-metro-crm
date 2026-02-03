@@ -3731,3 +3731,14 @@
 - [x] Criar testes unitários para sistema de filtro de equipes (9 testes passando)
 - [x] Criar endpoint de simulação para debug (equipes.simularGestor)
 
+
+## Feature: Filtro de Equipe em Todas as Abas (03/02/2026)
+- [x] Aplicar filtro de equipe em leads.list
+- [x] Aplicar filtro de equipe em agendamentos.listAll
+- [x] Aplicar filtro de equipe em visitas.listAll
+- [x] Aplicar filtro de equipe em contratos.listAll
+- [x] Aplicar filtro de equipe em corretores.list e listAll
+- [x] Adicionar funções getCorretoresByIds e getUsersByIds no db.ts
+- [x] Adicionar parâmetro corretoresIds em getAllLeads
+- [x] Adicionar parâmetro corretoresIds em getAllAgendamentos
+- [x] Adicionar parâmetro corretoresIds em getAllVisitas

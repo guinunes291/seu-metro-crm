@@ -305,28 +305,22 @@ export const appRouter = router({
         const dataInicio = input?.dataInicio;
         const dataFim = input?.dataFim;
         
-        // Gestor vê todos os leads (com paginação e filtros)
-        if (ctx.user.role === 'gestor' || ctx.user.role === 'admin') {
-          return await db.getAllLeads({ 
-            page, 
-            limit, 
-            searchTerm, 
-            status, 
-            projectId, 
-            origem, 
-            corretorId, 
-            dataInicio, 
-            dataFim 
-          });
-        }
-        // Corretor vê apenas seus leads (com paginação e filtros)
-        return await db.getLeadsByCorretor(ctx.user.id, { 
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        // Admin vê todos os leads (corretoresIds = null)
+        // Gestor vê apenas leads da sua equipe (corretoresIds = IDs dos membros)
+        // Corretor vê apenas seus leads (corretoresIds = [seu ID])
+        return await db.getAllLeads({ 
           page, 
           limit, 
           searchTerm, 
           status, 
           projectId, 
           origem, 
+          corretorId: corretorId || (corretoresIds?.length === 1 ? corretoresIds[0] : undefined),
+          corretoresIds,
           dataInicio, 
           dataFim 
         });
@@ -825,12 +819,34 @@ export const appRouter = router({
   // ============================================================================
   
   corretores: router({
-    list: gestorProcedure.query(async () => {
-      return await db.getAllCorretores();
+    // Lista de corretores (filtrado por equipe para gestores)
+    list: gestorProcedure.query(async ({ ctx }) => {
+      // Obter IDs dos corretores para filtro baseado no role
+      const { getCorretoresIdsParaFiltro } = await import('./equipes');
+      const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+      
+      // Se for admin, retorna todos os corretores
+      if (!corretoresIds) {
+        return await db.getAllCorretores();
+      }
+      
+      // Se for gestor, retorna apenas os corretores da sua equipe
+      return await db.getCorretoresByIds(corretoresIds);
     }),
     
-    listAll: gestorProcedure.query(async () => {
-      return await db.getAllUsers();
+    // Lista de todos os usuários (filtrado por equipe para gestores)
+    listAll: gestorProcedure.query(async ({ ctx }) => {
+      // Obter IDs dos corretores para filtro baseado no role
+      const { getCorretoresIdsParaFiltro } = await import('./equipes');
+      const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+      
+      // Se for admin, retorna todos os usuários
+      if (!corretoresIds) {
+        return await db.getAllUsers();
+      }
+      
+      // Se for gestor, retorna apenas os usuários da sua equipe
+      return await db.getUsersByIds(corretoresIds);
     }),
     
     getById: gestorProcedure
@@ -3022,7 +3038,7 @@ export const appRouter = router({
         });
       }),
     
-    // Listar todos os agendamentos (gestor)
+    // Listar todos os agendamentos (gestor/admin - filtrado por equipe)
     listAll: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
@@ -3030,11 +3046,16 @@ export const appRouter = router({
         corretorId: z.number().optional(),
         status: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         return await db.getAllAgendamentos({
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretorId: input?.corretorId,
+          corretoresIds,
           status: input?.status,
         });
       }),
@@ -3200,18 +3221,23 @@ export const appRouter = router({
         });
       }),
     
-    // Listar todas as visitas (gestor)
+    // Listar todas as visitas (gestor/admin - filtrado por equipe)
     listAll: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
         corretorId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         return await db.getAllVisitas({
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretorId: input?.corretorId,
+          corretoresIds,
         });
       }),
     
@@ -3341,21 +3367,29 @@ export const appRouter = router({
           .where(and(...conditions));
       }),
     
-    // Listar todos os contratos (gestor)
+    // Listar todos os contratos (gestor/admin - filtrado por equipe)
     listAll: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
         corretorId: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         const { getDb } = await import("./db");
         const database = await getDb();
         if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
         const { contratos, leads, users } = await import("../drizzle/schema");
-        const { eq, and, gte, lte } = await import("drizzle-orm");
+        const { eq, and, gte, lte, inArray } = await import("drizzle-orm");
         
-        const conditions = [];
+        const conditions: any[] = [];
+        // Filtro por equipe (corretoresIds)
+        if (corretoresIds && corretoresIds.length > 0) {
+          conditions.push(inArray(contratos.corretorId, corretoresIds));
+        }
         if (input?.corretorId) {
           conditions.push(eq(contratos.corretorId, input.corretorId));
         }
