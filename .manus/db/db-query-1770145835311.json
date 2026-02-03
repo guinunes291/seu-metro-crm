@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM follow_ups\nWHERE id NOT IN (\n  SELECT * FROM (\n    SELECT MIN(id) \n    FROM follow_ups\n    WHERE status = 'pendente'\n    GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  ) AS keep_ids\n)\nAND status = 'pendente'\nAND leadId IN (\n  SELECT leadId \n  FROM follow_ups \n  WHERE status = 'pendente'\n  GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  HAVING COUNT(*) > 1\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE FROM follow_ups\nWHERE id NOT IN (\n  SELECT * FROM (\n    SELECT MIN(id) \n    FROM follow_ups\n    WHERE status = 'pendente'\n    GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  ) AS keep_ids\n)\nAND status = 'pendente'\nAND leadId IN (\n  SELECT leadId \n  FROM follow_ups \n  WHERE status = 'pendente'\n  GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  HAVING COUNT(*) > 1\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 378
+}

@@ -1011,14 +1011,29 @@ export async function updateLead(id: number, data: Partial<InsertLead>) {
         const { proximoDiaAs9h } = await import('./timezone');
         const dataFollowUp = proximoDiaAs9h();
         
-        await db.insert(followUps).values({
-          leadId: id,
-          corretorId: leadAtual.corretorId,
-          dataFollowUp,
-          status: 'pendente',
-        });
+        // Verificar se já existe follow-up pendente para este lead na mesma data
+        const existente = await db.select()
+          .from(followUps)
+          .where(and(
+            eq(followUps.leadId, id),
+            eq(followUps.corretorId, leadAtual.corretorId),
+            eq(followUps.status, 'pendente'),
+            sql`DATE(${followUps.dataFollowUp}) = DATE(${dataFollowUp})`
+          ))
+          .limit(1);
         
-        console.log(`[updateLead] Follow-up automático criado para lead ${id} em ${dataFollowUp.toISOString()}`);
+        if (!existente[0]) {
+          await db.insert(followUps).values({
+            leadId: id,
+            corretorId: leadAtual.corretorId,
+            dataFollowUp,
+            status: 'pendente',
+          });
+          
+          console.log(`[updateLead] Follow-up automático criado para lead ${id} em ${dataFollowUp.toISOString()}`);
+        } else {
+          console.log(`[updateLead] Follow-up já existe para lead ${id} em ${dataFollowUp.toISOString()}, pulando criação`);
+        }
       }
     }
   }
@@ -3548,14 +3563,29 @@ export async function registrarTentativaFollowUp(
       const { proximoDiaAs9h } = await import('./timezone');
       const proximoFollowUp = proximoDiaAs9h();
       
-      await db.insert(followUps).values({
-        leadId: atual.leadId,
-        corretorId: atual.corretorId,
-        dataFollowUp: proximoFollowUp,
-        status: "pendente"
-      });
+      // Verificar se já existe follow-up pendente para este lead na mesma data
+      const existente = await db.select()
+        .from(followUps)
+        .where(and(
+          eq(followUps.leadId, atual.leadId),
+          eq(followUps.corretorId, atual.corretorId),
+          eq(followUps.status, "pendente"),
+          sql`DATE(${followUps.dataFollowUp}) = DATE(${proximoFollowUp})`
+        ))
+        .limit(1);
       
-      console.log(`[registrarTentativaFollowUp] Novo follow-up criado para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}`);
+      if (!existente[0]) {
+        await db.insert(followUps).values({
+          leadId: atual.leadId,
+          corretorId: atual.corretorId,
+          dataFollowUp: proximoFollowUp,
+          status: "pendente"
+        });
+        
+        console.log(`[registrarTentativaFollowUp] Novo follow-up criado para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}`);
+      } else {
+        console.log(`[registrarTentativaFollowUp] Follow-up já existe para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}, pulando criação`);
+      }
     }
     
     return { 

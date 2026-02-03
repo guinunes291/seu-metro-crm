@@ -3675,3 +3675,8 @@
 - [x] Investigar onde contadores "Leads Hoje" e contadores individuais de corretores são armazenados (campo leadsRecebidosHoje na tabela fila_distribuicao)
 - [x] Implementar job agendado para resetar contadores à 00:00 (fuso SP)
 - [x] Testar reset automático dos contadores (2 testes passando)
+
+## Bug: Duplicação de Clientes na Lista de Follow-up
+- [x] Investigar causa da duplicação (mesmo cliente aparece 2x em sequência)
+- [x] Corrigir query ou lógica que causa duplicação
+- [x] Testar correção e validar lista de follow-up
