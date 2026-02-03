@@ -3699,3 +3699,7 @@
 ## Ajuste: Dropdown de Gestor Mostra Todos os Usuários
 - [x] Ajustar filtro do dropdown para mostrar todos os usuários do sistema
 - [x] Implementar promoção automática de role para "gestor" ao criar equipe
+
+## Bug: Dropdown de Gestor Vazio
+- [x] Investigar por que dropdown não mostra usuários
+- [x] Corrigir query users.listAll ou lógica de carregamento

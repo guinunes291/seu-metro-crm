@@ -18,7 +18,10 @@ export default function GestaoEquipes() {
   const [equipeCorretores, setEquipeCorretores] = useState<number | null>(null);
 
   const { data: equipes, isLoading, refetch } = trpc.equipes.list.useQuery();
-  const { data: usuarios } = trpc.users.listAll.useQuery();
+  const { data: usuarios, isLoading: isLoadingUsuarios } = trpc.equipes.listUsuariosParaGestor.useQuery(undefined, {
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
   const { data: corretoresDaEquipe } = trpc.equipes.getCorretores.useQuery(
     { equipeId: equipeCorretores! },
     { enabled: !!equipeCorretores }
@@ -97,6 +100,7 @@ export default function GestaoEquipes() {
   };
 
   // Mostrar todos os usuários (qualquer um pode se tornar gestor)
+  console.log('[GestaoEquipes] Usuários carregados:', usuarios, 'isLoading:', isLoadingUsuarios);
   const gestores = usuarios || [];
   const corretoresSemEquipe = usuarios?.filter(u => u.role === "corretor" && !u.equipeId);
 
@@ -156,11 +160,17 @@ export default function GestaoEquipes() {
                     <SelectValue placeholder="Selecione um gestor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {gestores?.map(gestor => (
-                      <SelectItem key={gestor.id} value={gestor.id.toString()}>
-                        {gestor.name}
-                      </SelectItem>
-                    ))}
+                    {gestores && gestores.length > 0 ? (
+                      gestores.map(gestor => (
+                        <SelectItem key={gestor.id} value={gestor.id.toString()}>
+                          {gestor.name} ({gestor.role})
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        Nenhum usuário disponível
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

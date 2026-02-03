@@ -5273,6 +5273,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // ============================================================================
   
   equipes: router({
+    // Listar usuários disponíveis para serem gestores (apenas admin)
+    listUsuariosParaGestor: adminProcedure.query(async () => {
+      return await db.getAllUsers();
+    }),
+    
     // Listar todas as equipes (admin) ou equipe do gestor
     list: gestorProcedure.query(async ({ ctx }) => {
       const { listarEquipes, getEquipeByGestor } = await import('./equipes');
