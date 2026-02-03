@@ -1422,14 +1422,22 @@ export const appRouter = router({
         page: z.number().optional(),
         pageSize: z.number().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getLeadsPorCorretorComFiltros(input);
+      .query(async ({ ctx, input }) => {
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        return await db.getLeadsPorCorretorComFiltros({ ...input, corretoresIds });
       }),
 
     // Obter estatísticas por corretor
     getEstatisticasPorCorretor: gestorProcedure
-      .query(async () => {
-        return await db.getEstatisticasPorCorretor();
+      .query(async ({ ctx }) => {
+        // Obter IDs dos corretores para filtro baseado no role
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        return await db.getEstatisticasPorCorretor(corretoresIds);
       }),
   }),
 

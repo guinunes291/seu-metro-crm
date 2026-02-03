@@ -3742,3 +3742,6 @@
 - [x] Adicionar parâmetro corretoresIds em getAllLeads
 - [x] Adicionar parâmetro corretoresIds em getAllAgendamentos
 - [x] Adicionar parâmetro corretoresIds em getAllVisitas
+
+## Bug Fix: Filtro de Equipe em Leads por Corretor (03/02/2026)
+- [x] Aplicar filtro de equipe na página Leads por Corretor

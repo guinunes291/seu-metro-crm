@@ -1365,6 +1365,7 @@ export async function getHistoricoDistribuicoes(limit: number = 20) {
 // ============================================================================
 export interface FiltrosLeadsPorCorretor {
   corretorId?: number;
+  corretoresIds?: number[] | null; // Filtro por equipe
   status?: string;
   projectId?: number;
   dataInicio?: string;
@@ -1378,6 +1379,11 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
   if (!db) return [];
   
   const conditions: any[] = [];
+  
+  // Filtro por equipe (corretoresIds)
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+  }
   
   if (filtros?.corretorId) {
     conditions.push(eq(leads.corretorId, filtros.corretorId));
@@ -1442,14 +1448,26 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
 // ESTATÍSTICAS POR CORRETOR (PARA GESTOR)
 // ============================================================================
 
-export async function getEstatisticasPorCorretor() {
+export async function getEstatisticasPorCorretor(corretoresIds?: number[] | null) {
   const db = await getDb();
   if (!db) return [];
   
-  // Buscar todos os corretores
-  const corretores = await db.select()
-    .from(users)
-    .where(eq(users.role, 'corretor'));
+  // Buscar corretores (filtrados por equipe se fornecido)
+  let corretores;
+  if (corretoresIds && corretoresIds.length > 0) {
+    // Filtrar apenas corretores da equipe
+    corretores = await db.select()
+      .from(users)
+      .where(and(
+        eq(users.role, 'corretor'),
+        inArray(users.id, corretoresIds)
+      ));
+  } else {
+    // Buscar todos os corretores
+    corretores = await db.select()
+      .from(users)
+      .where(eq(users.role, 'corretor'));
+  }
   
   const estatisticas = await Promise.all(corretores.map(async (corretor) => {
     // Total de leads
