@@ -1575,11 +1575,17 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
-        } : undefined;
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        console.log('[dashboard.metrics] User:', ctx.user.name, 'Role:', ctx.user.role, 'Corretores IDs:', corretoresIds);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
         return await db.getDashboardMetrics(filtros);
       }),
     
@@ -1589,11 +1595,15 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
-        } : undefined;
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
         return await db.getLeadsPorCorretorDashboard(filtros);
       }),
     
@@ -1603,11 +1613,15 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
-        } : undefined;
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
         return await db.getAgendamentosPorCorretor(filtros);
       }),
     
@@ -1617,11 +1631,15 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
-        } : undefined;
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
         return await db.getVisitasPorCorretor(filtros);
       }),
     
@@ -1631,11 +1649,15 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
-        } : undefined;
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
         return await db.getVendasPorCorretor(filtros);
       }),
     
@@ -1645,10 +1667,13 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
         const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
-        return await db.getMetricasFunilGeral(dataInicio, dataFim);
+        return await db.getMetricasFunilGeral(dataInicio, dataFim, corretoresIds);
       }),
     
     // Métricas do funil por corretor (baseadas em transições)
@@ -1657,10 +1682,13 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
         const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
-        return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim);
+        return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim, corretoresIds);
       }),
     
     // Relatório detalhado de leads criados por corretor
@@ -1669,10 +1697,13 @@ export const appRouter = router({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
         const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
         const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
-        return await db.getRelatorioLeadsCriados(dataInicio, dataFim);
+        return await db.getRelatorioLeadsCriados(dataInicio, dataFim, corretoresIds);
       }),
   }),
 
@@ -1683,15 +1714,19 @@ export const appRouter = router({
     // Métricas históricas para gráficos de linha
     historico: gestorProcedure
       .input(z.object({ dias: z.number().default(30) }).optional())
-      .query(async ({ input }) => {
-        return await db.getMetricasHistoricas(input?.dias || 30);
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getMetricasHistoricas(input?.dias || 30, corretoresIds);
       }),
     
     // Dados do funil de vendas
     funil: gestorProcedure
       .input(z.object({ dias: z.number().default(30) }).optional())
-      .query(async ({ input }) => {
-        return await db.getEvolucaoFunil(input?.dias || 30);
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getEvolucaoFunil(input?.dias || 30, corretoresIds);
       }),
   }),
 
@@ -5276,6 +5311,50 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     // Listar usuários disponíveis para serem gestores (apenas admin)
     listUsuariosParaGestor: adminProcedure.query(async () => {
       return await db.getAllUsers();
+    }),
+    
+    // DEBUG: Testar filtro de corretores
+    testeFiltro: gestorProcedure.query(async ({ ctx }) => {
+      const { getCorretoresIdsParaFiltro, getEquipeByGestor, getCorretoresDaEquipe } = await import('./equipes');
+      
+      const equipe = await getEquipeByGestor(ctx.user.id);
+      const corretores = equipe ? await getCorretoresDaEquipe(equipe.id) : [];
+      const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+      
+      return {
+        userId: ctx.user.id,
+        userOpenId: ctx.user.openId,
+        userName: ctx.user.name,
+        userRole: ctx.user.role,
+        equipe: equipe ? { id: equipe.id, nome: equipe.nome } : null,
+        corretores: corretores.map(c => ({ id: c.id, name: c.name })),
+        corretoresIds,
+      };
+    }),
+    
+    // DEBUG: Simular filtro como se fosse o gestor (ID 5055943)
+    simularGestor: adminProcedure.query(async () => {
+      const { getCorretoresIdsParaFiltro, getEquipeByGestor, getCorretoresDaEquipe } = await import('./equipes');
+      
+      // Simular como gestor ID 5055943 (guilherme.97fn@gmail.com)
+      const gestorId = 5055943;
+      const gestorRole = 'gestor';
+      
+      const equipe = await getEquipeByGestor(gestorId);
+      const corretores = equipe ? await getCorretoresDaEquipe(equipe.id) : [];
+      const corretoresIds = await getCorretoresIdsParaFiltro(gestorId, gestorRole);
+      
+      // Buscar métricas filtradas usando db.getDashboardMetrics
+      const metricas = await db.getDashboardMetrics({ corretoresIds });
+      
+      return {
+        simulandoGestorId: gestorId,
+        simulandoRole: gestorRole,
+        equipe: equipe ? { id: equipe.id, nome: equipe.nome } : null,
+        corretores: corretores.map(c => ({ id: c.id, name: c.name })),
+        corretoresIds,
+        metricas,
+      };
     }),
     
     // Listar todas as equipes (admin) ou equipe do gestor

@@ -3703,3 +3703,31 @@
 ## Bug: Dropdown de Gestor Vazio
 - [x] Investigar por que dropdown não mostra usuários
 - [x] Corrigir query users.listAll ou lógica de carregamento
+
+## Feature: Filtros Automáticos por Equipe para Gestores
+- [x] Identificar queries do dashboard que precisam filtrar por equipe
+- [x] Implementar filtro automático em queries de leads (em progresso)
+- [ ] Implementar filtro automático em queries de estatísticas
+- [ ] Implementar filtro automático em queries de corretores
+- [ ] Testar com gestor (deve ver só sua equipe)
+- [ ] Testar com admin (deve ver tudo)
+
+## Feature: Sistema de Equipes e Hierarquia de Permissões
+- [x] Criar tabela 'equipes' no schema (nome, descrição, gestorId, cor, metaMensal, ativa)
+- [x] Adicionar campo 'equipeId' na tabela users para relacionamento
+- [x] Implementar CRUD completo de equipes no backend
+- [x] Implementar procedures para gerenciar membros da equipe (adicionar/remover corretores)
+- [x] Criar middlewares de permissão: adminProcedure e gestorRestritoProcedure
+- [x] Criar página "Gestão de Equipes" para admin (CRUD visual com cards coloridos)
+- [x] Criar página "Minha Equipe" para gestor (visualização da equipe e métricas)
+- [x] Atualizar menu lateral com permissões por role
+- [x] Implementar promoção automática para "gestor" ao criar equipe
+- [x] Corrigir bug: upsertUser não sobrescreve role existente no update
+- [x] Implementar função getCorretoresIdsParaFiltro para filtrar dados por equipe
+- [x] Aplicar filtro de equipe no dashboard.metrics
+- [x] Aplicar filtro de equipe em leadsPorCorretor, agendamentosPorCorretor, visitasPorCorretor, vendasPorCorretor
+- [x] Aplicar filtro de equipe em metricasFunil, metricasFunilPorCorretor, relatorioLeadsCriados
+- [x] Aplicar filtro de equipe em gráficos (historico, funil)
+- [x] Criar testes unitários para sistema de filtro de equipes (9 testes passando)
+- [x] Criar endpoint de simulação para debug (equipes.simularGestor)
+

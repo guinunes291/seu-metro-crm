@@ -216,3 +216,33 @@ export async function usuarioPertenceAEquipe(userId: number, equipeId: number): 
 
   return result.length > 0;
 }
+
+// ============================================================================
+// HELPERS PARA FILTROS POR EQUIPE
+// ============================================================================
+
+/**
+ * Retorna os IDs dos corretores da equipe do gestor
+ * Se o usuário for admin, retorna null (sem filtro)
+ * Se o usuário for gestor, retorna array com IDs dos corretores da sua equipe
+ */
+export async function getCorretoresIdsParaFiltro(userId: number, userRole: string): Promise<number[] | null> {
+  // Admin vê tudo
+  if (userRole === 'admin') {
+    return null;
+  }
+  
+  // Gestor vê apenas sua equipe
+  if (userRole === 'gestor') {
+    const equipe = await getEquipeByGestor(userId);
+    if (!equipe) {
+      return []; // Gestor sem equipe = não vê nada
+    }
+    
+    const corretores = await getCorretoresDaEquipe(equipe.id);
+    return corretores.map(c => c.id);
+  }
+  
+  // Corretor vê apenas seus próprios leads (retorna próprio ID)
+  return [userId];
+}

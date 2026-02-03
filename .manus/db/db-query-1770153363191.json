@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  u.id as gestor_id, \n  u.name as gestor_nome, \n  u.role,\n  e.id as equipe_id, \n  e.nome as equipe_nome,\n  (SELECT GROUP_CONCAT(id) FROM users WHERE equipeId = e.id) as corretores_ids\nFROM users u\nLEFT JOIN equipes e ON e.gestorId = u.id\nWHERE u.email = 'guilherme.97fn@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id as gestor_id, \n  u.name as gestor_nome, \n  u.role,\n  e.id as equipe_id, \n  e.nome as equipe_nome,\n  (SELECT GROUP_CONCAT(id) FROM users WHERE equipeId = e.id) as corretores_ids\nFROM users u\nLEFT JOIN equipes e ON e.gestorId = u.id\nWHERE u.email = 'guilherme.97fn@gmail.com';",
+  "rows": [
+    {
+      "gestor_id": "5055943",
+      "gestor_nome": "Guilherme Nunes",
+      "role": "gestor",
+      "equipe_id": "1",
+      "equipe_nome": "Equipe Guilherme Nunes",
+      "corretores_ids": "8082380,10255836,10255880"
+    }
+  ],
+  "messages": [],
+  "stdout": "gestor_id\tgestor_nome\trole\tequipe_id\tequipe_nome\tcorretores_ids\n5055943\tGuilherme Nunes\tgestor\t1\tEquipe Guilherme Nunes\t8082380,10255836,10255880\n",
+  "stderr": "",
+  "execution_time_ms": 422
+}

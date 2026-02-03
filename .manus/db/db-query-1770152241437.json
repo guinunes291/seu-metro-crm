@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  e.id as equipe_id,\n  e.nome as equipe_nome,\n  e.gestorId,\n  g.name as gestor_nome,\n  g.email as gestor_email,\n  COUNT(DISTINCT u.id) as total_corretores\nFROM equipes e\nLEFT JOIN users g ON e.gestorId = g.id\nLEFT JOIN users u ON u.equipeId = e.id AND u.role = 'corretor'\nWHERE g.email = 'guilherme.97fn@gmail.com'\nGROUP BY e.id, e.nome, e.gestorId, g.name, g.email;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  e.id as equipe_id,\n  e.nome as equipe_nome,\n  e.gestorId,\n  g.name as gestor_nome,\n  g.email as gestor_email,\n  COUNT(DISTINCT u.id) as total_corretores\nFROM equipes e\nLEFT JOIN users g ON e.gestorId = g.id\nLEFT JOIN users u ON u.equipeId = e.id AND u.role = 'corretor'\nWHERE g.email = 'guilherme.97fn@gmail.com'\nGROUP BY e.id, e.nome, e.gestorId, g.name, g.email;",
+  "rows": [
+    {
+      "equipe_id": "1",
+      "equipe_nome": "Equipe Guilherme Nunes",
+      "gestorId": "5055943",
+      "gestor_nome": "Guilherme Nunes",
+      "gestor_email": "guilherme.97fn@gmail.com",
+      "total_corretores": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "equipe_id\tequipe_nome\tgestorId\tgestor_nome\tgestor_email\ttotal_corretores\n1\tEquipe Guilherme Nunes\t5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\t3\n",
+  "stderr": "",
+  "execution_time_ms": 358
+}

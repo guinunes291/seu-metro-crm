@@ -140,8 +140,10 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
+      // Para o owner, só define admin se for um novo usuário (insert)
+      // Não sobrescreve o role existente no update
       values.role = 'admin';
-      updateSet.role = 'admin';
+      // NÃO adiciona role ao updateSet - preserva o role existente no banco
     }
     if (user.status !== undefined) {
       values.status = user.status;
@@ -1554,9 +1556,12 @@ export async function notifyLeadDistribuido(corretorId: number, leadId: number, 
 export interface DashboardFilters {
   dataInicio?: Date;
   dataFim?: Date;
+  corretoresIds?: number[] | null; // null = sem filtro (admin), [] = nenhum corretor, [ids] = filtrar por esses corretores
 }
 
 export async function getDashboardMetrics(filtros?: DashboardFilters) {
+  console.log('[getDashboardMetrics] Filtros recebidos:', JSON.stringify(filtros));
+  
   const db = await getDb();
   if (!db) return null;
   
@@ -1568,6 +1573,16 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
   
   if (filtros?.dataFim) {
     conditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  
+  // Filtro por corretores (para gestores verem apenas sua equipe)
+  if (filtros?.corretoresIds !== undefined && filtros.corretoresIds !== null) {
+    if (filtros.corretoresIds.length === 0) {
+      // Gestor sem corretores = não vê nada
+      conditions.push(sql`1 = 0`);
+    } else {
+      conditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+    }
   }
   
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -1642,14 +1657,19 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar todos os corretores
+  // Query 1: Buscar corretores (filtrados por equipe se necessário)
+  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
+  }
+  
   const corretores = await db.select({
     id: users.id,
     nome: users.name,
     status: users.status,
   })
     .from(users)
-    .where(eq(users.role, 'corretor'));
+    .where(and(...corretoresConditions));
   
   // Query 2: Contar leads por corretor em uma única query com GROUP BY
   const leadsConditions: any[] = [];
@@ -1658,6 +1678,9 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
   }
   if (filtros?.dataFim) {
     leadsConditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    leadsConditions.push(inArray(leads.corretorId, filtros.corretoresIds));
   }
   
   const leadsCounts = await db.select({
@@ -1686,14 +1709,19 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar todos os corretores
+  // Query 1: Buscar corretores (filtrados por equipe se necessário)
+  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
+  }
+  
   const corretores = await db.select({
     id: users.id,
     nome: users.name,
     status: users.status,
   })
     .from(users)
-    .where(eq(users.role, 'corretor'));
+    .where(and(...corretoresConditions));
   
   // Query 2: Contar agendamentos por corretor com GROUP BY
   const agendamentosConditions: any[] = [];
@@ -1702,6 +1730,9 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
   }
   if (filtros?.dataFim) {
     agendamentosConditions.push(lte(agendamentos.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    agendamentosConditions.push(inArray(agendamentos.corretorId, filtros.corretoresIds));
   }
   
   const agendamentosCounts = await db.select({
@@ -1728,14 +1759,19 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar todos os corretores
+  // Query 1: Buscar corretores (filtrados por equipe se necessário)
+  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
+  }
+  
   const corretores = await db.select({
     id: users.id,
     nome: users.name,
     status: users.status,
   })
     .from(users)
-    .where(eq(users.role, 'corretor'));
+    .where(and(...corretoresConditions));
   
   // Query 2: Contar visitas por corretor com GROUP BY
   const visitasConditions: any[] = [];
@@ -1744,6 +1780,9 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   }
   if (filtros?.dataFim) {
     visitasConditions.push(lte(visitas.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    visitasConditions.push(inArray(visitas.corretorId, filtros.corretoresIds));
   }
   
   const visitasCounts = await db.select({
@@ -1770,14 +1809,19 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar todos os corretores
+  // Query 1: Buscar corretores (filtrados por equipe se necessário)
+  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
+  }
+  
   const corretores = await db.select({
     id: users.id,
     nome: users.name,
     status: users.status,
   })
     .from(users)
-    .where(eq(users.role, 'corretor'));
+    .where(and(...corretoresConditions));
   
   // Query 2: Contar vendas e somar VGV por corretor em uma única query
   const vendasConditions: any[] = [eq(leads.status, 'contrato_fechado')];
@@ -1786,6 +1830,9 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   }
   if (filtros?.dataFim) {
     vendasConditions.push(lte(leads.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    vendasConditions.push(inArray(leads.corretorId, filtros.corretoresIds));
   }
   
   const vendasData = await db.select({
@@ -1835,7 +1882,7 @@ export interface MetricasDiarias {
   total: number;
 }
 
-export async function getMetricasHistoricas(dias: number = 30): Promise<MetricasDiarias[]> {
+export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: number[] | null): Promise<MetricasDiarias[]> {
   const db = await getDb();
   if (!db) return [];
   
@@ -1853,16 +1900,21 @@ export async function getMetricasHistoricas(dias: number = 30): Promise<Metricas
     
     const dataStr = data.toISOString().split('T')[0];
     
-    // Buscar leads criados nesse dia
+    // Buscar leads criados nesse dia (filtrados por equipe se necessário)
+    const conditions: any[] = [
+      gte(leads.createdAt, data),
+      lte(leads.createdAt, dataFim)
+    ];
+    if (corretoresIds && corretoresIds.length > 0) {
+      conditions.push(inArray(leads.corretorId, corretoresIds));
+    }
+    
     const leadsNoDia = await db.select({
       status: leads.status,
       count: sql<number>`count(*)`
     })
       .from(leads)
-      .where(and(
-        gte(leads.createdAt, data),
-        lte(leads.createdAt, dataFim)
-      ))
+      .where(and(...conditions))
       .groupBy(leads.status);
     
     const metricas: MetricasDiarias = {
@@ -1900,7 +1952,7 @@ export async function getMetricasHistoricas(dias: number = 30): Promise<Metricas
   return resultado;
 }
 
-export async function getEvolucaoFunil(dias: number = 30) {
+export async function getEvolucaoFunil(dias: number = 30, corretoresIds?: number[] | null) {
   const db = await getDb();
   if (!db) return [];
   
@@ -1909,13 +1961,18 @@ export async function getEvolucaoFunil(dias: number = 30) {
   dataInicio.setDate(dataInicio.getDate() - dias);
   dataInicio.setHours(0, 0, 0, 0);
   
-  // Buscar totais acumulados por status
+  // Buscar totais acumulados por status (filtrados por equipe se necessário)
+  const conditions: any[] = [gte(leads.createdAt, dataInicio)];
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(leads.corretorId, corretoresIds));
+  }
+  
   const totais = await db.select({
     status: leads.status,
     count: sql<number>`count(*)`
   })
     .from(leads)
-    .where(gte(leads.createdAt, dataInicio))
+    .where(and(...conditions))
     .groupBy(leads.status);
   
   const funil = [
@@ -5284,7 +5341,8 @@ export async function getMetricasFunilCorretor(
  */
 export async function getMetricasFunilTodosCorretores(
   dataInicio?: Date,
-  dataFim?: Date
+  dataFim?: Date,
+  corretoresIds?: number[] | null
 ): Promise<{
   corretorId: number;
   corretorNome: string;
@@ -5301,10 +5359,15 @@ export async function getMetricasFunilTodosCorretores(
   const db = await getDb();
   if (!db) return [];
   
-  // Buscar todos os corretores
+  // Buscar corretores (filtrados por equipe se necessário)
+  const conditions: any[] = [sql`${users.role} IN ('corretor', 'user')`];
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(users.id, corretoresIds));
+  }
+  
   const corretores = await db.select()
     .from(users)
-    .where(sql`${users.role} IN ('corretor', 'user')`);
+    .where(and(...conditions));
   
   const resultado = [];
   
@@ -5326,7 +5389,8 @@ export async function getMetricasFunilTodosCorretores(
  */
 export async function getMetricasFunilGeral(
   dataInicio?: Date,
-  dataFim?: Date
+  dataFim?: Date,
+  corretoresIds?: number[] | null
 ): Promise<{
   agendamentos: number;
   visitasRealizadas: number;
@@ -5348,12 +5412,15 @@ export async function getMetricasFunilGeral(
   };
   
   // Construir condições de filtro
-  const conditions = [];
+  const conditions: any[] = [];
   if (dataInicio) {
     conditions.push(gte(leadStatusTransitions.createdAt, dataInicio));
   }
   if (dataFim) {
     conditions.push(lte(leadStatusTransitions.createdAt, dataFim));
+  }
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(leadStatusTransitions.corretorId, corretoresIds));
   }
   
   // Contar transições para cada status
@@ -6073,7 +6140,8 @@ export async function getMetricasFunilLeadsUnicos(
  */
 export async function getRelatorioLeadsCriados(
   dataInicio?: Date,
-  dataFim?: Date
+  dataFim?: Date,
+  corretoresIds?: number[] | null
 ): Promise<{
   porCorretor: {
     corretorId: number;
@@ -6106,12 +6174,15 @@ export async function getRelatorioLeadsCriados(
   };
 
   // Construir condições de filtro
-  const conditions: SQL[] = [];
+  const conditions: any[] = [];
   if (dataInicio) {
     conditions.push(gte(leads.createdAt, dataInicio));
   }
   if (dataFim) {
     conditions.push(lte(leads.createdAt, dataFim));
+  }
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(leads.corretorId, corretoresIds));
   }
 
   // Buscar todos os leads com filtro de data

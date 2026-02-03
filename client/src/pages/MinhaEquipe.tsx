@@ -9,6 +9,10 @@ export default function MinhaEquipe() {
   const { user } = useAuth();
   const { data: equipes, isLoading } = trpc.equipes.list.useQuery();
   
+  // DEBUG: Testar filtro de corretores
+  const { data: testeFiltro } = trpc.equipes.testeFiltro.useQuery();
+  console.log('[MinhaEquipe] Teste Filtro:', testeFiltro);
+  
   const minhaEquipe = equipes?.[0]; // Gestor vê apenas sua equipe
   
   const { data: corretores } = trpc.equipes.getCorretores.useQuery(
