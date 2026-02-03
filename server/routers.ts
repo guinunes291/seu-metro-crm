@@ -32,6 +32,39 @@ const gestorProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+// Middleware para admin (apenas admin, não gestor)
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem acessar' });
+  }
+  return next({ ctx });
+});
+
+// Middleware para gestor restrito (apenas sua equipe)
+const gestorRestritoProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas gestores podem acessar' });
+  }
+  
+  // Admin tem acesso total, não precisa filtrar por equipe
+  if (ctx.user.role === 'admin') {
+    return next({ ctx: { ...ctx, equipeId: null } });
+  }
+  
+  // Gestor: buscar equipeId
+  const { getEquipeByGestor } = await import('./equipes');
+  const equipe = await getEquipeByGestor(ctx.user.id);
+  
+  if (!equipe) {
+    throw new TRPCError({ 
+      code: 'NOT_FOUND', 
+      message: 'Você não está associado a nenhuma equipe' 
+    });
+  }
+  
+  return next({ ctx: { ...ctx, equipeId: equipe.id } });
+});
+
 // ============================================================================
 // ROUTER PRINCIPAL
 // ============================================================================
@@ -5233,7 +5266,136 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           url: '/',
         });
       }),
-  }),
+   }),
 
+  // ============================================================================
+  // EQUIPES
+  // ============================================================================
+  
+  equipes: router({
+    // Listar todas as equipes (admin) ou equipe do gestor
+    list: gestorProcedure.query(async ({ ctx }) => {
+      const { listarEquipes, getEquipeByGestor } = await import('./equipes');
+      
+      if (ctx.user.role === 'admin') {
+        return await listarEquipes();
+      }
+      
+      // Gestor vê apenas sua equipe
+      const equipe = await getEquipeByGestor(ctx.user.id);
+      return equipe ? [equipe] : [];
+    }),
+    
+    // Buscar equipe por ID
+    getById: gestorProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const { getEquipeById, getEquipeByGestor } = await import('./equipes');
+        
+        // Admin pode ver qualquer equipe
+        if (ctx.user.role === 'admin') {
+          return await getEquipeById(input.id);
+        }
+        
+        // Gestor só pode ver sua própria equipe
+        const equipe = await getEquipeByGestor(ctx.user.id);
+        if (!equipe || equipe.id !== input.id) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
+        }
+        
+        return equipe;
+      }),
+    
+    // Criar equipe (apenas admin)
+    create: adminProcedure
+      .input(z.object({
+        nome: z.string().min(1),
+        descricao: z.string().optional(),
+        gestorId: z.number(),
+        cor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default('#3b82f6'),
+        metaMensal: z.number().default(10),
+      }))
+      .mutation(async ({ input }) => {
+        const { createEquipe } = await import('./equipes');
+        const id = await createEquipe(input);
+        return { id };
+      }),
+    
+    // Atualizar equipe (apenas admin)
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        nome: z.string().min(1).optional(),
+        descricao: z.string().optional(),
+        gestorId: z.number().optional(),
+        cor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+        metaMensal: z.number().optional(),
+        ativa: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateEquipe } = await import('./equipes');
+        const { id, ...data } = input;
+        await updateEquipe(id, data);
+        return { success: true };
+      }),
+    
+    // Deletar equipe (apenas admin)
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { deleteEquipe } = await import('./equipes');
+        await deleteEquipe(input.id);
+        return { success: true };
+      }),
+    
+    // Listar corretores da equipe
+    getCorretores: gestorProcedure
+      .input(z.object({ equipeId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresDaEquipe, getEquipeByGestor } = await import('./equipes');
+        
+        // Admin pode ver corretores de qualquer equipe
+        if (ctx.user.role === 'admin') {
+          return await getCorretoresDaEquipe(input.equipeId);
+        }
+        
+        // Gestor só pode ver corretores da sua equipe
+        const equipe = await getEquipeByGestor(ctx.user.id);
+        if (!equipe || equipe.id !== input.equipeId) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
+        }
+        
+        return await getCorretoresDaEquipe(input.equipeId);
+      }),
+    
+    // Adicionar corretor à equipe (apenas admin)
+    adicionarCorretor: adminProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        equipeId: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { adicionarCorretorNaEquipe } = await import('./equipes');
+        await adicionarCorretorNaEquipe(input.corretorId, input.equipeId);
+        return { success: true };
+      }),
+    
+    // Remover corretor da equipe (apenas admin)
+    removerCorretor: adminProcedure
+      .input(z.object({ corretorId: z.number() }))
+      .mutation(async ({ input }) => {
+        const { removerCorretorDaEquipe } = await import('./equipes');
+        await removerCorretorDaEquipe(input.corretorId);
+        return { success: true };
+      }),
+    
+    // Contar membros da equipe
+    contarMembros: gestorProcedure
+      .input(z.object({ equipeId: z.number() }))
+      .query(async ({ input }) => {
+        const { contarMembrosEquipe } = await import('./equipes');
+        return await contarMembrosEquipe(input.equipeId);
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

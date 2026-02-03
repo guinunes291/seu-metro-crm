@@ -3680,3 +3680,18 @@
 - [x] Investigar causa da duplicação (mesmo cliente aparece 2x em sequência)
 - [x] Corrigir query ou lógica que causa duplicação
 - [x] Testar correção e validar lista de follow-up
+
+## Feature: Sistema de Equipes e Hierarquia de Permissões
+- [x] Criar tabela 'equipes' no schema
+- [x] Adicionar campo 'equipeId' na tabela users
+- [x] Criar procedures CRUD para equipes (admin only)
+- [ ] Criar middleware 'gestorRestritoProcedure' para filtrar por equipe
+- [ ] Ajustar queries de leads para filtrar por equipe do gestor
+- [ ] Ajustar queries de corretores para filtrar por equipe
+- [ ] Ajustar dashboard para mostrar apenas dados da equipe do gestor
+- [x] Criar página "Gestão de Equipes" (admin)
+- [x] Criar página "Minha Equipe" (gestor)
+- [x] Atualizar menu lateral com permissões por role
+- [ ] Implementar filtros automáticos por equipe em todas as listagens
+- [ ] Criar testes unitários para permissões
+- [ ] Documentar sistema de permissões

@@ -103,10 +103,12 @@ const menuGroups = [
     icon: UserCog,
     roles: ["gestor", "admin"],
     items: [
+      { icon: Users, label: "Minha Equipe", path: "/minha-equipe", roles: ["gestor"] },
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin"] },
       { icon: Lock, label: "Controle de Bloqueio", path: "/controle-bloqueio", roles: ["gestor", "admin"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin"] },
-      { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["gestor", "admin"] },
+      { icon: Users, label: "Gestão de Equipes", path: "/gestao-equipes", roles: ["admin"] },
+      { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["admin"] },
       { icon: Target, label: "Controle de Limites", path: "/controle-limites", roles: ["gestor", "admin"] },
       { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["gestor", "admin"] },
       { icon: Target, label: "Projeto Foco do Mês", path: "/projeto-foco", roles: ["gestor", "admin"] },

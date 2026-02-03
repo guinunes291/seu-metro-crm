@@ -51,6 +51,8 @@ import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
 import ControleBloqueio from "@/pages/ControleBloqueio";
 import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
+import GestaoEquipes from "@/pages/GestaoEquipes";
+import MinhaEquipe from "@/pages/MinhaEquipe";
 import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
 
 
@@ -99,6 +101,8 @@ function Router() {
       <Route path="/projeto-foco" component={ProjetoFoco} />
       <Route path="/sistema/log-transferencias" component={LogTransferencias} />
       <Route path="/log-transferencias" component={LogTransferencias} />
+      <Route path="/gestao-equipes" component={GestaoEquipes} />
+      <Route path="/minha-equipe" component={MinhaEquipe} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

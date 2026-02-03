@@ -63,6 +63,9 @@ export const users = mysqlTable("users", {
   // Gamificação de follow-ups
   ultimoDesbloqueio: timestamp("ultimoDesbloqueio"), // Data/hora do último desbloqueio (60%)
   
+  // Sistema de Equipes
+  equipeId: int("equipeId"), // ID da equipe (para corretores e gestores)
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -73,10 +76,33 @@ export const users = mysqlTable("users", {
   roleIdx: index("user_role_idx").on(table.role),
   statusIdx: index("user_status_idx").on(table.status),
   situacaoIdx: index("user_situacao_idx").on(table.situacao),
+  equipeIdx: index("user_equipe_idx").on(table.equipeId),
 }));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+// ============================================================================
+// TABELA DE EQUIPES
+// ============================================================================
+
+export const equipes = mysqlTable("equipes", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  gestorId: int("gestorId").notNull(), // ID do gestor responsável
+  cor: varchar("cor", { length: 7 }).default("#3b82f6").notNull(), // Cor em hexadecimal
+  metaMensal: int("metaMensal").default(10).notNull(), // Meta de vendas da equipe
+  ativa: boolean("ativa").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  gestorIdx: index("equipe_gestor_idx").on(table.gestorId),
+  ativaIdx: index("equipe_ativa_idx").on(table.ativa),
+}));
+
+export type Equipe = typeof equipes.$inferSelect;
+export type InsertEquipe = typeof equipes.$inferInsert;
 
 // ============================================================================
 // TABELA DE PROJETOS (EMPREENDIMENTOS)
