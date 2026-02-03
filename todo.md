@@ -3754,3 +3754,7 @@
 - [x] Identificar corretores de teste
 - [x] Identificar leads de teste
 - [x] Remover dados de teste após confirmação do usuário
+
+## Bug Fix: Filtro de Equipe nas Métricas do Dashboard (03/02/2026)
+- [x] Métricas (Agendado, Visita, Análise, Contrato, VGV) não estão filtradas por equipe
+- [x] Corrigir getDashboardMetrics para aplicar filtro de corretoresIds
