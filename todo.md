@@ -3758,8 +3758,3 @@
 ## Bug Fix: Filtro de Equipe nas Métricas do Dashboard (03/02/2026)
 - [x] Métricas (Agendado, Visita, Análise, Contrato, VGV) não estão filtradas por equipe
 - [x] Corrigir getDashboardMetrics para aplicar filtro de corretoresIds
-
-## Bug Fix: Duplicação de Agendamentos (03/02/2026)
-- [x] Investigar causa da duplicação de agendamentos quando corretor cria
-- [x] Corrigir código que causa duplicação (adicionada verificação de duplicata no backend)
-- [ ] Corrigir erro "void (0)" ao criar agendamento (investigar)

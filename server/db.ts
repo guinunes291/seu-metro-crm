@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, ne } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -5610,26 +5610,6 @@ export async function createAgendamento(data: {
 }): Promise<Agendamento | null> {
   const db = await getDb();
   if (!db) return null;
-  
-  // Verificar se já existe um agendamento duplicado (mesmo lead, data e hora)
-  // Isso previne double-click e submissões duplicadas
-  const dataAgendamentoStr = data.dataAgendamento.toISOString().split('T')[0];
-  const existente = await db.select({ id: agendamentos.id })
-    .from(agendamentos)
-    .where(and(
-      eq(agendamentos.leadId, data.leadId),
-      sql`DATE(${agendamentos.dataAgendamento}) = ${dataAgendamentoStr}`,
-      eq(agendamentos.horaAgendamento, data.horaAgendamento),
-      ne(agendamentos.status, 'cancelado') // Ignorar cancelados
-    ))
-    .limit(1);
-  
-  if (existente.length > 0) {
-    console.log(`[Agendamento] Duplicata detectada - leadId: ${data.leadId}, data: ${dataAgendamentoStr}, hora: ${data.horaAgendamento}. Retornando agendamento existente.`);
-    // Retornar o agendamento existente em vez de criar duplicata
-    const agendamentoExistente = await db.select().from(agendamentos).where(eq(agendamentos.id, existente[0].id)).limit(1);
-    return agendamentoExistente[0] || null;
-  }
   
   // Inserir o agendamento
   const result = await db.insert(agendamentos).values({
