@@ -5374,6 +5374,31 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       };
     }),
     
+    // DEBUG: Simular filtro como se fosse o gestor (ID 5055943)
+    simularGestor: adminProcedure.query(async () => {
+      const { getCorretoresIdsParaFiltro, getEquipeByGestor, getCorretoresDaEquipe } = await import('./equipes');
+      
+      // Simular como gestor ID 5055943 (guilherme.97fn@gmail.com)
+      const gestorId = 5055943;
+      const gestorRole = 'gestor';
+      
+      const equipe = await getEquipeByGestor(gestorId);
+      const corretores = equipe ? await getCorretoresDaEquipe(equipe.id) : [];
+      const corretoresIds = await getCorretoresIdsParaFiltro(gestorId, gestorRole);
+      
+      // Buscar métricas filtradas usando db.getDashboardMetrics
+      const metricas = await db.getDashboardMetrics({ corretoresIds });
+      
+      return {
+        simulandoGestorId: gestorId,
+        simulandoRole: gestorRole,
+        equipe: equipe ? { id: equipe.id, nome: equipe.nome } : null,
+        corretores: corretores.map(c => ({ id: c.id, name: c.name })),
+        corretoresIds,
+        metricas,
+      };
+    }),
+    
     // Listar todas as equipes (admin) ou equipe do gestor
     list: gestorProcedure.query(async ({ ctx }) => {
       const { listarEquipes, getEquipeByGestor } = await import('./equipes');
