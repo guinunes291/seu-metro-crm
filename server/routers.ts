@@ -1544,49 +1544,73 @@ export const appRouter = router({
   // ============================================================================
   
   relatorios: router({
-    // Estatísticas gerais do CRM
+    // Estatísticas gerais do CRM (filtrado por equipe para gestores)
     estatisticasGerais: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const { calcularEstatisticasGerais } = await import("./relatorios");
         const periodo = input ? {
           dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
-        return await calcularEstatisticasGerais(periodo);
+        
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        return await calcularEstatisticasGerais(periodo, corretoresIds);
       }),
     
-    // Conversão por projeto
+    // Conversão por projeto (filtrado por equipe para gestores)
     conversaoPorProjeto: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const { calcularConversaoPorProjeto } = await import("./relatorios");
         const periodo = input ? {
           dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
-        return await calcularConversaoPorProjeto(periodo);
+        
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        return await calcularConversaoPorProjeto(periodo, corretoresIds);
       }),
     
-    // Conversão por corretor
+    // Conversão por corretor (filtrado por equipe para gestores)
     conversaoPorCorretor: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
       }).optional())
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const { calcularConversaoPorCorretor } = await import("./relatorios");
         const periodo = input ? {
           dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
-        return await calcularConversaoPorCorretor(periodo);
+        
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        return await calcularConversaoPorCorretor(periodo, corretoresIds);
       }),
   }),
 
@@ -1862,14 +1886,28 @@ export const appRouter = router({
         return await db.getMetaByCorretorMesAno(input.corretorId, input.mes, input.ano);
       }),
     
-    // Buscar todas as metas do mês
+    // Buscar todas as metas do mês (filtrado por equipe para gestores)
     getDoMes: gestorProcedure
       .input(z.object({
         mes: z.number(),
         ano: z.number(),
       }))
-      .query(async ({ input }) => {
-        return await db.getMetasDoMes(input.mes, input.ano);
+      .query(async ({ input, ctx }) => {
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        const todasMetas = await db.getMetasDoMes(input.mes, input.ano);
+        
+        // Filtrar por equipe se necessário
+        if (corretoresIds) {
+          return todasMetas.filter(m => corretoresIds!.includes(m.corretorId));
+        }
+        
+        return todasMetas;
       }),
     
     // Buscar metas de um corretor
@@ -2342,7 +2380,7 @@ export const appRouter = router({
   // PROGRESSO DE FOLLOW-UPS (GAMIFICAÇÃO)
   // ============================================================================
   progressoFollowUps: router({
-    // Listar progresso de todos os corretores (apenas gestor)
+    // Listar progresso de todos os corretores (filtrado por equipe para gestores)
     listarProgressoEquipe: gestorProcedure
       .query(async ({ ctx }) => {
         const { inicioDoDiaHoje } = await import('./timezone');
@@ -2350,8 +2388,13 @@ export const appRouter = router({
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
-        // Buscar todos os corretores ativos
-        const corretores = await db.getCorretoresAtivos();
+        // Buscar corretores ativos (filtrado por equipe se for gestor)
+        let corretores;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          corretores = await db.getCorretoresByEquipe(ctx.user.equipeId);
+        } else {
+          corretores = await db.getCorretoresAtivos();
+        }
         
         // Calcular progresso de cada corretor
         const progressos = await Promise.all(
@@ -2434,7 +2477,7 @@ export const appRouter = router({
   // HISTÓRICO DE DISTRIBUIÇÃO
   // ============================================================================
   historicoDistribuicao: router({
-    // Listar histórico de distribuições
+    // Listar histórico de distribuições (filtrado por equipe para gestores)
     list: gestorProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
@@ -2444,8 +2487,25 @@ export const appRouter = router({
         limit: z.number().min(1).max(100).default(50),
         offset: z.number().min(0).default(0),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getHistoricoDistribuicao(input);
+      .query(async ({ input, ctx }) => {
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        const historico = await db.getHistoricoDistribuicao(input);
+        
+        // Filtrar por equipe se necessário
+        if (corretoresIds) {
+          return {
+            ...historico,
+            items: historico.items.filter(h => corretoresIds!.includes(h.corretorId))
+          };
+        }
+        
+        return historico;
       }),
     
     /// Estatísticas de distribuição por período
@@ -2758,10 +2818,24 @@ export const appRouter = router({
   // METAS DIÁRIAS E PONTUAÇÃO
   // ============================================================================
   metasDiarias: router({
-    // Listar metas diárias de todos os corretores
+    // Listar metas diárias de todos os corretores (filtrado por equipe para gestores)
     list: gestorProcedure
-      .query(async () => {
-        return await db.getMetasDiarias();
+      .query(async ({ ctx }) => {
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | undefined = undefined;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        const todasMetas = await db.getMetasDiarias();
+        
+        // Filtrar por equipe se necessário
+        if (corretoresIds) {
+          return todasMetas.filter(m => corretoresIds!.includes(m.corretorId));
+        }
+        
+        return todasMetas;
       }),
     
     // Obter meta diária de um corretor específico

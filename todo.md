@@ -3787,3 +3787,22 @@
 - [x] Criar função `getCorretoresByEquipe` no db.ts (getAllAgendamentos já suportava corretoresIds)
 - [x] Testar: gestor deve ver apenas agendamentos dos corretores da sua equipe (filtro implementado no backend)
 - [x] Testar: admin deve continuar vendo todos os agendamentos (sem filtro quando não é gestor)
+
+## Feature: Filtro de Equipe em Páginas de Gestão
+
+- [x] Implementar filtro de equipe em Metas Mensais (backend)
+- [x] Implementar filtro de equipe em Metas Diárias (backend)
+- [x] Implementar filtro de equipe em Monitoramento de Follow-up (backend)
+- [x] Implementar filtro de equipe em Corretores (backend) - já estava implementado
+- [x] Implementar filtro de equipe em Relatórios (backend)
+- [x] Implementar filtro de equipe em Log de Transferências (backend)
+
+## Feature: Ocultar Abas Administrativas para Gestores
+
+- [x] Ocultar "Controle de Bloqueio" no menu lateral para gestores
+- [x] Ocultar "Controle de Limites" no menu lateral para gestores
+- [x] Ocultar "Roleta de Leads" no menu lateral para gestores
+- [x] Ocultar "Projeto Foco do Mês" no menu lateral para gestores
+- [x] Ocultar "Importar Leads" no menu lateral para gestores
+- [x] Testar: gestor não deve ver abas administrativas (servidor funcionando corretamente)
+- [x] Testar: admin deve continuar vendo todas as abas (lógica de roles implementada)

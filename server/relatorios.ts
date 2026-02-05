@@ -22,7 +22,8 @@ interface ConversaoPorProjeto {
  * Calcula estatísticas de conversão por projeto
  */
 export async function calcularConversaoPorProjeto(
-  periodo?: { dataInicio?: Date; dataFim?: Date }
+  periodo?: { dataInicio?: Date; dataFim?: Date },
+  corretoresIds?: number[]
 ): Promise<ConversaoPorProjeto[]> {
   const db = await getDb();
   if (!db) return [];
@@ -33,7 +34,7 @@ export async function calcularConversaoPorProjeto(
   const resultado: ConversaoPorProjeto[] = [];
 
   for (const projeto of todosProjetos) {
-    // Buscar leads do projeto com filtro de período se fornecido
+    // Buscar leads do projeto com filtro de período e equipe se fornecido
     let leadsDoProjeto;
     
     if (periodo?.dataInicio && periodo?.dataFim) {
@@ -52,6 +53,11 @@ export async function calcularConversaoPorProjeto(
         .select()
         .from(leads)
         .where(eq(leads.projectId, projeto.id));
+    }
+    
+    // Filtrar por equipe se necessário
+    if (corretoresIds) {
+      leadsDoProjeto = leadsDoProjeto.filter(l => l.corretorId && corretoresIds.includes(l.corretorId));
     }
 
     if (leadsDoProjeto.length === 0) {
@@ -124,24 +130,29 @@ interface ConversaoPorCorretor {
  * Calcula estatísticas de conversão por corretor
  */
 export async function calcularConversaoPorCorretor(
-  periodo?: { dataInicio?: Date; dataFim?: Date }
+  periodo?: { dataInicio?: Date; dataFim?: Date },
+  corretoresIds?: number[]
 ): Promise<ConversaoPorCorretor[]> {
   const db = await getDb();
   if (!db) return [];
 
   // Buscar todos os corretores com leads
-  const corretoresComLeads = await db
+  let query = db
     .select({
       corretorId: leads.corretorId,
     })
     .from(leads)
-    .where(sql`${leads.corretorId} IS NOT NULL`)
-    .groupBy(leads.corretorId);
+    .where(sql`${leads.corretorId} IS NOT NULL`);
+  
+  const corretoresComLeads = await query.groupBy(leads.corretorId);
 
   const resultado: ConversaoPorCorretor[] = [];
 
   for (const { corretorId } of corretoresComLeads) {
     if (!corretorId) continue;
+    
+    // Filtrar por equipe se necessário
+    if (corretoresIds && !corretoresIds.includes(corretorId)) continue;
 
     // Buscar dados do corretor
     const corretor = await db
@@ -228,7 +239,8 @@ export async function calcularConversaoPorCorretor(
  * Calcula estatísticas gerais do CRM
  */
 export async function calcularEstatisticasGerais(
-  periodo?: { dataInicio?: Date; dataFim?: Date }
+  periodo?: { dataInicio?: Date; dataFim?: Date },
+  corretoresIds?: number[]
 ): Promise<{
   totalLeads: number;
   leadsDistribuidos: number;
@@ -263,7 +275,7 @@ export async function calcularEstatisticasGerais(
     };
   }
 
-  // Buscar todos os leads (com filtro de período se fornecido)
+  // Buscar todos os leads (com filtro de período e equipe se fornecido)
   let todosLeads;
 
   if (periodo?.dataInicio && periodo?.dataFim) {
@@ -278,6 +290,11 @@ export async function calcularEstatisticasGerais(
       );
   } else {
     todosLeads = await db.select().from(leads);
+  }
+  
+  // Filtrar por equipe se necessário
+  if (corretoresIds) {
+    todosLeads = todosLeads.filter(l => l.corretorId && corretoresIds.includes(l.corretorId));
   }
 
   const totalLeads = todosLeads.length;
