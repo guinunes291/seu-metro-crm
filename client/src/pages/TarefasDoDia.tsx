@@ -81,8 +81,11 @@ type ResultadoContato = "contato_realizado" | "nao_atendeu" | "agendamento" | "v
 
 export default function TarefasDoDia() {
   const [showNovaTarefa, setShowNovaTarefa] = useState(false);
+  const [showNovaTarefaComLead, setShowNovaTarefaComLead] = useState(false);
   const [showRegistrarTentativa, setShowRegistrarTentativa] = useState<number | null>(null);
   const [showConcluirTarefa, setShowConcluirTarefa] = useState<number | null>(null);
+  const [buscaLead, setBuscaLead] = useState("");
+  const [leadSelecionado, setLeadSelecionado] = useState<{id: number, nome: string, telefone: string} | null>(null);
   
   // Estado para o modal de registro de interação (ao clicar em Não Respondeu/Respondeu)
   const [showRegistrarInteracao, setShowRegistrarInteracao] = useState<{
@@ -99,6 +102,13 @@ export default function TarefasDoDia() {
   
   // Form states
   const [novaTarefa, setNovaTarefa] = useState({
+    titulo: "",
+    descricao: "",
+    tipo: "outro" as TipoTarefa,
+    dataAgendada: new Date().toISOString().split('T')[0],
+    prioridade: "media" as Prioridade,
+  });
+  const [novaTarefaComLead, setNovaTarefaComLead] = useState({
     titulo: "",
     descricao: "",
     tipo: "outro" as TipoTarefa,
@@ -124,6 +134,26 @@ export default function TarefasDoDia() {
         dataAgendada: new Date().toISOString().split('T')[0],
         prioridade: "media",
       });
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar tarefa: ${error.message}`);
+    },
+  });
+
+  const criarTarefaComLeadMutation = trpc.tarefas.createComLead.useMutation({
+    onSuccess: () => {
+      toast.success("Tarefa criada! O cliente sairá do follow-up até a data agendada.");
+      setShowNovaTarefaComLead(false);
+      setNovaTarefaComLead({
+        titulo: "",
+        descricao: "",
+        tipo: "outro",
+        dataAgendada: new Date().toISOString().split('T')[0],
+        prioridade: "media",
+      });
+      setLeadSelecionado(null);
+      setBuscaLead("");
       refetch();
     },
     onError: (error) => {
@@ -178,6 +208,18 @@ export default function TarefasDoDia() {
     criarTarefaMutation.mutate({
       ...novaTarefa,
       dataAgendada: new Date(novaTarefa.dataAgendada + "T09:00:00"),
+    });
+  };
+
+  const handleCriarTarefaComLead = () => {
+    if (!leadSelecionado) {
+      toast.error("Selecione um cliente para criar a tarefa");
+      return;
+    }
+    criarTarefaComLeadMutation.mutate({
+      leadId: leadSelecionado.id,
+      ...novaTarefaComLead,
+      dataAgendada: new Date(novaTarefaComLead.dataAgendada + "T09:00:00"),
     });
   };
 
@@ -299,13 +341,25 @@ export default function TarefasDoDia() {
         {followUps.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-orange-500" />
-                Follow-ups do Dia
-              </CardTitle>
-              <CardDescription>
-                Clientes aguardando contato. Após 5 dias sem resposta, o lead vai para Perdido/Lixeira.
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-orange-500" />
+                    Follow-ups do Dia
+                  </CardTitle>
+                  <CardDescription>
+                    Clientes aguardando contato. Após 5 dias sem resposta, o lead vai para Perdido/Lixeira.
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowNovaTarefaComLead(true)}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Tarefa com Cliente
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -792,6 +846,165 @@ export default function TarefasDoDia() {
               ) : (
                 "Salvar Interação"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Nova Tarefa com Lead */}
+      <Dialog open={showNovaTarefaComLead} onOpenChange={setShowNovaTarefaComLead}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova Tarefa com Cliente</DialogTitle>
+            <DialogDescription>
+              Selecione um cliente e crie uma tarefa. O cliente sairá do follow-up até a data da tarefa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Busca e seleção de cliente */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cliente</label>
+              {!leadSelecionado ? (
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Buscar cliente por nome ou telefone..."
+                    value={buscaLead}
+                    onChange={(e) => setBuscaLead(e.target.value)}
+                  />
+                  {buscaLead.length >= 2 && (
+                    <div className="max-h-48 overflow-y-auto border rounded-md">
+                      {leads
+                        ?.filter(lead => 
+                          lead.nome.toLowerCase().includes(buscaLead.toLowerCase()) ||
+                          lead.telefone.includes(buscaLead)
+                        )
+                        .slice(0, 10)
+                        .map(lead => (
+                          <button
+                            key={lead.id}
+                            className="w-full text-left px-4 py-2 hover:bg-accent flex items-center justify-between"
+                            onClick={() => {
+                              setLeadSelecionado({ id: lead.id, nome: lead.nome, telefone: lead.telefone });
+                              setBuscaLead("");
+                            }}
+                          >
+                            <div>
+                              <p className="font-medium">{lead.nome}</p>
+                              <p className="text-sm text-muted-foreground">{lead.telefone}</p>
+                            </div>
+                          </button>
+                        ))}
+                      {leads?.filter(lead => 
+                        lead.nome.toLowerCase().includes(buscaLead.toLowerCase()) ||
+                        lead.telefone.includes(buscaLead)
+                      ).length === 0 && (
+                        <p className="px-4 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 border rounded-md bg-accent">
+                  <div>
+                    <p className="font-medium">{leadSelecionado.nome}</p>
+                    <p className="text-sm text-muted-foreground">{leadSelecionado.telefone}</p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setLeadSelecionado(null)}
+                  >
+                    Trocar
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Formulário da tarefa */}
+            {leadSelecionado && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Título</label>
+                  <Input
+                    placeholder="Ex: Ligar para cliente sobre documentação"
+                    value={novaTarefaComLead.titulo}
+                    onChange={(e) => setNovaTarefaComLead({ ...novaTarefaComLead, titulo: e.target.value })}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Descrição (opcional)</label>
+                  <Textarea
+                    placeholder="Detalhes adicionais..."
+                    value={novaTarefaComLead.descricao}
+                    onChange={(e) => setNovaTarefaComLead({ ...novaTarefaComLead, descricao: e.target.value })}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipo</label>
+                    <Select 
+                      value={novaTarefaComLead.tipo} 
+                      onValueChange={(v) => setNovaTarefaComLead({ ...novaTarefaComLead, tipo: v as TipoTarefa })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(tipoLabels).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Prioridade</label>
+                    <Select 
+                      value={novaTarefaComLead.prioridade} 
+                      onValueChange={(v) => setNovaTarefaComLead({ ...novaTarefaComLead, prioridade: v as Prioridade })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="alta">Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data</label>
+                  <Input
+                    type="date"
+                    value={novaTarefaComLead.dataAgendada}
+                    onChange={(e) => setNovaTarefaComLead({ ...novaTarefaComLead, dataAgendada: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O cliente sairá do follow-up até esta data
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowNovaTarefaComLead(false);
+              setLeadSelecionado(null);
+              setBuscaLead("");
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleCriarTarefaComLead}
+              disabled={!leadSelecionado || !novaTarefaComLead.titulo || criarTarefaComLeadMutation.isPending}
+            >
+              {criarTarefaComLeadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Criar Tarefa
             </Button>
           </DialogFooter>
         </DialogContent>

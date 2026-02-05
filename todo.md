@@ -3754,3 +3754,15 @@
 - [x] Aplicar filtro de equipe nas métricas de Agendado, Visita, Análise, Contrato e VGV
 - [x] Testar servidor após alterações
 - [x] Verificar se métricas estão corretas para gestor (servidor funcionando, filtro aplicado)
+
+## Feature: Nova Tarefa na Aba Follow-up com Exclusão Temporária (05/02/2026)
+- [x] Adicionar campo `proximaTarefaData` (timestamp nullable) na tabela `leads`
+- [x] Migrar banco de dados com novo campo (ALTER TABLE)
+- [x] Criar procedure `tarefas.createComLead` que cria tarefa vinculada a um lead e atualiza `proximaTarefaData`
+- [x] Modificar queries de follow-up (getFollowUpsPendentes e getFollowUpsDoDia) para excluir leads que têm `proximaTarefaData` no futuro
+- [x] Adicionar modal de busca de cliente no botão "Nova Tarefa" da aba Follow-up (TarefasDoDia.tsx)
+- [x] Implementar campo de busca com autocomplete para selecionar cliente
+- [x] Implementar formulário de criação de tarefa vinculada ao cliente selecionado
+- [x] Ao concluir tarefa, limpar `proximaTarefaData` do lead para ele voltar ao follow-up normal
+- [x] Testar: cliente deve sair do follow-up ao criar tarefa e retornar apenas na data agendada (4 testes passando)
+- [x] Testar: cliente deve voltar ao follow-up após concluir a tarefa (funcionalidade implementada no backend)

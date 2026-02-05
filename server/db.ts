@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -3532,6 +3532,18 @@ export async function updateTarefa(id: number, data: Partial<InsertTarefa>) {
     .where(eq(tarefas.id, id));
 }
 
+export async function getTarefaById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select()
+    .from(tarefas)
+    .where(eq(tarefas.id, id))
+    .limit(1);
+  
+  return result[0] || null;
+}
+
 export async function concluirTarefa(id: number, observacoes?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -3544,6 +3556,15 @@ export async function concluirTarefa(id: number, observacoes?: string) {
       updatedAt: new Date() 
     })
     .where(eq(tarefas.id, id));
+}
+
+export async function updateLeadProximaTarefaData(leadId: number, data: Date | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(leads)
+    .set({ proximaTarefaData: data })
+    .where(eq(leads.id, leadId));
 }
 
 export async function deleteTarefa(id: number) {
@@ -3602,7 +3623,12 @@ export async function getFollowUpsPendentes(corretorId: number) {
     .where(and(
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "pendente"),
-      lte(followUps.dataFollowUp, agora)
+      lte(followUps.dataFollowUp, agora),
+      // Excluir leads que têm tarefa agendada no futuro
+      or(
+        isNull(leads.proximaTarefaData),
+        lte(leads.proximaTarefaData, agora)
+      )
     ))
     .orderBy(followUps.dataFollowUp);
 }
@@ -3615,6 +3641,8 @@ export async function getFollowUpsDoDia(corretorId: number) {
   const { fimDoDiaHoje, inicioDoDiaHoje } = await import('./timezone');
   const inicioDeHoje = inicioDoDiaHoje(); // 00:00:00 de hoje
   const fimDeHoje = fimDoDiaHoje(); // 23:59:59.999 de hoje
+  
+  const agora = new Date();
   
   return await db.select({
     id: followUps.id,
@@ -3634,7 +3662,12 @@ export async function getFollowUpsDoDia(corretorId: number) {
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, inicioDeHoje),
-      lte(followUps.dataFollowUp, fimDeHoje)
+      lte(followUps.dataFollowUp, fimDeHoje),
+      // Excluir leads que têm tarefa agendada no futuro
+      or(
+        isNull(leads.proximaTarefaData),
+        lte(leads.proximaTarefaData, agora)
+      )
     ))
     .orderBy(followUps.dataFollowUp);
 }

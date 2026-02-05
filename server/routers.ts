@@ -2207,6 +2207,29 @@ export const appRouter = router({
         return { success: true, id };
       }),
     
+    // Criar tarefa vinculada a um lead (remove lead do follow-up até a data da tarefa)
+    createComLead: corretorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        titulo: z.string().min(1),
+        descricao: z.string().optional(),
+        tipo: z.enum(["follow_up", "agendamento", "ligacao", "whatsapp", "email", "visita", "documentacao", "outro"]).default("outro"),
+        dataAgendada: z.date(),
+        prioridade: z.enum(["baixa", "media", "alta"]).default("media"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Criar a tarefa
+        const id = await db.createTarefa({
+          ...input,
+          corretorId: ctx.user.id,
+        });
+        
+        // Atualizar o lead para que saia do follow-up até a data da tarefa
+        await db.updateLeadProximaTarefaData(input.leadId, input.dataAgendada);
+        
+        return { success: true, id };
+      }),
+    
     // Concluir tarefa
     concluir: corretorProcedure
       .input(z.object({
@@ -2214,7 +2237,17 @@ export const appRouter = router({
         observacoes: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
+        // Buscar a tarefa para pegar o leadId
+        const tarefa = await db.getTarefaById(input.id);
+        
+        // Concluir a tarefa
         await db.concluirTarefa(input.id, input.observacoes);
+        
+        // Se a tarefa estava vinculada a um lead, limpar proximaTarefaData para voltar ao follow-up
+        if (tarefa?.leadId) {
+          await db.updateLeadProximaTarefaData(tarefa.leadId, null);
+        }
+        
         return { success: true };
       }),
     
