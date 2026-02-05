@@ -5096,8 +5096,18 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         dataInicio: z.string().optional(),
         dataFim: z.string().optional()
       }).optional())
-      .query(async ({ input }) => {
-        const agendamentos = await db.getAllAgendamentos(input);
+      .query(async ({ input, ctx }) => {
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | null = null;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        const agendamentos = await db.getAllAgendamentos({
+          ...input,
+          corretoresIds
+        });
         
         const total = agendamentos.length;
         const porStatus = {
@@ -5126,19 +5136,27 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         };
       }),
     
-    // Calendário consolidado (para o gestor ver todos os agendamentos)
+    // Calendário consolidado (para o gestor ver agendamentos da sua equipe)
     getCalendario: gestorProcedure
       .input(z.object({
         mes: z.number().min(1).max(12),
         ano: z.number()
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
         const dataInicio = new Date(input.ano, input.mes - 1, 1);
         const dataFim = new Date(input.ano, input.mes, 0, 23, 59, 59);
         
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | null = null;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
         const agendamentos = await db.getAllAgendamentos({
           dataInicio: dataInicio.toISOString(),
-          dataFim: dataFim.toISOString()
+          dataFim: dataFim.toISOString(),
+          corretoresIds
         });
         
         // Agrupar por dia

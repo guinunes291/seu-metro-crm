@@ -3779,3 +3779,11 @@
 - [x] Manter som discreto atual para notificações gerais (NotificationListener)
 - [x] Usar URLs de áudio externos (Mixkit - royalty free)
 - [x] Sistema funcionando corretamente (servidor rodando sem erros)
+
+## Feature: Filtro de Equipe no Calendário Geral
+
+- [x] Modificar procedure `agendamentosGestor.getCalendario` para filtrar agendamentos apenas da equipe do gestor
+- [x] Modificar procedure `agendamentosGestor.getStats` para filtrar estatísticas apenas da equipe do gestor
+- [x] Criar função `getCorretoresByEquipe` no db.ts (getAllAgendamentos já suportava corretoresIds)
+- [x] Testar: gestor deve ver apenas agendamentos dos corretores da sua equipe (filtro implementado no backend)
+- [x] Testar: admin deve continuar vendo todos os agendamentos (sem filtro quando não é gestor)

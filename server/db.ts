@@ -7507,6 +7507,26 @@ export async function getCorretoresAtivos() {
     .where(eq(users.role, 'corretor'));
 }
 
+/**
+ * Busca corretores de uma equipe específica
+ */
+export async function getCorretoresByEquipe(equipeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    equipeId: users.equipeId
+  })
+    .from(users)
+    .where(and(
+      eq(users.role, 'corretor'),
+      eq(users.equipeId, equipeId)
+    ));
+}
+
 export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Date, amanhaParam?: Date) {
   const db = await getDb();
   if (!db) return [];
