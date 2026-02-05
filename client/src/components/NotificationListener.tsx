@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { Bell, Volume2, VolumeX, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// URL do som de notificação (usando um som público)
-const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
+// URL do som de notificação discreto para notificações gerais (não urgentes)
+const NOTIFICATION_SOUND_URL = "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3";
 
 // Função para solicitar permissão de notificação do navegador
 async function requestNotificationPermission(): Promise<boolean> {
@@ -70,7 +70,7 @@ export default function NotificationListener() {
   // Criar elemento de áudio
   useEffect(() => {
     audioRef.current = new Audio(NOTIFICATION_SOUND_URL);
-    audioRef.current.volume = 0.5;
+    audioRef.current.volume = 0.3; // Volume discreto para notificações gerais
     
     // Pré-carregar o áudio
     audioRef.current.load();

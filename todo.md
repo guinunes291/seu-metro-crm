@@ -3772,3 +3772,10 @@
 - [x] O botão "Nova Tarefa" no header da página está abrindo o modal antigo (sem busca de cliente)
 - [x] Deve abrir o modal "Nova Tarefa com Cliente" que tem busca e seleção de cliente
 - [x] Manter o modal antigo apenas para o botão "Criar Nova Tarefa" quando não há tarefas
+
+## Feature: Sons de Notificação Diferenciados
+
+- [x] Substituir som atual de leads webhook (useWebhookLeadNotification) por som mais chamativo e urgente
+- [x] Manter som discreto atual para notificações gerais (NotificationListener)
+- [x] Usar URLs de áudio externos (Mixkit - royalty free)
+- [x] Sistema funcionando corretamente (servidor rodando sem erros)

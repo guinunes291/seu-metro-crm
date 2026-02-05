@@ -28,42 +28,20 @@ export function useWebhookLeadNotification() {
     }
   );
 
-  // Inicializar áudio de alerta
+  // Inicializar áudio de alerta urgente
   useEffect(() => {
-    // Som de notificação urgente (beep triplo)
-    const audioContext = typeof window !== 'undefined' && 'AudioContext' in window 
-      ? new AudioContext() 
-      : null;
+    // Som de alarme urgente para leads de Facebook Ads/Webhook
+    // Usando som de emergência mais chamativo
+    audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3');
+    audioRef.current.volume = 0.7; // Volume mais alto para urgência
+    audioRef.current.load();
     
-    if (audioContext) {
-      // Criar som de alerta programaticamente
-      const playAlert = () => {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.value = 800; // Frequência alta para urgência
-        oscillator.type = 'sine';
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-      };
-      
-      audioRef.current = {
-        play: () => {
-          // Tocar 3 vezes
-          playAlert();
-          setTimeout(playAlert, 150);
-          setTimeout(playAlert, 300);
-          return Promise.resolve();
-        },
-      } as any;
-    }
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
   }, []);
 
   // Solicitar permissão para notificações push
