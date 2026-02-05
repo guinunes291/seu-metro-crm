@@ -3766,3 +3766,9 @@
 - [x] Ao concluir tarefa, limpar `proximaTarefaData` do lead para ele voltar ao follow-up normal
 - [x] Testar: cliente deve sair do follow-up ao criar tarefa e retornar apenas na data agendada (4 testes passando)
 - [x] Testar: cliente deve voltar ao follow-up após concluir a tarefa (funcionalidade implementada no backend)
+
+## Bug: Botão "Nova Tarefa" abrindo modal errado
+
+- [x] O botão "Nova Tarefa" no header da página está abrindo o modal antigo (sem busca de cliente)
+- [x] Deve abrir o modal "Nova Tarefa com Cliente" que tem busca e seleção de cliente
+- [x] Manter o modal antigo apenas para o botão "Criar Nova Tarefa" quando não há tarefas

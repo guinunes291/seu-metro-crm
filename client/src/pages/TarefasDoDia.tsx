@@ -288,9 +288,9 @@ export default function TarefasDoDia() {
               <RefreshCw className="mr-2 h-4 w-4" />
               Atualizar
             </Button>
-            <Button onClick={() => setShowNovaTarefa(true)}>
+            <Button onClick={() => setShowNovaTarefaComLead(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Nova Tarefa
+              Nova Tarefa com Cliente
             </Button>
           </div>
         </div>
