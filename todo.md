@@ -3745,3 +3745,7 @@
 
 ## Bug Fix: Filtro de Equipe em Leads por Corretor (03/02/2026)
 - [x] Aplicar filtro de equipe na página Leads por Corretor
+
+## Bug Fix: Tag de Descarte Não Removida ao Registrar Atividade (05/02/2026)
+- [ ] Investigar lógica de descarte de leads e identificar onde a tag deveria ser removida
+- [ ] Corrigir código para remover tag de descarte ao registrar atividade

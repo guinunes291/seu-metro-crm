@@ -601,9 +601,10 @@ export const appRouter = router({
           });
         }
         
-        // Atualizar último contato do lead
+        // Atualizar último contato e última interação do lead
         await db.updateLead(input.leadId, {
           ultimoContato: new Date(),
+          ultimaInteracao: new Date(),
         });
         
         return { success: true };
