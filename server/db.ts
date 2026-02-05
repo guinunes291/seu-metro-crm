@@ -1660,28 +1660,36 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'em_atendimento')) : eq(leads.status, 'em_atendimento')),
     db.select({ count: sql<number>`count(DISTINCT ${agendamentos.id})` })
       .from(agendamentos)
-      .where(filtros?.dataInicio || filtros?.dataFim ? and(
-        ...(filtros.dataInicio ? [gte(agendamentos.createdAt, filtros.dataInicio)] : []),
-        ...(filtros.dataFim ? [lte(agendamentos.createdAt, filtros.dataFim)] : [])
-      ) : undefined),
+      .leftJoin(leads, eq(agendamentos.leadId, leads.id))
+      .where(and(
+        ...(filtros?.dataInicio ? [gte(agendamentos.createdAt, filtros.dataInicio)] : []),
+        ...(filtros?.dataFim ? [lte(agendamentos.createdAt, filtros.dataFim)] : []),
+        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+      )),
     db.select({ count: sql<number>`count(DISTINCT ${visitas.id})` })
       .from(visitas)
-      .where(filtros?.dataInicio || filtros?.dataFim ? and(
-        ...(filtros.dataInicio ? [gte(visitas.createdAt, filtros.dataInicio)] : []),
-        ...(filtros.dataFim ? [lte(visitas.createdAt, filtros.dataFim)] : [])
-      ) : undefined),
+      .leftJoin(leads, eq(visitas.leadId, leads.id))
+      .where(and(
+        ...(filtros?.dataInicio ? [gte(visitas.createdAt, filtros.dataInicio)] : []),
+        ...(filtros?.dataFim ? [lte(visitas.createdAt, filtros.dataFim)] : []),
+        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+      )),
     db.select({ count: sql<number>`count(DISTINCT ${analises_credito.id})` })
       .from(analises_credito)
-      .where(filtros?.dataInicio || filtros?.dataFim ? and(
-        ...(filtros.dataInicio ? [gte(analises_credito.createdAt, filtros.dataInicio)] : []),
-        ...(filtros.dataFim ? [lte(analises_credito.createdAt, filtros.dataFim)] : [])
-      ) : undefined),
+      .leftJoin(leads, eq(analises_credito.leadId, leads.id))
+      .where(and(
+        ...(filtros?.dataInicio ? [gte(analises_credito.createdAt, filtros.dataInicio)] : []),
+        ...(filtros?.dataFim ? [lte(analises_credito.createdAt, filtros.dataFim)] : []),
+        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+      )),
     db.select({ count: sql<number>`count(DISTINCT ${contratos.id})` })
       .from(contratos)
-      .where(filtros?.dataInicio || filtros?.dataFim ? and(
-        ...(filtros.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
-        ...(filtros.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : [])
-      ) : undefined),
+      .leftJoin(leads, eq(contratos.leadId, leads.id))
+      .where(and(
+        ...(filtros?.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
+        ...(filtros?.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : []),
+        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+      )),
     db.select({ count: sql<number>`count(*)` })
       .from(leads)
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
@@ -1693,10 +1701,12 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)` 
   })
     .from(contratos)
-    .where(filtros?.dataInicio || filtros?.dataFim ? and(
-      ...(filtros.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
-      ...(filtros.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : [])
-    ) : undefined);
+    .leftJoin(leads, eq(contratos.leadId, leads.id))
+    .where(and(
+      ...(filtros?.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
+      ...(filtros?.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : []),
+      ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+    ));
   
   return {
     total: Number(totalResult[0]?.count || 0),

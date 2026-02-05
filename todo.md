@@ -3749,3 +3749,8 @@
 ## Bug Fix: Tag de Descarte Não Removida ao Registrar Atividade (05/02/2026)
 - [ ] Investigar lógica de descarte de leads e identificar onde a tag deveria ser removida
 - [ ] Corrigir código para remover tag de descarte ao registrar atividade
+
+## Bug Fix: Métricas do Dashboard do Gestor Não Filtradas por Equipe (05/02/2026)
+- [x] Aplicar filtro de equipe nas métricas de Agendado, Visita, Análise, Contrato e VGV
+- [x] Testar servidor após alterações
+- [x] Verificar se métricas estão corretas para gestor (servidor funcionando, filtro aplicado)
