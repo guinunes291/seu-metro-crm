@@ -3813,3 +3813,15 @@
 - [x] Abas administrativas continuam aparecendo para gestores no menu lateral - adicionado debug para investigar
 - [x] Verificar se a lógica de roles está sendo respeitada no DashboardLayout - console.log adicionado
 - [x] Testar com usuário gestor real para confirmar correção - aguardando teste do usuário após restart
+
+## Bug: Filtro "Todos os Corretores" no Calendário Geral
+
+- [x] O filtro "Todos os corretores" no canto superior direito do Calendário Geral está mostrando todos os corretores ativos do sistema - CORRIGIDO
+- [x] Deve mostrar apenas os corretores da equipe do gestor logado - FUNCIONANDO
+- [x] Investigar qual procedure está sendo usado para popular o dropdown - corretores.list
+- [x] Corrigir filtro de agendamentos no calendário (getCalendario) - modificado para usar getEquipeByGestor em vez de ctx.user.equipeId
+
+## Feature: Remover Calendário Geral do menu de gestores
+
+- [x] Remover aba "Calendário Geral" do menu lateral para gestores (apenas admin deve ver)
+- [x] Manter aba "Agendamentos" que já tem filtro funcionando corretamente

@@ -826,13 +826,19 @@ export const appRouter = router({
       const { getCorretoresIdsParaFiltro } = await import('./equipes');
       const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
       
+      console.log('[corretores.list] User:', ctx.user.email, 'Role:', ctx.user.role, 'CorretoresIds:', corretoresIds);
+      
       // Se for admin, retorna todos os corretores
       if (!corretoresIds) {
-        return await db.getAllCorretores();
+        const result = await db.getAllCorretores();
+        console.log('[corretores.list] Admin - Retornando todos:', result.length, 'corretores');
+        return result;
       }
       
       // Se for gestor, retorna apenas os corretores da sua equipe
-      return await db.getCorretoresByIds(corretoresIds);
+      const result = await db.getCorretoresByIds(corretoresIds);
+      console.log('[corretores.list] Gestor - Retornando:', result.length, 'corretores da equipe');
+      return result;
     }),
     
     // Lista de todos os usuários (filtrado por equipe para gestores)
@@ -5230,18 +5236,41 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         const dataInicio = new Date(input.ano, input.mes - 1, 1);
         const dataFim = new Date(input.ano, input.mes, 0, 23, 59, 59);
         
+        console.log('[getCalendario] User:', ctx.user.email, 'Role:', ctx.user.role, 'UserId:', ctx.user.id);
+        
         // Se for gestor (não admin), buscar apenas corretores da sua equipe
         let corretoresIds: number[] | null = null;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        if (ctx.user.role === 'gestor') {
+          // Buscar equipe do gestor usando a função getEquipeByGestor
+          const { getEquipeByGestor } = await import('./equipes');
+          const equipe = await getEquipeByGestor(ctx.user.id);
+          console.log('[getCalendario] Equipe do gestor:', equipe);
+          
+          if (equipe) {
+            console.log('[getCalendario] Buscando corretores da equipe ID:', equipe.id);
+            const corretoresDaEquipe = await db.getCorretoresByEquipe(equipe.id);
+            console.log('[getCalendario] Corretores encontrados:', corretoresDaEquipe.length, corretoresDaEquipe.map(c => ({ id: c.id, name: c.name })));
+            corretoresIds = corretoresDaEquipe.map(c => c.id);
+            console.log('[getCalendario] Gestor - Filtrando por corretores IDs:', corretoresIds);
+          } else {
+            console.log('[getCalendario] Gestor sem equipe - Sem filtro');
+          }
+        } else {
+          console.log('[getCalendario] Admin - Sem filtro');
         }
+        
+        console.log('[getCalendario] Buscando agendamentos com filtro:', { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString(), corretoresIds });
         
         const agendamentos = await db.getAllAgendamentos({
           dataInicio: dataInicio.toISOString(),
           dataFim: dataFim.toISOString(),
           corretoresIds
         });
+        
+        console.log('[getCalendario] Agendamentos retornados:', agendamentos.length, 'agendamentos');
+        if (agendamentos.length > 0) {
+          console.log('[getCalendario] Primeiros 3 agendamentos:', agendamentos.slice(0, 3).map(a => ({ id: a.id, corretorId: a.corretorId, corretor: a.corretorNome })));
+        }
         
         // Agrupar por dia
         const porDia: Record<string, typeof agendamentos> = {};

@@ -71,7 +71,7 @@ const menuGroups = [
       { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda", roles: ["corretor"] },
       { icon: FileText, label: "Propostas", path: "/propostas" },
       { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor", roles: ["gestor", "admin"] },
-      { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor", roles: ["gestor", "admin"] },
+      { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor", roles: ["admin"] },
       { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
     ],
   },
