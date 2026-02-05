@@ -33,10 +33,26 @@ export function useWebhookLeadNotification() {
     // Som de alarme urgente para leads de Facebook Ads/Webhook
     // Usando som de emergência mais chamativo
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3');
-    audioRef.current.volume = 0.7; // Volume mais alto para urgência
+    audioRef.current.volume = 0.8; // Volume alto para urgência
     audioRef.current.load();
     
+    // Habilitar autoplay após primeira interação do usuário
+    const enableAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.play().then(() => {
+          audioRef.current?.pause();
+          audioRef.current!.currentTime = 0;
+        }).catch(() => {});
+      }
+    };
+    
+    // Escutar primeira interação (click ou keydown)
+    document.addEventListener('click', enableAudio, { once: true });
+    document.addEventListener('keydown', enableAudio, { once: true });
+    
     return () => {
+      document.removeEventListener('click', enableAudio);
+      document.removeEventListener('keydown', enableAudio);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -74,9 +90,15 @@ export function useWebhookLeadNotification() {
 
       // 2. Som de alerta
       if (audioRef.current) {
-        audioRef.current.play().catch((e) => {
-          console.log('Erro ao tocar som:', e);
-        });
+        console.log('[Webhook Notification] Tentando tocar som de alerta...');
+        audioRef.current.play()
+          .then(() => {
+            console.log('[Webhook Notification] Som tocado com sucesso!');
+          })
+          .catch((e) => {
+            console.error('[Webhook Notification] Erro ao tocar som:', e);
+            console.log('[Webhook Notification] Dica: Interaja com a página (clique ou pressione uma tecla) para habilitar o som.');
+          });
       }
 
       // 3. Notificação push do navegador

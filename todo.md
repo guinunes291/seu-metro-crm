@@ -3825,3 +3825,10 @@
 
 - [x] Remover aba "Calendário Geral" do menu lateral para gestores (apenas admin deve ver)
 - [x] Manter aba "Agendamentos" que já tem filtro funcionando corretamente
+
+## Bug: Sons de notificação não estão tocando para leads da roleta/Facebook Ads
+
+- [x] Investigar por que os sons de notificação não estão funcionando - problema de autoplay do navegador
+- [x] Verificar se o componente useWebhookLeadNotification está sendo montado corretamente - está em Leads.tsx e LeadsPorCorretor.tsx
+- [x] Verificar se o áudio está sendo carregado e reproduzido sem erros - adicionado logs e tratamento de autoplay
+- [x] Implementado habilitação automática de áudio após primeira interação do usuário
