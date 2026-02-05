@@ -33,7 +33,7 @@ export function useWebhookLeadNotification() {
     // Som de alarme urgente para leads de Facebook Ads/Webhook
     // Usando som de emergência mais chamativo
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3');
-    audioRef.current.volume = 0.8; // Volume alto para urgência
+    audioRef.current.volume = 1.0; // Volume máximo (100%) para urgência
     audioRef.current.load();
     
     // Habilitar autoplay após primeira interação do usuário
@@ -101,13 +101,14 @@ export function useWebhookLeadNotification() {
           });
       }
 
-      // 3. Notificação push do navegador
+      // 3. Notificação push do navegador (funciona mesmo com aba em segundo plano)
       if ('Notification' in window && Notification.permission === 'granted') {
         const notification = new Notification('🔥 Novo Lead Facebook Ads!', {
-          body: `${lead.nome} - ${lead.telefone}`,
+          body: `${lead.nome} - ${lead.telefone}${lead.projectNome ? ` | Projeto: ${lead.projectNome}` : ''}`,
           icon: '/favicon.ico',
           tag: `lead-${lead.id}`,
           requireInteraction: true, // Não desaparece automaticamente
+          silent: false, // Permite som da notificação do sistema
         });
 
         notification.onclick = () => {

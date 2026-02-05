@@ -3832,3 +3832,11 @@
 - [x] Verificar se o componente useWebhookLeadNotification está sendo montado corretamente - está em Leads.tsx e LeadsPorCorretor.tsx
 - [x] Verificar se o áudio está sendo carregado e reproduzido sem erros - adicionado logs e tratamento de autoplay
 - [x] Implementado habilitação automática de áudio após primeira interação do usuário
+
+## Melhoria: Volume e Notificações em Segundo Plano
+
+- [x] Aumentar volume do som de notificação de leads webhook para 100% (volume máximo)
+- [x] Implementar notificações push do navegador que funcionem mesmo com aba em segundo plano
+- [x] Solicitar permissão de notificações ao usuário na primeira vez (já implementado)
+- [x] Garantir que o som toque mesmo quando a aba não está em foco (via notificações push)
+- [ ] Testar notificações com aba minimizada/em segundo plano
