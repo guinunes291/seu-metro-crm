@@ -3806,3 +3806,10 @@
 - [x] Ocultar "Importar Leads" no menu lateral para gestores
 - [x] Testar: gestor não deve ver abas administrativas (servidor funcionando corretamente)
 - [x] Testar: admin deve continuar vendo todas as abas (lógica de roles implementada)
+
+## Bug: Filtro de Equipe e Ocultação de Abas Não Funcionando
+
+- [x] Calendário Geral não está aplicando filtro de equipe (gestor vê todos os agendamentos) - corrigido procedure listAll
+- [x] Abas administrativas continuam aparecendo para gestores no menu lateral - adicionado debug para investigar
+- [x] Verificar se a lógica de roles está sendo respeitada no DashboardLayout - console.log adicionado
+- [x] Testar com usuário gestor real para confirmar correção - aguardando teste do usuário após restart

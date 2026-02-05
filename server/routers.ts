@@ -5152,7 +5152,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // ============================================================================
   
   agendamentosGestor: router({
-    // Listar todos os agendamentos de todos os corretores
+    // Listar todos os agendamentos de todos os corretores (filtrado por equipe para gestores)
     listAll: gestorProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
@@ -5160,8 +5160,18 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         corretorId: z.number().optional(),
         status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']).optional()
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getAllAgendamentos(input);
+      .query(async ({ input, ctx }) => {
+        // Se for gestor (não admin), buscar apenas corretores da sua equipe
+        let corretoresIds: number[] | null = null;
+        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
+          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
+          corretoresIds = corretoresDaEquipe.map(c => c.id);
+        }
+        
+        return await db.getAllAgendamentos({
+          ...input,
+          corretoresIds
+        });
       }),
     
     // Estatísticas de agendamentos
