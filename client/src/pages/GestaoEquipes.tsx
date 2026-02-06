@@ -18,6 +18,7 @@ export default function GestaoEquipes() {
   const [dialogCorretoresAberto, setDialogCorretoresAberto] = useState(false);
   const [equipeCorretores, setEquipeCorretores] = useState<number | null>(null);
 
+  const utils = trpc.useUtils();
   const { data: equipes, isLoading, refetch } = trpc.equipes.list.useQuery();
   const { data: usuarios, isLoading: isLoadingUsuarios } = trpc.equipes.listUsuariosParaGestor.useQuery(undefined, {
     refetchOnMount: true,
@@ -64,7 +65,10 @@ export default function GestaoEquipes() {
   const adicionarCorretor = trpc.equipes.adicionarCorretor.useMutation({
     onSuccess: () => {
       toast.success("Corretor adicionado à equipe!");
-      refetch();
+      // Invalidar cache para atualizar listas automaticamente
+      utils.equipes.list.invalidate();
+      utils.equipes.listUsuariosParaGestor.invalidate();
+      utils.equipes.getCorretores.invalidate();
     },
     onError: (error) => {
       toast.error(`Erro ao adicionar corretor: ${error.message}`);
@@ -74,7 +78,10 @@ export default function GestaoEquipes() {
   const removerCorretor = trpc.equipes.removerCorretor.useMutation({
     onSuccess: () => {
       toast.success("Corretor removido da equipe!");
-      refetch();
+      // Invalidar cache para atualizar listas automaticamente
+      utils.equipes.list.invalidate();
+      utils.equipes.listUsuariosParaGestor.invalidate();
+      utils.equipes.getCorretores.invalidate();
     },
     onError: (error) => {
       toast.error(`Erro ao remover corretor: ${error.message}`);

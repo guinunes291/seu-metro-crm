@@ -3848,3 +3848,5 @@
 - [x] Investigar lógica do hook useWebhookLeadNotification - problema identificado
 - [x] Verificar se o timestamp está sendo salvo corretamente no localStorage - implementado
 - [x] Corrigir para que só toque quando há leads realmente novos (criados após o último check)
+
+- [x] Tornar adição/remoção de corretores em equipes dinâmica (atualização em tempo real sem reload)
