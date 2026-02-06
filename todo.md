@@ -3840,3 +3840,11 @@
 - [x] Solicitar permissão de notificações ao usuário na primeira vez (já implementado)
 - [x] Garantir que o som toque mesmo quando a aba não está em foco (via notificações push)
 - [ ] Testar notificações com aba minimizada/em segundo plano
+
+## Bug: Som de Notificação Tocando ao Abrir Aba
+
+- [x] Som de notificação está tocando toda vez que gestor/admin abre a aba "Leads por Corretor"
+- [x] Deve tocar apenas quando **novos leads chegam**, não ao abrir a página
+- [x] Investigar lógica do hook useWebhookLeadNotification - problema identificado
+- [x] Verificar se o timestamp está sendo salvo corretamente no localStorage - implementado
+- [x] Corrigir para que só toque quando há leads realmente novos (criados após o último check)

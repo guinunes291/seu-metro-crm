@@ -12,7 +12,19 @@ import { UrgentLeadPopup } from '@/components/UrgentLeadPopup';
  * - Popup urgente com botão WhatsApp
  */
 export function useWebhookLeadNotification() {
-  const lastCheckRef = useRef(new Date());
+  // Inicializar lastCheck do localStorage ou usar timestamp atual
+  const getInitialLastCheck = () => {
+    const stored = localStorage.getItem('lastWebhookLeadCheck');
+    if (stored) {
+      return new Date(stored);
+    }
+    // Se não houver timestamp salvo, usar timestamp atual para evitar notificações de leads antigos
+    const now = new Date();
+    localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
+    return now;
+  };
+  
+  const lastCheckRef = useRef(getInitialLastCheck());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const notifiedLeadsRef = useRef<Set<number>>(new Set());
   const [urgentLead, setUrgentLead] = useState<any>(null);
@@ -124,8 +136,10 @@ export function useWebhookLeadNotification() {
       }
     });
 
-    // Atualizar timestamp da última verificação
-    lastCheckRef.current = new Date();
+    // Atualizar timestamp da última verificação e salvar no localStorage
+    const now = new Date();
+    lastCheckRef.current = now;
+    localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
   }, [newLeads, urgentLead]);
 
   return {
