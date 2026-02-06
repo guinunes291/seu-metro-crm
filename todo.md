@@ -3852,3 +3852,5 @@
 - [x] Tornar adição/remoção de corretores em equipes dinâmica (atualização em tempo real sem reload)
 
 - [x] Desabilitar sons de notificação para gestores e admins (apenas corretores devem receber)
+
+- [ ] Corrigir erro "(void 0) is not a function" ao criar agendamento

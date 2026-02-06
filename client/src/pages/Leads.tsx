@@ -240,7 +240,10 @@ export default function Leads() {
         observacoes: "",
         useCustomProject: false,
       });
-      refetch();
+      // Invalidar cache para atualizar listas
+      utils.leads.list.invalidate();
+      utils.agendamentos.list.invalidate();
+      utils.agendamentos.hoje.invalidate();
     },
     onError: (error) => {
       console.error("Erro ao criar agendamento:", error);
