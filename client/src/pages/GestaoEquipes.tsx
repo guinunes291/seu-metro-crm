@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Users, Plus, Edit, Trash2, UserPlus, UserMinus } from "lucide-react";
 import { toast } from "sonner";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function GestaoEquipes() {
   const [dialogAberto, setDialogAberto] = useState(false);
@@ -105,11 +106,16 @@ export default function GestaoEquipes() {
   const corretoresSemEquipe = usuarios?.filter(u => u.role === "corretor" && !u.equipeId);
 
   if (isLoading) {
-    return <div className="p-6">Carregando equipes...</div>;
+    return (
+      <DashboardLayout>
+        <div className="p-6">Carregando equipes...</div>
+      </DashboardLayout>
+    );
   }
 
   return (
-    <div className="container py-6">
+    <DashboardLayout>
+      <div className="container py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Gestão de Equipes</h1>
@@ -348,6 +354,7 @@ export default function GestaoEquipes() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
