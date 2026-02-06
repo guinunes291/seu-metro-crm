@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { UrgentLeadPopup } from '@/components/UrgentLeadPopup';
+import { useAuth } from '@/_core/hooks/useAuth';
 
 /**
  * Hook para notificar corretor sobre novos leads via webhook (Facebook Ads)
@@ -12,6 +13,12 @@ import { UrgentLeadPopup } from '@/components/UrgentLeadPopup';
  * - Popup urgente com botão WhatsApp
  */
 export function useWebhookLeadNotification() {
+  const { user } = useAuth();
+  
+  // Apenas corretores devem receber notificações sonoras
+  // Gestores e admins não recebem sons
+  const shouldNotify = user?.role === 'corretor';
+  
   // Inicializar lastCheck do localStorage ou usar timestamp atual
   const getInitialLastCheck = () => {
     const stored = localStorage.getItem('lastWebhookLeadCheck');
@@ -30,13 +37,15 @@ export function useWebhookLeadNotification() {
   const [urgentLead, setUrgentLead] = useState<any>(null);
 
   // Query para buscar novos leads webhook
+  // Apenas habilitar polling para corretores
   const { data: newLeads } = trpc.leads.getNewWebhookLeads.useQuery(
     { 
       since: lastCheckRef.current.toISOString(),
     },
     {
-      refetchInterval: 5000, // Polling a cada 5 segundos
-      refetchIntervalInBackground: true,
+      enabled: shouldNotify, // Desabilitar para gestores/admins
+      refetchInterval: shouldNotify ? 5000 : false, // Polling apenas para corretores
+      refetchIntervalInBackground: shouldNotify,
     }
   );
 
@@ -81,6 +90,8 @@ export function useWebhookLeadNotification() {
 
   // Processar novos leads
   useEffect(() => {
+    // Não processar se não deve notificar (gestor/admin)
+    if (!shouldNotify) return;
     if (!newLeads || newLeads.length === 0) return;
 
     newLeads.forEach((lead) => {

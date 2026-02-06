@@ -3850,3 +3850,5 @@
 - [x] Corrigir para que só toque quando há leads realmente novos (criados após o último check)
 
 - [x] Tornar adição/remoção de corretores em equipes dinâmica (atualização em tempo real sem reload)
+
+- [x] Desabilitar sons de notificação para gestores e admins (apenas corretores devem receber)
