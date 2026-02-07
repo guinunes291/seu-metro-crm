@@ -90,42 +90,55 @@ self.addEventListener('message', (event) => {
 // Notificações push (preparado para uso futuro)
 self.addEventListener('push', (event) => {
   if (event.data) {
-    const data = event.data.json();
-    const options = {
-      body: data.body || 'Nova notificação',
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-72x72.png',
-      vibrate: [100, 50, 100],
-      data: {
-        url: data.url || '/'
-      },
-      actions: [
-        { action: 'open', title: 'Abrir' },
-        { action: 'close', title: 'Fechar' }
-      ]
-    };
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'Seu Metro Quadrado', options)
-    );
+    try {
+      const data = event.data.json();
+      const options = {
+        body: data.body || 'Nova notificação',
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        vibrate: [100, 50, 100],
+        data: {
+          url: data.url || '/'
+        },
+        actions: [
+          { action: 'open', title: 'Abrir' },
+          { action: 'close', title: 'Fechar' }
+        ]
+      };
+      event.waitUntil(
+        self.registration.showNotification(data.title || 'Seu Metro Quadrado', options)
+          .catch((error) => {
+            console.error('[SW] Erro ao mostrar notificação:', error);
+          })
+      );
+    } catch (error) {
+      console.error('[SW] Erro ao processar push:', error);
+    }
   }
 });
 
 // Clique em notificação
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  if (event.action === 'open' || !event.action) {
-    const url = event.notification.data?.url || '/';
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === url && 'focus' in client) {
-            return client.focus();
+  try {
+    event.notification.close();
+    if (event.action === 'open' || !event.action) {
+      const url = event.notification.data?.url || '/';
+      event.waitUntil(
+        clients.matchAll({ type: 'window' }).then((clientList) => {
+          for (const client of clientList) {
+            if (client.url === url && 'focus' in client) {
+              return client.focus();
+            }
           }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(url);
-        }
-      })
-    );
+          if (clients.openWindow) {
+            return clients.openWindow(url);
+          }
+        }).catch((error) => {
+          console.error('[SW] Erro ao abrir janela:', error);
+        })
+      );
+    }
+  } catch (error) {
+    console.error('[SW] Erro ao processar clique:', error);
   }
 });

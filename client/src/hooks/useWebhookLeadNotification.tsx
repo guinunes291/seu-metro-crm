@@ -126,19 +126,23 @@ export function useWebhookLeadNotification() {
 
       // 3. Notificação push do navegador (funciona mesmo com aba em segundo plano)
       if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('🔥 Novo Lead Facebook Ads!', {
-          body: `${lead.nome} - ${lead.telefone}${lead.projectNome ? ` | Projeto: ${lead.projectNome}` : ''}`,
-          icon: '/favicon.ico',
-          tag: `lead-${lead.id}`,
-          requireInteraction: true, // Não desaparece automaticamente
-          silent: false, // Permite som da notificação do sistema
-        });
+        try {
+          const notification = new Notification('🔥 Novo Lead Facebook Ads!', {
+            body: `${lead.nome} - ${lead.telefone}${lead.projectNome ? ` | Projeto: ${lead.projectNome}` : ''}`,
+            icon: '/favicon.ico',
+            tag: `lead-${lead.id}`,
+            requireInteraction: true, // Não desaparece automaticamente
+            silent: false, // Permite som da notificação do sistema
+          });
 
-        notification.onclick = () => {
-          window.focus();
-          window.location.href = `/leads?leadId=${lead.id}`;
-          notification.close();
-        };
+          notification.onclick = () => {
+            window.focus();
+            window.location.href = `/leads?leadId=${lead.id}`;
+            notification.close();
+          };
+        } catch (error) {
+          console.error('[Webhook Notification] Erro ao criar notificação:', error);
+        }
       }
       
       // 4. Popup urgente (mostra apenas o primeiro lead se houver múltiplos)

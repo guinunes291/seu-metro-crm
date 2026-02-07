@@ -140,6 +140,17 @@ export function usePushNotifications() {
       return;
     }
 
+    // Verificar se notificações são suportadas e permitidas
+    if (!('Notification' in window)) {
+      console.warn('[Push] Notificações não suportadas');
+      return;
+    }
+
+    if (Notification.permission !== 'granted') {
+      console.warn('[Push] Permissão de notificação não concedida');
+      return;
+    }
+
     try {
       await registration.showNotification(options.title, {
         body: options.body,

@@ -29,22 +29,32 @@ async function requestNotificationPermission(): Promise<boolean> {
 
 // Função para enviar notificação do navegador
 function sendBrowserNotification(title: string, body: string, leadId?: number) {
+  // Verificar se notificações são suportadas
+  if (!('Notification' in window)) {
+    console.warn('[Notificações] Não suportadas neste navegador');
+    return;
+  }
+
   if (Notification.permission === "granted") {
-    const notification = new Notification(title, {
-      body,
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
-      tag: leadId ? `lead-${leadId}` : undefined,
-      requireInteraction: true, // Mantém a notificação até o usuário interagir
-    });
-    
-    notification.onclick = () => {
-      window.focus();
-      if (leadId) {
-        window.location.href = `/leads?leadId=${leadId}`;
-      }
-      notification.close();
-    };
+    try {
+      const notification = new Notification(title, {
+        body,
+        icon: "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: leadId ? `lead-${leadId}` : undefined,
+        requireInteraction: true, // Mantém a notificação até o usuário interagir
+      });
+      
+      notification.onclick = () => {
+        window.focus();
+        if (leadId) {
+          window.location.href = `/leads?leadId=${leadId}`;
+        }
+        notification.close();
+      };
+    } catch (error) {
+      console.error('[Notificações] Erro ao criar notificação:', error);
+    }
   }
 }
 

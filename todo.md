@@ -3869,3 +3869,5 @@
 - [x] Corrigir schemas SQL (adicionar colunas faltantes)
 - [x] Processar tabelões com pipeline LLM (em andamento: 27 tabelões)
 - [ ] Criar interface admin para gerenciar tabelões (opcional)
+
+- [x] Corrigir erro "TypeError: Illegal constructor" ao acessar "Meus Leads" no mobile
