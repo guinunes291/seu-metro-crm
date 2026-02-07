@@ -143,6 +143,15 @@ export const projects = mysqlTable("projects", {
   imagensAdicionais: text("imagensAdicionais"), // JSON array de URLs
   bookUrl: text("bookUrl"), // URL do PDF de apresentação do projeto
   
+  // Campos do portal de projetos
+  construtoraId: int("construtoraId").references(() => construtoras.id), // FK para construtoras
+  imagemCapaUrl: text("imagemCapaUrl"), // URL da imagem de fachada
+  bookPdfUrl: text("bookPdfUrl"), // URL do book em PDF
+  linkMateriais: text("linkMateriais"), // JSON com links do Drive
+  regiao: varchar("regiao", { length: 255 }), // Região alternativa (além de zona)
+  latitude: decimal("latitude", { precision: 10, scale: 8 }),
+  longitude: decimal("longitude", { precision: 11, scale: 8 }),
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -1852,3 +1861,134 @@ export const pushSubscriptions = mysqlTable("push_subscriptions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   lastUsedAt: timestamp("lastUsedAt").defaultNow().notNull(),
 });
+
+
+// ============================================================================
+// PORTAL DE PROJETOS IMOBILIÁRIOS - CONSTRUTORAS
+// ============================================================================
+
+/**
+ * Tabela de construtoras/incorporadoras.
+ * Centraliza informações das construtoras que fornecem tabelões mensais.
+ */
+export const construtoras = mysqlTable("construtoras", {
+  id: int("id").primaryKey().autoincrement(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  logoUrl: text("logoUrl"),
+  ativo: int("ativo").default(1).notNull(), // 1 = ativo, 0 = inativo
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  nomeIdx: index("construtoras_nome_idx").on(table.nome),
+}));
+
+export type Construtora = typeof construtoras.$inferSelect;
+export type InsertConstrutora = typeof construtoras.$inferInsert;
+
+// ============================================================================
+// PORTAL DE PROJETOS IMOBILIÁRIOS - MATERIAIS
+// ============================================================================
+
+/**
+ * Tabela de materiais vinculados a projetos (books, fotos, tabelas).
+ * Armazena links do Google Drive e URLs do S3.
+ */
+export const materiais = mysqlTable("materiais", {
+  id: int("id").primaryKey().autoincrement(),
+  projetoId: int("projetoId").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  tipo: mysqlEnum("tipo", ["book", "foto", "tabela", "outro"]).notNull(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  driveUrl: text("driveUrl"),
+  s3Url: text("s3Url"),
+  fileKey: varchar("fileKey", { length: 500 }),
+  mimeType: varchar("mimeType", { length: 100 }),
+  tamanho: int("tamanho"), // em bytes
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  projetoIdx: index("materiais_projeto_idx").on(table.projetoId),
+  tipoIdx: index("materiais_tipo_idx").on(table.tipo),
+}));
+
+export type Material = typeof materiais.$inferSelect;
+export type InsertMaterial = typeof materiais.$inferInsert;
+
+// ============================================================================
+// PORTAL DE PROJETOS IMOBILIÁRIOS - TABELÕES
+// ============================================================================
+
+/**
+ * Tabela de tabelões mensais das construtoras.
+ * Registra PDFs processados e status de extração.
+ */
+export const tabeloes = mysqlTable("tabeloes", {
+  id: int("id").primaryKey().autoincrement(),
+  construtoraId: int("construtoraId").notNull().references(() => construtoras.id, { onDelete: "cascade" }),
+  mes: int("mes").notNull(), // 1-12
+  ano: int("ano").notNull(),
+  drivePdfUrl: text("drivePdfUrl"),
+  s3PdfUrl: text("s3PdfUrl"),
+  fileKey: varchar("fileKey", { length: 500 }),
+  statusProcessamento: mysqlEnum("statusProcessamento", ["pendente", "processando", "concluido", "erro"])
+    .default("pendente")
+    .notNull(),
+  mensagemErro: text("mensagemErro"),
+  totalProjetos: int("totalProjetos"),
+  totalLinks: int("totalLinks"),
+  processadoEm: timestamp("processadoEm"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  construtoraIdx: index("tabeloes_construtora_idx").on(table.construtoraId),
+  mesAnoIdx: index("tabeloes_mes_ano_idx").on(table.mes, table.ano),
+  statusIdx: index("tabeloes_status_idx").on(table.statusProcessamento),
+}));
+
+export type Tabelao = typeof tabeloes.$inferSelect;
+export type InsertTabelao = typeof tabeloes.$inferInsert;
+
+// ============================================================================
+// PORTAL DE PROJETOS IMOBILIÁRIOS - HISTÓRICO DE PREÇOS
+// ============================================================================
+
+/**
+ * Tabela de histórico de preços dos projetos.
+ * Permite análise de tendências e evolução de valores.
+ */
+export const historicosPrecos = mysqlTable("historicos_precos", {
+  id: int("id").primaryKey().autoincrement(),
+  projetoId: int("projetoId").notNull().references(() => projects.id, { onDelete: "cascade" }),
+  mes: int("mes").notNull(),
+  ano: int("ano").notNull(),
+  precoMinimo: int("precoMinimo").notNull(), // em centavos
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  projetoIdx: index("historicos_precos_projeto_idx").on(table.projetoId),
+  mesAnoIdx: index("historicos_precos_mes_ano_idx").on(table.mes, table.ano),
+}));
+
+export type HistoricoPreco = typeof historicosPrecos.$inferSelect;
+export type InsertHistoricoPreco = typeof historicosPrecos.$inferInsert;
+
+// ============================================================================
+// PORTAL DE PROJETOS IMOBILIÁRIOS - LOGS DE SINCRONIZAÇÃO
+// ============================================================================
+
+/**
+ * Tabela de logs de sincronização.
+ * Registra atividades de processamento de tabelões e importação de dados.
+ */
+export const logsSincronizacao = mysqlTable("logs_sincronizacao", {
+  id: int("id").primaryKey().autoincrement(),
+  status: mysqlEnum("status", ["sucesso", "erro", "aviso"]).notNull(),
+  mensagem: text("mensagem").notNull(),
+  detalhes: text("detalhes"),
+  tabeloesProcessados: int("tabeloesProcessados"),
+  projetosExtraidos: int("projetosExtraidos"),
+  materiaisExtraidos: int("materiaisExtraidos"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  statusIdx: index("logs_sincronizacao_status_idx").on(table.status),
+  createdAtIdx: index("logs_sincronizacao_created_at_idx").on(table.createdAt),
+}));
+
+export type LogSincronizacao = typeof logsSincronizacao.$inferSelect;
+export type InsertLogSincronizacao = typeof logsSincronizacao.$inferInsert;

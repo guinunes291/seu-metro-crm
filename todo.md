@@ -3853,4 +3853,18 @@
 
 - [x] Desabilitar sons de notificação para gestores e admins (apenas corretores devem receber)
 
-- [ ] Corrigir erro "(void 0) is not a function" ao criar agendamento
+- [x] Corrigir erro "(void 0) is not a function" ao criar agendamento
+
+## Integração Portal de Projetos Imobiliários
+
+- [x] Explorar estrutura do Google Drive (tabelões)
+- [x] Expandir schema: adicionar tabelas construtoras, materiais, tabeloes, historico_precos, logs_sincronizacao
+- [x] Adicionar campos opcionais em projects: construtoraId, imagemCapaUrl, bookPdfUrl, linkMateriais
+- [x] Implementar server/pdfProcessor.ts (download, extração, LLM, upload S3)
+- [x] Criar rotas tRPC para construtoras (listar, criar, atualizar)
+- [x] Criar rotas tRPC para materiais (listar por projeto)
+- [x] Criar rotas tRPC admin para processar tabelões (import, process, processAll)
+- [x] Criar importador de tabelões (server/importadorTabeloes.ts)
+- [ ] Testar importação via rota tabeloes.import
+- [ ] Processar alguns tabelões para validar pipeline LLM
+- [ ] Criar interface admin para gerenciar tabelões (opcional)

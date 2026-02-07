@@ -5688,5 +5688,264 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         return await contarMembrosEquipe(input.equipeId);
       }),
   }),
+
+  // ============================================================================
+  // PORTAL DE PROJETOS IMOBILIARIOS - CONSTRUTORAS
+  // ============================================================================
+
+  construtoras: router({
+    // Listar construtoras (público)
+    list: publicProcedure
+      .input(z.object({
+        apenasAtivas: z.boolean().optional().default(true),
+      }))
+      .query(async ({ input }) => {
+        const { construtoras } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        
+        let query = db.select().from(construtoras);
+        
+        if (input.apenasAtivas) {
+          query = query.where(eq(construtoras.ativo, 1));
+        }
+        
+        const result = await query;
+        return result;
+      }),
+    
+    // Criar construtora (apenas admin)
+    create: adminProcedure
+      .input(z.object({
+        nome: z.string().min(1),
+        logoUrl: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { construtoras } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        
+        const [result] = await db.insert(construtoras).values({
+          nome: input.nome,
+          logoUrl: input.logoUrl,
+          ativo: 1,
+        }).$returningId();
+        
+        return { id: result.id };
+      }),
+    
+    // Atualizar construtora (apenas admin)
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        nome: z.string().optional(),
+        logoUrl: z.string().optional(),
+        ativo: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { construtoras } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        
+        const { id, ...data } = input;
+        
+        await db.update(construtoras)
+          .set(data)
+          .where(eq(construtoras.id, id));
+        
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // PORTAL DE PROJETOS IMOBILIÁRIOS - TABELÕES
+  // ============================================================================
+
+  tabeloes: router({
+    // Listar tabelões (admin)
+    list: adminProcedure
+      .input(z.object({
+        construtoraId: z.number().optional(),
+        status: z.enum(['pendente', 'processando', 'concluido', 'erro']).optional(),
+        mes: z.number().optional(),
+        ano: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        const { tabeloes, construtoras } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, and } = await import('drizzle-orm');
+        
+        let conditions = [];
+        
+        if (input.construtoraId) {
+          conditions.push(eq(tabeloes.construtoraId, input.construtoraId));
+        }
+        if (input.status) {
+          conditions.push(eq(tabeloes.statusProcessamento, input.status));
+        }
+        if (input.mes) {
+          conditions.push(eq(tabeloes.mes, input.mes));
+        }
+        if (input.ano) {
+          conditions.push(eq(tabeloes.ano, input.ano));
+        }
+        
+        const result = await db
+          .select({
+            tabelao: tabeloes,
+            construtora: construtoras,
+          })
+          .from(tabeloes)
+          .leftJoin(construtoras, eq(tabeloes.construtoraId, construtoras.id))
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(tabeloes.ano, tabeloes.mes);
+        
+        return result;
+      }),
+    
+    // Criar tabelão (apenas admin)
+    create: adminProcedure
+      .input(z.object({
+        construtoraId: z.number(),
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+        drivePdfUrl: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        const { tabeloes } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        
+        const [result] = await db.insert(tabeloes).values({
+          construtoraId: input.construtoraId,
+          mes: input.mes,
+          ano: input.ano,
+          drivePdfUrl: input.drivePdfUrl,
+          statusProcessamento: 'pendente',
+        }).$returningId();
+        
+        return { id: result.id };
+      }),
+    
+    // Processar tabelão (apenas admin)
+    process: adminProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input }) => {
+        const { processCatalog } = await import('./pdfProcessor');
+        
+        // Processar em background (não bloquear a resposta)
+        processCatalog(input.id).catch(error => {
+          console.error(`Erro ao processar tabelão ${input.id}:`, error);
+        });
+        
+        return { success: true, message: 'Processamento iniciado' };
+      }),
+    
+    // Processar todos os tabelões pendentes (apenas admin)
+    processAll: adminProcedure
+      .mutation(async () => {
+        const { processAllPendingCatalogs } = await import('./pdfProcessor');
+        
+        // Processar em background
+        processAllPendingCatalogs().catch(error => {
+          console.error('Erro ao processar tabelões:', error);
+        });
+        
+        return { success: true, message: 'Processamento de todos os tabelões iniciado' };
+      }),
+    
+    // Importar tabelões do Google Drive (apenas admin)
+    import: adminProcedure
+      .mutation(async () => {
+        const { importAllTabeloes } = await import('./importadorTabeloes');
+        
+        const result = await importAllTabeloes();
+        
+        return {
+          success: true,
+          message: `Importação concluída: ${result.tabeloes} tabelões, ${result.construtoras} construtoras`,
+          ...result,
+        };
+      }),
+  }),
+
+  // ============================================================================
+  // PORTAL DE PROJETOS IMOBILIÁRIOS - MATERIAIS
+  // ============================================================================
+
+  materiais: router({
+    // Listar materiais de um projeto (público)
+    byProject: publicProcedure
+      .input(z.object({
+        projetoId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { materiais } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        
+        const result = await db
+          .select()
+          .from(materiais)
+          .where(eq(materiais.projetoId, input.projetoId));
+        
+        return result;
+      }),
+  }),
+
+  // ============================================================================
+  // PORTAL DE PROJETOS IMOBILIÁRIOS - HISTÓRICO DE PREÇOS
+  // ============================================================================
+
+  historicosPrecos: router({
+    // Obter histórico de preços de um projeto (público)
+    byProject: publicProcedure
+      .input(z.object({
+        projetoId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        const { historicosPrecos } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq } = await import('drizzle-orm');
+        
+        const result = await db
+          .select()
+          .from(historicosPrecos)
+          .where(eq(historicosPrecos.projetoId, input.projetoId))
+          .orderBy(historicosPrecos.ano, historicosPrecos.mes);
+        
+        return result;
+      }),
+  }),
+
+  // ============================================================================
+  // PORTAL DE PROJETOS IMOBILIÁRIOS - LOGS DE SINCRONIZAÇÃO
+  // ============================================================================
+
+  logsSincronizacao: router({
+    // Listar logs (admin)
+    list: adminProcedure
+      .input(z.object({
+        limit: z.number().optional().default(50),
+        status: z.enum(['sucesso', 'erro', 'aviso']).optional(),
+      }))
+      .query(async ({ input }) => {
+        const { logsSincronizacao } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, desc } = await import('drizzle-orm');
+        
+        let query = db.select().from(logsSincronizacao);
+        
+        if (input.status) {
+          query = query.where(eq(logsSincronizacao.status, input.status));
+        }
+        
+        const result = await query
+          .orderBy(desc(logsSincronizacao.createdAt))
+          .limit(input.limit);
+        
+        return result;
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;
