@@ -3903,3 +3903,9 @@
 - [x] Upload todos os 27 logos para S3
 - [x] Atualizar banco de dados com URLs dos logos
 - [x] Testar exibição dos logos nos cards
+
+## Bug Crítico: Informações dos Projetos Sumiram
+- [x] Investigar query getAllProjects que foi modificada para trazer logoUrl
+- [x] Corrigir mapeamento dos dados retornados pela query (usado getTableColumns)
+- [x] Testar que os projetos voltaram a aparecer com todas as informações
+- [x] Validar que os logos continuam funcionando
