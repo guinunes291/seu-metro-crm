@@ -3865,6 +3865,7 @@
 - [x] Criar rotas tRPC para materiais (listar por projeto)
 - [x] Criar rotas tRPC admin para processar tabelões (import, process, processAll)
 - [x] Criar importador de tabelões (server/importadorTabeloes.ts)
-- [ ] Testar importação via rota tabeloes.import
-- [ ] Processar alguns tabelões para validar pipeline LLM
+- [x] Testar importação via rota tabeloes.import (47 construtoras, 56 tabelões)
+- [x] Corrigir schemas SQL (adicionar colunas faltantes)
+- [x] Processar tabelões com pipeline LLM (em andamento: 27 tabelões)
 - [ ] Criar interface admin para gerenciar tabelões (opcional)
