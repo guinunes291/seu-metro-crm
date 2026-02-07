@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useCompare } from "@/contexts/CompareContext";
 import CompareBar from "@/components/CompareBar";
 import { useLocation } from "wouter";
+import { ProjetosMapView } from "./ProjetosMapView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Projetos() {
   const { user } = useAuth();
@@ -591,8 +593,22 @@ export default function Projetos() {
           </Card>
         )}
 
-        {/* Filtros */}
-        <Card className="mb-6">
+        {/* Tabs: Lista / Mapa */}
+        <Tabs defaultValue="lista" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="lista" className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Lista
+            </TabsTrigger>
+            <TabsTrigger value="mapa" className="flex items-center gap-2">
+              <Map className="h-4 w-4" />
+              Mapa
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="lista" className="mt-0">
+            {/* Filtros */}
+            <Card className="mb-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
@@ -807,6 +823,72 @@ export default function Projetos() {
             ))}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="mapa" className="mt-0">
+            {/* Filtros aplicam ao mapa também */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filtros
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Buscar por nome, construtora, bairro..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  <select
+                    value={zonaFilter}
+                    onChange={(e) => setZonaFilter(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="todas">Todas as Zonas</option>
+                    <option value="norte">Zona Norte</option>
+                    <option value="sul">Zona Sul</option>
+                    <option value="leste">Zona Leste</option>
+                    <option value="oeste">Zona Oeste</option>
+                    <option value="centro">Centro</option>
+                  </select>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="todos">Todos os Status</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="esgotado">Esgotado</option>
+                  </select>
+
+                  <select
+                    value={construtoraFilter}
+                    onChange={(e) => setConstrutoraFilter(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="todas">Todas as Construtoras</option>
+                    {construtorasComProjetos.map(construtora => (
+                      <option key={construtora.id} value={construtora.nome}>
+                        {construtora.nome} ({construtora.totalProjetos})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            <ProjetosMapView projects={filteredProjects} isLoading={isLoading} />
+          </TabsContent>
+        </Tabs>
       </div>
       
       <CompareBar />
