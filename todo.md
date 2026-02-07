@@ -3871,3 +3871,35 @@
 - [ ] Criar interface admin para gerenciar tabelões (opcional)
 
 - [x] Corrigir erro "TypeError: Illegal constructor" ao acessar "Meus Leads" no mobile
+
+- [ ] Reprocessar tabelões para extrair links de materiais (em andamento - PID 97274)
+- [ ] Implementar extração de imagens de fachada dos books (pendente)
+
+- [ ] Deletar tabelões de meses antigos (manter apenas Fevereiro/26)
+- [ ] Deletar projetos importados de meses antigos
+- [ ] Corrigir importador para processar apenas mês atual
+
+- [x] Gerar planilha Excel com todos os projetos e links do Drive
+
+- [ ] Adicionar filtro por Construtora na aba Projetos
+- [ ] Adicionar logo da construtora em cada card de projeto
+- [ ] Adicionar campo logoUrl na tabela construtoras
+
+## Nova Feature: Filtro por Construtora e Logos nos Cards de Projetos
+- [ ] Adicionar filtro por construtora na página de Projetos
+- [ ] Modificar query de projetos para trazer logoUrl da tabela construtoras via JOIN
+- [ ] Coletar URLs dos logos das 47 construtoras
+- [ ] Fazer download e upload dos logos para S3
+- [ ] Atualizar banco de dados com URLs dos logos no S3
+- [ ] Exibir logo da construtora no canto superior direito de cada card
+- [ ] Testar filtro e exibição de logos
+
+## Nova Feature: Logos das Construtoras nos Cards + Filtro por Construtora
+- [x] Implementar filtro por construtora na página de Projetos
+- [x] Criar query listWithProjects para popular dropdown de construtoras
+- [x] Associar projetos às construtoras (984 projetos associados)
+- [x] Baixar logos fornecidos pelo usuário (5 logos)
+- [x] Buscar logos restantes na internet (22 construtoras restantes)
+- [x] Upload todos os 27 logos para S3
+- [x] Atualizar banco de dados com URLs dos logos
+- [x] Testar exibição dos logos nos cards

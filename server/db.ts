@@ -543,7 +543,26 @@ export async function getAllProjects() {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(projects).orderBy(desc(projects.createdAt));
+  // Importar construtoras do schema
+  const { construtoras } = await import('../drizzle/schema');
+  
+  // Fazer LEFT JOIN com construtoras para trazer o logoUrl e nome
+  const result = await db
+    .select({
+      ...projects,
+      logoUrl: construtoras.logoUrl,
+      construtoraName: construtoras.nome,
+    })
+    .from(projects)
+    .leftJoin(construtoras, eq(projects.construtoraId, construtoras.id))
+    .orderBy(desc(projects.createdAt));
+  
+  // Mapear resultado para formato esperado
+  return result.map(row => ({
+    ...row.projects,
+    logoUrl: row.logoUrl,
+    construtoraName: row.construtoraName,
+  }));
 }
 
 export async function getProjectById(id: number) {

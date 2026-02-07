@@ -113,10 +113,11 @@ export async function extractProjectDataWithLLM(
           role: "system",
           content: `Você é um especialista em extração de dados de tabelões imobiliários. 
 Extraia informações estruturadas sobre projetos imobiliários do texto fornecido.
-Para cada projeto, extraia: nome, endereço, região/bairro, preço mínimo, metragem mínima e máxima, dormitórios mínimo e máximo, descrição.
+Para cada projeto, extraia: nome, endereço, região/bairro, preço mínimo, metragem mínima e máxima, dormitórios mínimo e máximo, descrição, linkMateriais (pasta do Google Drive com fotos/books), bookPdfUrl (link direto para PDF de apresentação).
 Se algum campo não estiver disponível, use null.
 Preços devem ser em centavos (multiplicar por 100).
-Metragens em metros quadrados (inteiro).`
+Metragens em metros quadrados (inteiro).
+Links devem ser URLs completas do Google Drive.`
         },
         {
           role: "user",
@@ -145,7 +146,9 @@ Metragens em metros quadrados (inteiro).`
                     metragemMaxima: { type: ["integer", "null"] },
                     dormitoriosMin: { type: ["integer", "null"] },
                     dormitoriosMax: { type: ["integer", "null"] },
-                    descricao: { type: ["string", "null"] }
+                    descricao: { type: ["string", "null"] },
+                    linkMateriais: { type: ["string", "null"], description: "Link do Google Drive para pasta de materiais (fotos, books, plantas)" },
+                    bookPdfUrl: { type: ["string", "null"], description: "Link direto para o book/apresentação em PDF do projeto" }
                   },
                   required: ["nome"],
                   additionalProperties: false
@@ -269,6 +272,8 @@ export async function processCatalog(tabelaoId: number): Promise<void> {
               metragemMinima: projectData.metragemMinima,
               metragemMaxima: projectData.metragemMaxima,
               descricao: projectData.descricao,
+              linkMateriais: projectData.linkMateriais,
+              bookPdfUrl: projectData.bookPdfUrl,
               updatedAt: new Date(),
             })
             .where(eq(projects.id, existingProject.id));
@@ -294,6 +299,8 @@ export async function processCatalog(tabelaoId: number): Promise<void> {
                 ? `${projectData.dormitoriosMin}, ${projectData.dormitoriosMax}`
                 : null,
               descricao: projectData.descricao,
+              linkMateriais: projectData.linkMateriais,
+              bookPdfUrl: projectData.bookPdfUrl,
               status: "ativo",
               tipo: "outro",
             })

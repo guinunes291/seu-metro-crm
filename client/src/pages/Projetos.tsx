@@ -18,6 +18,7 @@ export default function Projetos() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { data: projects = [], isLoading, refetch } = trpc.projects.list.useQuery();
+  const { data: construtorasComProjetos = [] } = trpc.construtoras.listWithProjects.useQuery();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const createProjectMutation = trpc.projects.create.useMutation();
@@ -30,10 +31,11 @@ export default function Projetos() {
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [zonaFilter, setZonaFilter] = useState<string>("todas");
-  const [statusFilter, setStatusFilter] = useState<string>("ativo");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
   const [dormitoriosFilter, setDormitoriosFilter] = useState<string>("todos");
   const [enquadramentoFilter, setEnquadramentoFilter] = useState<string>("todos");
   const [vagasFilter, setVagasFilter] = useState<string>("todos");
+  const [construtoraFilter, setConstrutoraFilter] = useState<string>("todas");
 
   const [suggestFormData, setSuggestFormData] = useState({
     nome: "",
@@ -90,10 +92,14 @@ export default function Projetos() {
       const matchesVagas = vagasFilter === "todos" || 
         (vagasFilter === "com" && project.vagas && project.vagas > 0) ||
         (vagasFilter === "sem" && (!project.vagas || project.vagas === 0));
+      // Filtrar por nome da construtora (vindo do JOIN com tabela construtoras)
+      const matchesConstrutora = construtoraFilter === "todas" || 
+        project.construtoraName === construtoraFilter || 
+        project.construtora === construtoraFilter;
 
-      return matchesSearch && matchesZona && matchesStatus && matchesDormitorios && matchesEnquadramento && matchesVagas;
+      return matchesSearch && matchesZona && matchesStatus && matchesDormitorios && matchesEnquadramento && matchesVagas && matchesConstrutora;
     });
-  }, [projects, searchTerm, zonaFilter, statusFilter, dormitoriosFilter, enquadramentoFilter, vagasFilter]);
+  }, [projects, searchTerm, zonaFilter, statusFilter, dormitoriosFilter, enquadramentoFilter, vagasFilter, construtoraFilter]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -662,6 +668,19 @@ export default function Projetos() {
                 <option value="com">Com Vaga</option>
                 <option value="sem">Sem Vaga</option>
               </select>
+              
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                value={construtoraFilter}
+                onChange={(e) => setConstrutoraFilter(e.target.value)}
+              >
+                <option value="todas">Todas as Construtoras</option>
+                {construtorasComProjetos.map(construtora => (
+                  <option key={construtora.id} value={construtora.nome}>
+                    {construtora.nome} ({construtora.totalProjetos})
+                  </option>
+                ))}
+              </select>
             </div>
           </CardContent>
         </Card>
@@ -673,7 +692,7 @@ export default function Projetos() {
               <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
               <p className="text-lg font-semibold mb-2">Nenhum projeto encontrado</p>
               <p className="text-muted-foreground text-center">
-                {searchTerm || zonaFilter !== "todas" || statusFilter !== "todos" || dormitoriosFilter !== "todos" || enquadramentoFilter !== "todos" || vagasFilter !== "todos"
+                {searchTerm || zonaFilter !== "todas" || statusFilter !== "todos" || dormitoriosFilter !== "todos" || enquadramentoFilter !== "todos" || vagasFilter !== "todos" || construtoraFilter !== "todas"
                   ? "Tente ajustar os filtros para encontrar projetos"
                   : "Comece criando um novo projeto"}
               </p>
@@ -717,11 +736,12 @@ export default function Projetos() {
                   
                   {/* Logo da Construtora */}
                   {project.logoUrl && (
-                    <div className="absolute top-4 right-4 bg-white rounded-lg p-2 shadow-lg">
+                    <div className="absolute top-3 right-3 bg-white/95 rounded-md p-1.5 shadow-md backdrop-blur-sm">
                       <img 
                         src={project.logoUrl} 
                         alt={project.construtora || 'Logo'}
-                        className="h-12 w-auto object-contain"
+                        className="h-8 max-w-[80px] object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     </div>
                   )}

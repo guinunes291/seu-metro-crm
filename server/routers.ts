@@ -5714,6 +5714,33 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         return result;
       }),
     
+    // Listar construtoras com projetos (para filtro)
+    listWithProjects: publicProcedure
+      .query(async () => {
+        const { construtoras, projects } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const { eq, isNotNull, sql } = await import('drizzle-orm');
+        
+        const db = await getDb();
+        if (!db) return [];
+        
+        // Buscar construtoras que têm pelo menos 1 projeto associado
+        const result = await db
+          .select({
+            id: construtoras.id,
+            nome: construtoras.nome,
+            logoUrl: construtoras.logoUrl,
+            totalProjetos: sql<number>`COUNT(${projects.id})`,
+          })
+          .from(construtoras)
+          .leftJoin(projects, eq(projects.construtoraId, construtoras.id))
+          .where(isNotNull(projects.id))
+          .groupBy(construtoras.id, construtoras.nome, construtoras.logoUrl)
+          .orderBy(construtoras.nome);
+        
+        return result;
+      }),
+    
     // Criar construtora (apenas admin)
     create: adminProcedure
       .input(z.object({

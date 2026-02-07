@@ -1,0 +1,20 @@
+{
+  "query": "\nSELECT mes, ano, COUNT(*) as total\nFROM tabeloes\nGROUP BY mes, ano\nORDER BY ano DESC, mes DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT mes, ano, COUNT(*) as total\nFROM tabeloes\nGROUP BY mes, ano\nORDER BY ano DESC, mes DESC;\n",
+  "rows": [
+    {
+      "mes": "2",
+      "ano": "2026",
+      "total": "27"
+    },
+    {
+      "mes": "1",
+      "ano": "2026",
+      "total": "29"
+    }
+  ],
+  "messages": [],
+  "stdout": "mes\tano\ttotal\n2\t2026\t27\n1\t2026\t29\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}
