@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT id, name, email, role, equipeId\nFROM users\nWHERE email = 'guilherme_97fm@outlook.com';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, name, email, role, equipeId\nFROM users\nWHERE email = 'guilherme_97fm@outlook.com';\n",
+  "rows": [
+    {
+      "id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "equipeId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tequipeId\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 406
+}

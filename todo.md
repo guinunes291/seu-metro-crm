@@ -3935,3 +3935,6 @@
 - [ ] Processar manualmente lead perdido (Natan M. M. e Oliveira - +5571997110211)
 - [ ] Testar webhook com lead de teste para validar correção
 - [ ] Garantir que todos os campos de qualificação sejam capturados corretamente
+
+- [x] Remover abas do menu lateral para gestores (Histórico, Lixeira, Metas Mensais, Metas Diárias, Log de Transferências)
+- [x] Filtrar Monitoramento de Follow-Up para mostrar apenas corretores ativos da equipe do gestor
