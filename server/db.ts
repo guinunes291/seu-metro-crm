@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -557,6 +557,44 @@ export async function getAllProjects() {
     .from(projects)
     .leftJoin(construtoras, eq(projects.construtoraId, construtoras.id))
     .orderBy(desc(projects.createdAt));
+  
+  return result;
+}
+
+export async function getProjectsForMap() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { construtoras } = await import('../drizzle/schema');
+  
+  // Query otimizada: apenas campos necessários para o mapa
+  const result = await db
+    .select({
+      id: projects.id,
+      nome: projects.nome,
+      construtora: projects.construtora,
+      endereco: projects.endereco,
+      bairro: projects.bairro,
+      cidade: projects.cidade,
+      zona: projects.zona,
+      status: projects.status,
+      dormitorios: projects.dormitorios,
+      valorMinimo: projects.valorMinimo,
+      vagas: projects.vagas,
+      enquadramento: projects.enquadramento,
+      latitude: projects.latitude,
+      longitude: projects.longitude,
+      logoUrl: construtoras.logoUrl,
+      construtoraName: construtoras.nome,
+    })
+    .from(projects)
+    .leftJoin(construtoras, eq(projects.construtoraId, construtoras.id))
+    .where(
+      and(
+        isNotNull(projects.latitude),
+        isNotNull(projects.longitude)
+      )
+    );
   
   return result;
 }

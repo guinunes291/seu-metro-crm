@@ -7,7 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map as MapIcon, List } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { lazy, Suspense } from "react";
+const ProjetosMapView = lazy(() => import("./ProjetosMapView"));
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useCompare } from "@/contexts/CompareContext";
@@ -591,6 +594,19 @@ export default function Projetos() {
           </Card>
         )}
 
+        {/* Abas Lista/Mapa */}
+        <Tabs defaultValue="lista" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="lista" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              Lista
+            </TabsTrigger>
+            <TabsTrigger value="mapa" className="flex items-center gap-2">
+              <MapIcon className="h-4 w-4" />
+              Mapa
+            </TabsTrigger>
+          </TabsList>
+
         {/* Filtros */}
         <Card className="mb-6">
           <CardHeader>
@@ -685,6 +701,7 @@ export default function Projetos() {
           </CardContent>
         </Card>
 
+        <TabsContent value="lista">
         {/* Grid de Projetos */}
         {filteredProjects.length === 0 ? (
           <Card>
@@ -807,6 +824,19 @@ export default function Projetos() {
             ))}
           </div>
         )}
+        </TabsContent>
+
+        <TabsContent value="mapa">
+          <Suspense fallback={<div className="flex items-center justify-center h-[600px] bg-card rounded-lg border"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+            <ProjetosMapView
+              filtroConstrutora={construtoraFilter}
+              filtroZona={zonaFilter}
+              filtroStatus={statusFilter}
+              filtroBusca={searchTerm}
+            />
+          </Suspense>
+        </TabsContent>
+        </Tabs>
       </div>
       
       <CompareBar />

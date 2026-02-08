@@ -89,6 +89,10 @@ export const appRouter = router({
     list: protectedProcedure.query(async () => {
       return await db.getAllProjects();
     }),
+
+    listForMap: protectedProcedure.query(async () => {
+      return await db.getProjectsForMap();
+    }),
     
     getById: protectedProcedure
       .input(z.object({ id: z.number() }))

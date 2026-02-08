@@ -3909,3 +3909,11 @@
 - [x] Corrigir mapeamento dos dados retornados pela query (usado getTableColumns)
 - [x] Testar que os projetos voltaram a aparecer com todas as informações
 - [x] Validar que os logos continuam funcionando
+
+## Mapa Interativo Otimizado (v2)
+- [x] Geocodificar 1027 projetos em lote no backend (salvar lat/lng no banco)
+- [x] Criar endpoint tRPC leve para retornar projetos com coordenadas
+- [x] Criar componente ProjetosMapView otimizado (sem geocodificação no frontend)
+- [x] Implementar clustering de markers com @googlemaps/markerclusterer
+- [x] Integrar aba Mapa na página de Projetos
+- [x] Testar performance e funcionalidade completa - CARREGAMENTO INSTANTÂNEO!

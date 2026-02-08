@@ -1,0 +1,110 @@
+{
+  "query": "SELECT id, nome, endereco, bairro, cidade, estado, latitude, longitude FROM projects WHERE endereco IS NOT NULL AND endereco != '' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, endereco, bairro, cidade, estado, latitude, longitude FROM projects WHERE endereco IS NOT NULL AND endereco != '' LIMIT 10;",
+  "rows": [
+    {
+      "id": "480185",
+      "nome": "SAO JOAQUIM",
+      "endereco": "R. Mituto Mizumoto, 392 - Liberdade - São Paulo",
+      "bairro": "Liberdade",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480186",
+      "nome": "Plano Parque Brás",
+      "endereco": "Rua Domingos Paiva, 260 - Centro - São Paulo",
+      "bairro": "Centro",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480187",
+      "nome": "MAPP Rio Branco (MUNDO APTO)",
+      "endereco": "Av. Rio Branco, 82 - Campos Elíseos - São Paulo",
+      "bairro": "Campos Elíseos",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480188",
+      "nome": "REPUBLICA",
+      "endereco": "R. Epitácio Pessoa, 137 - República - São Paulo",
+      "bairro": "República",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480189",
+      "nome": "LIBERDADE",
+      "endereco": "R. Barão De Iguape, 855 - Liberdade - São Paulo",
+      "bairro": "Liberdade",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480190",
+      "nome": "CENTRO",
+      "endereco": "R. Barão De Campinas, 265 - Campos Elíseos - São Paulo",
+      "bairro": "Campos Elíseos",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480191",
+      "nome": "NOVE DE JULHO",
+      "endereco": "R. Santo Antônio, 1080 - Bela Vista - São Paulo",
+      "bairro": "Bela Vista",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480192",
+      "nome": "CAMBUCI",
+      "endereco": "R. Silveira Campos, 66 - Cambuci - São Paulo",
+      "bairro": "Cambuci",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480193",
+      "nome": "PAULISTA",
+      "endereco": "Av. Brigadeiro Luís Antônio, 2779 - Jd. Paulista - São Paulo",
+      "bairro": "Jd. Paulista",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    },
+    {
+      "id": "480194",
+      "nome": "MIRAE BOM RETIRO",
+      "endereco": "Rua Cônego Vicente Miguel Marino, 134 - Barra Funda - São Paulo",
+      "bairro": "Barra Funda",
+      "cidade": "São Paulo",
+      "estado": "SP",
+      "latitude": "NULL",
+      "longitude": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tendereco\tbairro\tcidade\testado\tlatitude\tlongitude\n480185\tSAO JOAQUIM\tR. Mituto Mizumoto, 392 - Liberdade - São Paulo\tLiberdade\tSão Paulo\tSP\tNULL\tNULL\n480186\tPlano Parque Brás\tRua Domingos Paiva, 260 - Centro - São Paulo\tCentro\tSão Paulo\tSP\tNULL\tNULL\n480187\tMAPP Rio Branco (MUNDO APTO)\tAv. Rio Branco, 82 - Campos Elíseos - São Paulo\tCampos Elíseos\tSão Paulo\tSP\tNULL\tNULL\n480188\tREPUBLICA\tR. Epitácio Pessoa, 137 - República - São Paulo\tRepública\tSão Paulo\tSP\tNULL\tNULL\n480189\tLIBERDADE\tR. Barão De Iguape, 855 - Liberdade - São Paulo\tLiberdade\tSão Paulo\tSP\tNULL\tNULL\n480190\tCENTRO\tR. Barão De Campinas, 265 - Campos Elíseos - São Paulo\tCampos Elíseos\tSão Paulo\tSP\tNULL\tNULL\n480191\tNOVE DE JULHO\tR. Santo Antônio, 1080 - Bela Vista - São Paulo\tBela Vista\tSão Paulo\tSP\tNULL\tNULL\n480192\tCAMBUCI\tR. Silveira Campos, 66 - Cambuci - São Paulo\tCambuci\tSão Paulo\tSP\tNULL\tNULL\n480193\tPAULISTA\tAv. Brigadeiro Luís Antônio, 2779 - Jd. Paulista - São Paulo\tJd. Paulista\tSão Paulo\tSP\tNULL\tNULL\n480194\tMIRAE BOM RETIRO\tRua Cônego Vicente Miguel Marino, 134 - Barra Funda - São Paulo\tBarra Funda\tSão Paulo\tSP\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 376
+}
