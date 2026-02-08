@@ -452,6 +452,18 @@ export default function LeadsPorCorretor() {
                                 {lead.faixaRenda}
                               </div>
                             )}
+                            {lead.prefereContatoPor && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <span className="font-medium">Contato:</span>
+                                {lead.prefereContatoPor}
+                              </div>
+                            )}
+                            {lead.finalidadeImovel && (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <span className="font-medium">Finalidade:</span>
+                                {lead.finalidadeImovel}
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

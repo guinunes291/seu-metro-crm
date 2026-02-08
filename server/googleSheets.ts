@@ -14,6 +14,9 @@ interface SheetRow {
   status?: string;
   dataDistribuicao?: string;
   distribuido?: string;
+  faixaRenda?: string;
+  prefereContatoPor?: string;
+  finalidadeImovel?: string;
 }
 
 /**

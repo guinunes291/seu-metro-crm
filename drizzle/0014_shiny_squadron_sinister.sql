@@ -1,0 +1,1 @@
+ALTER TABLE `leads` ADD `finalidadeImovel` varchar(50);

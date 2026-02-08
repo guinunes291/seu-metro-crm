@@ -309,6 +309,7 @@ export const leads = mysqlTable("leads", {
   campanha: varchar("campanha", { length: 255 }), // Nome da campanha (campaign_name)
   faixaRenda: varchar("faixaRenda", { length: 100 }), // Faixa de renda (faixa_de_renda)
   prefereContatoPor: varchar("prefereContatoPor", { length: 50 }), // Preferência de contato (prefere_falar_por)
+  finalidadeImovel: varchar("finalidadeImovel", { length: 50 }), // Finalidade do imóvel (investimento, moradia, etc)
   dataHoraCriacao: timestamp("dataHoraCriacao"), // Data/hora de criação no Facebook (created_time)
   
   // Identificação de leads via webhook (para notificação urgente)

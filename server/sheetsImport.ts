@@ -262,6 +262,9 @@ export async function importLeadsFromSheet(
             dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
               ? new Date(row.dataDistribuicao) 
               : null,
+            faixaRenda: row.faixaRenda && row.faixaRenda.trim() !== "" ? row.faixaRenda.trim() : null,
+            prefereContatoPor: row.prefereContatoPor && row.prefereContatoPor.trim() !== "" ? row.prefereContatoPor.trim() : null,
+            finalidadeImovel: row.finalidadeImovel && row.finalidadeImovel.trim() !== "" ? row.finalidadeImovel.trim() : null,
           });
 
           // Adicionar ao set de existentes para evitar duplicatas dentro do mesmo batch

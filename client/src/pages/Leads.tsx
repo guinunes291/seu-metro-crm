@@ -861,6 +861,12 @@ export default function Leads() {
                               <span><strong>Prefere contato por:</strong> {lead.prefereContatoPor}</span>
                             </div>
                           )}
+                          {lead.finalidadeImovel && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <span><strong>Finalidade:</strong> {lead.finalidadeImovel}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="flex flex-col gap-2">
@@ -1279,7 +1285,7 @@ export default function Leads() {
                 </div>
 
                 {/* Campos do Facebook Lead Ads */}
-                {(selectedLead.campanha || selectedLead.faixaRenda || selectedLead.prefereContatoPor || selectedLead.dataHoraCriacao) && (
+                {(selectedLead.campanha || selectedLead.faixaRenda || selectedLead.prefereContatoPor || selectedLead.finalidadeImovel || selectedLead.dataHoraCriacao) && (
                   <>
                     <Separator />
                     <div>
@@ -1315,6 +1321,14 @@ export default function Leads() {
                             <MessageSquare className="h-4 w-4 text-muted-foreground" />
                             <span>
                               <strong>Prefere contato por:</strong> {selectedLead.prefereContatoPor}
+                            </span>
+                          </div>
+                        )}
+                        {selectedLead.finalidadeImovel && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              <strong>Finalidade do Imóvel:</strong> {selectedLead.finalidadeImovel}
                             </span>
                           </div>
                         )}

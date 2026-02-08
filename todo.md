@@ -3917,3 +3917,15 @@
 - [x] Implementar clustering de markers com @googlemaps/markerclusterer
 - [x] Integrar aba Mapa na página de Projetos
 - [x] Testar performance e funcionalidade completa - CARREGAMENTO INSTANTÂNEO!
+
+## Nova Feature: Campos de Qualificação de Leads
+- [ ] Adicionar campos ao schema de leads: faixaRenda, preferenciaContato, finalidadeImovel
+- [ ] Migrar banco de dados (pnpm db:push)
+- [ ] Atualizar função de importação do Google Sheets para mapear novos campos
+- [ ] Exibir faixaRenda nos cards de leads
+- [ ] Exibir preferenciaContato nos cards de leads (ícone WhatsApp/Telefone/Email)
+- [ ] Exibir finalidadeImovel nos cards de leads
+- [ ] Adicionar novos campos na tabela de leads
+- [ ] Adicionar novos campos no modal de detalhes do lead
+- [ ] Testar importação com dados reais
+- [ ] Validar que dados históricos foram preservados
