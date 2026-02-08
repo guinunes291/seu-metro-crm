@@ -1,0 +1,18 @@
+{
+  "query": "\nUPDATE leads\nSET \n  faixaRenda = 'Acima de 8.000,00',\n  prefereContatoPor = 'WhatsApp',\n  finalidadeImovel = 'Moradia'\nWHERE id = 3390006;\n\n-- Verificar atualização\nSELECT id, nome, telefone, faixaRenda, prefereContatoPor, finalidadeImovel\nFROM leads\nWHERE id = 3390006;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nUPDATE leads\nSET \n  faixaRenda = 'Acima de 8.000,00',\n  prefereContatoPor = 'WhatsApp',\n  finalidadeImovel = 'Moradia'\nWHERE id = 3390006;\n\n-- Verificar atualização\nSELECT id, nome, telefone, faixaRenda, prefereContatoPor, finalidadeImovel\nFROM leads\nWHERE id = 3390006;\n",
+  "rows": [
+    {
+      "id": "3390006",
+      "nome": "Izabella",
+      "telefone": "+5521976375777",
+      "faixaRenda": "Acima de 8.000,00",
+      "prefereContatoPor": "WhatsApp",
+      "finalidadeImovel": "Moradia"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\tfaixaRenda\tprefereContatoPor\tfinalidadeImovel\n3390006\tIzabella\t+5521976375777\tAcima de 8.000,00\tWhatsApp\tMoradia\n",
+  "stderr": "",
+  "execution_time_ms": 446
+}

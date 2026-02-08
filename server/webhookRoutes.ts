@@ -404,11 +404,14 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
         }
       }
     } 
-    // Formato simplificado (para testes)
+    // Formato simplificado (para testes e Zapier)
     else if (body.nome || body.name || body.full_name) {
       nome = body.nome || body.name || body.full_name || '';
       email = body.email || '';
       telefone = body.telefone || body.phone || body.phone_number || '';
+      faixaRenda = body['faixa de renda'] || body.faixaRenda || body.faixa_renda || '';
+      prefereContatoPor = body.prefereContatoPor || body.prefere_contato_por || '';
+      finalidadeImovel = body.finalidadeImovel || body.finalidade_imovel || body.finalidade || '';
     }
     
     // Validar dados mínimos
