@@ -3962,3 +3962,9 @@
 - [x] Testar e publicar correção
 - [x] Remover Chart.js completamente e substituir por gráficos CSS/SVG puros (solução definitiva para loop infinito)
 - [x] Corrigir valores de faturamento no dashboard - R$ 7K em vez de R$ 703K (converter valorVenda de reais para centavos no backend)
+
+## Bugs de Agendamento
+- [x] Adicionar seletor visual de data/horário (Calendar shadcn + botões de hora/minuto)
+- [x] Corrigir erro quando data/horário não é preenchido corretamente (validação robusta)
+- [x] Resolver duplicação de agendamentos (proteção duplo clique + verificação backend)
+- [x] Aplicar mesmas correções no formulário de agendamento do Leads.tsx

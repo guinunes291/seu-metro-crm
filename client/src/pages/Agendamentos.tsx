@@ -60,8 +60,9 @@ import {
 import CalendarioAgendamentos from "@/components/CalendarioAgendamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 type Lead = {
   id: number;
@@ -109,6 +110,10 @@ export default function AgendamentosPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [useCustomProject, setUseCustomProject] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedHour, setSelectedHour] = useState("");
+  const [selectedMinute, setSelectedMinute] = useState("");
   const [formData, setFormData] = useState({
     projectId: "",
     projetoCustom: "",
@@ -117,6 +122,9 @@ export default function AgendamentosPage() {
     horaAgendamento: "",
     observacoes: "",
   });
+
+  const HOURS = Array.from({ length: 14 }, (_, i) => String(i + 7).padStart(2, "0")); // 07-20
+  const MINUTES = ["00", "15", "30", "45"];
 
   // Queries
   const { data: agendamentos, isLoading } = trpc.agendamentos.list.useQuery();
@@ -129,6 +137,7 @@ export default function AgendamentosPage() {
   const createAgendamento = trpc.agendamentos.create.useMutation({
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
+      setIsSubmitting(false);
       setIsModalOpen(false);
       resetForm();
       utils.agendamentos.list.invalidate();
@@ -136,6 +145,7 @@ export default function AgendamentosPage() {
     },
     onError: (error) => {
       toast.error(error.message || "Erro ao criar agendamento");
+      setIsSubmitting(false);
     },
   });
 
@@ -172,6 +182,9 @@ export default function AgendamentosPage() {
     setSelectedLead(null);
     setSearchTerm("");
     setUseCustomProject(false);
+    setSelectedDate(undefined);
+    setSelectedHour("");
+    setSelectedMinute("");
     setFormData({
       projectId: "",
       projetoCustom: "",
@@ -183,13 +196,20 @@ export default function AgendamentosPage() {
   };
 
   const handleSubmit = () => {
+    if (isSubmitting || createAgendamento.isPending) return;
+
     if (!selectedLead) {
       toast.error("Selecione um cliente");
       return;
     }
 
-    if (!formData.dataAgendamento || !formData.horaAgendamento) {
-      toast.error("Preencha data e hora do agendamento");
+    if (!selectedDate) {
+      toast.error("Selecione a data do agendamento");
+      return;
+    }
+
+    if (!selectedHour || !selectedMinute) {
+      toast.error("Selecione o horário do agendamento");
       return;
     }
 
@@ -203,18 +223,23 @@ export default function AgendamentosPage() {
       return;
     }
 
+    const dataFormatted = format(selectedDate, "yyyy-MM-dd");
+    const horaFormatted = `${selectedHour}:${selectedMinute}`;
+
+    setIsSubmitting(true);
     createAgendamento.mutate({
       leadId: selectedLead.id,
       projectId: useCustomProject ? undefined : parseInt(formData.projectId),
       projetoCustom: useCustomProject ? formData.projetoCustom : undefined,
       construtora: formData.construtora || undefined,
-      dataAgendamento: formData.dataAgendamento,
-      horaAgendamento: formData.horaAgendamento,
+      dataAgendamento: dataFormatted,
+      horaAgendamento: horaFormatted,
       observacoes: formData.observacoes || undefined,
     });
   };
 
   const handleCreateFromCalendar = (date: Date) => {
+    setSelectedDate(date);
     setFormData({
       ...formData,
       dataAgendamento: format(date, "yyyy-MM-dd"),
@@ -366,24 +391,75 @@ export default function AgendamentosPage() {
                   />
                 </div>
 
-                {/* Data e Hora */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Data *</Label>
-                    <Input
-                      type="date"
-                      value={formData.dataAgendamento}
-                      onChange={(e) => setFormData({ ...formData, dataAgendamento: e.target.value })}
+                {/* Data */}
+                <div className="space-y-2">
+                  <Label>Data *</Label>
+                  <div className="flex justify-center">
+                    <CalendarComponent
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={(date) => {
+                        setSelectedDate(date);
+                        if (date) {
+                          setFormData({ ...formData, dataAgendamento: format(date, "yyyy-MM-dd") });
+                        }
+                      }}
+                      disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                      locale={ptBR}
+                      className="rounded-md border"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Hora *</Label>
-                    <Input
-                      type="time"
-                      value={formData.horaAgendamento}
-                      onChange={(e) => setFormData({ ...formData, horaAgendamento: e.target.value })}
-                    />
+                  {selectedDate && (
+                    <p className="text-sm text-center text-muted-foreground">
+                      Selecionado: {format(selectedDate, "dd/MM/yyyy (EEEE)", { locale: ptBR })}
+                    </p>
+                  )}
+                </div>
+
+                {/* Hora */}
+                <div className="space-y-2">
+                  <Label>Horário *</Label>
+                  <div className="flex gap-4 items-center">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Hora</Label>
+                      <div className="grid grid-cols-7 gap-1">
+                        {HOURS.map((h) => (
+                          <Button
+                            key={h}
+                            type="button"
+                            size="sm"
+                            variant={selectedHour === h ? "default" : "outline"}
+                            className="h-8 text-xs"
+                            onClick={() => setSelectedHour(h)}
+                          >
+                            {h}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="w-24">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Min</Label>
+                      <div className="grid grid-cols-2 gap-1">
+                        {MINUTES.map((m) => (
+                          <Button
+                            key={m}
+                            type="button"
+                            size="sm"
+                            variant={selectedMinute === m ? "default" : "outline"}
+                            className="h-8 text-xs"
+                            onClick={() => setSelectedMinute(m)}
+                          >
+                            {m}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                  {selectedHour && selectedMinute && (
+                    <p className="text-sm text-center text-muted-foreground">
+                      Horário: {selectedHour}:{selectedMinute}
+                    </p>
+                  )}
                 </div>
 
                 {/* Observações */}
@@ -404,9 +480,9 @@ export default function AgendamentosPage() {
                 </Button>
                 <Button 
                   onClick={handleSubmit}
-                  disabled={createAgendamento.isPending}
+                  disabled={isSubmitting || createAgendamento.isPending}
                 >
-                  {createAgendamento.isPending ? (
+                  {(isSubmitting || createAgendamento.isPending) ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       Criando...
@@ -531,6 +607,18 @@ function AgendamentoCard({
 
   const nomeProjeto = projeto?.nome || agendamento.projetoCustom || "Projeto não especificado";
 
+  // Formatar data de agendamento de forma segura
+  const formatDataAgendamento = (dataStr: any) => {
+    try {
+      if (!dataStr) return "-";
+      const d = typeof dataStr === 'string' ? new Date(dataStr) : dataStr;
+      if (isNaN(d.getTime())) return "-";
+      return format(d, "dd/MM/yyyy");
+    } catch {
+      return "-";
+    }
+  };
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -591,7 +679,7 @@ function AgendamentoCard({
               <div>
                 <span className="text-muted-foreground">Data:</span>
                 <div className="font-medium">
-                  {format(parseISO(agendamento.dataAgendamento), "dd/MM/yyyy")}
+                  {formatDataAgendamento(agendamento.dataAgendamento)}
                 </div>
               </div>
             </div>

@@ -5650,6 +5650,29 @@ export async function getHistoricoTransicoesLead(leadId: number): Promise<LeadSt
 // ============================================================================
 
 /**
+ * Verificar se já existe um agendamento duplicado (mesmo lead + data + hora + status ativo)
+ */
+export async function checkAgendamentoDuplicado(params: {
+  leadId: number;
+  dataAgendamento: Date;
+  horaAgendamento: string;
+}): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const result = await db.select({ count: sql<number>`count(*)` })
+    .from(agendamentos)
+    .where(and(
+      eq(agendamentos.leadId, params.leadId),
+      eq(agendamentos.dataAgendamento, params.dataAgendamento),
+      eq(agendamentos.horaAgendamento, params.horaAgendamento),
+      inArray(agendamentos.status, ['pendente', 'confirmado'])
+    ));
+  
+  return (result[0]?.count || 0) > 0;
+}
+
+/**
  * Criar um novo agendamento
  * Automaticamente atualiza o status do lead para "agendado" se necessário
  */

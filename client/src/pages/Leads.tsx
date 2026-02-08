@@ -907,6 +907,9 @@ export default function Leads() {
                     observacoes: "",
                     useCustomProject: false,
                   });
+                  setAgSelectedDate(undefined);
+                  setAgSelectedHour("");
+                  setAgSelectedMinute("");
                   setAgendamentoDialog(true);
                 }}
                               >
@@ -1001,6 +1004,9 @@ export default function Leads() {
                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                               onClick={() => {
                                 setSelectedLead(lead);
+                                setAgSelectedDate(undefined);
+                                setAgSelectedHour("");
+                                setAgSelectedMinute("");
                                 // Preencher projeto do lead se existir
                                 if (lead.projectId) {
                                   setAgendamentoForm(prev => ({
@@ -1383,6 +1389,9 @@ export default function Leads() {
                     observacoes: "",
                     useCustomProject: false,
                   });
+                  setAgSelectedDate(undefined);
+                  setAgSelectedHour("");
+                  setAgSelectedMinute("");
                   setAgendamentoDialog(true);
                 }}
                           >

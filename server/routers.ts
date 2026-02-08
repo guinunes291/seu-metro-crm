@@ -3114,13 +3114,27 @@ export const appRouter = router({
         // Importar função de timezone
         const { parsearDataISO } = await import('./timezone');
         
+        // Verificar duplicação: mesmo lead + mesma data + mesmo horário + status ativo
+        const dataAgendamentoParsed = parsearDataISO(input.dataAgendamento);
+        const existente = await db.checkAgendamentoDuplicado({
+          leadId: input.leadId,
+          dataAgendamento: dataAgendamentoParsed,
+          horaAgendamento: input.horaAgendamento,
+        });
+        if (existente) {
+          throw new TRPCError({ 
+            code: 'CONFLICT', 
+            message: 'Já existe um agendamento para este cliente nesta data e horário' 
+          });
+        }
+        
         const agendamento = await db.createAgendamento({
           leadId: input.leadId,
           corretorId: ctx.user.id,
           projectId: input.projectId,
           projetoCustom: input.projetoCustom,
           construtora: input.construtora,
-          dataAgendamento: parsearDataISO(input.dataAgendamento),
+          dataAgendamento: dataAgendamentoParsed,
           horaAgendamento: input.horaAgendamento,
           observacoes: input.observacoes,
           criadoPorId: ctx.user.id,
