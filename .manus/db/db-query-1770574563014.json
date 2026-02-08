@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Deletar agendamentos duplicados (manter apenas o mais recente de cada grupo)\nDELETE FROM agendamentos\nWHERE status IN ('pendente', 'confirmado')\n  AND id NOT IN (\n    -- Manter apenas o ID mais recente de cada grupo\n    SELECT MAX(id)\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n  )\n  AND (leadId, dataAgendamento, horaAgendamento) IN (\n    -- Apenas grupos que têm duplicatas\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  );\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Deletar agendamentos duplicados (manter apenas o mais recente de cada grupo)\nDELETE FROM agendamentos\nWHERE status IN ('pendente', 'confirmado')\n  AND id NOT IN (\n    -- Manter apenas o ID mais recente de cada grupo\n    SELECT MAX(id)\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n  )\n  AND (leadId, dataAgendamento, horaAgendamento) IN (\n    -- Apenas grupos que têm duplicatas\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  );\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 355
+}

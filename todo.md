@@ -3968,3 +3968,8 @@
 - [x] Corrigir erro quando data/horário não é preenchido corretamente (validação robusta)
 - [x] Resolver duplicação de agendamentos (proteção duplo clique + verificação backend)
 - [x] Aplicar mesmas correções no formulário de agendamento do Leads.tsx
+
+## Limpeza de Agendamentos Duplicados
+- [x] Identificar agendamentos duplicados (mesmo lead + data + hora + status ativo) - 2 grupos encontrados
+- [x] Remover duplicatas mantendo apenas o mais recente (maior ID) - 3 agendamentos deletados
+- [x] Verificar quantidade de agendamentos antes e depois da limpeza - 0 duplicatas restantes

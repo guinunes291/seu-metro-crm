@@ -1,0 +1,60 @@
+{
+  "query": "\nSELECT \n  a.id,\n  a.leadId,\n  l.nome as leadNome,\n  a.dataAgendamento,\n  a.horaAgendamento,\n  a.status,\n  a.createdAt,\n  u.name as corretorNome\nFROM agendamentos a\nLEFT JOIN leads l ON a.leadId = l.id\nLEFT JOIN users u ON a.corretorId = u.id\nWHERE a.status IN ('pendente', 'confirmado')\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  a.id,\n  a.leadId,\n  l.nome as leadNome,\n  a.dataAgendamento,\n  a.horaAgendamento,\n  a.status,\n  a.createdAt,\n  u.name as corretorNome\nFROM agendamentos a\nLEFT JOIN leads l ON a.leadId = l.id\nLEFT JOIN users u ON a.corretorId = u.id\nWHERE a.status IN ('pendente', 'confirmado')\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
+  "rows": [
+    {
+      "id": "720003",
+      "leadId": "2790510",
+      "leadNome": "Chris",
+      "dataAgendamento": "2026-02-09 03:00:00",
+      "horaAgendamento": "12:00",
+      "status": "pendente",
+      "createdAt": "2026-02-05 21:54:12",
+      "corretorNome": "Guilherme Nunes"
+    },
+    {
+      "id": "720004",
+      "leadId": "2790510",
+      "leadNome": "Chris",
+      "dataAgendamento": "2026-02-09 03:00:00",
+      "horaAgendamento": "12:00",
+      "status": "pendente",
+      "createdAt": "2026-02-05 21:56:11",
+      "corretorNome": "Daniel Lacerda"
+    },
+    {
+      "id": "720005",
+      "leadId": "2790510",
+      "leadNome": "Chris",
+      "dataAgendamento": "2026-02-09 03:00:00",
+      "horaAgendamento": "12:00",
+      "status": "pendente",
+      "createdAt": "2026-02-05 21:56:31",
+      "corretorNome": "Daniel Lacerda"
+    },
+    {
+      "id": "750002",
+      "leadId": "3240006",
+      "leadNome": "Raí",
+      "dataAgendamento": "2026-02-14 03:00:00",
+      "horaAgendamento": "10:00",
+      "status": "pendente",
+      "createdAt": "2026-02-06 20:37:10",
+      "corretorNome": "Daniel Lacerda"
+    },
+    {
+      "id": "750003",
+      "leadId": "3240006",
+      "leadNome": "Raí",
+      "dataAgendamento": "2026-02-14 03:00:00",
+      "horaAgendamento": "10:00",
+      "status": "pendente",
+      "createdAt": "2026-02-06 20:37:27",
+      "corretorNome": "Daniel Lacerda"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tleadId\tleadNome\tdataAgendamento\thoraAgendamento\tstatus\tcreatedAt\tcorretorNome\n720003\t2790510\tChris\t2026-02-09 03:00:00\t12:00\tpendente\t2026-02-05 21:54:12\tGuilherme Nunes\n720004\t2790510\tChris\t2026-02-09 03:00:00\t12:00\tpendente\t2026-02-05 21:56:11\tDaniel Lacerda\n720005\t2790510\tChris\t2026-02-09 03:00:00\t12:00\tpendente\t2026-02-05 21:56:31\tDaniel Lacerda\n750002\t3240006\tRaí\t2026-02-14 03:00:00\t10:00\tpendente\t2026-02-06 20:37:10\tDaniel Lacerda\n750003\t3240006\tRaí\t2026-02-14 03:00:00\t10:00\tpendente\t2026-02-06 20:37:27\tDaniel Lacerda\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

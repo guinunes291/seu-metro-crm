@@ -1,0 +1,31 @@
+{
+  "query": "\n-- Encontrar IDs dos agendamentos duplicados que devem ser deletados (manter apenas o mais recente de cada grupo)\nSELECT a.id, a.leadId, a.dataAgendamento, a.horaAgendamento, a.createdAt\nFROM agendamentos a\nWHERE a.status IN ('pendente', 'confirmado')\n  AND a.id NOT IN (\n    -- Manter apenas o ID mais recente de cada grupo\n    SELECT MAX(id)\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n  )\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    -- Apenas grupos que têm duplicatas\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Encontrar IDs dos agendamentos duplicados que devem ser deletados (manter apenas o mais recente de cada grupo)\nSELECT a.id, a.leadId, a.dataAgendamento, a.horaAgendamento, a.createdAt\nFROM agendamentos a\nWHERE a.status IN ('pendente', 'confirmado')\n  AND a.id NOT IN (\n    -- Manter apenas o ID mais recente de cada grupo\n    SELECT MAX(id)\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n  )\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    -- Apenas grupos que têm duplicatas\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
+  "rows": [
+    {
+      "id": "720003",
+      "leadId": "2790510",
+      "dataAgendamento": "2026-02-09 03:00:00",
+      "horaAgendamento": "12:00",
+      "createdAt": "2026-02-05 21:54:12"
+    },
+    {
+      "id": "720004",
+      "leadId": "2790510",
+      "dataAgendamento": "2026-02-09 03:00:00",
+      "horaAgendamento": "12:00",
+      "createdAt": "2026-02-05 21:56:11"
+    },
+    {
+      "id": "750002",
+      "leadId": "3240006",
+      "dataAgendamento": "2026-02-14 03:00:00",
+      "horaAgendamento": "10:00",
+      "createdAt": "2026-02-06 20:37:10"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tleadId\tdataAgendamento\thoraAgendamento\tcreatedAt\n720003\t2790510\t2026-02-09 03:00:00\t12:00\t2026-02-05 21:54:12\n720004\t2790510\t2026-02-09 03:00:00\t12:00\t2026-02-05 21:56:11\n750002\t3240006\t2026-02-14 03:00:00\t10:00\t2026-02-06 20:37:10\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}
