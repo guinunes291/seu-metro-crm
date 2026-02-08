@@ -7,7 +7,7 @@ import {
   CalendarCheck, Eye, FileText, Briefcase, Activity, ChevronDown,
   Settings, Save, ArrowUp, ArrowDown, Minus
 } from "lucide-react";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -189,7 +189,7 @@ function KPICard({
   );
 }
 
-// Gauge Chart (Doughnut) para % de atingimento
+// Gauge Chart (Doughnut) para % de atingimento - MEMOIZED
 function GaugeChart({ percentage, label }: { percentage: number; label: string }) {
   const clampedPercentage = Math.min(percentage, 100);
   const remaining = Math.max(100 - clampedPercentage, 0);
@@ -202,7 +202,7 @@ function GaugeChart({ percentage, label }: { percentage: number; label: string }
     return '#dc2626';
   };
 
-  const data = {
+  const data = useMemo(() => ({
     datasets: [{
       data: [clampedPercentage, remaining],
       backgroundColor: [getColor(percentage), 'rgba(51, 65, 85, 0.5)'],
@@ -211,9 +211,9 @@ function GaugeChart({ percentage, label }: { percentage: number; label: string }
       rotation: 225,
       cutout: '80%',
     }],
-  };
+  }), [clampedPercentage, remaining, percentage]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
@@ -221,7 +221,7 @@ function GaugeChart({ percentage, label }: { percentage: number; label: string }
       legend: { display: false },
       datalabels: { display: false },
     },
-  };
+  }), []);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -236,18 +236,18 @@ function GaugeChart({ percentage, label }: { percentage: number; label: string }
   );
 }
 
-// Gráfico de Evolução Mensal (Barras + Linha)
-function EvolucaoMensalChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) {
+// Gráfico de Evolução Mensal (Barras + Linha) - MEMOIZED
+function EvolucaoMensalChart({ data: rawData }: { data: any[] }) {
+  if (!rawData || rawData.length === 0) {
     return <div className="flex items-center justify-center h-48 text-gray-400">Sem dados</div>;
   }
 
-  const chartData = {
-    labels: data.map(d => d.mesNome),
+  const chartData = useMemo(() => ({
+    labels: rawData.map(d => d.mesNome),
     datasets: [
       {
         label: 'Faturamento',
-        data: data.map(d => (d.vgvRealizado || 0) / 100),
+        data: rawData.map(d => (d.vgvRealizado || 0) / 100),
         backgroundColor: 'rgba(139, 92, 246, 0.7)',
         borderColor: 'rgba(139, 92, 246, 1)',
         borderWidth: 1,
@@ -256,7 +256,7 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
       },
       {
         label: 'Meta',
-        data: data.map(d => Number(d.metaVGV || 0) / 100),
+        data: rawData.map(d => Number(d.metaVGV || 0) / 100),
         backgroundColor: 'rgba(99, 102, 241, 0.3)',
         borderColor: 'rgba(99, 102, 241, 0.8)',
         borderWidth: 2,
@@ -268,9 +268,9 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
         order: 1,
       },
     ],
-  };
+  }), [rawData]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -307,7 +307,7 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
         grid: { color: 'rgba(51, 65, 85, 0.3)' },
       },
     },
-  };
+  }), []);
 
   return (
     <div className="h-[300px]">
@@ -316,34 +316,34 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
   );
 }
 
-// Gráfico de Atingimento Mensal (barras positivas/negativas)
-function AtingimentoMensalChart({ data }: { data: any[] }) {
-  if (!data || data.length === 0) {
+// Gráfico de Atingimento Mensal (barras positivas/negativas) - MEMOIZED
+function AtingimentoMensalChart({ data: rawData }: { data: any[] }) {
+  if (!rawData || rawData.length === 0) {
     return <div className="flex items-center justify-center h-48 text-gray-400">Sem dados</div>;
   }
 
-  const chartData = {
-    labels: data.map(d => d.mesNome),
+  const chartData = useMemo(() => ({
+    labels: rawData.map(d => d.mesNome),
     datasets: [{
       label: '% Atingimento',
-      data: data.map(d => {
+      data: rawData.map(d => {
         const pct = d.percentual || 0;
-        return pct > 100 ? pct - 100 : pct - 100;
+        return pct - 100;
       }),
-      backgroundColor: data.map(d => {
+      backgroundColor: rawData.map(d => {
         const pct = d.percentual || 0;
         return pct >= 100 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)';
       }),
-      borderColor: data.map(d => {
+      borderColor: rawData.map(d => {
         const pct = d.percentual || 0;
         return pct >= 100 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)';
       }),
       borderWidth: 1,
       borderRadius: 4,
     }],
-  };
+  }), [rawData]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -376,7 +376,7 @@ function AtingimentoMensalChart({ data }: { data: any[] }) {
         grid: { color: 'rgba(51, 65, 85, 0.3)' },
       },
     },
-  };
+  }), []);
 
   return (
     <div className="h-[250px]">
@@ -385,40 +385,40 @@ function AtingimentoMensalChart({ data }: { data: any[] }) {
   );
 }
 
-// Gráfico de Barras Horizontal - Faturamento por Vendedor
+// Gráfico de Barras Horizontal - Faturamento por Vendedor - MEMOIZED
 function FaturamentoPorVendedorChart({ corretores }: { corretores: any[] }) {
   if (!corretores || corretores.length === 0) {
     return <div className="flex items-center justify-center h-48 text-gray-400">Sem dados</div>;
   }
 
-  const top10 = corretores.slice(0, 10);
+  const top10 = useMemo(() => corretores.slice(0, 10), [corretores]);
 
-  const chartData = {
-    labels: top10.map(c => c.nome?.split(' ')[0] || 'Corretor'),
-    datasets: [{
-      label: 'Faturamento',
-      data: top10.map(c => (c.vgv || 0) / 100),
-      backgroundColor: top10.map((_, i) => {
-        const colors = [
-          'rgba(139, 92, 246, 0.8)',
-          'rgba(99, 102, 241, 0.8)',
-          'rgba(59, 130, 246, 0.7)',
-          'rgba(14, 165, 233, 0.7)',
-          'rgba(6, 182, 212, 0.6)',
-          'rgba(20, 184, 166, 0.6)',
-          'rgba(34, 197, 94, 0.5)',
-          'rgba(132, 204, 22, 0.5)',
-          'rgba(234, 179, 8, 0.5)',
-          'rgba(249, 115, 22, 0.5)',
-        ];
-        return colors[i] || 'rgba(139, 92, 246, 0.5)';
-      }),
-      borderWidth: 0,
-      borderRadius: 4,
-    }],
-  };
+  const chartData = useMemo(() => {
+    const colors = [
+      'rgba(139, 92, 246, 0.8)',
+      'rgba(99, 102, 241, 0.8)',
+      'rgba(59, 130, 246, 0.7)',
+      'rgba(14, 165, 233, 0.7)',
+      'rgba(6, 182, 212, 0.6)',
+      'rgba(20, 184, 166, 0.6)',
+      'rgba(34, 197, 94, 0.5)',
+      'rgba(132, 204, 22, 0.5)',
+      'rgba(234, 179, 8, 0.5)',
+      'rgba(249, 115, 22, 0.5)',
+    ];
+    return {
+      labels: top10.map(c => c.nome?.split(' ')[0] || 'Corretor'),
+      datasets: [{
+        label: 'Faturamento',
+        data: top10.map(c => (c.vgv || 0) / 100),
+        backgroundColor: top10.map((_, i) => colors[i] || 'rgba(139, 92, 246, 0.5)'),
+        borderWidth: 0,
+        borderRadius: 4,
+      }],
+    };
+  }, [top10]);
 
-  const options = {
+  const options = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: 'y' as const,
@@ -460,7 +460,7 @@ function FaturamentoPorVendedorChart({ corretores }: { corretores: any[] }) {
         grid: { display: false },
       },
     },
-  };
+  }), []);
 
   return (
     <div className="h-[350px]">
@@ -731,7 +731,7 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
 
   if (!isAdmin) return null;
 
-  const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
   return (
     <Dialog>
@@ -743,7 +743,7 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
       </DialogTrigger>
       <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-white">Configurar Metas - {meses[mes - 1]} {ano}</DialogTitle>
+          <DialogTitle className="text-white">Configurar Metas - {mesesNomes[mes - 1]} {ano}</DialogTitle>
           <DialogDescription className="text-gray-400">
             Defina as metas globais da operação para este mês.
           </DialogDescription>
@@ -820,28 +820,35 @@ export default function PerformanceTV() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState<'realxmeta' | 'vgv' | 'produtividade'>('realxmeta');
   
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const [selectedMes, setSelectedMes] = useState(now.getMonth() + 1);
   const [selectedAno, setSelectedAno] = useState(now.getFullYear());
   
   const dateRange = useMemo(() => getDateRangeForPeriod(periodo, customRange), [periodo, customRange]);
   
-  // Queries existentes
-  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
-  const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery({
+  // Stabilize query inputs
+  const dateRangeInput = useMemo(() => ({
     dataInicio: dateRange.from,
     dataFim: dateRange.to,
-  });
+  }), [dateRange.from?.getTime(), dateRange.to?.getTime()]);
   
-  // Novas queries para Real x Meta
-  const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery({
+  const dashboardInput = useMemo(() => ({
     mes: selectedMes,
     ano: selectedAno,
-  });
+  }), [selectedMes, selectedAno]);
   
-  const { data: evolucaoMensal, refetch: refetchEvolucao } = trpc.dashboardPerformance.evolucaoMensal.useQuery({
+  const evolucaoInput = useMemo(() => ({
     ano: selectedAno,
-  });
+  }), [selectedAno]);
+  
+  // Queries existentes
+  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
+  const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery(dateRangeInput);
+  
+  // Novas queries para Real x Meta
+  const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery(dashboardInput);
+  
+  const { data: evolucaoMensal, refetch: refetchEvolucao } = trpc.dashboardPerformance.evolucaoMensal.useQuery(evolucaoInput);
   
   // Auto-refresh
   useEffect(() => {
@@ -884,42 +891,54 @@ export default function PerformanceTV() {
     return periodLabels[periodo];
   }, [periodo, customRange]);
   
-  // Rankings formatados
-  const rankingFormatado = rankingVGV?.map((item: any, index: number) => ({
-    corretorId: item.corretorId, corretorNome: item.corretorNome, corretorFoto: item.corretorFoto,
-    vgvTotal: item.vgvTotal || 0, contratosFechados: item.contratosFechados || 0, posicao: index + 1,
-  })) || [];
+  // Rankings formatados - MEMOIZED
+  const rankingFormatado = useMemo(() => 
+    rankingVGV?.map((item: any, index: number) => ({
+      corretorId: item.corretorId, corretorNome: item.corretorNome, corretorFoto: item.corretorFoto,
+      vgvTotal: item.vgvTotal || 0, contratosFechados: item.contratosFechados || 0, posicao: index + 1,
+    })) || []
+  , [rankingVGV]);
 
-  const rankingProdutividade = rankingPeriodo?.map((item: any, index: number) => ({
-    corretorId: item.corretorId, corretorNome: item.corretorNome, corretorFoto: item.corretorFoto,
-    pontuacaoTotal: Number(item.totalPontos) || 0,
-    ligacoesRealizadas: Number(item.totalLigacoes) || 0, ligacoesAtendidas: 0,
-    whatsappEnviados: Number(item.totalWhatsapp) || 0, whatsappRespondidos: 0,
-    agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
-    visitasRealizadas: Number(item.totalVisitas) || 0,
-    documentacoesRecolhidas: Number(item.totalDocumentacoes) || 0,
-    posicao: index + 1,
-  })) || [];
+  const rankingProdutividade = useMemo(() => 
+    rankingPeriodo?.map((item: any, index: number) => ({
+      corretorId: item.corretorId, corretorNome: item.corretorNome, corretorFoto: item.corretorFoto,
+      pontuacaoTotal: Number(item.totalPontos) || 0,
+      ligacoesRealizadas: Number(item.totalLigacoes) || 0, ligacoesAtendidas: 0,
+      whatsappEnviados: Number(item.totalWhatsapp) || 0, whatsappRespondidos: 0,
+      agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
+      visitasRealizadas: Number(item.totalVisitas) || 0,
+      documentacoesRecolhidas: Number(item.totalDocumentacoes) || 0,
+      posicao: index + 1,
+    })) || []
+  , [rankingPeriodo]);
   
-  // Totais VGV
-  const totalVGV = rankingFormatado.reduce((acc: number, item: any) => acc + (item.vgvTotal || 0), 0);
-  const totalContratos = rankingFormatado.reduce((acc: number, item: any) => acc + (item.contratosFechados || 0), 0);
-  const totalCorretores = rankingFormatado.length;
+  // Totais VGV - MEMOIZED
+  const { totalVGV, totalContratos, totalCorretores } = useMemo(() => ({
+    totalVGV: rankingFormatado.reduce((acc: number, item: any) => acc + (item.vgvTotal || 0), 0),
+    totalContratos: rankingFormatado.reduce((acc: number, item: any) => acc + (item.contratosFechados || 0), 0),
+    totalCorretores: rankingFormatado.length,
+  }), [rankingFormatado]);
   
-  // Totais Produtividade
-  const totalLigacoes = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.ligacoesRealizadas || 0), 0);
-  const totalWhatsapp = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.whatsappEnviados || 0), 0);
-  const totalAgendamentos = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.agendamentosConfirmados || 0), 0);
-  const totalVisitas = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.visitasRealizadas || 0), 0);
-  const totalDocumentacoes = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.documentacoesRecolhidas || 0), 0);
-  const totalPontos = rankingProdutividade.reduce((acc: number, item: any) => acc + (item.pontuacaoTotal || 0), 0);
+  // Totais Produtividade - MEMOIZED
+  const { totalLigacoes, totalWhatsapp, totalAgendamentos, totalVisitas, totalDocumentacoes, totalPontos } = useMemo(() => ({
+    totalLigacoes: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.ligacoesRealizadas || 0), 0),
+    totalWhatsapp: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.whatsappEnviados || 0), 0),
+    totalAgendamentos: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.agendamentosConfirmados || 0), 0),
+    totalVisitas: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.visitasRealizadas || 0), 0),
+    totalDocumentacoes: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.documentacoesRecolhidas || 0), 0),
+    totalPontos: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.pontuacaoTotal || 0), 0),
+  }), [rankingProdutividade]);
   
-  // Dados Real x Meta
+  // Dados Real x Meta - MEMOIZED
   const resumo = dashboardData?.resumo;
   const metaVGV = resumo?.metaVGV || 50000000;
   const faturamento = resumo?.totalVGV || 0;
   const percentualAtingimento = resumo?.percentualAtingimento || 0;
   const gapMeta = resumo?.gapMeta || 0;
+  
+  // Memoize corretores and evolucao for chart components
+  const corretoresDashboard = useMemo(() => dashboardData?.corretores || [], [dashboardData?.corretores]);
+  const evolucaoData = useMemo(() => evolucaoMensal || [], [evolucaoMensal]);
   
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -1006,47 +1025,49 @@ export default function PerformanceTV() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    {(Object.keys(periodLabels) as PeriodOption[]).map((period) => (
-                      period !== "custom" ? (
-                        <DropdownMenuItem key={period} onClick={() => handlePeriodSelect(period)} className={periodo === period ? "bg-accent" : ""}>
-                          {periodLabels[period]}
-                          {periodo === period && <span className="ml-auto text-primary">✓</span>}
-                        </DropdownMenuItem>
-                      ) : null
+                    {Object.entries(periodLabels).filter(([key]) => key !== 'custom').map(([key, label]) => (
+                      <DropdownMenuItem key={key} onClick={() => handlePeriodSelect(key as PeriodOption)} className={periodo === key ? "bg-accent" : ""}>
+                        {label}
+                      </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
-                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsCalendarOpen(true); }} className={periodo === "custom" ? "bg-accent" : ""}>
-                          {periodLabels.custom}
-                        </DropdownMenuItem>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="end">
-                        <div className="p-4">
-                          <CalendarComponent mode="range" selected={{ from: tempRange.from, to: tempRange.to }} onSelect={(range) => setTempRange({ from: range?.from, to: range?.to })} locale={ptBR} numberOfMonths={2} />
-                          <div className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" size="sm" onClick={() => setIsCalendarOpen(false)}>Cancelar</Button>
-                            <Button size="sm" onClick={handleCustomRangeSelect} disabled={!tempRange.from || !tempRange.to}>Aplicar</Button>
-                          </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <DropdownMenuItem onClick={() => handlePeriodSelect("custom")}>Personalizado...</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
               
-              <Button variant="outline" size="icon" onClick={() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-white">
-                <RefreshCw className="w-4 h-4" />
+              <Button variant="outline" size="icon" onClick={toggleFullscreen} className="bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">
+                <Maximize className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={toggleFullscreen} className="bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-white">
-                <Maximize className="w-4 h-4" />
+              <Button variant="outline" size="icon" onClick={() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }} className="bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">
+                <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Conteúdo Principal */}
+      {/* Calendar Popover */}
+      {isCalendarOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setIsCalendarOpen(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-white font-semibold mb-4">Selecione o período</h3>
+            <CalendarComponent
+              mode="range"
+              selected={{ from: tempRange.from, to: tempRange.to }}
+              onSelect={(range: any) => setTempRange({ from: range?.from, to: range?.to })}
+              locale={ptBR}
+              className="text-white"
+            />
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" onClick={() => setIsCalendarOpen(false)} className="flex-1">Cancelar</Button>
+              <Button onClick={handleCustomRangeSelect} className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={!tempRange.from || !tempRange.to}>Aplicar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Content */}
       <div className="container mx-auto px-4 py-6">
         
         {/* ============================================================ */}
@@ -1077,7 +1098,7 @@ export default function PerformanceTV() {
               {/* Gráfico de Atingimento Mensal */}
               <div className="bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
                 <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-3">% ATINGIMENTO DA META AO LONGO DO TEMPO</h3>
-                <AtingimentoMensalChart data={evolucaoMensal || []} />
+                <AtingimentoMensalChart data={evolucaoData} />
               </div>
               
               {/* KPIs Complementares */}
@@ -1101,7 +1122,7 @@ export default function PerformanceTV() {
                   <DollarSign className="w-4 h-4 text-purple-400" />
                   FATURAMENTO POR VENDEDOR
                 </h3>
-                <FaturamentoPorVendedorChart corretores={dashboardData?.corretores || []} />
+                <FaturamentoPorVendedorChart corretores={corretoresDashboard} />
               </div>
               
               {/* Evolução Faturamento e Meta */}
@@ -1110,7 +1131,7 @@ export default function PerformanceTV() {
                   <TrendingUp className="w-4 h-4 text-purple-400" />
                   EVOLUÇÃO FATURAMENTO E META AO LONGO DO TEMPO
                 </h3>
-                <EvolucaoMensalChart data={evolucaoMensal || []} />
+                <EvolucaoMensalChart data={evolucaoData} />
               </div>
             </div>
             
@@ -1120,7 +1141,7 @@ export default function PerformanceTV() {
                 <Briefcase className="w-4 h-4 text-purple-400" />
                 FATURAMENTO POR VENDEDOR - REAL x META
               </h3>
-              <TabelaVendedoresMeta corretores={dashboardData?.corretores || []} />
+              <TabelaVendedoresMeta corretores={corretoresDashboard} />
             </div>
           </>
         )}

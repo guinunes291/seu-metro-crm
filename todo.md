@@ -3955,3 +3955,8 @@
 - [x] Corrigir filtro de corretores inativos (usar campo situacao em vez de status)
 - [x] Incluir admins e gestores na contagem de VGV do dashboard (além de corretores)
 - [x] Limpar corretores de teste sem nome (IDs: 10627416, 10628023, 10628125, 10627422)
+
+## Bug Crítico: Loop Infinito Chart.js no PerformanceTV (Produção)
+- [x] Diagnosticar loop infinito causado por buildOrUpdateControllers no Chart.js
+- [x] Corrigir referências instáveis que causam re-renders infinitos nos gráficos
+- [x] Testar e publicar correção
