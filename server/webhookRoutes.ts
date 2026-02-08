@@ -339,6 +339,8 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
     let email = '';
     let telefone = '';
     let faixaRenda = '';
+    let prefereContatoPor = '';
+    let finalidadeImovel = '';
     let formId = '';
     
     // Verificar se é o formato de notificação do Facebook (com leadgen_id)
