@@ -3960,3 +3960,4 @@
 - [x] Diagnosticar loop infinito causado por buildOrUpdateControllers no Chart.js
 - [x] Corrigir referências instáveis que causam re-renders infinitos nos gráficos
 - [x] Testar e publicar correção
+- [x] Remover Chart.js completamente e substituir por gráficos CSS/SVG puros (solução definitiva para loop infinito)
