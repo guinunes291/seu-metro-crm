@@ -11,6 +11,8 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
   email: string;
   telefone: string;
   faixaRenda?: string;
+  prefereContatoPor?: string;
+  finalidadeImovel?: string;
   formId?: string;
 } | null> {
   const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
@@ -49,6 +51,8 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
     let email = '';
     let telefone = '';
     let faixaRenda = '';
+    let prefereContatoPor = '';
+    let finalidadeImovel = '';
     let formId = '';
     let formName = '';
     
@@ -77,14 +81,34 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
                    fieldName.includes('renda') || fieldName.includes('income')) {
           faixaRenda = value;
           console.log(`[Webhook Facebook] ✅ Faixa de renda capturada do campo "${field.name}": ${value}`);
+        } else if (fieldName === 'prefere falar por' || fieldName === 'prefere contato por' ||
+                   fieldName === 'prefere_falar_por' || fieldName === 'prefere_contato_por' ||
+                   fieldName === 'preferencia_contato' || fieldName === 'preferência de contato' ||
+                   fieldName === 'contato_preferencial' || fieldName === 'meio_contato' ||
+                   fieldName.includes('prefere') || fieldName.includes('contato')) {
+          prefereContatoPor = value;
+          console.log(`[Webhook Facebook] ✅ Preferência de contato capturada do campo "${field.name}": ${value}`);
+        } else if (fieldName === 'você pretende utilizar o imóvel para' ||
+                   fieldName === 'finalidade' || fieldName === 'finalidade_imovel' ||
+                   fieldName === 'finalidade do imóvel' || fieldName === 'objetivo' ||
+                   fieldName === 'uso_imovel' || fieldName === 'uso do imóvel' ||
+                   fieldName.includes('finalidade') || fieldName.includes('utilizar')) {
+          finalidadeImovel = value;
+          console.log(`[Webhook Facebook] ✅ Finalidade do imóvel capturada do campo "${field.name}": ${value}`);
         }
       }
     }
     
     // Log final dos dados extraídos
-    console.log('[Webhook Facebook] Dados extraídos:', { nome, email, telefone, faixaRenda, formId });
+    console.log('[Webhook Facebook] Dados extraídos:', { nome, email, telefone, faixaRenda, prefereContatoPor, finalidadeImovel, formId });
     if (!faixaRenda) {
       console.warn('[Webhook Facebook] ⚠️ ATENÇÃO: Faixa de renda NÃO foi capturada!');
+    }
+    if (!prefereContatoPor) {
+      console.warn('[Webhook Facebook] ⚠️ ATENÇÃO: Preferência de contato NÃO foi capturada!');
+    }
+    if (!finalidadeImovel) {
+      console.warn('[Webhook Facebook] ⚠️ ATENÇÃO: Finalidade do imóvel NÃO foi capturada!');
     }
     
     // Capturar form_id se disponível
@@ -92,7 +116,7 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
       formId = data.form_id;
     }
     
-    return { nome, email, telefone, faixaRenda, formId };
+    return { nome, email, telefone, faixaRenda, prefereContatoPor, finalidadeImovel, formId };
     
   } catch (error) {
     console.error('[Webhook Facebook] Erro na requisição:', error);
@@ -135,6 +159,8 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     let email = '';
     let telefone = '';
     let faixaRenda = '';
+    let prefereContatoPor = '';
+    let finalidadeImovel = '';
     let formId = '';
     let formName = '';
     
@@ -160,6 +186,8 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
           email = leadData.email;
           telefone = leadData.telefone;
           faixaRenda = leadData.faixaRenda || '';
+          prefereContatoPor = leadData.prefereContatoPor || '';
+          finalidadeImovel = leadData.finalidadeImovel || '';
           formId = leadData.formId || '';
         } else {
           console.log('[Webhook Facebook] Não foi possível buscar dados do lead');
@@ -263,6 +291,8 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
       telefone,
       origem: 'facebook',
       faixaRenda: faixaRenda || undefined,
+      prefereContatoPor: prefereContatoPor || undefined,
+      finalidadeImovel: finalidadeImovel || undefined,
       projectId: projectId,
     });
     
@@ -333,6 +363,8 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
           email = leadData.email;
           telefone = leadData.telefone;
           faixaRenda = leadData.faixaRenda || '';
+          prefereContatoPor = leadData.prefereContatoPor || '';
+          finalidadeImovel = leadData.finalidadeImovel || '';
           formId = leadData.formId || '';
         } else {
           console.log('[Webhook Foco] Não foi possível buscar dados do lead');
@@ -424,6 +456,8 @@ router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
       telefone,
       origem: 'facebook',
       faixaRenda: faixaRenda || undefined,
+      prefereContatoPor: prefereContatoPor || undefined,
+      finalidadeImovel: finalidadeImovel || undefined,
       projectId: projectId,
     });
     
