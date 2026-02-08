@@ -70,6 +70,9 @@ export async function readGoogleSheet(
         status: obj.status || "",
         dataDistribuicao: obj["data distribuição"] || obj["data_distribuicao"] || "",
         distribuido: obj.distribuido || obj.distributed || "",
+        faixaRenda: obj["faixa de renda"] || obj["faixarenda"] || obj["faixa_renda"] || "",
+        prefereContatoPor: obj["prefere falar por"] || obj["prefere contato por"] || obj["preferecontatopor"] || obj["prefere_contato_por"] || "",
+        finalidadeImovel: obj["você pretende utilizar o imóvel para"] || obj["finalidade"] || obj["finalidadeimovel"] || obj["finalidade_imovel"] || "",
       };
     });
 
