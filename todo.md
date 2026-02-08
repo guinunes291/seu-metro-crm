@@ -3961,3 +3961,4 @@
 - [x] Corrigir referências instáveis que causam re-renders infinitos nos gráficos
 - [x] Testar e publicar correção
 - [x] Remover Chart.js completamente e substituir por gráficos CSS/SVG puros (solução definitiva para loop infinito)
+- [x] Corrigir valores de faturamento no dashboard - R$ 7K em vez de R$ 703K (converter valorVenda de reais para centavos no backend)

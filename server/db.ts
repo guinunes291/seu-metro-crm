@@ -9105,7 +9105,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
         lte(contratos.createdAt, dataFim)
       ));
     
-    const vgvCorretor = Number(vgvResult[0]?.total || 0);
+    const vgvCorretor = Math.round(Number(vgvResult[0]?.total || 0) * 100); // Converter reais para centavos
     const contratosCorretor = Number(vgvResult[0]?.count || 0);
     
     // Leads do corretor no período
@@ -9243,7 +9243,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
     }
     
     const vgvResult = await vgvQuery;
-    const vgvRealizado = Number(vgvResult[0]?.total || 0);
+    const vgvRealizado = Math.round(Number(vgvResult[0]?.total || 0) * 100); // Converter reais para centavos
     const percentual = metaVGV > 0 ? Math.round((vgvRealizado / metaVGV) * 10000) / 100 : 0;
     
     resultado.push({

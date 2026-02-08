@@ -1,0 +1,64 @@
+{
+  "query": "SELECT id, valorVenda, corretorId, DATE(createdAt) as data FROM contratos ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, valorVenda, corretorId, DATE(createdAt) as data FROM contratos ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "120001",
+      "valorVenda": "380000.00",
+      "corretorId": "7722800",
+      "data": "2026-02-07"
+    },
+    {
+      "id": "90001",
+      "valorVenda": "323000.00",
+      "corretorId": "7722800",
+      "data": "2026-02-05"
+    },
+    {
+      "id": "60001",
+      "valorVenda": "249900.00",
+      "corretorId": "7982154",
+      "data": "2026-01-29"
+    },
+    {
+      "id": "30002",
+      "valorVenda": "275000.00",
+      "corretorId": "7722800",
+      "data": "2026-01-29"
+    },
+    {
+      "id": "30001",
+      "valorVenda": "265000.00",
+      "corretorId": "7722800",
+      "data": "2026-01-27"
+    },
+    {
+      "id": "2",
+      "valorVenda": "299800.00",
+      "corretorId": "7722800",
+      "data": "2026-01-26"
+    },
+    {
+      "id": "1",
+      "valorVenda": "199629.58",
+      "corretorId": "7862260",
+      "data": "2026-01-26"
+    },
+    {
+      "id": "3",
+      "valorVenda": "338092.98",
+      "corretorId": "7722800",
+      "data": "2026-01-19"
+    },
+    {
+      "id": "60002",
+      "valorVenda": "237710.00",
+      "corretorId": "7722800",
+      "data": "2026-01-14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tvalorVenda\tcorretorId\tdata\n120001\t380000.00\t7722800\t2026-02-07\n90001\t323000.00\t7722800\t2026-02-05\n60001\t249900.00\t7982154\t2026-01-29\n30002\t275000.00\t7722800\t2026-01-29\n30001\t265000.00\t7722800\t2026-01-27\n2\t299800.00\t7722800\t2026-01-26\n1\t199629.58\t7862260\t2026-01-26\n3\t338092.98\t7722800\t2026-01-19\n60002\t237710.00\t7722800\t2026-01-14\n",
+  "stderr": "",
+  "execution_time_ms": 352
+}
