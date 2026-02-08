@@ -3929,3 +3929,9 @@
 - [ ] Adicionar novos campos no modal de detalhes do lead
 - [ ] Testar importação com dados reais
 - [ ] Validar que dados históricos foram preservados
+
+## Bug Crítico: Webhook do Facebook Falhando
+- [ ] Corrigir erro "prefereContatoPor is not defined" no webhookRoutes.ts
+- [ ] Processar manualmente lead perdido (Natan M. M. e Oliveira - +5571997110211)
+- [ ] Testar webhook com lead de teste para validar correção
+- [ ] Garantir que todos os campos de qualificação sejam capturados corretamente

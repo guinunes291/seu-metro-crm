@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM leads WHERE telefone = '+5571997110211' ORDER BY createdAt DESC LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id FROM leads WHERE telefone = '+5571997110211' ORDER BY createdAt DESC LIMIT 1;",
+  "rows": [
+    {
+      "id": "3390003"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n3390003\n",
+  "stderr": "",
+  "execution_time_ms": 350
+}

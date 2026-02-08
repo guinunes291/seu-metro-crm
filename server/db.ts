@@ -2926,6 +2926,7 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
   campanha?: string;
   faixaRenda?: string;
   prefereContatoPor?: string;
+  finalidadeImovel?: string;
   dataHoraCriacao?: string;
 }) {
   const db = await getDb();
@@ -2959,6 +2960,7 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     campanha: dadosLead.campanha,
     faixaRenda: dadosLead.faixaRenda,
     prefereContatoPor: dadosLead.prefereContatoPor,
+    finalidadeImovel: dadosLead.finalidadeImovel,
     dataHoraCriacao: dadosLead.dataHoraCriacao ? new Date(dadosLead.dataHoraCriacao) : undefined,
     origemWebhook: true, // Marcar como lead via webhook para notificação urgente
   });
@@ -3049,6 +3051,8 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
   telefone: string;
   origem?: string;
   faixaRenda?: string;
+  prefereContatoPor?: string;
+  finalidadeImovel?: string;
   projectId?: number;
 }) {
   const db = await getDb();
@@ -3074,6 +3078,8 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     projectId: dadosLead.projectId || webhook.projectIdPadrao || undefined,
     status: 'novo',
     faixaRenda: dadosLead.faixaRenda,
+    prefereContatoPor: dadosLead.prefereContatoPor,
+    finalidadeImovel: dadosLead.finalidadeImovel,
     origemWebhook: true, // Marcar como lead via webhook para notificação urgente
   });
   
