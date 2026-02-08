@@ -37,7 +37,8 @@ import {
   interacoes, InsertInteracao, Interacao,
   documentacoes, InsertDocumentacao, Documentacao,
   analises_credito, InsertAnaliseCredito, AnaliseCredito,
-  contratos, InsertContrato, Contrato
+  contratos, InsertContrato, Contrato,
+  metasGlobais
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -8986,4 +8987,274 @@ export async function createContrato(data: InsertContrato): Promise<Contrato | n
   
   const contrato = await db.select().from(contratos).where(eq(contratos.id, insertId)).limit(1);
   return contrato[0] || null;
+}
+
+
+// ============================================================================
+// METAS GLOBAIS E DASHBOARD DE PERFORMANCE
+// ============================================================================
+
+/**
+ * Buscar ou criar meta global para um mês/ano
+ */
+export async function getMetaGlobal(mes: number, ano: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const existing = await db.select()
+    .from(metasGlobais)
+    .where(and(
+      eq(metasGlobais.mes, mes),
+      eq(metasGlobais.ano, ano)
+    ))
+    .limit(1);
+  
+  if (existing.length > 0) return existing[0];
+  
+  // Criar meta padrão se não existir
+  await db.insert(metasGlobais).values({
+    mes,
+    ano,
+    metaVGV: '50000000', // R$ 500.000 padrão
+    metaContratos: 10,
+    metaLeads: 200,
+    metaAgendamentos: 50,
+    metaVisitas: 30,
+  });
+  
+  const created = await db.select()
+    .from(metasGlobais)
+    .where(and(
+      eq(metasGlobais.mes, mes),
+      eq(metasGlobais.ano, ano)
+    ))
+    .limit(1);
+  
+  return created[0] || null;
+}
+
+/**
+ * Atualizar meta global
+ */
+export async function updateMetaGlobal(id: number, data: {
+  metaVGV?: string;
+  metaContratos?: number;
+  metaLeads?: number;
+  metaAgendamentos?: number;
+  metaVisitas?: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  await db.update(metasGlobais)
+    .set(data)
+    .where(eq(metasGlobais.id, id));
+  
+  const updated = await db.select()
+    .from(metasGlobais)
+    .where(eq(metasGlobais.id, id))
+    .limit(1);
+  
+  return updated[0] || null;
+}
+
+/**
+ * Dashboard de Performance: dados agregados de VGV por corretor vs meta
+ * Retorna dados para gráficos e tabelas do dashboard
+ */
+export async function getDashboardPerformance(mes: number, ano: number, equipeId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  // Buscar meta global
+  const metaGlobal = await getMetaGlobal(mes, ano);
+  
+  // Período do mês
+  const dataInicio = new Date(ano, mes - 1, 1);
+  const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
+  
+  // Buscar todos os vendedores (corretores, gestores e admins que também vendem)
+  let corretoresResult = await db.select().from(users).where(
+    inArray(users.role, ['corretor', 'gestor', 'admin'])
+  );
+  
+  if (equipeId) {
+    corretoresResult = corretoresResult.filter(c => c.equipeId === equipeId);
+  }
+  
+  // Dados por corretor
+  const corretoresData = [];
+  let totalVGV = 0;
+  let totalContratos = 0;
+  let totalLeads = 0;
+  let totalAgendamentos = 0;
+  let totalVisitas = 0;
+  
+  for (const corretor of corretoresResult) {
+    if (corretor.situacao === 'inativo') continue;
+    
+    // VGV do corretor (contratos fechados)
+    const vgvResult = await db.select({
+      total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
+      count: sql<number>`COUNT(*)`
+    })
+      .from(contratos)
+      .where(and(
+        eq(contratos.corretorId, corretor.id),
+        gte(contratos.createdAt, dataInicio),
+        lte(contratos.createdAt, dataFim)
+      ));
+    
+    const vgvCorretor = Number(vgvResult[0]?.total || 0);
+    const contratosCorretor = Number(vgvResult[0]?.count || 0);
+    
+    // Leads do corretor no período
+    const leadsResult = await db.select({
+      status: leads.status,
+      count: sql<number>`COUNT(*)`
+    })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretor.id),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim)
+      ))
+      .groupBy(leads.status);
+    
+    let leadsCorretor = 0;
+    let agendamentosCorretor = 0;
+    let visitasCorretor = 0;
+    
+    for (const row of leadsResult) {
+      const count = Number(row.count);
+      leadsCorretor += count;
+      if (row.status === 'agendado') agendamentosCorretor = count;
+      if (row.status === 'visita_realizada') visitasCorretor = count;
+    }
+    
+    // Buscar meta individual do corretor
+    const metaIndividual = await getMetaByCorretorMesAno(corretor.id, mes, ano);
+    
+    totalVGV += vgvCorretor;
+    totalContratos += contratosCorretor;
+    totalLeads += leadsCorretor;
+    totalAgendamentos += agendamentosCorretor;
+    totalVisitas += visitasCorretor;
+    
+    corretoresData.push({
+      id: corretor.id,
+      nome: corretor.name || 'Sem nome',
+      fotoUrl: corretor.fotoUrl,
+      equipeId: corretor.equipeId,
+      vgv: vgvCorretor,
+      contratos: contratosCorretor,
+      leads: leadsCorretor,
+      agendamentos: agendamentosCorretor,
+      visitas: visitasCorretor,
+      metaVGV: metaIndividual?.metaVGV || 0,
+      metaContratos: metaIndividual?.metaContratos || 0,
+      metaLeads: metaIndividual?.metaLeads || 0,
+    });
+  }
+  
+  // Ordenar por VGV (maior primeiro)
+  corretoresData.sort((a, b) => b.vgv - a.vgv);
+  
+  // Calcular percentuais
+  const metaVGVGlobal = Number(metaGlobal?.metaVGV || 0);
+  const percentualAtingimento = metaVGVGlobal > 0 ? Math.round((totalVGV / metaVGVGlobal) * 10000) / 100 : 0;
+  const gapMeta = metaVGVGlobal - totalVGV;
+  
+  return {
+    metaGlobal,
+    resumo: {
+      totalVGV,
+      totalContratos,
+      totalLeads,
+      totalAgendamentos,
+      totalVisitas,
+      metaVGV: metaVGVGlobal,
+      percentualAtingimento,
+      gapMeta,
+      totalCorretores: corretoresData.length,
+    },
+    corretores: corretoresData,
+  };
+}
+
+/**
+ * Evolução mensal de VGV (últimos 12 meses)
+ */
+export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const resultado = [];
+  
+  for (let mes = 1; mes <= 12; mes++) {
+    const dataInicio = new Date(anoReferencia, mes - 1, 1);
+    const dataFim = new Date(anoReferencia, mes, 0, 23, 59, 59, 999);
+    
+    // Buscar meta global do mês
+    const metaGlobal = await db.select()
+      .from(metasGlobais)
+      .where(and(
+        eq(metasGlobais.mes, mes),
+        eq(metasGlobais.ano, anoReferencia)
+      ))
+      .limit(1);
+    
+    const metaVGV = Number(metaGlobal[0]?.metaVGV || 0);
+    
+    // VGV realizado
+    let vgvQuery = db.select({
+      total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
+    }).from(contratos);
+    
+    if (equipeId) {
+      // Buscar IDs dos corretores da equipe
+      const corretoresEquipe = await db.select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.role, 'corretor'), eq(users.equipeId, equipeId)));
+      const membroIds = corretoresEquipe.map(c => c.id);
+      
+      if (membroIds.length > 0) {
+        vgvQuery = vgvQuery.where(and(
+          inArray(contratos.corretorId, membroIds),
+          gte(contratos.createdAt, dataInicio),
+          lte(contratos.createdAt, dataFim)
+        ));
+      } else {
+        resultado.push({
+          mes,
+          mesNome: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][mes - 1],
+          vgvRealizado: 0,
+          metaVGV,
+          percentual: 0,
+          diferenca: -metaVGV,
+        });
+        continue;
+      }
+    } else {
+      vgvQuery = vgvQuery.where(and(
+        gte(contratos.createdAt, dataInicio),
+        lte(contratos.createdAt, dataFim)
+      ));
+    }
+    
+    const vgvResult = await vgvQuery;
+    const vgvRealizado = Number(vgvResult[0]?.total || 0);
+    const percentual = metaVGV > 0 ? Math.round((vgvRealizado / metaVGV) * 10000) / 100 : 0;
+    
+    resultado.push({
+      mes,
+      mesNome: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][mes - 1],
+      vgvRealizado,
+      metaVGV,
+      percentual,
+      diferenca: vgvRealizado - metaVGV,
+    });
+  }
+  
+  return resultado;
 }

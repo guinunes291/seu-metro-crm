@@ -1,0 +1,31 @@
+{
+  "query": "SELECT COUNT(*) as leads_total FROM leads; SELECT COUNT(*) as users_total FROM users; SELECT COUNT(*) as leads_teste FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'; SELECT COUNT(*) as corretores_teste FROM users WHERE name LIKE 'Corretor%Teste%' OR name LIKE 'Corretor Rank%' OR name LIKE 'Corretor Batch%' OR name = 'Corretor 2' OR name LIKE 'João Silva Teste';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as leads_total FROM leads; SELECT COUNT(*) as users_total FROM users; SELECT COUNT(*) as leads_teste FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'; SELECT COUNT(*) as corretores_teste FROM users WHERE name LIKE 'Corretor%Teste%' OR name LIKE 'Corretor Rank%' OR name LIKE 'Corretor Batch%' OR name = 'Corretor 2' OR name LIKE 'João Silva Teste';",
+  "rows": [
+    {
+      "leads_total": "9710"
+    },
+    {
+      "leads_total": "users_total"
+    },
+    {
+      "leads_total": "29"
+    },
+    {
+      "leads_total": "leads_teste"
+    },
+    {
+      "leads_total": "0"
+    },
+    {
+      "leads_total": "corretores_teste"
+    },
+    {
+      "leads_total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "leads_total\n9710\nusers_total\n29\nleads_teste\n0\ncorretores_teste\n0\n",
+  "stderr": "",
+  "execution_time_ms": 500
+}

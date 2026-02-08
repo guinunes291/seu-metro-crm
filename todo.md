@@ -3938,3 +3938,20 @@
 
 - [x] Remover abas do menu lateral para gestores (Histórico, Lixeira, Metas Mensais, Metas Diárias, Log de Transferências)
 - [x] Filtrar Monitoramento de Follow-Up para mostrar apenas corretores ativos da equipe do gestor
+
+- [x] Criar schema de metas no banco de dados (meta mensal, meta por corretor)
+- [x] Criar procedures tRPC para gerenciar metas e buscar dados de performance
+- [x] Criar página de configuração de metas (admin/gestor)
+- [x] Aprimorar Performance TV com gráficos de faturamento vs meta
+- [x] Adicionar tabela comparativa de faturamento por corretor
+- [x] Implementar visão Admin (toda operação) e Gestor (apenas equipe)
+- [x] Adicionar gráfico de evolução mensal de faturamento e meta
+- [x] Adicionar gráfico de % atingimento da meta ao longo do tempo
+
+- [x] Limpar todos os dados de teste do banco (leads, corretores, projetos de teste)
+
+## Correções e Melhorias - Dashboard Performance
+- [x] Corrigir erro useToast no MetasConfigModal (substituído por toast do sonner)
+- [x] Corrigir filtro de corretores inativos (usar campo situacao em vez de status)
+- [x] Incluir admins e gestores na contagem de VGV do dashboard (além de corretores)
+- [x] Limpar corretores de teste sem nome (IDs: 10627416, 10628023, 10628125, 10627422)

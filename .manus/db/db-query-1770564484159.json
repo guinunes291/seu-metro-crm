@@ -1,0 +1,46 @@
+{
+  "query": "SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME IN ('leads', 'users') AND TABLE_SCHEMA = DATABASE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE REFERENCED_TABLE_NAME IN ('leads', 'users') AND TABLE_SCHEMA = DATABASE();",
+  "rows": [
+    {
+      "TABLE_NAME": "desbloqueio_corretor",
+      "COLUMN_NAME": "corretor_id",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "desbloqueio_corretor",
+      "COLUMN_NAME": "desbloqueado_por",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "lead_estoque",
+      "COLUMN_NAME": "leadId",
+      "REFERENCED_TABLE_NAME": "leads",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "historico_atribuicoes",
+      "COLUMN_NAME": "leadId",
+      "REFERENCED_TABLE_NAME": "leads",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "historico_atribuicoes",
+      "COLUMN_NAME": "corretorId",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    },
+    {
+      "TABLE_NAME": "push_subscriptions",
+      "COLUMN_NAME": "userId",
+      "REFERENCED_TABLE_NAME": "users",
+      "REFERENCED_COLUMN_NAME": "id"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tCOLUMN_NAME\tREFERENCED_TABLE_NAME\tREFERENCED_COLUMN_NAME\ndesbloqueio_corretor\tcorretor_id\tusers\tid\ndesbloqueio_corretor\tdesbloqueado_por\tusers\tid\nlead_estoque\tleadId\tleads\tid\nhistorico_atribuicoes\tleadId\tleads\tid\nhistorico_atribuicoes\tcorretorId\tusers\tid\npush_subscriptions\tuserId\tusers\tid\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

@@ -1993,3 +1993,37 @@ export const logsSincronizacao = mysqlTable("logs_sincronizacao", {
 
 export type LogSincronizacao = typeof logsSincronizacao.$inferSelect;
 export type InsertLogSincronizacao = typeof logsSincronizacao.$inferInsert;
+
+// ============================================================================
+// METAS GLOBAIS DA OPERAÇÃO
+// ============================================================================
+
+/**
+ * Tabela de metas globais da operação (para dashboard admin).
+ * Permite configurar metas mensais para toda a operação.
+ */
+export const metasGlobais = mysqlTable("metas_globais", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Período da meta
+  mes: int("mes").notNull(), // 1-12
+  ano: int("ano").notNull(),
+  
+  // Metas globais
+  metaVGV: decimal("metaVGV", { precision: 15, scale: 2 }).default('0'),
+  metaContratos: int("metaContratos").default(0),
+  metaLeads: int("metaLeads").default(0),
+  metaAgendamentos: int("metaAgendamentos").default(0),
+  metaVisitas: int("metaVisitas").default(0),
+  
+  // Observações
+  observacoes: text("observacoes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  mesAnoIdx: index("metas_globais_mes_ano_idx").on(table.mes, table.ano),
+}));
+
+export type MetaGlobal = typeof metasGlobais.$inferSelect;
+export type InsertMetaGlobal = typeof metasGlobais.$inferInsert;

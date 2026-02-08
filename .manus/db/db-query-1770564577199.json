@@ -1,0 +1,26 @@
+{
+  "query": "SELECT 'leads_restantes' as tipo, COUNT(*) as total FROM leads UNION ALL SELECT 'users_restantes', COUNT(*) FROM users UNION ALL SELECT 'leads_teste_restantes', COUNT(*) FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%' UNION ALL SELECT 'corretores_teste_restantes', COUNT(*) FROM users WHERE name LIKE 'Corretor%Teste%' OR name LIKE 'Corretor Rank%' OR name LIKE 'Corretor Batch%' OR name = 'Corretor 2' OR name LIKE 'João Silva Teste';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT 'leads_restantes' as tipo, COUNT(*) as total FROM leads UNION ALL SELECT 'users_restantes', COUNT(*) FROM users UNION ALL SELECT 'leads_teste_restantes', COUNT(*) FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%' UNION ALL SELECT 'corretores_teste_restantes', COUNT(*) FROM users WHERE name LIKE 'Corretor%Teste%' OR name LIKE 'Corretor Rank%' OR name LIKE 'Corretor Batch%' OR name = 'Corretor 2' OR name LIKE 'João Silva Teste';",
+  "rows": [
+    {
+      "tipo": "users_restantes",
+      "total": "29"
+    },
+    {
+      "tipo": "corretores_teste_restantes",
+      "total": "0"
+    },
+    {
+      "tipo": "leads_teste_restantes",
+      "total": "0"
+    },
+    {
+      "tipo": "leads_restantes",
+      "total": "9710"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\ttotal\nusers_restantes\t29\ncorretores_teste_restantes\t0\nleads_teste_restantes\t0\nleads_restantes\t9710\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

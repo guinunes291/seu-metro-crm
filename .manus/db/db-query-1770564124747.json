@@ -1,0 +1,26 @@
+{
+  "query": "SELECT COUNT(*) as total, 'Lead Batch' as tipo FROM leads WHERE nome LIKE 'Lead Batch%' UNION ALL SELECT COUNT(*), 'Lead Rank' FROM leads WHERE nome LIKE 'Lead Rank%' UNION ALL SELECT COUNT(*), 'Lead C0-C2' FROM leads WHERE nome LIKE 'Lead C0%' OR nome LIKE 'Lead C1%' OR nome LIKE 'Lead C2%' UNION ALL SELECT COUNT(*), 'Teste/Test' FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR email LIKE '%test%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total, 'Lead Batch' as tipo FROM leads WHERE nome LIKE 'Lead Batch%' UNION ALL SELECT COUNT(*), 'Lead Rank' FROM leads WHERE nome LIKE 'Lead Rank%' UNION ALL SELECT COUNT(*), 'Lead C0-C2' FROM leads WHERE nome LIKE 'Lead C0%' OR nome LIKE 'Lead C1%' OR nome LIKE 'Lead C2%' UNION ALL SELECT COUNT(*), 'Teste/Test' FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR email LIKE '%test%';",
+  "rows": [
+    {
+      "total": "3",
+      "tipo": "Lead Batch"
+    },
+    {
+      "total": "20",
+      "tipo": "Lead C0-C2"
+    },
+    {
+      "total": "30",
+      "tipo": "Lead Rank"
+    },
+    {
+      "total": "1",
+      "tipo": "Teste/Test"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\ttipo\n3\tLead Batch\n20\tLead C0-C2\n30\tLead Rank\n1\tTeste/Test\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}

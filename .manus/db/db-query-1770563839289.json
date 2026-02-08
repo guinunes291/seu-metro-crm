@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM metas_globais WHERE mes = 2 AND ano = 2026;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE FROM metas_globais WHERE mes = 2 AND ano = 2026;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 353
+}

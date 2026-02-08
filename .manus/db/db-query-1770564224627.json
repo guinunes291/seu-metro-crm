@@ -1,0 +1,110 @@
+{
+  "query": "SELECT id, nome, telefone FROM leads ORDER BY id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, telefone FROM leads ORDER BY id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "3390042",
+      "nome": "Lead Projeto 4",
+      "telefone": "11996444444"
+    },
+    {
+      "id": "3390041",
+      "nome": "Lead Projeto 3",
+      "telefone": "11996333333"
+    },
+    {
+      "id": "3390040",
+      "nome": "Lead Projeto 2",
+      "telefone": "11996222222"
+    },
+    {
+      "id": "3390038",
+      "nome": "Lead Projeto 1",
+      "telefone": "11996111111"
+    },
+    {
+      "id": "3390036",
+      "nome": "Lead Projeto 0",
+      "telefone": "11996000000"
+    },
+    {
+      "id": "3390026",
+      "nome": "Lead Convertido",
+      "telefone": "11999333333"
+    },
+    {
+      "id": "3390025",
+      "nome": "Lead Atendimento",
+      "telefone": "11999222222"
+    },
+    {
+      "id": "3390024",
+      "nome": "Lead Novo",
+      "telefone": "11999111111"
+    },
+    {
+      "id": "3390021",
+      "nome": "Lead Atendimento 4",
+      "telefone": "11997444444"
+    },
+    {
+      "id": "3390019",
+      "nome": "Lead Atendimento 3",
+      "telefone": "11997333333"
+    },
+    {
+      "id": "3390018",
+      "nome": "Lead Atendimento 2",
+      "telefone": "11997222222"
+    },
+    {
+      "id": "3390017",
+      "nome": "Lead Atendimento 1",
+      "telefone": "11997111111"
+    },
+    {
+      "id": "3390016",
+      "nome": "Lead Atendimento 0",
+      "telefone": "11997000000"
+    },
+    {
+      "id": "3390015",
+      "nome": "Lead Perdido 1",
+      "telefone": "11998111111"
+    },
+    {
+      "id": "3390014",
+      "nome": "Lead Perdido 0",
+      "telefone": "11998000000"
+    },
+    {
+      "id": "3390013",
+      "nome": "Lead Convertido 2",
+      "telefone": "11999222222"
+    },
+    {
+      "id": "3390012",
+      "nome": "Lead Convertido 1",
+      "telefone": "11999111111"
+    },
+    {
+      "id": "3390011",
+      "nome": "Lead Convertido 0",
+      "telefone": "11999000000"
+    },
+    {
+      "id": "3390008",
+      "nome": "RONEY NOGUEIRA JUNIOR",
+      "telefone": "(11) 94515-5135"
+    },
+    {
+      "id": "3390006",
+      "nome": "Izabella",
+      "telefone": "+5521976375777"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\n3390042\tLead Projeto 4\t11996444444\n3390041\tLead Projeto 3\t11996333333\n3390040\tLead Projeto 2\t11996222222\n3390038\tLead Projeto 1\t11996111111\n3390036\tLead Projeto 0\t11996000000\n3390026\tLead Convertido\t11999333333\n3390025\tLead Atendimento\t11999222222\n3390024\tLead Novo\t11999111111\n3390021\tLead Atendimento 4\t11997444444\n3390019\tLead Atendimento 3\t11997333333\n3390018\tLead Atendimento 2\t11997222222\n3390017\tLead Atendimento 1\t11997111111\n3390016\tLead Atendimento 0\t11997000000\n3390015\tLead Perdido 1\t11998111111\n3390014\tLead Perdido 0\t11998000000\n3390013\tLead Convertido 2\t11999222222\n3390012\tLead Convertido 1\t11999111111\n3390011\tLead Convertido 0\t11999000000\n3390008\tRONEY NOGUEIRA JUNIOR\t(11) 94515-5135\n3390006\tIzabella\t+5521976375777\n",
+  "stderr": "",
+  "execution_time_ms": 340
+}

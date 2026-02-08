@@ -1,0 +1,19 @@
+{
+  "query": "SELECT COUNT(*) as total_leads FROM leads; SELECT COUNT(*) as leads_teste_restantes FROM leads WHERE nome LIKE 'Lead Batch%' OR nome LIKE 'Lead Rank%' OR nome LIKE 'Lead C0%' OR nome LIKE 'Lead C1 %' OR nome LIKE 'Lead C2 %';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total_leads FROM leads; SELECT COUNT(*) as leads_teste_restantes FROM leads WHERE nome LIKE 'Lead Batch%' OR nome LIKE 'Lead Rank%' OR nome LIKE 'Lead C0%' OR nome LIKE 'Lead C1 %' OR nome LIKE 'Lead C2 %';",
+  "rows": [
+    {
+      "total_leads": "9728"
+    },
+    {
+      "total_leads": "leads_teste_restantes"
+    },
+    {
+      "total_leads": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_leads\n9728\nleads_teste_restantes\n0\n",
+  "stderr": "",
+  "execution_time_ms": 406
+}

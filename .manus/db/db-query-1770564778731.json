@@ -1,0 +1,73 @@
+{
+  "query": "SELECT id, corretorId, leadId, valorVenda, createdAt FROM contratos ORDER BY valorVenda DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, corretorId, leadId, valorVenda, createdAt FROM contratos ORDER BY valorVenda DESC;",
+  "rows": [
+    {
+      "id": "120001",
+      "corretorId": "7722800",
+      "leadId": "3390008",
+      "valorVenda": "380000.00",
+      "createdAt": "2026-02-07 00:00:00"
+    },
+    {
+      "id": "3",
+      "corretorId": "7722800",
+      "leadId": "2850013",
+      "valorVenda": "338092.98",
+      "createdAt": "2026-01-19 00:00:00"
+    },
+    {
+      "id": "90001",
+      "corretorId": "7722800",
+      "leadId": "3240004",
+      "valorVenda": "323000.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "id": "2",
+      "corretorId": "7722800",
+      "leadId": "2850012",
+      "valorVenda": "299800.00",
+      "createdAt": "2026-01-26 00:00:00"
+    },
+    {
+      "id": "30002",
+      "corretorId": "7722800",
+      "leadId": "2880003",
+      "valorVenda": "275000.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "30001",
+      "corretorId": "7722800",
+      "leadId": "2880001",
+      "valorVenda": "265000.00",
+      "createdAt": "2026-01-27 00:00:00"
+    },
+    {
+      "id": "60001",
+      "corretorId": "7982154",
+      "leadId": "720011",
+      "valorVenda": "249900.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "60002",
+      "corretorId": "7722800",
+      "leadId": "2850014",
+      "valorVenda": "237710.00",
+      "createdAt": "2026-01-14 00:00:00"
+    },
+    {
+      "id": "1",
+      "corretorId": "7862260",
+      "leadId": "720004",
+      "valorVenda": "199629.58",
+      "createdAt": "2026-01-26 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tleadId\tvalorVenda\tcreatedAt\n120001\t7722800\t3390008\t380000.00\t2026-02-07 00:00:00\n3\t7722800\t2850013\t338092.98\t2026-01-19 00:00:00\n90001\t7722800\t3240004\t323000.00\t2026-02-05 00:00:00\n2\t7722800\t2850012\t299800.00\t2026-01-26 00:00:00\n30002\t7722800\t2880003\t275000.00\t2026-01-29 00:00:00\n30001\t7722800\t2880001\t265000.00\t2026-01-27 00:00:00\n60001\t7982154\t720011\t249900.00\t2026-01-29 00:00:00\n60002\t7722800\t2850014\t237710.00\t2026-01-14 00:00:00\n1\t7862260\t720004\t199629.58\t2026-01-26 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 363
+}

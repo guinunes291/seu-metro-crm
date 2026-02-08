@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE metas_globais MODIFY COLUMN metaVGV DECIMAL(15,2) DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaContratos INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaLeads INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaAgendamentos INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaVisitas INT DEFAULT 0;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute ALTER TABLE metas_globais MODIFY COLUMN metaVGV DECIMAL(15,2) DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaContratos INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaLeads INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaAgendamentos INT DEFAULT 0; ALTER TABLE metas_globais ADD COLUMN IF NOT EXISTS metaVisitas INT DEFAULT 0;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2804
+}

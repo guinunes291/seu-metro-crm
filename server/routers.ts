@@ -5953,6 +5953,59 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   // PORTAL DE PROJETOS IMOBILIÁRIOS - LOGS DE SINCRONIZAÇÃO
   // ============================================================================
 
+  // ============================================================================
+  // METAS GLOBAIS E DASHBOARD DE PERFORMANCE
+  // ============================================================================
+  metasGlobais: router({
+    // Buscar meta global do mês/ano
+    get: gestorProcedure
+      .input(z.object({
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.getMetaGlobal(input.mes, input.ano);
+      }),
+    
+    // Atualizar meta global
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        metaVGV: z.string().optional(),
+        metaContratos: z.number().optional(),
+        metaLeads: z.number().optional(),
+        metaAgendamentos: z.number().optional(),
+        metaVisitas: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await db.updateMetaGlobal(id, data);
+      }),
+  }),
+
+  dashboardPerformance: router({
+    // Dashboard completo de performance
+    getData: gestorProcedure
+      .input(z.object({
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const equipeId = ctx.user.role === 'gestor' ? ctx.user.equipeId : undefined;
+        return await db.getDashboardPerformance(input.mes, input.ano, equipeId || undefined);
+      }),
+    
+    // Evolução mensal de VGV
+    evolucaoMensal: gestorProcedure
+      .input(z.object({
+        ano: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const equipeId = ctx.user.role === 'gestor' ? ctx.user.equipeId : undefined;
+        return await db.getEvolucaoMensalVGV(input.ano, equipeId || undefined);
+      }),
+  }),
+
   logsSincronizacao: router({
     // Listar logs (admin)
     list: adminProcedure
