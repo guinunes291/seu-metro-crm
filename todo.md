@@ -3973,3 +3973,7 @@
 - [x] Identificar agendamentos duplicados (mesmo lead + data + hora + status ativo) - 2 grupos encontrados
 - [x] Remover duplicatas mantendo apenas o mais recente (maior ID) - 3 agendamentos deletados
 - [x] Verificar quantidade de agendamentos antes e depois da limpeza - 0 duplicatas restantes
+
+## Bug: Botões Incorretos no Kanban
+- [x] Corrigir lógica de exibição de botões na coluna "Visita Realizada" - deve mostrar apenas "Registrar Análise", não "Registrar Visita"
+- [x] Verificar lógica de botões em todas as colunas do Kanban (Agendado: Registrar Visita | Visita Realizada: Registrar Análise | Análise de Crédito: Fechar Contrato)

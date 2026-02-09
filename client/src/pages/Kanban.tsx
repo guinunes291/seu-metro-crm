@@ -231,8 +231,8 @@ export default function Kanban() {
                           </div>
                           
                           <div className="mt-2 space-y-2">
-                            {/* Botão Registrar Visita para leads agendados ou visita realizada */}
-                            {(column.id === 'agendado' || column.id === 'visita_realizada') && (
+                            {/* Botão Registrar Visita apenas para leads agendados */}
+                            {column.id === 'agendado' && (
                               <Button
                                 variant="outline"
                                 size="sm"
