@@ -3977,3 +3977,9 @@
 ## Bug: Botões Incorretos no Kanban
 - [x] Corrigir lógica de exibição de botões na coluna "Visita Realizada" - deve mostrar apenas "Registrar Análise", não "Registrar Visita"
 - [x] Verificar lógica de botões em todas as colunas do Kanban (Agendado: Registrar Visita | Visita Realizada: Registrar Análise | Análise de Crédito: Fechar Contrato)
+
+## Bug: Copilot não acessa catálogo de projetos em tempo real
+- [x] Investigar por que o Copilot responde "Não tenho acesso em tempo real" - catálogo só era incluído no modo 'recomendar'
+- [x] Verificar se getCatalog() está sendo chamada antes de gerar a resposta - não estava sendo chamada no chat livre
+- [x] Corrigir integração do catálogo com o contexto da conversa do Copilot - agora sempre inclui o catálogo
+- [x] Testar resposta do Copilot para perguntas sobre quantidade de projetos - servidor reiniciado, pronto para teste

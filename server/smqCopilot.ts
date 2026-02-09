@@ -500,12 +500,16 @@ export async function chatWithCopilot(
     systemPrompt += `\n\n---\n\n${formatLeadContext(leadContext)}`;
   }
   
-  // Adiciona catálogo de projetos se solicitado (modo recomendar)
-  if (includeCatalog || mode === 'recomendar') {
-    const catalogProjects = await getCatalogProjects(
-      leadContext?.regiaoDesejada ? { zona: leadContext.regiaoDesejada } : undefined
-    );
-    systemPrompt += `\n\n---\n\n${formatCatalogContext(catalogProjects)}`;
+  // Adiciona catálogo de projetos sempre (para que o Copilot tenha acesso em tempo real)
+  // Se houver região desejada no lead, filtra por zona
+  const catalogProjects = await getCatalogProjects(
+    leadContext?.regiaoDesejada ? { zona: leadContext.regiaoDesejada } : undefined
+  );
+  systemPrompt += `\n\n---\n\n${formatCatalogContext(catalogProjects)}`;
+  
+  // Se o modo for recomendar, adiciona instrução específica
+  if (mode === 'recomendar' || includeCatalog) {
+    systemPrompt += `\n\n⚠️ IMPORTANTE: Recomende APENAS empreendimentos do catálogo acima. Explique por que cada um se encaixa no perfil do lead.`;
   }
   
   // Adiciona instrução do modo se não for chat livre
