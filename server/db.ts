@@ -1945,27 +1945,29 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
     .from(users)
     .where(and(...corretoresConditions));
   
-  // Query 2: Contar vendas e somar VGV por corretor em uma única query
-  const vendasConditions: any[] = [eq(leads.status, 'contrato_fechado')];
+  // Query 2: Buscar VGV real da tabela de contratos (valorVenda em reais)
+  const contratosConditions: any[] = [];
   if (filtros?.dataInicio) {
-    vendasConditions.push(gte(leads.createdAt, filtros.dataInicio));
+    contratosConditions.push(gte(contratos.createdAt, filtros.dataInicio));
   }
   if (filtros?.dataFim) {
-    vendasConditions.push(lte(leads.createdAt, filtros.dataFim));
+    contratosConditions.push(lte(contratos.createdAt, filtros.dataFim));
   }
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
-    vendasConditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+    contratosConditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
   }
   
-  const vendasData = await db.select({
-    corretorId: leads.corretorId,
+  const vendasQuery = db.select({
+    corretorId: contratos.corretorId,
     count: sql<number>`count(*)`,
-    vgv: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
+    vgv: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
   })
-    .from(leads)
-    .leftJoin(projects, eq(leads.projectId, projects.id))
-    .where(and(...vendasConditions))
-    .groupBy(leads.corretorId);
+    .from(contratos)
+    .groupBy(contratos.corretorId);
+  
+  const vendasData = contratosConditions.length > 0
+    ? await vendasQuery.where(and(...contratosConditions))
+    : await vendasQuery;
   
   const vendasMap = new Map(vendasData.map(vd => [
     vd.corretorId, 

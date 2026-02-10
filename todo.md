@@ -3983,3 +3983,9 @@
 - [x] Verificar se getCatalog() está sendo chamada antes de gerar a resposta - não estava sendo chamada no chat livre
 - [x] Corrigir integração do catálogo com o contexto da conversa do Copilot - agora sempre inclui o catálogo
 - [x] Testar resposta do Copilot para perguntas sobre quantidade de projetos - servidor reiniciado, pronto para teste
+
+## Bug: VGV no Dashboard do gestor/admin mostrando valores multiplicados por 100
+- [x] Investigar cálculo de VGV no Dashboard do gestor/admin (Andrew com R$ 23.390.000 em vez de R$ 233.900) - estava usando projects.valorMinimo em vez de contratos.valorVenda
+- [x] Identificar onde está ocorrendo a multiplicação incorreta por 100 - valorMinimo estava em centavos sendo tratado como reais
+- [x] Corrigir lógica de cálculo e formatação de valores - alterado getVendasPorCorretor para usar contratos.valorVenda
+- [x] Testar correção e verificar valores corretos para todos os corretores - aguardando validação do usuário
