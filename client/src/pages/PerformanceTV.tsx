@@ -7,7 +7,7 @@ import {
   CalendarCheck, Eye, FileText, Briefcase, Activity, ChevronDown,
   Settings, Save, ArrowUp, ArrowDown, Minus
 } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -161,9 +161,21 @@ function GaugeChart({ percentage, label }: { percentage: number; label: string }
 
 // Gráfico de Barras CSS - Evolução Mensal
 function EvolucaoMensalChart({ data }: { data: any[] }) {
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const [hoveredType, setHoveredType] = React.useState<'fat' | 'meta' | null>(null);
+  
   if (!data || data.length === 0) {
     return <div className="flex items-center justify-center h-48 text-gray-400">Sem dados</div>;
   }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
 
   const maxVal = Math.max(...data.map(d => Math.max(d.vgvRealizado || 0, Number(d.metaVGV || 0))), 1);
 
@@ -180,18 +192,41 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
           const fatPct = (fat / maxVal) * 100;
           const metaPct = (meta / maxVal) * 100;
           return (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+            <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end relative">
               <div className="text-[9px] text-gray-300 font-semibold">
                 {fat >= 1000000 ? `${(fat/1000000).toFixed(1)}M` : fat >= 1000 ? `${(fat/1000).toFixed(0)}K` : fat > 0 ? fat.toFixed(0) : ''}
               </div>
               <div className="w-full relative flex items-end justify-center" style={{ height: `${Math.max(fatPct, metaPct, 5)}%` }}>
                 {/* Barra de faturamento */}
-                <div className="w-[60%] bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-md transition-all duration-500"
-                  style={{ height: `${fatPct > 0 ? (fatPct / Math.max(fatPct, metaPct, 5)) * 100 : 0}%`, minHeight: fat > 0 ? '4px' : '0' }} />
+                <div 
+                  className="w-[60%] bg-gradient-to-t from-purple-600 to-purple-400 rounded-t-md transition-all duration-500 cursor-pointer hover:from-purple-500 hover:to-purple-300"
+                  style={{ height: `${fatPct > 0 ? (fatPct / Math.max(fatPct, metaPct, 5)) * 100 : 0}%`, minHeight: fat > 0 ? '4px' : '0' }}
+                  onMouseEnter={() => { setHoveredIndex(i); setHoveredType('fat'); }}
+                  onMouseLeave={() => { setHoveredIndex(null); setHoveredType(null); }}
+                />
                 {/* Linha de meta */}
                 {meta > 0 && (
-                  <div className="absolute w-[90%] border-t-2 border-dashed border-indigo-400"
-                    style={{ bottom: `${(metaPct / Math.max(fatPct, metaPct, 5)) * 100}%` }} />
+                  <div 
+                    className="absolute w-[90%] border-t-2 border-dashed border-indigo-400 cursor-pointer hover:border-indigo-300"
+                    style={{ bottom: `${(metaPct / Math.max(fatPct, metaPct, 5)) * 100}%` }}
+                    onMouseEnter={() => { setHoveredIndex(i); setHoveredType('meta'); }}
+                    onMouseLeave={() => { setHoveredIndex(null); setHoveredType(null); }}
+                  />
+                )}
+                {/* Tooltip */}
+                {hoveredIndex === i && hoveredType && (
+                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-3 py-2 rounded-lg shadow-xl border border-slate-700 whitespace-nowrap z-10">
+                    <div className="font-semibold">{d.mesNome}</div>
+                    <div className="text-gray-300">
+                      {hoveredType === 'fat' ? (
+                        <><span className="text-purple-400">Faturamento:</span> {formatCurrency(fat)}</>
+                      ) : (
+                        <><span className="text-indigo-400">Meta:</span> {formatCurrency(meta)}</>
+                      )}
+                    </div>
+                    {/* Seta do tooltip */}
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-800" />
+                  </div>
                 )}
               </div>
               <span className="text-[10px] text-gray-400 font-medium">{d.mesNome}</span>

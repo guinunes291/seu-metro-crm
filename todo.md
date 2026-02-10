@@ -3998,3 +3998,10 @@
 - [x] Testar Dashboard Performance TV com valores corretos - aguardando validação do usuário
 - [x] Testar Dashboard do gestor/admin com valores corretos - aguardando validação do usuário
 - [ ] Verificar todas as telas que exibem valores monetários
+
+## Feature: Tooltips interativos no gráfico de Evolução Faturamento
+- [x] Adicionar estado para controlar tooltip visível (hover)
+- [x] Implementar tooltip para barras de faturamento mostrando valor exato em R$
+- [x] Implementar tooltip para linha de meta mostrando valor da meta em R$
+- [x] Formatar valores com padrão brasileiro (R$ 1.234.567,89)
+- [x] Testar tooltips no Dashboard Performance TV - servidor rodando, pronto para teste
