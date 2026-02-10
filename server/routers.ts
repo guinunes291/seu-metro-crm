@@ -6003,9 +6003,13 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .input(z.object({
         mes: z.number().min(1).max(12),
         ano: z.number(),
+        equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        const equipeId = ctx.user.role === 'gestor' ? ctx.user.equipeId : undefined;
+        // Gestor sempre vê apenas sua equipe
+        const equipeId = ctx.user.role === 'gestor' 
+          ? ctx.user.equipeId 
+          : input.equipeId; // Admin pode filtrar por equipe
         return await db.getDashboardPerformance(input.mes, input.ano, equipeId || undefined);
       }),
     
@@ -6013,9 +6017,13 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     evolucaoMensal: gestorProcedure
       .input(z.object({
         ano: z.number(),
+        equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        const equipeId = ctx.user.role === 'gestor' ? ctx.user.equipeId : undefined;
+        // Gestor sempre vê apenas sua equipe
+        const equipeId = ctx.user.role === 'gestor' 
+          ? ctx.user.equipeId 
+          : input.equipeId; // Admin pode filtrar por equipe
         return await db.getEvolucaoMensalVGV(input.ano, equipeId || undefined);
       }),
   }),

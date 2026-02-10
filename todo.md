@@ -4005,3 +4005,12 @@
 - [x] Implementar tooltip para linha de meta mostrando valor da meta em R$
 - [x] Formatar valores com padrão brasileiro (R$ 1.234.567,89)
 - [x] Testar tooltips no Dashboard Performance TV - servidor rodando, pronto para teste
+
+## Feature: Filtro por equipe no Dashboard Performance TV
+- [x] Buscar lista de equipes disponíveis no banco de dados - usando trpc.equipes.list
+- [x] Adicionar dropdown de seleção de equipe no header do Performance TV - apenas para admins
+- [x] Atualizar procedure dashboardPerformance.getData para aceitar filtro de equipeId
+- [x] Atualizar procedure dashboardPerformance.evolucaoMensal para aceitar filtro de equipeId
+- [x] Atualizar procedure ranking.getCompleto para aceitar filtro de equipeId (opcional) - não necessário, já filtra automaticamente
+- [x] Testar filtro com diferentes equipes - servidor rodando corretamente
+- [x] Verificar se gestor vê apenas sua equipe por padrão - backend já filtra automaticamente

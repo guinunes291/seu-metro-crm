@@ -583,6 +583,12 @@ export default function PerformanceTV() {
   
   const [selectedMes, setSelectedMes] = useState(() => new Date().getMonth() + 1);
   const [selectedAno, setSelectedAno] = useState(() => new Date().getFullYear());
+  const [selectedEquipeId, setSelectedEquipeId] = useState<number | undefined>(undefined);
+  
+  // Buscar lista de equipes (admin vê todas, gestor vê apenas sua equipe)
+  const { data: equipes } = trpc.equipes.list.useQuery(undefined, {
+    enabled: user?.role === 'admin' || user?.role === 'gestor',
+  });
   
   const dateRange = useMemo(() => getDateRangeForPeriod(periodo, customRange), [periodo, customRange]);
   
@@ -592,8 +598,15 @@ export default function PerformanceTV() {
   
   const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
   const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery(dateRangeInput);
-  const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery({ mes: selectedMes, ano: selectedAno });
-  const { data: evolucaoMensal, refetch: refetchEvolucao } = trpc.dashboardPerformance.evolucaoMensal.useQuery({ ano: selectedAno });
+  const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery({ 
+    mes: selectedMes, 
+    ano: selectedAno,
+    equipeId: selectedEquipeId, // Filtro de equipe (apenas admin)
+  });
+  const { data: evolucaoMensal, refetch: refetchEvolucao } = trpc.dashboardPerformance.evolucaoMensal.useQuery({ 
+    ano: selectedAno,
+    equipeId: selectedEquipeId, // Filtro de equipe (apenas admin)
+  });
   
   useEffect(() => {
     const interval = setInterval(() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }, 30000);
@@ -701,6 +714,35 @@ export default function PerformanceTV() {
             </Tabs>
             
             <div className="flex items-center gap-2">
+              {/* Filtro de Equipe (apenas admin) */}
+              {user?.role === 'admin' && equipes && equipes.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">
+                      <Users className="h-4 w-4" /> 
+                      {selectedEquipeId ? equipes.find(e => e.id === selectedEquipeId)?.nome || 'Equipe' : 'Todas as Equipes'}
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem 
+                      onClick={() => setSelectedEquipeId(undefined)}
+                      className={!selectedEquipeId ? "bg-accent" : ""}>
+                      Todas as Equipes
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {equipes.map((equipe) => (
+                      <DropdownMenuItem 
+                        key={equipe.id} 
+                        onClick={() => setSelectedEquipeId(equipe.id)}
+                        className={selectedEquipeId === equipe.id ? "bg-accent" : ""}>
+                        {equipe.nome}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              
               {activeTab === 'realxmeta' && (
                 <>
                   <DropdownMenu>
