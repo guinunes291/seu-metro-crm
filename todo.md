@@ -3989,3 +3989,12 @@
 - [x] Identificar onde está ocorrendo a multiplicação incorreta por 100 - valorMinimo estava em centavos sendo tratado como reais
 - [x] Corrigir lógica de cálculo e formatação de valores - alterado getVendasPorCorretor para usar contratos.valorVenda
 - [x] Testar correção e verificar valores corretos para todos os corretores - aguardando validação do usuário
+
+## Padronização: Trabalhar APENAS com valores em REAIS (sem centavos)
+- [x] Corrigir backend getEvolucaoMensalVGV: remover multiplicação por 100, retornar valores em reais
+- [x] Corrigir backend getDashboardPerformance: remover conversões de centavos
+- [x] Corrigir frontend PerformanceTV: remover divisões por 100
+- [x] Converter metaVGV no banco de dados: dividir valores por 100 (centavos → reais) - Jan: R$ 2M, Fev: R$ 6,25M
+- [x] Testar Dashboard Performance TV com valores corretos - aguardando validação do usuário
+- [x] Testar Dashboard do gestor/admin com valores corretos - aguardando validação do usuário
+- [ ] Verificar todas as telas que exibem valores monetários

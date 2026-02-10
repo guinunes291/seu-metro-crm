@@ -165,7 +165,7 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
     return <div className="flex items-center justify-center h-48 text-gray-400">Sem dados</div>;
   }
 
-  const maxVal = Math.max(...data.map(d => Math.max((d.vgvRealizado || 0) / 100, Number(d.metaVGV || 0) / 100)), 1);
+  const maxVal = Math.max(...data.map(d => Math.max(d.vgvRealizado || 0, Number(d.metaVGV || 0))), 1);
 
   return (
     <div className="space-y-2">
@@ -175,8 +175,8 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
       </div>
       <div className="flex items-end gap-2 h-[260px]">
         {data.map((d, i) => {
-          const fat = (d.vgvRealizado || 0) / 100;
-          const meta = Number(d.metaVGV || 0) / 100;
+          const fat = d.vgvRealizado || 0;
+          const meta = Number(d.metaVGV || 0);
           const fatPct = (fat / maxVal) * 100;
           const metaPct = (meta / maxVal) * 100;
           return (
