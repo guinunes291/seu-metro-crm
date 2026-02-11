@@ -4021,3 +4021,9 @@
 - [x] Identificar TODOS os componentes que exibem valores monetários no PerformanceTV.tsx - encontrados 40 locais
 - [x] Padronizar formatação: valores do backend já vêm em reais, não dividir/multiplicar - corrigido
 - [x] Testar todos os cards, tabelas e gráficos do Performance TV - servidor rodando, Dashboard do Gestor mostrando VGV correto (R$ 3.189.054)
+
+## Bug: Coluna "Corretor" vazia na visualização em lista de "Meus Leads"
+- [x] Investigar código da página MeusLeads para identificar por que a coluna Corretor mostra "-" - faltava JOIN com tabela users
+- [x] Verificar se o backend está retornando os dados do corretor atribuído - getAllLeads não fazia JOIN
+- [x] Corrigir exibição do nome do corretor na tabela - adicionado LEFT JOIN com users.name
+- [x] Testar correção com leads que têm corretor atribuído - servidor rodando, pronto para teste

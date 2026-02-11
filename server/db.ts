@@ -945,9 +945,13 @@ export async function getAllLeads(options?: {
     .where(whereClause);
   const total = Number(countResult[0]?.count || 0);
   
-  // Buscar leads com paginação
+  // Buscar leads com paginação e nome do corretor
   // Ordenar: leads webhook primeiro, depois por data de criação
-  const leadsResult = await db.select().from(leads)
+  const leadsResult = await db.select({
+    ...leads,
+    corretorNome: users.name,
+  }).from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
     .where(whereClause)
     .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
     .limit(limit)
