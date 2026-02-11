@@ -62,14 +62,13 @@ function getDateRangeForPeriod(period: PeriodOption, customRange?: DateRange): D
 }
 
 function formatCurrency(value: number): string {
-  const v = value / 100;
-  if (v >= 1000000) return `R$ ${(v / 1000000).toFixed(1).replace('.', ',')}M`;
-  if (v >= 1000) return `R$ ${(v / 1000).toFixed(0)}K`;
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
+  if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1).replace('.', ',')}M`;
+  if (value >= 1000) return `R$ ${(value / 1000).toFixed(0)}K`;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
 }
 
 function formatFullCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value / 100);
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
 function formatCurrencyReais(value: number): string {
