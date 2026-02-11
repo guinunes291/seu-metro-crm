@@ -4014,3 +4014,10 @@
 - [x] Atualizar procedure ranking.getCompleto para aceitar filtro de equipeId (opcional) - não necessário, já filtra automaticamente
 - [x] Testar filtro com diferentes equipes - servidor rodando corretamente
 - [x] Verificar se gestor vê apenas sua equipe por padrão - backend já filtra automaticamente
+
+## Bug CRÍTICO: Múltiplos campos monetários com formatação incorreta no Performance TV
+- [x] Meta mostrando R$ 625,0M em vez de R$ 6,25M (multiplicando por 100 incorretamente) - removido * 100 ao salvar
+- [x] Tabela "Faturamento por Vendedor" mostrando valores divididos por 1000 (Guilherme R$ 10.138 em vez de R$ 1M) - removido / 100 em 6 locais
+- [x] Identificar TODOS os componentes que exibem valores monetários no PerformanceTV.tsx - encontrados 40 locais
+- [x] Padronizar formatação: valores do backend já vêm em reais, não dividir/multiplicar - corrigido
+- [x] Testar todos os cards, tabelas e gráficos do Performance TV - servidor rodando, Dashboard do Gestor mostrando VGV correto (R$ 3.189.054)

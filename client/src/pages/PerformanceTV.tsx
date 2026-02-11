@@ -289,7 +289,7 @@ function FaturamentoPorVendedorChart({ corretores }: { corretores: any[] }) {
   }
 
   const top10 = corretores.slice(0, 10);
-  const maxVal = Math.max(...top10.map(c => (c.vgv || 0) / 100), 1);
+  const maxVal = Math.max(...top10.map(c => (c.vgv || 0)), 1);
   const colors = [
     'from-purple-500 to-purple-400', 'from-indigo-500 to-indigo-400', 'from-blue-500 to-blue-400',
     'from-sky-500 to-sky-400', 'from-cyan-500 to-cyan-400', 'from-teal-500 to-teal-400',
@@ -300,7 +300,7 @@ function FaturamentoPorVendedorChart({ corretores }: { corretores: any[] }) {
   return (
     <div className="space-y-3">
       {top10.map((c, i) => {
-        const val = (c.vgv || 0) / 100;
+        const val = (c.vgv || 0);
         const pct = (val / maxVal) * 100;
         return (
           <div key={c.id || i} className="space-y-1">
@@ -346,8 +346,8 @@ function TabelaVendedoresMeta({ corretores }: { corretores: any[] }) {
         </thead>
         <tbody>
           {corretores.map((corretor, index) => {
-            const vgv = (corretor.vgv || 0) / 100;
-            const meta = (corretor.metaVGV || 0) / 100;
+            const vgv = (corretor.vgv || 0);
+            const meta = (corretor.metaVGV || 0);
             const diff = vgv - meta;
             const pct = meta > 0 ? ((vgv / meta) * 100 - 100) : 0;
             const isPositive = diff >= 0;
@@ -381,10 +381,10 @@ function TabelaVendedoresMeta({ corretores }: { corretores: any[] }) {
         <tfoot>
           <tr className="border-t-2 border-slate-600 bg-slate-800/30">
             <td className="py-3 px-3 text-white font-bold">Total</td>
-            <td className="py-3 px-3 text-right text-white font-bold">{formatCurrencyReais(totalVGV / 100)}</td>
-            <td className="py-3 px-3 text-right text-gray-400 font-bold">{formatCurrencyReais(totalMeta / 100)}</td>
-            <td className="py-3 px-3 text-center">
-              <span className={totalDiff >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>{formatCurrencyReais(Math.abs(totalDiff / 100))}</span>
+            <td className="py-3 px-3 text-right text-white font-bold">{formatCurrencyReais(totalVGV)}</td>
+            <td className="py-3 px-3 text-right text-gray-400 font-bold">{formatCurrencyReais(totalMeta)}</td>
+            <td className="py-3 px-3 text-right font-bold">
+              <span className={totalDiff >= 0 ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>{formatCurrencyReais(Math.abs(totalDiff))}</span>
             </td>
             <td className={`py-3 px-3 text-right font-bold ${totalPct >= 100 ? 'text-emerald-400' : 'text-red-400'}`}>
               {totalPct >= 100 ? '+' : ''}{(totalPct - 100).toFixed(2)}%
@@ -515,7 +515,7 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
   useEffect(() => {
     if (metaGlobal) {
       setFormData({
-        metaVGV: (Number(metaGlobal.metaVGV || 0) / 100).toString(),
+        metaVGV: Number(metaGlobal.metaVGV || 0).toString(),
         metaContratos: metaGlobal.metaContratos || 0, metaLeads: metaGlobal.metaLeads || 0,
         metaAgendamentos: metaGlobal.metaAgendamentos || 0, metaVisitas: metaGlobal.metaVisitas || 0,
       });
@@ -526,7 +526,7 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
     if (!metaGlobal?.id) return;
     updateMeta.mutate({
       id: metaGlobal.id,
-      metaVGV: (Number(formData.metaVGV.replace(/[^\d.,]/g, '').replace(',', '.')) * 100).toString(),
+      metaVGV: Number(formData.metaVGV.replace(/[^\d.,]/g, '').replace(',', '.')).toString(),
       metaContratos: Number(formData.metaContratos), metaLeads: Number(formData.metaLeads),
       metaAgendamentos: Number(formData.metaAgendamentos), metaVisitas: Number(formData.metaVisitas),
     });
