@@ -4027,3 +4027,11 @@
 - [x] Verificar se o backend está retornando os dados do corretor atribuído - getAllLeads não fazia JOIN
 - [x] Corrigir exibição do nome do corretor na tabela - adicionado LEFT JOIN com users.name
 - [x] Testar correção com leads que têm corretor atribuído - servidor rodando, pronto para teste
+
+## Feature: Ordenação prioritária de leads
+- [x] Implementar ordenação: 1. Facebook ADS aguardando atendimento (mais recentes primeiro)
+- [x] Implementar ordenação: 2. Leads aguardando atendimento sem Facebook ADS (mais recentes primeiro)
+- [x] Implementar ordenação: 3. Facebook ADS em atendimento (mais recentes primeiro)
+- [x] Implementar ordenação: 4. Demais leads (mais recentes primeiro)
+- [x] Atualizar query getAllLeads no db.ts com lógica de ordenação prioritária - usando CASE WHEN com 4 níveis
+- [x] Testar ordenação com diferentes combinações de status e origem - servidor rodando, pronto para teste

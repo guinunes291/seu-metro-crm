@@ -946,14 +946,26 @@ export async function getAllLeads(options?: {
   const total = Number(countResult[0]?.count || 0);
   
   // Buscar leads com paginação e nome do corretor
-  // Ordenar: leads webhook primeiro, depois por data de criação
+  // Ordenar com prioridade:
+  // 1. Facebook ADS + Aguardando Atendimento (mais recentes primeiro)
+  // 2. Aguardando Atendimento sem ADS (mais recentes primeiro)
+  // 3. Facebook ADS + Em Atendimento (mais recentes primeiro)
+  // 4. Demais leads (mais recentes primeiro)
   const leadsResult = await db.select({
     ...leads,
     corretorNome: users.name,
   }).from(leads)
     .leftJoin(users, eq(leads.corretorId, users.id))
     .where(whereClause)
-    .orderBy(desc(leads.origemWebhook), desc(leads.createdAt))
+    .orderBy(
+      sql`CASE 
+        WHEN ${leads.origemWebhook} = 1 AND ${leads.status} = 'aguardando_atendimento' THEN 1
+        WHEN ${leads.origemWebhook} = 0 AND ${leads.status} = 'aguardando_atendimento' THEN 2
+        WHEN ${leads.origemWebhook} = 1 AND ${leads.status} = 'em_atendimento' THEN 3
+        ELSE 4
+      END`,
+      desc(leads.createdAt)
+    )
     .limit(limit)
     .offset(offset);
   
