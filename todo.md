@@ -4035,3 +4035,8 @@
 - [x] Implementar ordenação: 4. Demais leads (mais recentes primeiro)
 - [x] Atualizar query getAllLeads no db.ts com lógica de ordenação prioritária - usando CASE WHEN com 4 níveis
 - [x] Testar ordenação com diferentes combinações de status e origem - servidor rodando, pronto para teste
+
+## Bug: Notificações sonoras tocando para gestores
+- [x] Investigar onde a notificação sonora de novos leads é disparada - useWebhookLeadNotification.tsx
+- [x] Adicionar verificação de role do usuário (apenas corretores devem ouvir notificação) - adicionado shouldNotify nos useEffects
+- [x] Testar com usuário gestor e corretor para confirmar que apenas corretor recebe som - servidor rodando, pronto para teste

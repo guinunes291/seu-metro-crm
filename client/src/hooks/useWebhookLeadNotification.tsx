@@ -51,6 +51,9 @@ export function useWebhookLeadNotification() {
 
   // Inicializar áudio de alerta urgente
   useEffect(() => {
+    // Apenas corretores devem carregar o áudio
+    if (!shouldNotify) return;
+    
     // Som de alarme urgente para leads de Facebook Ads/Webhook
     // Usando som de emergência mais chamativo
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3');
@@ -79,14 +82,17 @@ export function useWebhookLeadNotification() {
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [shouldNotify]);
 
   // Solicitar permissão para notificações push
   useEffect(() => {
+    // Apenas corretores devem solicitar permissão de notificação
+    if (!shouldNotify) return;
+    
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, []);
+  }, [shouldNotify]);
 
   // Processar novos leads
   useEffect(() => {
