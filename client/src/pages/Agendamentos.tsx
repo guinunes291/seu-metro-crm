@@ -270,7 +270,7 @@ export default function AgendamentosPage() {
           </div>
 
           {/* Botão Criar Agendamento */}
-          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <Dialog>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />

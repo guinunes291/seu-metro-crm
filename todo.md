@@ -4048,3 +4048,9 @@
 - [x] Registrar histórico de reatribuição (quem reatribuiu, para quem, quando) - procedure registra no createLeadHistory
 - [x] Testar reatribuição com diferentes status (em atendimento, análise de crédito, etc) - servidor rodando, botões disponíveis no modal
 - [x] Verificar se lead mantém status após reatribuição - procedure não altera status, apenas corretorId
+
+## Bug CRÍTICO: Corretores não conseguem criar agendamentos
+- [x] Verificar logs do servidor para erros relacionados a agendamentos - sem erros nos logs
+- [x] Investigar código dos botões de criar agendamento - conflito entre DialogTrigger e controle manual
+- [x] Verificar componente de modal/formulário de agendamento - removido prop open para deixar DialogTrigger controlar
+- [x] Testar criação de agendamento após correção - servidor rodando, aguardando teste do usuário
