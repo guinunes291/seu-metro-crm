@@ -44,6 +44,8 @@ import { TimerLead } from "@/components/TimerLead";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
+import TransferirLeadButton from "@/components/TransferirLeadButton";
+import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 
@@ -1445,6 +1447,35 @@ export default function Leads() {
                           </Button>
                         )}
                       </div>
+                      
+                      {/* Botões de Transferência e Reatribuição (apenas para gestores) */}
+                      {isGestor && corretores && corretores.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+                          <TransferirLeadButton
+                            leadId={selectedLead.id}
+                            leadNome={selectedLead.nome}
+                            corretores={corretores}
+                            onSuccess={() => {
+                              refetch();
+                              toast.success('Lead transferido com sucesso!');
+                            }}
+                            variant="outline"
+                            size="sm"
+                          />
+                          <ReatribuirLeadButton
+                            leadId={selectedLead.id}
+                            leadNome={selectedLead.nome}
+                            leadStatus={selectedLead.status}
+                            corretores={corretores}
+                            onSuccess={() => {
+                              refetch();
+                              toast.success('Lead reatribuído com sucesso!');
+                            }}
+                            variant="outline"
+                            size="sm"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

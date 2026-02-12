@@ -4040,3 +4040,11 @@
 - [x] Investigar onde a notificação sonora de novos leads é disparada - useWebhookLeadNotification.tsx
 - [x] Adicionar verificação de role do usuário (apenas corretores devem ouvir notificação) - adicionado shouldNotify nos useEffects
 - [x] Testar com usuário gestor e corretor para confirmar que apenas corretor recebe som - servidor rodando, pronto para teste
+
+## Feature: Botão "Reatribuir Lead" (mantém status atual)
+- [x] Criar procedure backend `leads.reatribuir` que transfere lead sem mudar status - linha 659-697 do routers.ts
+- [x] Adicionar botão "Reatribuir Lead" no modal de detalhes do lead - criado ReatribuirLeadButton.tsx
+- [x] Implementar seletor de corretor destino - usando Select do shadcn/ui
+- [x] Registrar histórico de reatribuição (quem reatribuiu, para quem, quando) - procedure registra no createLeadHistory
+- [x] Testar reatribuição com diferentes status (em atendimento, análise de crédito, etc) - servidor rodando, botões disponíveis no modal
+- [x] Verificar se lead mantém status após reatribuição - procedure não altera status, apenas corretorId

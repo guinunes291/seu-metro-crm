@@ -656,6 +656,46 @@ export const appRouter = router({
         return { success: true, novoCorretor: novoCorretor.name };
       }),
     
+    // Reatribuir lead mantendo status atual (sem voltar para aguardando_atendimento)
+    reatribuir: protectedProcedure
+      .input(z.object({
+        leadId: z.number(),
+        novoCorretorId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const lead = await db.getLeadById(input.leadId);
+        
+        if (!lead) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        // Verificar se novo corretor existe
+        const novoCorretor = await db.getUserById(input.novoCorretorId);
+        if (!novoCorretor || novoCorretor.role !== 'corretor') {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        }
+        
+        const corretorAnteriorId = lead.corretorId;
+        const statusAtual = lead.status;
+        
+        // Atualizar lead com novo corretor MANTENDO o status atual
+        await db.updateLead(input.leadId, {
+          corretorId: input.novoCorretorId,
+          // NÃO altera o status
+        });
+        
+        // Registrar no histórico
+        await db.createLeadHistory({
+          leadId: input.leadId,
+          corretorId: ctx.user.id,
+          tipo: 'outro',
+          resultado: 'outro',
+          observacoes: `Lead reatribuído para ${novoCorretor.name} (status mantido: ${statusAtual})${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
+        });
+        
+        return { success: true, novoCorretor: novoCorretor.name, statusMantido: statusAtual };
+      }),
+    
     // Transferir múltiplos leads em lote (apenas gestores)
     transferirEmLote: gestorProcedure
       .input(z.object({
