@@ -4054,3 +4054,9 @@
 - [x] Investigar código dos botões de criar agendamento - conflito entre DialogTrigger e controle manual
 - [x] Verificar componente de modal/formulário de agendamento - removido prop open para deixar DialogTrigger controlar
 - [x] Testar criação de agendamento após correção - servidor rodando, aguardando teste do usuário
+
+## Bug CRÍTICO RESOLVIDO: Botão "Criar Agendamento" não abria modal
+- [x] Identificado problema: código chamava setAgSelectedDate/Hour/Minute que não foram declarados com useState
+- [x] Removidas 3 linhas problemáticas em 3 locais diferentes do arquivo Leads.tsx
+- [x] Testado e confirmado: modal agora abre corretamente ao clicar em "Criar Agendamento"
+
