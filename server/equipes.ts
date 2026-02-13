@@ -240,7 +240,14 @@ export async function getCorretoresIdsParaFiltro(userId: number, userRole: strin
     }
     
     const corretores = await getCorretoresDaEquipe(equipe.id);
-    return corretores.map(c => c.id);
+    const corretoresIds = corretores.map(c => c.id);
+    
+    // Incluir o próprio gestor nas métricas (caso ele também seja corretor)
+    if (!corretoresIds.includes(userId)) {
+      corretoresIds.push(userId);
+    }
+    
+    return corretoresIds;
   }
   
   // Corretor vê apenas seus próprios leads (retorna próprio ID)

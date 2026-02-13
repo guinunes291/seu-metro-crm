@@ -4105,3 +4105,11 @@
 - [ ] Verificar código da mutation enviarAlerta no Leads.tsx
 - [ ] Verificar procedure alertas.enviar no backend
 - [ ] Testar após correção
+
+## Bug: Gestor não aparece nas métricas quando equipe está filtrada
+- [x] Investigar código de filtro de equipe (getCorretoresIdsParaFiltro)
+- [x] Identificar onde o gestor está sendo excluído das métricas
+- [x] Corrigir lógica para incluir o ID do gestor quando sua equipe está selecionada
+- [x] Testar que gestor aparece em "Faturamento por Vendedor"
+- [x] Validar que todas as métricas incluem o gestor
+- [ ] Salvar checkpoint

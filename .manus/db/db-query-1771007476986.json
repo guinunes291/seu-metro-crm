@@ -1,0 +1,9 @@
+{
+  "query": "SELECT u.id, u.name, u.email, COUNT(l.id) as total_leads\nFROM users u\nLEFT JOIN leads l ON u.id = l.corretorId\nWHERE u.role = 'corretor' AND (u.name IS NULL OR u.name = '' OR u.name = 'Sem nome')\nGROUP BY u.id, u.name, u.email\nORDER BY total_leads DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT u.id, u.name, u.email, COUNT(l.id) as total_leads\nFROM users u\nLEFT JOIN leads l ON u.id = l.corretorId\nWHERE u.role = 'corretor' AND (u.name IS NULL OR u.name = '' OR u.name = 'Sem nome')\nGROUP BY u.id, u.name, u.email\nORDER BY total_leads DESC;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 159
+}
