@@ -1080,8 +1080,8 @@ export const appRouter = router({
     listarLimites: gestorProcedure
       .query(async () => {
         const corretores = await db.getAllCorretores();
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
+        const { inicioDoDiaHoje } = await import('./timezone');
+        const hoje = inicioDoDiaHoje();
         
         const limites = await Promise.all(corretores.map(async (corretor) => {
           // Contar leads recebidos hoje
@@ -1185,10 +1185,12 @@ export const appRouter = router({
         dataFim: z.string(),
       }))
       .query(async ({ input }) => {
+        const { converterFiltrosData } = await import('./timezone');
+        const { dataInicio, dataFim } = converterFiltrosData(input.dataInicio, input.dataFim);
         return await presenca.calcularEstatisticasPresenca(
           input.corretorId,
-          new Date(input.dataInicio),
-          new Date(input.dataFim)
+          dataInicio!,
+          dataFim!
         );
       }),
     

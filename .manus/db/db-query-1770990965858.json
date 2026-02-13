@@ -1,0 +1,34 @@
+{
+  "query": "SELECT \n  u.name as corretor,\n  COUNT(*) as total_whatsapp_hoje,\n  MIN(i.createdAt) as primeiro_whatsapp,\n  MAX(i.createdAt) as ultimo_whatsapp\nFROM interacoes i\nINNER JOIN users u ON i.corretorId = u.id\nWHERE i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = '2026-02-13'\nGROUP BY u.name\nORDER BY total_whatsapp_hoje DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.name as corretor,\n  COUNT(*) as total_whatsapp_hoje,\n  MIN(i.createdAt) as primeiro_whatsapp,\n  MAX(i.createdAt) as ultimo_whatsapp\nFROM interacoes i\nINNER JOIN users u ON i.corretorId = u.id\nWHERE i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = '2026-02-13'\nGROUP BY u.name\nORDER BY total_whatsapp_hoje DESC;",
+  "rows": [
+    {
+      "corretor": "Andrew",
+      "total_whatsapp_hoje": "26",
+      "primeiro_whatsapp": "2026-02-13 00:43:35",
+      "ultimo_whatsapp": "2026-02-13 10:40:06"
+    },
+    {
+      "corretor": "Leticia Castro",
+      "total_whatsapp_hoje": "16",
+      "primeiro_whatsapp": "2026-02-13 01:50:10",
+      "ultimo_whatsapp": "2026-02-13 01:56:31"
+    },
+    {
+      "corretor": "Graziele Gomes",
+      "total_whatsapp_hoje": "12",
+      "primeiro_whatsapp": "2026-02-13 12:58:51",
+      "ultimo_whatsapp": "2026-02-13 13:54:31"
+    },
+    {
+      "corretor": "Daniel Lacerda",
+      "total_whatsapp_hoje": "6",
+      "primeiro_whatsapp": "2026-02-13 13:33:48",
+      "ultimo_whatsapp": "2026-02-13 13:35:15"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretor\ttotal_whatsapp_hoje\tprimeiro_whatsapp\tultimo_whatsapp\nAndrew\t26\t2026-02-13 00:43:35\t2026-02-13 10:40:06\nLeticia Castro\t16\t2026-02-13 01:50:10\t2026-02-13 01:56:31\nGraziele Gomes\t12\t2026-02-13 12:58:51\t2026-02-13 13:54:31\nDaniel Lacerda\t6\t2026-02-13 13:33:48\t2026-02-13 13:35:15\n",
+  "stderr": "",
+  "execution_time_ms": 368
+}

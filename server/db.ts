@@ -8685,7 +8685,13 @@ async function garantirAtividadeDiariaExiste(corretorId: number, data: Date) {
 export async function sincronizarInteracoesDoDia() {
   const db = await getDb();
   if (!db) return;
-  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  
+  // Usar funções corretas de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const inicioHoje = inicioDoDiaHoje();
+  const fimHoje = fimDoDiaHoje();
+  const hoje = new Date(inicioHoje);
+  hoje.setHours(0, 0, 0, 0);
   
   // Buscar da tabela interacoes
   const interacoesHoje = await db
@@ -8759,7 +8765,12 @@ export async function sincronizarVisitasDoDia() {
   const db = await getDb();
   if (!db) return;
   
-  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  // Usar funções corretas de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const inicioHoje = inicioDoDiaHoje();
+  const fimHoje = fimDoDiaHoje();
+  const hoje = new Date(inicioHoje);
+  hoje.setHours(0, 0, 0, 0);
   
   // Buscar da tabela visitas
   const visitasHoje = await db
@@ -8808,7 +8819,12 @@ export async function sincronizarDocumentacoesDoDia() {
   const db = await getDb();
   if (!db) return;
   
-  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  // Usar funções corretas de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const inicioHoje = inicioDoDiaHoje();
+  const fimHoje = fimDoDiaHoje();
+  const hoje = new Date(inicioHoje);
+  hoje.setHours(0, 0, 0, 0);
   
   // Buscar da tabela documentacoes
   const documentacoesHoje = await db
@@ -8857,7 +8873,12 @@ export async function sincronizarAnalisesCreditoDoDia() {
   const db = await getDb();
   if (!db) return;
   
-  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  // Usar funções corretas de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const inicioHoje = inicioDoDiaHoje();
+  const fimHoje = fimDoDiaHoje();
+  const hoje = new Date(inicioHoje);
+  hoje.setHours(0, 0, 0, 0);
   
   // Buscar da tabela analises_credito
   const analisesHoje = await db
@@ -8906,7 +8927,12 @@ export async function sincronizarContratosDoDia() {
   const db = await getDb();
   if (!db) return;
   
-  const { inicioHoje, fimHoje, hoje } = obterIntervaloHoje();
+  // Usar funções corretas de timezone
+  const { inicioDoDiaHoje, fimDoDiaHoje } = await import('./timezone');
+  const inicioHoje = inicioDoDiaHoje();
+  const fimHoje = fimDoDiaHoje();
+  const hoje = new Date(inicioHoje);
+  hoje.setHours(0, 0, 0, 0);
   
   // Buscar da tabela contratos
   const contratosHoje = await db

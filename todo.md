@@ -4060,3 +4060,20 @@
 - [x] Removidas 3 linhas problemáticas em 3 locais diferentes do arquivo Leads.tsx
 - [x] Testado e confirmado: modal agora abre corretamente ao clicar em "Criar Agendamento"
 
+
+## Bug CRÍTICO: Dados incorretos na página de Performance
+- [x] Investigar por que os dados de WhatsApp mostrados não correspondem aos contatos feitos hoje
+- [x] Identificado problema de timezone - função obterIntervaloHoje() calculava offset incorretamente
+- [x] Corrigidas 5 funções de sincronização para usar inicioDoDiaHoje() e fimDoDiaHoje() do timezone.ts
+- [x] Funções corrigidas: sincronizarInteracoesDoDia, sincronizarVisitasDoDia, sincronizarDocumentacoesDoDia, sincronizarAnalisesCreditoDoDia, sincronizarContratosDoDia
+- [x] Testado com dados reais - dados agora refletem corretamente atividades criadas hoje no timezone de SP
+
+## Auditoria de Timezone - Garantir Consistência em Todos os Registros
+- [x] Identificar todas as funções que criam registros com timestamps - 64 ocorrências encontradas
+- [x] Analisar quais precisam de correção - filtros de consulta vs criação de registros
+- [x] Corrigir funções de sincronização (5 funções) para usar inicioDoDiaHoje()/fimDoDiaHoje()
+- [x] Corrigir ranking.porDia para usar inicioDoDiaHoje()
+- [x] Corrigir presenca.estatisticas para usar converterFiltrosData()
+- [x] Testar com dados reais - sistema agora usa timezone de SP corretamente
+- [x] Documentar padrão de uso de timezone - criado TIMEZONE_GUIDE.md
+- [ ] Aplicar converterFiltrosData() nas ~50 queries restantes (baixa prioridade - afeta apenas visualizações)
