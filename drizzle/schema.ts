@@ -2027,3 +2027,36 @@ export const metasGlobais = mysqlTable("metas_globais", {
 
 export type MetaGlobal = typeof metasGlobais.$inferSelect;
 export type InsertMetaGlobal = typeof metasGlobais.$inferInsert;
+
+// ============================================================================
+// TABELA DE ALERTAS PARA CORRETORES
+// ============================================================================
+
+/**
+ * Tabela de alertas enviados pelo admin/gestor para corretores.
+ * Permite notificar corretores sobre leads que precisam de atenção urgente.
+ */
+export const alertas = mysqlTable("alertas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Referências
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  remetenteId: int("remetenteId").notNull().references(() => users.id), // Admin/Gestor que enviou
+  
+  // Conteúdo
+  mensagem: text("mensagem").notNull(),
+  
+  // Status
+  lido: boolean("lido").default(false).notNull(),
+  lidoEm: timestamp("lidoEm"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  corretorIdx: index("alertas_corretor_idx").on(table.corretorId),
+  lidoIdx: index("alertas_lido_idx").on(table.lido),
+  createdAtIdx: index("alertas_created_at_idx").on(table.createdAt),
+}));
+
+export type Alerta = typeof alertas.$inferSelect;
+export type InsertAlerta = typeof alertas.$inferInsert;

@@ -198,6 +198,15 @@ export default function Leads() {
       utils.leads.list.invalidate();
     },
   });
+  
+  const enviarAlertaMutation = trpc.alertas.enviar.useMutation({
+    onSuccess: () => {
+      toast.success("Alerta enviado ao corretor com sucesso!");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao enviar alerta: ${error.message}`);
+    },
+  });
   const { data: leadHistory } = trpc.leads.getHistory.useQuery(
     { leadId: selectedLead?.id || 0 },
     { enabled: !!selectedLead }
@@ -1135,6 +1144,26 @@ export default function Leads() {
                               >
                                 <UserPlus className="h-4 w-4 mr-1" />
                                 Atribuir
+                              </Button>
+                            )}
+                            {isGestor && lead.corretorId && lead.status === "aguardando_atendimento" && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  enviarAlertaMutation.mutate({
+                                    leadId: lead.id,
+                                    corretorId: lead.corretorId,
+                                  });
+                                }}
+                                disabled={enviarAlertaMutation.isPending}
+                              >
+                                {enviarAlertaMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                  <AlertCircle className="h-4 w-4 mr-1" />
+                                )}
+                                Alertar
                               </Button>
                             )}
                             <Button

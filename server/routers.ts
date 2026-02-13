@@ -2999,7 +2999,7 @@ export const appRouter = router({
   // ============================================================================
   // ALERTAS DE PRODUTIVIDADE
   // ============================================================================
-  alertas: router({
+  alertasProdutividade: router({
     // Listar alertas (filtros opcionais)
     list: gestorProcedure
       .input(z.object({
@@ -6093,6 +6093,97 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           .limit(input.limit);
         
         return result;
+      }),
+  }),
+
+  // ============================================================================
+  // SISTEMA DE ALERTAS PARA CORRETORES
+  // ============================================================================
+  alertas: router({
+    // Enviar alerta para corretor (admin/gestor)
+    enviar: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        corretorId: z.number(),
+        mensagem: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { alertas, leads } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        
+        // Buscar informações do lead
+        const lead = await db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1);
+        if (!lead.length) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        const mensagem = input.mensagem || `Atenda urgentemente o lead ${lead[0].nome} que está aguardando atendimento!`;
+        
+        // Criar alerta
+        await db.insert(alertas).values({
+          leadId: input.leadId,
+          corretorId: input.corretorId,
+          remetenteId: ctx.user.id,
+          mensagem,
+          lido: false,
+        });
+        
+        return { success: true };
+      }),
+    
+    // Listar alertas do corretor logado
+    meus: protectedProcedure
+      .input(z.object({
+        apenasNaoLidos: z.boolean().optional().default(true),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { alertas, leads } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, and, desc } = await import('drizzle-orm');
+        
+        let conditions = [eq(alertas.corretorId, ctx.user.id)];
+        
+        if (input.apenasNaoLidos) {
+          conditions.push(eq(alertas.lido, false));
+        }
+        
+        const result = await db
+          .select({
+            id: alertas.id,
+            leadId: alertas.leadId,
+            leadNome: leads.nome,
+            mensagem: alertas.mensagem,
+            lido: alertas.lido,
+            lidoEm: alertas.lidoEm,
+            createdAt: alertas.createdAt,
+          })
+          .from(alertas)
+          .leftJoin(leads, eq(alertas.leadId, leads.id))
+          .where(and(...conditions))
+          .orderBy(desc(alertas.createdAt));
+        
+        return result;
+      }),
+    
+    // Marcar alerta como lido
+    marcarLido: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { alertas } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, and } = await import('drizzle-orm');
+        
+        await db
+          .update(alertas)
+          .set({ lido: true, lidoEm: new Date() })
+          .where(and(
+            eq(alertas.id, input.id),
+            eq(alertas.corretorId, ctx.user.id)
+          ));
+        
+        return { success: true };
       }),
   }),
 });

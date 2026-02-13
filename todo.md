@@ -4077,3 +4077,25 @@
 - [x] Testar com dados reais - sistema agora usa timezone de SP corretamente
 - [x] Documentar padrão de uso de timezone - criado TIMEZONE_GUIDE.md
 - [ ] Aplicar converterFiltrosData() nas ~50 queries restantes (baixa prioridade - afeta apenas visualizações)
+
+## Nova Feature: Sistema de Alertas para Corretores
+- [ ] Criar tabela de alertas no schema (id, leadId, corretorId, mensagem, lido, createdAt)
+- [ ] Criar procedure para enviar alerta (alertas.enviar)
+- [ ] Criar procedure para listar alertas do corretor (alertas.meus)
+- [ ] Criar procedure para marcar alerta como lido (alertas.marcarLido)
+- [ ] Adicionar botão "Alertar" na lista de leads (visível apenas para admin/gestor)
+- [ ] Implementar modal de confirmação ao clicar em "Alertar"
+- [ ] Criar componente de notificações em tempo real (AlertasNotification)
+- [ ] Adicionar som de alerta quando notificação chegar
+- [ ] Criar badge/contador de alertas pendentes no menu
+- [ ] Implementar polling ou WebSocket para atualização em tempo real
+- [ ] Testar fluxo completo (admin alerta → corretor recebe notificação com som)
+- [ ] Criar testes unitários para procedures de alertas
+
+## Nova Feature: Sistema de Alertas para Corretores
+- [x] Criar tabela de alertas no schema
+- [x] Criar procedures backend (enviar, listar, marcar como lido)
+- [x] Adicionar botão "Alertar" na interface de leads (admin/gestor)
+- [x] Criar componente de notificações em tempo real com som
+- [ ] Testar fluxo completo
+- [ ] Salvar checkpoint

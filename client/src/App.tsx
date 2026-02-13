@@ -53,7 +53,7 @@ import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
 import GestaoEquipes from "@/pages/GestaoEquipes";
 import MinhaEquipe from "@/pages/MinhaEquipe";
-import { SMQCopilotFloating } from "@/components/SMQCopilotFloating";
+import { AlertasNotification } from "./components/AlertasNotification";
 
 
 
@@ -125,7 +125,7 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <Router />
-              <SMQCopilotFloating />
+              <AlertasNotification />
             </TooltipProvider>
           </CopilotProvider>
         </CompareProvider>
