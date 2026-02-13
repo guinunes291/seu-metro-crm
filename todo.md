@@ -4099,3 +4099,9 @@
 - [x] Criar componente de notificações em tempo real com som
 - [ ] Testar fluxo completo
 - [ ] Salvar checkpoint
+
+## Bug CRÍTICO: Erro ao clicar no botão Alertar
+- [ ] Investigar erro "Cannot read properties of undefined (reading 'select')"
+- [ ] Verificar código da mutation enviarAlerta no Leads.tsx
+- [ ] Verificar procedure alertas.enviar no backend
+- [ ] Testar após correção

@@ -6109,7 +6109,9 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }))
       .mutation(async ({ input, ctx }) => {
         const { alertas, leads } = await import('../drizzle/schema');
-        const { db } = await import('./db');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
+        const { eq } = await import('drizzle-orm');
         
         // Buscar informações do lead
         const lead = await db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1);
@@ -6138,7 +6140,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }))
       .query(async ({ input, ctx }) => {
         const { alertas, leads } = await import('../drizzle/schema');
-        const { db } = await import('./db');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
         const { eq, and, desc } = await import('drizzle-orm');
         
         let conditions = [eq(alertas.corretorId, ctx.user.id)];
@@ -6172,7 +6175,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }))
       .mutation(async ({ input, ctx }) => {
         const { alertas } = await import('../drizzle/schema');
-        const { db } = await import('./db');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
         const { eq, and } = await import('drizzle-orm');
         
         await db
