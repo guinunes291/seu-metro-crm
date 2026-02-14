@@ -4113,3 +4113,12 @@
 - [x] Testar que gestor aparece em "Faturamento por Vendedor"
 - [x] Validar que todas as métricas incluem o gestor
 - [ ] Salvar checkpoint
+
+## Bug: Gestor Guilherme Nunes não aparece em "Faturamento por Vendedor"
+- [x] Verificar se Guilherme Nunes tem contratos registrados em fevereiro/2026
+- [x] Verificar qual é o ID do usuário Guilherme Nunes no banco
+- [x] Investigar query getVendasPorCorretor para identificar por que ele não aparece
+- [x] Verificar se o problema é no filtro ou na query de agregação
+- [x] Corrigir query para incluir gestor corretamente (removido filtro role='corretor')
+- [x] Testar e validar que Guilherme aparece na lista
+- [ ] Salvar checkpoint

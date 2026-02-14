@@ -1795,8 +1795,9 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar corretores (filtrados por equipe se necessário)
-  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  // Query 1: Buscar todos os usuários que podem ter vendas (filtrados por equipe se necessário)
+  // Incluir corretores, gestores e admins que tenham vendas
+  const corretoresConditions: any[] = [];
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
     corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
   }
@@ -1807,7 +1808,7 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
     status: users.status,
   })
     .from(users)
-    .where(and(...corretoresConditions));
+    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
   
   // Query 2: Contar leads por corretor em uma única query com GROUP BY
   const leadsConditions: any[] = [];
@@ -1847,8 +1848,9 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar corretores (filtrados por equipe se necessário)
-  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  // Query 1: Buscar todos os usuários que podem ter vendas (filtrados por equipe se necessário)
+  // Incluir corretores, gestores e admins que tenham vendas
+  const corretoresConditions: any[] = [];
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
     corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
   }
@@ -1859,7 +1861,7 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
     status: users.status,
   })
     .from(users)
-    .where(and(...corretoresConditions));
+    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
   
   // Query 2: Contar agendamentos por corretor com GROUP BY
   const agendamentosConditions: any[] = [];
@@ -1897,8 +1899,9 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar corretores (filtrados por equipe se necessário)
-  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  // Query 1: Buscar todos os usuários que podem ter vendas (filtrados por equipe se necessário)
+  // Incluir corretores, gestores e admins que tenham vendas
+  const corretoresConditions: any[] = [];
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
     corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
   }
@@ -1909,7 +1912,7 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
     status: users.status,
   })
     .from(users)
-    .where(and(...corretoresConditions));
+    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
   
   // Query 2: Contar visitas por corretor com GROUP BY
   const visitasConditions: any[] = [];
@@ -1947,8 +1950,9 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar corretores (filtrados por equipe se necessário)
-  const corretoresConditions: any[] = [eq(users.role, 'corretor')];
+  // Query 1: Buscar todos os usuários que podem ter vendas (filtrados por equipe se necessário)
+  // Incluir corretores, gestores e admins que tenham vendas
+  const corretoresConditions: any[] = [];
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
     corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
   }
@@ -1959,7 +1963,7 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
     status: users.status,
   })
     .from(users)
-    .where(and(...corretoresConditions));
+    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
   
   // Query 2: Buscar VGV real da tabela de contratos (valorVenda em reais)
   const contratosConditions: any[] = [];
