@@ -4122,3 +4122,12 @@
 - [x] Corrigir query para incluir gestor corretamente (removido filtro role='corretor')
 - [x] Testar e validar que Guilherme aparece na lista
 - [ ] Salvar checkpoint
+
+## Bug: Gestor ainda não aparece em "Faturamento por Vendedor" após filtrar por equipe
+- [x] Verificar se a correção anterior (remoção do filtro role='corretor') foi aplicada corretamente
+- [x] Verificar se o ID do gestor está sendo incluído no array retornado por getCorretoresIdsParaFiltro
+- [x] Investigar query getVendasPorCorretor com logs detalhados
+- [x] Identificar onde o gestor está sendo filtrado (problema: filtro por equipeId em getDashboardPerformance)
+- [x] Corrigir problema (buscar membros da equipe + gestor corretamente)
+- [x] Testar e validar que gestor aparece
+- [ ] Salvar checkpoint

@@ -9150,7 +9150,19 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
   );
   
   if (equipeId) {
-    corretoresResult = corretoresResult.filter(c => c.equipeId === equipeId);
+    // Buscar membros da equipe + gestor
+    const { getCorretoresDaEquipe, getEquipeById } = await import('./equipes');
+    const equipe = await getEquipeById(equipeId);
+    const membros = await getCorretoresDaEquipe(equipeId);
+    const membrosIds = membros.map(m => m.id);
+    
+    // Incluir o gestor da equipe
+    if (equipe?.gestorId && !membrosIds.includes(equipe.gestorId)) {
+      membrosIds.push(equipe.gestorId);
+    }
+    
+    // Filtrar apenas membros da equipe + gestor
+    corretoresResult = corretoresResult.filter(c => membrosIds.includes(c.id));
   }
   
   // Dados por corretor
