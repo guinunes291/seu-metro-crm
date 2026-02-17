@@ -1845,6 +1845,48 @@ export type Contrato = typeof contratos.$inferSelect;
 export type InsertContrato = typeof contratos.$inferInsert;
 
 // ============================================================================
+// TABELA DE HISTÓRICO DE TRANSFERÊNCIAS (Reatribuição de Leads/Contratos)
+// ============================================================================
+
+/**
+ * Tabela para registrar todas as transferências de leads e contratos entre corretores.
+ * Usado para auditoria e rastreamento de reatribuições.
+ */
+export const transferHistory = mysqlTable("transfer_history", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Tipo de transferência
+  tipo: mysqlEnum("tipo", ["lead", "contrato"]).notNull(),
+  
+  // ID do lead ou contrato transferido
+  leadId: int("leadId"), // NULL se for transferência de contrato
+  contratoId: int("contratoId"), // NULL se for transferência de lead
+  
+  // Corretores envolvidos
+  corretorAnteriorId: int("corretorAnteriorId").notNull().references(() => users.id),
+  corretorNovoId: int("corretorNovoId").notNull().references(() => users.id),
+  
+  // Quem fez a transferência
+  transferidoPorId: int("transferidoPorId").notNull().references(() => users.id),
+  
+  // Motivo e observações
+  motivo: text("motivo"),
+  observacoes: text("observacoes"),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  leadIdx: index("transfer_lead_idx").on(table.leadId),
+  contratoIdx: index("transfer_contrato_idx").on(table.contratoId),
+  corretorAnteriorIdx: index("transfer_corretor_anterior_idx").on(table.corretorAnteriorId),
+  corretorNovoIdx: index("transfer_corretor_novo_idx").on(table.corretorNovoId),
+  createdAtIdx: index("transfer_created_at_idx").on(table.createdAt),
+}));
+
+export type TransferHistory = typeof transferHistory.$inferSelect;
+export type InsertTransferHistory = typeof transferHistory.$inferInsert;
+
+// ============================================================================
 // TABELA DE PUSH SUBSCRIPTIONS (Notificações Push)
 // ============================================================================
 

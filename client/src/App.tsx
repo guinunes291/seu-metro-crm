@@ -53,6 +53,7 @@ import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
 import GestaoEquipes from "@/pages/GestaoEquipes";
 import MinhaEquipe from "@/pages/MinhaEquipe";
+import GestaoAtribuicoes from "@/pages/GestaoAtribuicoes";
 import { AlertasNotification } from "./components/AlertasNotification";
 
 
@@ -103,6 +104,7 @@ function Router() {
       <Route path="/log-transferencias" component={LogTransferencias} />
       <Route path="/gestao-equipes" component={GestaoEquipes} />
       <Route path="/minha-equipe" component={MinhaEquipe} />
+      <Route path="/gestao-atribuicoes" component={GestaoAtribuicoes} />
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

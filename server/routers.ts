@@ -6097,6 +6097,189 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
   }),
 
   // ============================================================================
+  // SISTEMA DE REATRIBUIÇÃO DE LEADS E CONTRATOS
+  // ============================================================================
+  reatribuicao: router({
+    // Reatribuir lead para outro corretor (gestor/admin)
+    reatribuirLead: gestorProcedure
+      .input(z.object({
+        leadId: z.number(),
+        novoCorretorId: z.number(),
+        motivo: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { leads, transferHistory, contratos } = await import('../drizzle/schema');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
+        const { eq } = await import('drizzle-orm');
+        
+        // Buscar lead atual
+        const leadAtual = await db.select().from(leads).where(eq(leads.id, input.leadId)).limit(1);
+        if (!leadAtual.length) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+        }
+        
+        const corretorAnteriorId = leadAtual[0].corretorId;
+        
+        if (!corretorAnteriorId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Lead não possui corretor atribuído' });
+        }
+        
+        if (corretorAnteriorId === input.novoCorretorId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'O novo corretor é o mesmo que o atual' });
+        }
+        
+        // Atualizar lead
+        await db
+          .update(leads)
+          .set({ 
+            corretorId: input.novoCorretorId,
+            dataDistribuicao: new Date(),
+            timestampRecebimento: new Date(),
+          })
+          .where(eq(leads.id, input.leadId));
+        
+        // Registrar transferência no histórico
+        await db.insert(transferHistory).values({
+          tipo: 'lead',
+          leadId: input.leadId,
+          contratoId: null,
+          corretorAnteriorId,
+          corretorNovoId: input.novoCorretorId,
+          transferidoPorId: ctx.user.id,
+          motivo: input.motivo || 'Reatribuição manual',
+          observacoes: input.observacoes,
+        });
+        
+        // Se o lead tem contrato, atualizar também
+        const contratoExistente = await db.select().from(contratos).where(eq(contratos.leadId, input.leadId)).limit(1);
+        if (contratoExistente.length) {
+          await db
+            .update(contratos)
+            .set({ corretorId: input.novoCorretorId })
+            .where(eq(contratos.leadId, input.leadId));
+        }
+        
+        return { success: true, leadId: input.leadId };
+      }),
+    
+    // Reatribuir contrato para outro corretor (gestor/admin)
+    reatribuirContrato: gestorProcedure
+      .input(z.object({
+        contratoId: z.number(),
+        novoCorretorId: z.number(),
+        motivo: z.string().optional(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { contratos, transferHistory, leads } = await import('../drizzle/schema');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
+        const { eq } = await import('drizzle-orm');
+        
+        // Buscar contrato atual
+        const contratoAtual = await db.select().from(contratos).where(eq(contratos.id, input.contratoId)).limit(1);
+        if (!contratoAtual.length) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Contrato não encontrado' });
+        }
+        
+        const corretorAnteriorId = contratoAtual[0].corretorId;
+        
+        if (corretorAnteriorId === input.novoCorretorId) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'O novo corretor é o mesmo que o atual' });
+        }
+        
+        // Atualizar contrato
+        await db
+          .update(contratos)
+          .set({ corretorId: input.novoCorretorId })
+          .where(eq(contratos.id, input.contratoId));
+        
+        // Atualizar lead correspondente se existir
+        const leadId = contratoAtual[0].leadId;
+        if (leadId) {
+          await db
+            .update(leads)
+            .set({ 
+              corretorId: input.novoCorretorId,
+              dataDistribuicao: new Date(),
+            })
+            .where(eq(leads.id, leadId));
+        }
+        
+        // Registrar transferência no histórico
+        await db.insert(transferHistory).values({
+          tipo: 'contrato',
+          leadId: leadId || null,
+          contratoId: input.contratoId,
+          corretorAnteriorId,
+          corretorNovoId: input.novoCorretorId,
+          transferidoPorId: ctx.user.id,
+          motivo: input.motivo || 'Reatribuição manual de contrato',
+          observacoes: input.observacoes,
+        });
+        
+        return { success: true, contratoId: input.contratoId };
+      }),
+    
+    // Listar histórico de transferências (gestor/admin)
+    listarHistorico: gestorProcedure
+      .input(z.object({
+        tipo: z.enum(['lead', 'contrato']).optional(),
+        leadId: z.number().optional(),
+        contratoId: z.number().optional(),
+        corretorId: z.number().optional(),
+        limit: z.number().optional().default(50),
+      }))
+      .query(async ({ input }) => {
+        const { transferHistory, users, leads } = await import('../drizzle/schema');
+        const dbModule = await import('./db');
+        const db = dbModule.db;
+        const { eq, and, desc } = await import('drizzle-orm');
+        
+        const conditions = [];
+        
+        if (input.tipo) {
+          conditions.push(eq(transferHistory.tipo, input.tipo));
+        }
+        if (input.leadId) {
+          conditions.push(eq(transferHistory.leadId, input.leadId));
+        }
+        if (input.contratoId) {
+          conditions.push(eq(transferHistory.contratoId, input.contratoId));
+        }
+        if (input.corretorId) {
+          conditions.push(
+            eq(transferHistory.corretorAnteriorId, input.corretorId)
+          );
+        }
+        
+        const result = await db
+          .select({
+            id: transferHistory.id,
+            tipo: transferHistory.tipo,
+            leadId: transferHistory.leadId,
+            leadNome: leads.nome,
+            contratoId: transferHistory.contratoId,
+            corretorAnteriorId: transferHistory.corretorAnteriorId,
+            corretorNovoId: transferHistory.corretorNovoId,
+            transferidoPorId: transferHistory.transferidoPorId,
+            motivo: transferHistory.motivo,
+            observacoes: transferHistory.observacoes,
+            createdAt: transferHistory.createdAt,
+          })
+          .from(transferHistory)
+          .leftJoin(leads, eq(transferHistory.leadId, leads.id))
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(desc(transferHistory.createdAt))
+          .limit(input.limit);
+        
+        return result;
+      }),
+  }),
+
+  // ============================================================================
   // SISTEMA DE ALERTAS PARA CORRETORES
   // ============================================================================
   alertas: router({

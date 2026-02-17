@@ -4131,3 +4131,32 @@
 - [x] Corrigir problema (buscar membros da equipe + gestor corretamente)
 - [x] Testar e validar que gestor aparece
 - [ ] Salvar checkpoint
+
+## Nova Feature: Gestão de Atribuição de Leads/Contratos (Reatribuição Fácil)
+- [ ] Criar tabela de histórico de transferências no schema
+- [ ] Implementar procedure de reatribuição de lead no backend
+- [ ] Implementar procedure de reatribuição de contrato no backend
+- [ ] Criar página de gestão de atribuições (/gestao/atribuicoes)
+- [ ] Implementar lista de leads/contratos com filtros (status, corretor atual, equipe)
+- [ ] Criar modal de reatribuição com seleção de novo corretor
+- [ ] Implementar atualização automática de métricas após reatribuição
+- [ ] Adicionar controle de acesso (apenas gestores e admins)
+- [ ] Criar histórico de transferências visível para auditoria
+- [ ] Implementar invalidação de cache para atualização em tempo real
+- [ ] Testar reatribuição de leads em diferentes status
+- [ ] Testar reatribuição de contratos e impacto nas métricas
+- [ ] Criar testes unitários para procedures de reatribuição
+
+## Nova Feature: Gestão de Atribuições de Leads/Contratos (Fev 2026)
+- [x] Criar schema de banco de dados para histórico de transferências
+- [x] Implementar backend (tRPC procedures) para reatribuição de leads
+- [x] Implementar backend (tRPC procedures) para reatribuição de contratos
+- [x] Implementar backend para listar histórico de transferências
+- [x] Criar interface de gestão com lista de leads (/gestao-atribuicoes)
+- [x] Implementar filtros avançados (status, corretor, busca, tipo)
+- [x] Implementar modal de reatribuição com validações
+- [x] Implementar modal de histórico de transferências
+- [x] Adicionar atualização em tempo real das métricas (invalidação de queries)
+- [x] Testar funcionalidade completa
+- [x] Corrigir erro de Select.Item com valores vazios
+- [ ] Adicionar permissões (apenas gestor/admin)

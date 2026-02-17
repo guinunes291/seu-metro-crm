@@ -1,0 +1,127 @@
+{
+  "query": "\nSELECT \n  c.id,\n  l.nome AS cliente,\n  u.name AS corretor,\n  COALESCE(e.nome, 'Sem equipe') AS equipe,\n  CONCAT('R$ ', FORMAT(c.valorVenda, 2, 'pt_BR')) AS valor,\n  DATE_FORMAT(c.createdAt, '%d/%m/%Y') AS data,\n  DATE_FORMAT(c.createdAt, '%b/%Y') AS periodo\nFROM contratos c\nINNER JOIN leads l ON c.leadId = l.id\nINNER JOIN users u ON c.corretorId = u.id\nLEFT JOIN equipes e ON u.equipeId = e.id\nORDER BY c.createdAt DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  c.id,\n  l.nome AS cliente,\n  u.name AS corretor,\n  COALESCE(e.nome, 'Sem equipe') AS equipe,\n  CONCAT('R$ ', FORMAT(c.valorVenda, 2, 'pt_BR')) AS valor,\n  DATE_FORMAT(c.createdAt, '%d/%m/%Y') AS data,\n  DATE_FORMAT(c.createdAt, '%b/%Y') AS periodo\nFROM contratos c\nINNER JOIN leads l ON c.leadId = l.id\nINNER JOIN users u ON c.corretorId = u.id\nLEFT JOIN equipes e ON u.equipeId = e.id\nORDER BY c.createdAt DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "210001",
+      "cliente": "Renata Cristina Borges",
+      "corretor": "Luis Carlos De Veras",
+      "equipe": "Sem equipe",
+      "valor": "R$ 416,546.72",
+      "data": "15/02/2026",
+      "periodo": "Feb/2026"
+    },
+    {
+      "id": "180001",
+      "cliente": "Edmilson Alves",
+      "corretor": "Andrew",
+      "equipe": "Equipe Guilherme Nunes",
+      "valor": "R$ 310,121.39",
+      "data": "09/02/2026",
+      "periodo": "Feb/2026"
+    },
+    {
+      "id": "120001",
+      "cliente": "RONEY NOGUEIRA JUNIOR",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 380,000.00",
+      "data": "07/02/2026",
+      "periodo": "Feb/2026"
+    },
+    {
+      "id": "150001",
+      "cliente": "Julia Alves Santos",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 310,800.00",
+      "data": "05/02/2026",
+      "periodo": "Feb/2026"
+    },
+    {
+      "id": "90001",
+      "cliente": "Vitor Dos Santos Marcos",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 323,000.00",
+      "data": "05/02/2026",
+      "periodo": "Feb/2026"
+    },
+    {
+      "id": "210003",
+      "cliente": "Gabriel Vieira Da Silva",
+      "corretor": "Igor Nigro",
+      "equipe": "Equipe Sheldon",
+      "valor": "R$ 321,620.00",
+      "data": "29/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "30002",
+      "cliente": "Luanna Benício Coelho",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 275,000.00",
+      "data": "29/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "210002",
+      "cliente": "Emerson Rosário Dos Santos",
+      "corretor": "Igor Nigro",
+      "equipe": "Equipe Sheldon",
+      "valor": "R$ 226,900.00",
+      "data": "29/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "60001",
+      "cliente": "Ronaldo",
+      "corretor": "kauanthyago34",
+      "equipe": "Equipe Guilherme Nunes",
+      "valor": "R$ 249,900.00",
+      "data": "29/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "30001",
+      "cliente": "CARLOS EDUARDO RODRIGUES DOS SANTOS DE OLIVEIRA",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 265,000.00",
+      "data": "27/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "1",
+      "cliente": "André Alves de",
+      "corretor": "Andrew",
+      "equipe": "Equipe Guilherme Nunes",
+      "valor": "R$ 199,629.58",
+      "data": "26/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "2",
+      "cliente": "Julia Gonçalves Severino",
+      "corretor": "Guilherme Nunes",
+      "equipe": "Sem equipe",
+      "valor": "R$ 299,800.00",
+      "data": "26/01/2026",
+      "periodo": "Jan/2026"
+    },
+    {
+      "id": "3",
+      "cliente": "JUSTINE MARIA DOS SANTOS ",
+      "corretor": "sheldonbarbosaa",
+      "equipe": "Sem equipe",
+      "valor": "R$ 338,092.98",
+      "data": "19/01/2026",
+      "periodo": "Jan/2026"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcliente\tcorretor\tequipe\tvalor\tdata\tperiodo\n210001\tRenata Cristina Borges\tLuis Carlos De Veras\tSem equipe\tR$ 416,546.72\t15/02/2026\tFeb/2026\n180001\tEdmilson Alves\tAndrew\tEquipe Guilherme Nunes\tR$ 310,121.39\t09/02/2026\tFeb/2026\n120001\tRONEY NOGUEIRA JUNIOR\tGuilherme Nunes\tSem equipe\tR$ 380,000.00\t07/02/2026\tFeb/2026\n150001\tJulia Alves Santos\tGuilherme Nunes\tSem equipe\tR$ 310,800.00\t05/02/2026\tFeb/2026\n90001\tVitor Dos Santos Marcos\tGuilherme Nunes\tSem equipe\tR$ 323,000.00\t05/02/2026\tFeb/2026\n210003\tGabriel Vieira Da Silva\tIgor Nigro\tEquipe Sheldon\tR$ 321,620.00\t29/01/2026\tJan/2026\n30002\tLuanna Benício Coelho\tGuilherme Nunes\tSem equipe\tR$ 275,000.00\t29/01/2026\tJan/2026\n210002\tEmerson Rosário Dos Santos\tIgor Nigro\tEquipe Sheldon\tR$ 226,900.00\t29/01/2026\tJan/2026\n60001\tRonaldo\tkauanthyago34\tEquipe Guilherme Nunes\tR$ 249,900.00\t29/01/2026\tJan/2026\n30001\tCARLOS EDUARDO RODRIGUES DOS SANTOS DE OLIVEIRA\tGuilherme Nunes\tSem equipe\tR$ 265,000.00\t27/01/2026\tJan/2026\n1\tAndré Alves de\tAndrew\tEquipe Guilherme Nunes\tR$ 199,629.58\t26/01/2026\tJan/2026\n2\tJulia Gonçalves Severino\tGuilherme Nunes\tSem equipe\tR$ 299,800.00\t26/01/2026\tJan/2026\n3\tJUSTINE MARIA DOS SANTOS \tsheldonbarbosaa\tSem equipe\tR$ 338,092.98\t19/01/2026\tJan/2026\n",
+  "stderr": "",
+  "execution_time_ms": 167
+}

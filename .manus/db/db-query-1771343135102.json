@@ -1,0 +1,28 @@
+{
+  "query": "\nSELECT \n  COALESCE(e.nome, 'Sem equipe') AS equipe,\n  COUNT(c.id) AS total_contratos,\n  SUM(c.valorVenda) AS vgv_total,\n  GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ') AS corretores\nFROM contratos c\nINNER JOIN users u ON c.corretorId = u.id\nLEFT JOIN equipes e ON u.equipeId = e.id\nGROUP BY e.id, e.nome\nORDER BY total_contratos DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  COALESCE(e.nome, 'Sem equipe') AS equipe,\n  COUNT(c.id) AS total_contratos,\n  SUM(c.valorVenda) AS vgv_total,\n  GROUP_CONCAT(DISTINCT u.name ORDER BY u.name SEPARATOR ', ') AS corretores\nFROM contratos c\nINNER JOIN users u ON c.corretorId = u.id\nLEFT JOIN equipes e ON u.equipeId = e.id\nGROUP BY e.id, e.nome\nORDER BY total_contratos DESC;\n",
+  "rows": [
+    {
+      "equipe": "Sem equipe",
+      "total_contratos": "8",
+      "vgv_total": "2608239.70",
+      "corretores": "Guilherme Nunes, Luis Carlos De Veras, sheldonbarbosaa"
+    },
+    {
+      "equipe": "Equipe Guilherme Nunes",
+      "total_contratos": "3",
+      "vgv_total": "759650.97",
+      "corretores": "Andrew, kauanthyago34"
+    },
+    {
+      "equipe": "Equipe Sheldon",
+      "total_contratos": "2",
+      "vgv_total": "548520.00",
+      "corretores": "Igor Nigro"
+    }
+  ],
+  "messages": [],
+  "stdout": "equipe\ttotal_contratos\tvgv_total\tcorretores\nSem equipe\t8\t2608239.70\tGuilherme Nunes, Luis Carlos De Veras, sheldonbarbosaa\nEquipe Guilherme Nunes\t3\t759650.97\tAndrew, kauanthyago34\nEquipe Sheldon\t2\t548520.00\tIgor Nigro\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
