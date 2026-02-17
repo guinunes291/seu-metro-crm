@@ -373,7 +373,7 @@ export async function syncLeadsFromSheet(
         .filter(row => row.telefone)
         .map(row => normalizeTelefone(row.telefone));
       
-      const existingPhones = await getExistingPhones(batchTelefones);
+      const existingPhones = await getExistingLeads(batchTelefones);
 
       for (let i = 0; i < batch.length; i++) {
         const row = batch[i];

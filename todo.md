@@ -4192,4 +4192,10 @@
 - [x] Analisar funcionalidade existente de "Sincronizar Novos"
 - [x] Implementar lógica de atualização de projetoCustom em leads existentes
 - [x] Reiniciar servidor para aplicar mudanças
+- [x] Criar checkpoint
+
+## Correção: Erro getExistingPhones is not defined
+- [x] Verificar se função getExistingPhones existe no arquivo
+- [x] Corrigir referência para getExistingLeads
+- [ ] Testar sincronização novamente
 - [ ] Criar checkpoint
