@@ -4206,4 +4206,22 @@
 - [x] Identificar problema: condição !lead.projectId impedia atualização
 - [x] Corrigir lógica para atualizar sempre que projetoCustom estiver vazio
 - [x] Reiniciar servidor
-- [ ] Criar checkpoint
+- [x] Criar checkpoint
+
+## Correção Definitiva: Sincronização de Projetos do Google Sheets
+- [x] Adicionar logs detalhados na função syncLeadsFromSheet
+- [ ] Verificar se planilha tem coluna "Projeto" ou outras variações
+- [ ] Garantir que row.projeto está sendo lido corretamente
+- [ ] Testar lógica de atualização com dados reais
+- [ ] Verificar se leads estão sendo encontrados por telefone
+- [ ] Criar checkpoint após correção
+
+## Correção Crítica: Sincronização de projetoCustom não estava funcionando
+- [x] Identificar problema: função getExistingLeads buscava telefones exatos, mas formato no banco era diferente
+- [x] Modificar getExistingLeads para usar REGEXP_REPLACE no SQL para comparar apenas números
+- [x] Remover logs de debug após correção
+- [x] Criar testes automatizados para validar sincronização
+- [x] Executar testes - todos os 9 testes passaram
+- [ ] Testar sincronização real com planilha do Google Sheets
+- [ ] Verificar que leads agora mostram nomes de projetos nos cards
+- [ ] Criar checkpoint final

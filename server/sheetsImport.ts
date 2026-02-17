@@ -146,11 +146,17 @@ async function getExistingLeads(telefones: string[]): Promise<Set<string>> {
   if (!db || telefones.length === 0) return new Set();
 
   try {
-    // Buscar por telefones em lote
+    // Normalizar telefones da planilha (apenas números)
+    const normalizedPhones = telefones.map(t => extractPhoneNumbers(t));
+    
+    // Buscar leads cujo telefone (apenas números) corresponda a algum da lista
+    // Usamos REGEXP_REPLACE para remover caracteres não numéricos no SQL
     const existing = await db
       .select({ telefone: leads.telefone })
       .from(leads)
-      .where(inArray(leads.telefone, telefones));
+      .where(
+        sql`REGEXP_REPLACE(${leads.telefone}, '[^0-9]', '') IN (${sql.join(normalizedPhones.map(p => sql`${p}`), sql`, `)})`
+      );
 
     // Retornar Set de telefones normalizados (apenas números)
     return new Set(existing.map(l => extractPhoneNumbers(l.telefone)));
