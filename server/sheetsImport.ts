@@ -412,8 +412,8 @@ export async function syncLeadsFromSheet(
               if (existingLead.length > 0) {
                 const lead = existingLead[0];
                 
-                // Atualizar apenas se projetoCustom estiver vazio e não tiver projectId
-                if (!lead.projetoCustom && !lead.projectId) {
+                // Atualizar apenas se projetoCustom estiver vazio
+                if (!lead.projetoCustom || lead.projetoCustom.trim() === "") {
                   await db
                     .update(leads)
                     .set({

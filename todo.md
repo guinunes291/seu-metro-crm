@@ -4197,5 +4197,13 @@
 ## Correção: Erro getExistingPhones is not defined
 - [x] Verificar se função getExistingPhones existe no arquivo
 - [x] Corrigir referência para getExistingLeads
-- [ ] Testar sincronização novamente
+- [x] Reiniciar servidor
+- [x] Criar checkpoint
+
+## Investigação: Sincronização não está atualizando projetoCustom
+- [x] Verificar logs do servidor para identificar o problema
+- [x] Verificar query no banco - apenas 1 lead com projetoCustom
+- [x] Identificar problema: condição !lead.projectId impedia atualização
+- [x] Corrigir lógica para atualizar sempre que projetoCustom estiver vazio
+- [x] Reiniciar servidor
 - [ ] Criar checkpoint
