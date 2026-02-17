@@ -1,1 +1,0 @@
-ALTER TABLE `leads` ADD `origemWebhook` boolean DEFAULT false NOT NULL;

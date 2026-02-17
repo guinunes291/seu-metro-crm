@@ -839,10 +839,10 @@ export default function Leads() {
                               </a>
                             </div>
                           )}
-                          {project && (
+                          {(project || lead.projetoCustom) && (
                             <div className="flex items-center gap-2 text-sm">
                               <Building2 className="h-4 w-4 text-muted-foreground" />
-                              <span>{project.nome}</span>
+                              <span>{project?.nome || lead.projetoCustom}</span>
                             </div>
                           )}
                           {lead.ultimoContato && (
@@ -1304,7 +1304,7 @@ export default function Leads() {
                     )}
                     <div className="flex items-center gap-2 text-sm">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span>{projects?.find(p => p.id === selectedLead.projectId)?.nome || "Sem projeto"}</span>
+                      <span>{projects?.find(p => p.id === selectedLead.projectId)?.nome || selectedLead.projetoCustom || "Sem projeto"}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="h-4 w-4 text-muted-foreground" />

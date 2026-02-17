@@ -1,1 +1,0 @@
-ALTER TABLE `projects` MODIFY COLUMN `cidade` varchar(100) NOT NULL DEFAULT 'Su00e3o Paulo';

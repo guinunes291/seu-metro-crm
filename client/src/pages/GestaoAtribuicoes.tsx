@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -20,11 +21,29 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Search, ArrowRightLeft, History, User, Phone, Mail } from 'lucide-react';
+import { Search, ArrowRightLeft, History, User, Phone, Mail, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 export default function GestaoAtribuicoes() {
+  const { user, isLoading } = useAuth();
+  
+  // Controle de permissões: apenas gestor/admin
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Verificando permissões...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user || user.role !== 'gestor') {
+    return <Navigate to="/" replace />;
+  }
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [corretorFilter, setCorretorFilter] = useState<string>('');
@@ -40,6 +59,13 @@ export default function GestaoAtribuicoes() {
   // Modal de histórico
   const [historicoAberto, setHistoricoAberto] = useState(false);
   const [leadHistorico, setLeadHistorico] = useState<any>(null);
+  
+  // Modal de nova atribuição
+  const [novaAtribuicaoAberta, setNovaAtribuicaoAberta] = useState(false);
+  const [leadIdNovo, setLeadIdNovo] = useState<string>('');
+  const [corretorIdNovo, setCorretorIdNovo] = useState<string>('');
+  const [motivoNovo, setMotivoNovo] = useState('');
+  const [observacoesNovo, setObservacoesNovo] = useState('');
 
   // Queries
   const { data: leads, refetch: refetchLeads } = trpc.leads.list.useQuery({
@@ -128,13 +154,49 @@ export default function GestaoAtribuicoes() {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
+  const abrirNovaAtribuicao = () => {
+    setLeadIdNovo('');
+    setCorretorIdNovo('');
+    setMotivoNovo('');
+    setObservacoesNovo('');
+    setNovaAtribuicaoAberta(true);
+  };
+  
+  const confirmarNovaAtribuicao = () => {
+    if (!leadIdNovo || !corretorIdNovo) {
+      toast.error('Selecione um lead e um corretor');
+      return;
+    }
+    
+    const lead = leads?.find(l => l.id === parseInt(leadIdNovo));
+    if (!lead) {
+      toast.error('Lead não encontrado');
+      return;
+    }
+    
+    reatribuirLead.mutate({
+      leadId: parseInt(leadIdNovo),
+      novoCorretorId: parseInt(corretorIdNovo),
+      motivo: motivoNovo || 'Nova atribuição',
+      observacoes: observacoesNovo,
+    });
+    
+    setNovaAtribuicaoAberta(false);
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Gestão de Atribuições</h1>
-        <p className="text-muted-foreground">
-          Reatribua leads e contratos entre corretores de forma fácil e rápida
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Gestão de Atribuições</h1>
+          <p className="text-muted-foreground">
+            Reatribua leads e contratos entre corretores de forma fácil e rápida
+          </p>
+        </div>
+        <Button onClick={abrirNovaAtribuicao} size="lg">
+          <Plus className="mr-2 h-5 w-5" />
+          Nova Atribuição
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -342,6 +404,80 @@ export default function GestaoAtribuicoes() {
             </Button>
             <Button onClick={handleConfirmarReatribuicao} disabled={reatribuirLead.isPending}>
               {reatribuirLead.isPending ? 'Reatribuindo...' : 'Confirmar Reatribuição'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Nova Atribuição */}
+      <Dialog open={novaAtribuicaoAberta} onOpenChange={setNovaAtribuicaoAberta}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova Atribuição</DialogTitle>
+            <DialogDescription>
+              Atribuir um lead a um corretor rapidamente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Lead *</Label>
+              <Select value={leadIdNovo} onValueChange={setLeadIdNovo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um lead" />
+                </SelectTrigger>
+                <SelectContent>
+                  {leads?.map((lead) => (
+                    <SelectItem key={lead.id} value={lead.id.toString()}>
+                      {lead.nome} - {lead.telefone}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Corretor *</Label>
+              <Select value={corretorIdNovo} onValueChange={setCorretorIdNovo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um corretor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {corretores?.map((corretor) => (
+                    <SelectItem key={corretor.id} value={corretor.id.toString()}>
+                      {corretor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Motivo</Label>
+              <Input
+                placeholder="Ex: Redistribuição de carga"
+                value={motivoNovo}
+                onChange={(e) => setMotivoNovo(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Observações</Label>
+              <Textarea
+                placeholder="Observações adicionais (opcional)"
+                value={observacoesNovo}
+                onChange={(e) => setObservacoesNovo(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNovaAtribuicaoAberta(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={confirmarNovaAtribuicao} disabled={reatribuirLead.isPending}>
+              {reatribuirLead.isPending ? 'Atribuindo...' : 'Confirmar Atribuição'}
             </Button>
           </DialogFooter>
         </DialogContent>

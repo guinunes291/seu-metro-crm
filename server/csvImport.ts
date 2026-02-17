@@ -288,10 +288,15 @@ export async function importLeadsFromCSV(
         
         // Buscar projeto por nome se fornecido
         let projectId: number | null = null;
+        let projetoCustom: string | null = null;
+        
         if (projetoNome && projetoNome.trim()) {
           const projeto = await db.findProjectByName(projetoNome.trim());
           if (projeto) {
             projectId = projeto.id;
+          } else {
+            // Se projeto não existe no banco, salvar como texto livre
+            projetoCustom = projetoNome.trim();
           }
         }
         
@@ -303,6 +308,7 @@ export async function importLeadsFromCSV(
           origem,
           observacoes: observacoes || null,
           projectId,
+          projetoCustom,
           corretorId,
           status: 'novo',
           createdAt: new Date(),

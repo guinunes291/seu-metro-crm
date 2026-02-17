@@ -1,1 +1,0 @@
-ALTER TABLE `webhook_config` ADD `formIdMapping` text;

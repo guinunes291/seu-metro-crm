@@ -4160,3 +4160,23 @@
 - [x] Testar funcionalidade completa
 - [x] Corrigir erro de Select.Item com valores vazios
 - [ ] Adicionar permissões (apenas gestor/admin)
+
+## Melhorias: Permissões e Navegação da Gestão de Atribuições
+- [x] Implementar controle de permissões (apenas gestor/admin) na página de Gestão de Atribuições
+- [x] Adicionar link "Gestão de Atribuições" no menu lateral (seção Gestão)
+- [ ] Testar acesso com usuário corretor (deve ser bloqueado)
+- [ ] Testar acesso com usuário gestor/admin (deve funcionar)
+- [ ] Criar checkpoint
+
+## Melhoria: Botão Nova Atribuição
+- [x] Adicionar botão "Nova Atribuição" no topo da página de Gestão de Atribuições
+- [x] Criar modal para seleção rápida de lead e corretor de destino
+- [ ] Testar funcionalidade completa
+- [ ] Criar checkpoint
+
+## Feature: Importação CSV de Leads com Projeto Customizado
+- [x] Verificar se existe funcionalidade de importação CSV
+- [x] Implementar/ajustar mapeamento da coluna "Projeto" para campo `projetoCustom`
+- [x] Garantir que `projetoCustom` apareça nos cards de leads
+- [ ] Testar importação com arquivo CSV fornecido
+- [ ] Criar checkpoint

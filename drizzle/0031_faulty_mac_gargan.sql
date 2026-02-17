@@ -1,1 +1,0 @@
-ALTER TABLE `propostas` ADD `tabelaPagamento` text;

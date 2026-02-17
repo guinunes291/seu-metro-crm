@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `limiteDiarioLeads` int DEFAULT 10 NOT NULL;
