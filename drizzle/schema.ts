@@ -266,6 +266,7 @@ export const leads = mysqlTable("leads", {
     "outro"               // Outras origens
   ]).default("outro"), // Canal de captação
   projectId: int("projectId"), // Projeto de interesse
+  projetoCustom: varchar("projetoCustom", { length: 255 }), // Projeto digitado manualmente (texto livre)
   
   // Atribuição
   corretorId: int("corretorId"), // Corretor responsável

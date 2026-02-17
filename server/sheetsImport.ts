@@ -245,7 +245,9 @@ export async function importLeadsFromSheet(
           }
 
           // Buscar projeto existente (não cria automaticamente)
-          const projectId = await findExistingProject(row.origem);
+          // Primeiro tenta buscar pelo campo 'projeto', depois por 'origem'
+          const projectName = row.projeto || row.origem;
+          const projectId = await findExistingProject(projectName);
 
           // Preparar dados do lead
           const leadStatus = mapStatus(row.status || "");
@@ -258,6 +260,7 @@ export async function importLeadsFromSheet(
             telefone: normalizedPhone,
             origem: row.origem && row.origem.trim() !== "" ? row.origem.trim() : null,
             projectId: projectId,
+            projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
             status: leadStatus as any,
             dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
               ? new Date(row.dataDistribuicao) 

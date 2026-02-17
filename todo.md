@@ -4178,5 +4178,12 @@
 - [x] Verificar se existe funcionalidade de importação CSV
 - [x] Implementar/ajustar mapeamento da coluna "Projeto" para campo `projetoCustom`
 - [x] Garantir que `projetoCustom` apareça nos cards de leads
-- [ ] Testar importação com arquivo CSV fornecido
+- [x] Corrigir erro de import em GestaoAtribuicoes.tsx
+- [x] Criar checkpoint
+
+## Correção: Adicionar campo projetoCustom à tabela leads
+- [x] Adicionar campo `projetoCustom` ao schema da tabela leads
+- [x] Aplicar migração do banco de dados (ALTER TABLE via SQL)
+- [x] Ajustar importação do Google Sheets para salvar projetoCustom
+- [x] Reiniciar servidor para aplicar mudanças
 - [ ] Criar checkpoint

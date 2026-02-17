@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1771347844667,
+      "tag": "0000_outgoing_terror",
+      "breakpoints": true
+    }
+  ]
+}
