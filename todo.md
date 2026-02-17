@@ -4186,4 +4186,10 @@
 - [x] Aplicar migração do banco de dados (ALTER TABLE via SQL)
 - [x] Ajustar importação do Google Sheets para salvar projetoCustom
 - [x] Reiniciar servidor para aplicar mudanças
+- [x] Criar checkpoint
+
+## Feature: Sincronização de Leads Existentes com projetoCustom
+- [x] Analisar funcionalidade existente de "Sincronizar Novos"
+- [x] Implementar lógica de atualização de projetoCustom em leads existentes
+- [x] Reiniciar servidor para aplicar mudanças
 - [ ] Criar checkpoint

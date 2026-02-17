@@ -337,12 +337,158 @@ export async function importLeadsFromSheet(
 
 /**
  * Importa apenas leads novos (sincronização incremental)
+ * E atualiza leads existentes com projetoCustom se estiver vazio
  */
 export async function syncLeadsFromSheet(
   sheetUrl: string,
   sheetRange: string = "MASTER_LEADS!A:H"
 ): Promise<ImportResult> {
-  // A função importLeadsFromSheet já faz verificação de duplicatas
-  // então podemos usá-la diretamente para sincronização incremental
-  return await importLeadsFromSheet(sheetUrl, sheetRange);
+  const result: ImportResult = {
+    total: 0,
+    imported: 0,
+    duplicates: 0,
+    errors: 0,
+    details: [],
+  };
+
+  try {
+    const spreadsheetId = extractSpreadsheetId(sheetUrl);
+    const rows = await readGoogleSheet(spreadsheetId, sheetRange);
+
+    result.total = rows.length;
+
+    const db = await getDb();
+    if (!db) {
+      throw new Error("Database não disponível");
+    }
+
+    // Processar em lotes de 100 para melhor performance
+    const BATCH_SIZE = 100;
+    
+    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+      
+      // Buscar todos os telefones existentes deste lote de uma vez
+      const batchTelefones = batch
+        .filter(row => row.telefone)
+        .map(row => normalizeTelefone(row.telefone));
+      
+      const existingPhones = await getExistingPhones(batchTelefones);
+
+      for (let i = 0; i < batch.length; i++) {
+        const row = batch[i];
+        const rowNumber = batchStart + i + 2; // +2 porque começa em 1 e tem cabeçalho
+
+        try {
+          // Validar dados obrigatórios
+          if (!row.nome || !row.telefone) {
+            result.errors++;
+            result.details.push({
+              row: rowNumber,
+              nome: row.nome || "Sem nome",
+              status: "error",
+              message: "Nome ou telefone ausente",
+            });
+            continue;
+          }
+
+          const normalizedPhone = normalizeTelefone(row.telefone);
+          const phoneNumbers = extractPhoneNumbers(normalizedPhone);
+
+          // Verificar se já existe
+          if (existingPhones.has(phoneNumbers)) {
+            // Lead existente - atualizar projetoCustom se necessário
+            const projectName = row.projeto || row.origem;
+            if (projectName && projectName.trim() !== "") {
+              const projectId = await findExistingProject(projectName);
+              
+              // Buscar lead existente pelo telefone
+              const existingLead = await db
+                .select()
+                .from(leads)
+                .where(eq(leads.telefone, normalizedPhone))
+                .limit(1);
+
+              if (existingLead.length > 0) {
+                const lead = existingLead[0];
+                
+                // Atualizar apenas se projetoCustom estiver vazio e não tiver projectId
+                if (!lead.projetoCustom && !lead.projectId) {
+                  await db
+                    .update(leads)
+                    .set({
+                      projetoCustom: !projectId && projectName ? projectName.trim() : null,
+                      projectId: projectId,
+                    })
+                    .where(eq(leads.id, lead.id));
+                  
+                  result.details.push({
+                    row: rowNumber,
+                    nome: row.nome,
+                    status: "duplicate",
+                    message: `Lead atualizado com projeto: ${projectName}`,
+                  });
+                } else {
+                  result.details.push({
+                    row: rowNumber,
+                    nome: row.nome,
+                    status: "duplicate",
+                    message: "Lead já possui projeto",
+                  });
+                }
+              }
+            }
+            
+            result.duplicates++;
+            continue;
+          }
+
+          // Lead novo - importar normalmente
+          const projectName = row.projeto || row.origem;
+          const projectId = await findExistingProject(projectName);
+          const leadStatus = mapStatus(row.status || "");
+          
+          await db.insert(leads).values({
+            idPrincipal: row.id || null,
+            nome: row.nome.trim(),
+            email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
+            telefone: normalizedPhone,
+            origem: row.origem && row.origem.trim() !== "" ? row.origem.trim() : null,
+            projectId: projectId,
+            projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
+            status: leadStatus as any,
+            dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
+              ? new Date(row.dataDistribuicao) 
+              : null,
+            faixaRenda: row.faixaRenda && row.faixaRenda.trim() !== "" ? row.faixaRenda.trim() : null,
+            prefereContatoPor: row.prefereContatoPor && row.prefereContatoPor.trim() !== "" ? row.prefereContatoPor.trim() : null,
+            finalidadeImovel: row.finalidadeImovel && row.finalidadeImovel.trim() !== "" ? row.finalidadeImovel.trim() : null,
+          });
+
+          existingPhones.add(phoneNumbers);
+          result.imported++;
+          result.details.push({
+            row: rowNumber,
+            nome: row.nome,
+            status: "imported",
+            message: "Lead importado com sucesso",
+          });
+        } catch (error) {
+          console.error(`Erro ao processar lead ${rowNumber}:`, error);
+          result.errors++;
+          result.details.push({
+            row: rowNumber,
+            nome: row.nome || "Desconhecido",
+            status: "error",
+            message: error instanceof Error ? error.message : "Erro desconhecido",
+          });
+        }
+      }
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Erro ao sincronizar leads:", error);
+    throw error;
+  }
 }
