@@ -1,0 +1,60 @@
+{
+  "query": "SELECT nome, telefone, projetoCustom FROM leads WHERE projetoCustom IS NOT NULL AND projetoCustom != '' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT nome, telefone, projetoCustom FROM leads WHERE projetoCustom IS NOT NULL AND projetoCustom != '' LIMIT 10;",
+  "rows": [
+    {
+      "nome": "JAQUELINE",
+      "telefone": "-",
+      "projetoCustom": "Pátio Central Galeria"
+    },
+    {
+      "nome": "GABRIEL",
+      "telefone": "(17) 99615-1327",
+      "projetoCustom": "Holistic Residence"
+    },
+    {
+      "nome": "JOAOPEDRO",
+      "telefone": "(11) 91514-8342",
+      "projetoCustom": "Concept Barra Funda Residence"
+    },
+    {
+      "nome": "VITORIA",
+      "telefone": "(13) 97408-9693",
+      "projetoCustom": "Pátio Central Galeria"
+    },
+    {
+      "nome": "WEVERSON",
+      "telefone": "(11) 94635-4764",
+      "projetoCustom": "011 Brooklin"
+    },
+    {
+      "nome": "VAL",
+      "telefone": "(11) 98999-6026",
+      "projetoCustom": "011 Brooklin"
+    },
+    {
+      "nome": "CÍNTIA",
+      "telefone": "(11) 96680-4587",
+      "projetoCustom": "Facebook Lead Ads: Riva SP - Pátio Central (R2V) 04.25"
+    },
+    {
+      "nome": "MIGUEL",
+      "telefone": "(11) 98821-8151",
+      "projetoCustom": "Pátio Central Galeria"
+    },
+    {
+      "nome": "KATIA CRISTINO",
+      "telefone": "(11) 98456-3599",
+      "projetoCustom": "Facebook Lead Ads: Riva SP - Pátio Central 01.2025"
+    },
+    {
+      "nome": "FLAVIA",
+      "telefone": "(11) 97726-1092",
+      "projetoCustom": "Pátio Central: (Mkt) (Direcional) Faça uma simulação"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome\ttelefone\tprojetoCustom\nJAQUELINE\t-\tPátio Central Galeria\nGABRIEL\t(17) 99615-1327\tHolistic Residence\nJOAOPEDRO\t(11) 91514-8342\tConcept Barra Funda Residence\nVITORIA\t(13) 97408-9693\tPátio Central Galeria\nWEVERSON\t(11) 94635-4764\t011 Brooklin\nVAL\t(11) 98999-6026\t011 Brooklin\nCÍNTIA\t(11) 96680-4587\tFacebook Lead Ads: Riva SP - Pátio Central (R2V) 04.25\nMIGUEL\t(11) 98821-8151\tPátio Central Galeria\nKATIA CRISTINO\t(11) 98456-3599\tFacebook Lead Ads: Riva SP - Pátio Central 01.2025\nFLAVIA\t(11) 97726-1092\tPátio Central: (Mkt) (Direcional) Faça uma simulação\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

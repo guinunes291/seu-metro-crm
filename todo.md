@@ -4225,3 +4225,10 @@
 - [ ] Testar sincronização real com planilha do Google Sheets
 - [ ] Verificar que leads agora mostram nomes de projetos nos cards
 - [ ] Criar checkpoint final
+
+## Atualização Manual: Preencher projetoCustom de todos os leads
+- [x] Buscar dados da planilha do Google Sheets (coluna Projeto)
+- [x] Criar script de atualização em massa
+- [x] Executar atualização no banco de dados
+- [x] Verificar quantos leads foram atualizados - 482 leads atualizados!
+- [x] Confirmar que nomes de projetos aparecem nos cards - FUNCIONANDO!
