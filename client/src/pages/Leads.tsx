@@ -460,6 +460,11 @@ export default function Leads() {
       return;
     }
     
+    // Proteção contra múltiplos cliques
+    if (updateLeadMutation.isPending) {
+      return;
+    }
+    
     await executeStatusUpdate(
       pendingStatusChange.leadId, 
       pendingStatusChange.newStatus, 

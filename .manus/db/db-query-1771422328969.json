@@ -1,0 +1,22 @@
+{
+  "query": "\nSELECT \n  i.tipo,\n  COUNT(*) as total,\n  SUM(CASE WHEN i.atendida = 1 THEN 1 ELSE 0 END) as atendidas,\n  SUM(CASE WHEN i.respondida = 1 THEN 1 ELSE 0 END) as respondidas\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE u.name = 'Andrew'\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY i.tipo;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  i.tipo,\n  COUNT(*) as total,\n  SUM(CASE WHEN i.atendida = 1 THEN 1 ELSE 0 END) as atendidas,\n  SUM(CASE WHEN i.respondida = 1 THEN 1 ELSE 0 END) as respondidas\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE u.name = 'Andrew'\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY i.tipo;\n",
+  "rows": [
+    {
+      "tipo": "whatsapp",
+      "total": "30",
+      "atendidas": "0",
+      "respondidas": "0"
+    },
+    {
+      "tipo": "ligacao",
+      "total": "2",
+      "atendidas": "0",
+      "respondidas": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\ttotal\tatendidas\trespondidas\nwhatsapp\t30\t0\t0\nligacao\t2\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

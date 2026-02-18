@@ -1,0 +1,266 @@
+{
+  "query": "\nSELECT \n  u.name as corretor,\n  i.tipo,\n  i.createdAt,\n  i.atendida,\n  i.respondida,\n  l.nome as lead_nome\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nLEFT JOIN leads l ON i.leadId = l.id\nWHERE u.name = 'Andrew'\n  AND DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  u.name as corretor,\n  i.tipo,\n  i.createdAt,\n  i.atendida,\n  i.respondida,\n  l.nome as lead_nome\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nLEFT JOIN leads l ON i.leadId = l.id\nWHERE u.name = 'Andrew'\n  AND DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC;\n",
+  "rows": [
+    {
+      "corretor": "Andrew",
+      "tipo": "ligacao",
+      "createdAt": "2026-02-18 13:27:33",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Júlia Peroti"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "ligacao",
+      "createdAt": "2026-02-18 13:27:22",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Júlia Peroti"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:23:38",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Gustavo Manoel"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:23:35",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Felipe"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:23:01",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Camila Leal Maia"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:56",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Jessica Pereira"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:52",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Gabriel Mennella"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:44",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Michelle Marcato Siqueira"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:24",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "fernanda garbosa"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:21",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Ricardo Furtado"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:17",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Sa Amorim"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:13",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Lucas Martins"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:10",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Yan Breno"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:07",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Ana Paula Sousa"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:22:03",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Matheus Lima da Silva"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:59",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "SOARES  PABLO"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:55",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Renan"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:52",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Carol"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:48",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "João"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:43",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Samela"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:39",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Murilo Gallo"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:36",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Julia Nascimento"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:31",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Eduarda Cardeal"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:27",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Antonio Marcone"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:22",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Carolina Nascimento"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:19",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Carolina Nascimento"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:15",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Eduarda Shibakura"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:12",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Izabella"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:08",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Luiz Gabriel Saldanha Carneiro Santiago"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:04",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "J o r d a n  G o m e s"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:21:01",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Vivendo os 20"
+    },
+    {
+      "corretor": "Andrew",
+      "tipo": "whatsapp",
+      "createdAt": "2026-02-18 13:20:57",
+      "atendida": "0",
+      "respondida": "0",
+      "lead_nome": "Vivendo os 20"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretor\ttipo\tcreatedAt\tatendida\trespondida\tlead_nome\nAndrew\tligacao\t2026-02-18 13:27:33\t0\t0\tJúlia Peroti\nAndrew\tligacao\t2026-02-18 13:27:22\t0\t0\tJúlia Peroti\nAndrew\twhatsapp\t2026-02-18 13:23:38\t0\t0\tGustavo Manoel\nAndrew\twhatsapp\t2026-02-18 13:23:35\t0\t0\tFelipe\nAndrew\twhatsapp\t2026-02-18 13:23:01\t0\t0\tCamila Leal Maia\nAndrew\twhatsapp\t2026-02-18 13:22:56\t0\t0\tJessica Pereira\nAndrew\twhatsapp\t2026-02-18 13:22:52\t0\t0\tGabriel Mennella\nAndrew\twhatsapp\t2026-02-18 13:22:44\t0\t0\tMichelle Marcato Siqueira\nAndrew\twhatsapp\t2026-02-18 13:22:24\t0\t0\tfernanda garbosa\nAndrew\twhatsapp\t2026-02-18 13:22:21\t0\t0\tRicardo Furtado\nAndrew\twhatsapp\t2026-02-18 13:22:17\t0\t0\tSa Amorim\nAndrew\twhatsapp\t2026-02-18 13:22:13\t0\t0\tLucas Martins\nAndrew\twhatsapp\t2026-02-18 13:22:10\t0\t0\tYan Breno\nAndrew\twhatsapp\t2026-02-18 13:22:07\t0\t0\tAna Paula Sousa\nAndrew\twhatsapp\t2026-02-18 13:22:03\t0\t0\tMatheus Lima da Silva\nAndrew\twhatsapp\t2026-02-18 13:21:59\t0\t0\tSOARES  PABLO\nAndrew\twhatsapp\t2026-02-18 13:21:55\t0\t0\tRenan\nAndrew\twhatsapp\t2026-02-18 13:21:52\t0\t0\tCarol\nAndrew\twhatsapp\t2026-02-18 13:21:48\t0\t0\tJoão\nAndrew\twhatsapp\t2026-02-18 13:21:43\t0\t0\tSamela\nAndrew\twhatsapp\t2026-02-18 13:21:39\t0\t0\tMurilo Gallo\nAndrew\twhatsapp\t2026-02-18 13:21:36\t0\t0\tJulia Nascimento\nAndrew\twhatsapp\t2026-02-18 13:21:31\t0\t0\tEduarda Cardeal\nAndrew\twhatsapp\t2026-02-18 13:21:27\t0\t0\tAntonio Marcone\nAndrew\twhatsapp\t2026-02-18 13:21:22\t0\t0\tCarolina Nascimento\nAndrew\twhatsapp\t2026-02-18 13:21:19\t0\t0\tCarolina Nascimento\nAndrew\twhatsapp\t2026-02-18 13:21:15\t0\t0\tEduarda Shibakura\nAndrew\twhatsapp\t2026-02-18 13:21:12\t0\t0\tIzabella\nAndrew\twhatsapp\t2026-02-18 13:21:08\t0\t0\tLuiz Gabriel Saldanha Carneiro Santiago\nAndrew\twhatsapp\t2026-02-18 13:21:04\t0\t0\tJ o r d a n  G o m e s\nAndrew\twhatsapp\t2026-02-18 13:21:01\t0\t0\tVivendo os 20\nAndrew\twhatsapp\t2026-02-18 13:20:57\t0\t0\tVivendo os 20\n",
+  "stderr": "",
+  "execution_time_ms": 102
+}

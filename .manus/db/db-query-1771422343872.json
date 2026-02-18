@@ -1,0 +1,80 @@
+{
+  "query": "\nSELECT \n  i.id,\n  i.createdAt,\n  i.leadId,\n  l.nome as lead_nome,\n  i.observacoes\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nLEFT JOIN leads l ON i.leadId = l.id\nWHERE u.name = 'Andrew'\n  AND i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  i.id,\n  i.createdAt,\n  i.leadId,\n  l.nome as lead_nome,\n  i.observacoes\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nLEFT JOIN leads l ON i.leadId = l.id\nWHERE u.name = 'Andrew'\n  AND i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = CURDATE()\nORDER BY i.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "id": "900517",
+      "createdAt": "2026-02-18 13:23:38",
+      "leadId": "3870006",
+      "lead_nome": "Gustavo Manoel",
+      "observacoes": ""
+    },
+    {
+      "id": "900516",
+      "createdAt": "2026-02-18 13:23:35",
+      "leadId": "3900589",
+      "lead_nome": "Felipe",
+      "observacoes": ""
+    },
+    {
+      "id": "900515",
+      "createdAt": "2026-02-18 13:23:01",
+      "leadId": "3900586",
+      "lead_nome": "Camila Leal Maia",
+      "observacoes": ""
+    },
+    {
+      "id": "900514",
+      "createdAt": "2026-02-18 13:22:56",
+      "leadId": "3900571",
+      "lead_nome": "Jessica Pereira",
+      "observacoes": ""
+    },
+    {
+      "id": "900513",
+      "createdAt": "2026-02-18 13:22:52",
+      "leadId": "3900085",
+      "lead_nome": "Gabriel Mennella",
+      "observacoes": ""
+    },
+    {
+      "id": "900512",
+      "createdAt": "2026-02-18 13:22:44",
+      "leadId": "3900082",
+      "lead_nome": "Michelle Marcato Siqueira",
+      "observacoes": ""
+    },
+    {
+      "id": "900511",
+      "createdAt": "2026-02-18 13:22:24",
+      "leadId": "3900079",
+      "lead_nome": "fernanda garbosa",
+      "observacoes": ""
+    },
+    {
+      "id": "900510",
+      "createdAt": "2026-02-18 13:22:21",
+      "leadId": "3900076",
+      "lead_nome": "Ricardo Furtado",
+      "observacoes": ""
+    },
+    {
+      "id": "900509",
+      "createdAt": "2026-02-18 13:22:17",
+      "leadId": "3900073",
+      "lead_nome": "Sa Amorim",
+      "observacoes": ""
+    },
+    {
+      "id": "900508",
+      "createdAt": "2026-02-18 13:22:13",
+      "leadId": "3900070",
+      "lead_nome": "Lucas Martins",
+      "observacoes": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcreatedAt\tleadId\tlead_nome\tobservacoes\n900517\t2026-02-18 13:23:38\t3870006\tGustavo Manoel\t\n900516\t2026-02-18 13:23:35\t3900589\tFelipe\t\n900515\t2026-02-18 13:23:01\t3900586\tCamila Leal Maia\t\n900514\t2026-02-18 13:22:56\t3900571\tJessica Pereira\t\n900513\t2026-02-18 13:22:52\t3900085\tGabriel Mennella\t\n900512\t2026-02-18 13:22:44\t3900082\tMichelle Marcato Siqueira\t\n900511\t2026-02-18 13:22:24\t3900079\tfernanda garbosa\t\n900510\t2026-02-18 13:22:21\t3900076\tRicardo Furtado\t\n900509\t2026-02-18 13:22:17\t3900073\tSa Amorim\t\n900508\t2026-02-18 13:22:13\t3900070\tLucas Martins\t\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

@@ -4249,4 +4249,12 @@
 
 ## Correção: Queries executando antes da autenticação em Gestão de Atribuições
 - [x] Adicionar enabled flag nas queries leads.list e corretores.list
-- [ ] Testar correção em produção após deploy
+- [x] Testar correção em produção após deploy - Aguardando novo publish
+
+## Bug: Botão WhatsApp criando registros duplicados (30 registros para 1 clique)
+- [x] Identificar código que calcula métricas de atividades diárias
+- [x] Verificar dados reais no banco de dados - 30 registros em timestamps diferentes (1/seg)
+- [x] Investigar código do botão e mutation - Não encontrado causa raiz
+- [x] Implementar proteções: verificação isPending + validação servidor (5seg)
+- [x] Adicionar logs para rastrear criação de registros
+- [ ] Testar correção e validar que apenas 1 registro é criado por clique
