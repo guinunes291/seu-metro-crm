@@ -1,0 +1,8 @@
+{
+  "query": "\nCREATE TEMPORARY TABLE IF NOT EXISTS registros_a_manter AS\nSELECT MIN(i.id) as id_manter\nFROM interacoes i\nWHERE DATE(i.createdAt) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)\nGROUP BY i.leadId, i.corretorId, i.tipo, DATE(i.createdAt)\nHAVING COUNT(*) > 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nCREATE TEMPORARY TABLE IF NOT EXISTS registros_a_manter AS\nSELECT MIN(i.id) as id_manter\nFROM interacoes i\nWHERE DATE(i.createdAt) >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)\nGROUP BY i.leadId, i.corretorId, i.tipo, DATE(i.createdAt)\nHAVING COUNT(*) > 1;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1105 (HY000) at line 2: 'CREATE TABLE ... SELECT' is not implemented yet"
+  ]
+}

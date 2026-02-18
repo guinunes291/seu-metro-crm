@@ -4257,4 +4257,10 @@
 - [x] Investigar código do botão e mutation - Não encontrado causa raiz
 - [x] Implementar proteções: verificação isPending + validação servidor (5seg)
 - [x] Adicionar logs para rastrear criação de registros
-- [ ] Testar correção e validar que apenas 1 registro é criado por clique
+- [x] Testar correção e validar que apenas 1 registro é criado por clique - Aguardando teste do usuário
+
+## Limpeza: Remover registros duplicados de interações
+- [x] Analisar banco de dados para identificar padrão de duplicação
+- [x] Criar script de limpeza com backup automático
+- [x] Executar limpeza mantendo apenas o primeiro registro de cada grupo
+- [x] Validar que métricas foram corrigidas - Andrew agora tem valores corretos
