@@ -4260,3 +4260,6 @@
 
 ## Gestores na Lista de Transferência
 - [x] Incluir gestores na lista de corretores disponíveis para transferência de leads
+
+## Bug Fix - Transferência para Gestor
+- [x] Corrigir erro "Corretor não encontrado" ao transferir lead para gestor

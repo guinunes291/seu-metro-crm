@@ -627,10 +627,10 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Verificar se novo corretor existe
+        // Verificar se novo corretor/gestor existe
         const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || novoCorretor.role !== 'corretor') {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
         }
         
         const corretorAnteriorId = lead.corretorId;
@@ -669,10 +669,10 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Verificar se novo corretor existe
+        // Verificar se novo corretor/gestor existe
         const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || novoCorretor.role !== 'corretor') {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
         }
         
         const corretorAnteriorId = lead.corretorId;
@@ -707,10 +707,10 @@ export const appRouter = router({
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'Nenhum lead selecionado' });
         }
         
-        // Verificar se novo corretor existe
+        // Verificar se novo corretor/gestor existe
         const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || novoCorretor.role !== 'corretor') {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
         }
         
         let transferidos = 0;
@@ -773,10 +773,10 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Verificar se corretor existe
+        // Verificar se corretor/gestor existe
         const corretor = await db.getUserById(input.corretorId);
-        if (!corretor || corretor.role !== 'corretor') {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor não encontrado' });
+        if (!corretor || (corretor.role !== 'corretor' && corretor.role !== 'gestor')) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
         }
         
         // Atualizar lead com novo corretor
