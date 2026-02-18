@@ -4264,3 +4264,9 @@
 - [x] Criar script de limpeza com backup automático
 - [x] Executar limpeza mantendo apenas o primeiro registro de cada grupo
 - [x] Validar que métricas foram corrigidas - Andrew agora tem valores corretos
+
+## Bug: Erro ao registrar interação de follow-up - "(void 0) is not a function"
+- [x] Identificar código da página Tarefas do Dia
+- [x] Localizar função indefinida que causa o erro - mutate() dentro de onSuccess
+- [x] Corrigir função usando mutateAsync() com try/catch
+- [ ] Validar que "Respondeu" e "Não Respondeu" funcionam corretamente
