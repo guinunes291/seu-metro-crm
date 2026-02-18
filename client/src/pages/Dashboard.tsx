@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
 import FunilVendasVisual from "@/components/FunilVendasVisual";
 import PerformanceSemanal from "@/components/PerformanceSemanal";
+import DistribuirSemCorretorButton from "@/components/DistribuirSemCorretorButton";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import {
@@ -965,7 +966,7 @@ export default function Dashboard() {
             <div className="mt-8">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <BarChart3 className="h-5 w-5" />
@@ -973,9 +974,12 @@ export default function Dashboard() {
                       </CardTitle>
                       <CardDescription>Distribuição de leads por corretor, origem e projeto</CardDescription>
                     </div>
-                    <Badge variant="outline" className="text-sm">
-                      Total: {relatorioLeadsCriados?.totalGeral || 0} leads
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-sm">
+                        Total: {relatorioLeadsCriados?.totalGeral || 0} leads
+                      </Badge>
+                      <DistribuirSemCorretorButton />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

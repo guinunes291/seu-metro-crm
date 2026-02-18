@@ -4263,3 +4263,7 @@
 
 ## Bug Fix - Transferência para Gestor
 - [x] Corrigir erro "Corretor não encontrado" ao transferir lead para gestor
+
+## Distribuição de Leads Sem Corretor
+- [x] Identificar onde está a lista de leads por corretor
+- [x] Implementar botão para distribuir leads sem corretor automaticamente

@@ -1515,6 +1515,12 @@ export const appRouter = router({
         
         return await db.getEstatisticasPorCorretor(corretoresIds);
       }),
+
+    // Distribuir todos os leads sem corretor
+    distribuirLeadsSemCorretor: gestorProcedure
+      .mutation(async () => {
+        return await db.distribuirLeadsSemCorretor();
+      }),
   }),
 
   // ============================================================================

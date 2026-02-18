@@ -9638,3 +9638,43 @@ export async function getCorretoresEGestoresByIds(ids: number[]) {
     nome: c.name
   }));
 }
+
+/**
+ * Distribuir todos os leads sem corretor pela roleta
+ * Retorna o número de leads distribuídos
+ */
+export async function distribuirLeadsSemCorretor(): Promise<{ distribuidos: number; erros: number; semCorretorDisponivel: number }> {
+  const db = await getDb();
+  if (!db) return { distribuidos: 0, erros: 0, semCorretorDisponivel: 0 };
+  
+  // Buscar todos os leads sem corretor
+  const leadsSemCorretor = await db.select()
+    .from(leads)
+    .where(isNull(leads.corretorId))
+    .orderBy(leads.createdAt);
+  
+  console.log(`[Distribuição] Encontrados ${leadsSemCorretor.length} leads sem corretor`);
+  
+  let distribuidos = 0;
+  let erros = 0;
+  let semCorretorDisponivel = 0;
+  
+  for (const lead of leadsSemCorretor) {
+    try {
+      const corretorId = await distribuirLeadPelaRoleta(lead.id);
+      
+      if (corretorId) {
+        distribuidos++;
+      } else {
+        semCorretorDisponivel++;
+      }
+    } catch (error) {
+      console.error(`[Distribuição] Erro ao distribuir lead ${lead.id}:`, error);
+      erros++;
+    }
+  }
+  
+  console.log(`[Distribuição] Resultado: ${distribuidos} distribuídos, ${semCorretorDisponivel} sem corretor disponível, ${erros} erros`);
+  
+  return { distribuidos, erros, semCorretorDisponivel };
+}
