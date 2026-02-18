@@ -2005,7 +2005,9 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
     };
   });
   
-  return result.filter(c => c.status === 'presente').sort((a, b) => b.vgv - a.vgv);
+  // Retornar todos os corretores com vendas, independentemente do status
+  // Filtrar apenas inativos se necessário
+  return result.filter(c => c.vendas > 0).sort((a, b) => b.vgv - a.vgv);
 }
 
 

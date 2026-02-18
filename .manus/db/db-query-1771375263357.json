@@ -1,0 +1,66 @@
+{
+  "query": "SELECT c.id, c.corretorId, u.name as corretor_nome, c.valorVenda, c.createdAt \nFROM contratos c \nLEFT JOIN users u ON c.corretorId = u.id \nWHERE u.name LIKE '%Kauan%' OR u.name LIKE '%Guilherme%' OR u.name LIKE '%Sheldon%' \nORDER BY c.createdAt DESC \nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT c.id, c.corretorId, u.name as corretor_nome, c.valorVenda, c.createdAt \nFROM contratos c \nLEFT JOIN users u ON c.corretorId = u.id \nWHERE u.name LIKE '%Kauan%' OR u.name LIKE '%Guilherme%' OR u.name LIKE '%Sheldon%' \nORDER BY c.createdAt DESC \nLIMIT 20;",
+  "rows": [
+    {
+      "id": "120001",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "380000.00",
+      "createdAt": "2026-02-07 00:00:00"
+    },
+    {
+      "id": "150001",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "310800.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "id": "90001",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "323000.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "id": "30002",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "275000.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "60001",
+      "corretorId": "7982154",
+      "corretor_nome": "kauanthyago34",
+      "valorVenda": "249900.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "30001",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "265000.00",
+      "createdAt": "2026-01-27 00:00:00"
+    },
+    {
+      "id": "2",
+      "corretorId": "7722800",
+      "corretor_nome": "Guilherme Nunes",
+      "valorVenda": "299800.00",
+      "createdAt": "2026-01-26 00:00:00"
+    },
+    {
+      "id": "3",
+      "corretorId": "7961898",
+      "corretor_nome": "sheldonbarbosaa",
+      "valorVenda": "338092.98",
+      "createdAt": "2026-01-19 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tcorretor_nome\tvalorVenda\tcreatedAt\n120001\t7722800\tGuilherme Nunes\t380000.00\t2026-02-07 00:00:00\n150001\t7722800\tGuilherme Nunes\t310800.00\t2026-02-05 00:00:00\n90001\t7722800\tGuilherme Nunes\t323000.00\t2026-02-05 00:00:00\n30002\t7722800\tGuilherme Nunes\t275000.00\t2026-01-29 00:00:00\n60001\t7982154\tkauanthyago34\t249900.00\t2026-01-29 00:00:00\n30001\t7722800\tGuilherme Nunes\t265000.00\t2026-01-27 00:00:00\n2\t7722800\tGuilherme Nunes\t299800.00\t2026-01-26 00:00:00\n3\t7961898\tsheldonbarbosaa\t338092.98\t2026-01-19 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

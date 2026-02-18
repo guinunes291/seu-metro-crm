@@ -1,0 +1,38 @@
+{
+  "query": "SELECT \n  u.id,\n  u.name as nome,\n  u.status,\n  COUNT(c.id) as vendas,\n  COALESCE(SUM(c.valorVenda), 0) as vgv\nFROM users u\nLEFT JOIN contratos c ON u.id = c.corretorId\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name, u.status\nHAVING COUNT(c.id) > 0\nORDER BY vgv DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id,\n  u.name as nome,\n  u.status,\n  COUNT(c.id) as vendas,\n  COALESCE(SUM(c.valorVenda), 0) as vgv\nFROM users u\nLEFT JOIN contratos c ON u.id = c.corretorId\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name, u.status\nHAVING COUNT(c.id) > 0\nORDER BY vgv DESC;",
+  "rows": [
+    {
+      "id": "6396243",
+      "nome": "Igor Nigro",
+      "status": "presente",
+      "vendas": "2",
+      "vgv": "548520.00"
+    },
+    {
+      "id": "7862260",
+      "nome": "Andrew",
+      "status": "presente",
+      "vendas": "2",
+      "vgv": "509750.97"
+    },
+    {
+      "id": "11184140",
+      "nome": "Luis Carlos De Veras",
+      "status": "ausente",
+      "vendas": "1",
+      "vgv": "416546.72"
+    },
+    {
+      "id": "7982154",
+      "nome": "kauanthyago34",
+      "status": "ausente",
+      "vendas": "1",
+      "vgv": "249900.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tstatus\tvendas\tvgv\n6396243\tIgor Nigro\tpresente\t2\t548520.00\n7862260\tAndrew\tpresente\t2\t509750.97\n11184140\tLuis Carlos De Veras\tausente\t1\t416546.72\n7982154\tkauanthyago34\tausente\t1\t249900.00\n",
+  "stderr": "",
+  "execution_time_ms": 149
+}

@@ -4232,3 +4232,10 @@
 - [x] Executar atualização no banco de dados
 - [x] Verificar quantos leads foram atualizados - 482 leads atualizados!
 - [x] Confirmar que nomes de projetos aparecem nos cards - FUNCIONANDO!
+
+## Correção: Tabela de VGV não exibe todos os corretores
+- [x] Investigar código da tabela de VGV no dashboard
+- [x] Verificar dados no banco - confirmar contratos de Kauan, Guilherme e Sheldon
+- [x] Identificar problema: filtro de status 'presente' excluía corretores
+- [x] Corrigir função getVendasPorCorretor para exibir todos com vendas
+- [x] Testar no ambiente de produção após deploy - Testes passaram!
