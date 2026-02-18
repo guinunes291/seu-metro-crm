@@ -12,6 +12,7 @@ import { ExportCSVButton } from "@/components/ExportCSVButton";
 import { Button } from "@/components/ui/button";
 import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
 import FunilVendasVisual from "@/components/FunilVendasVisual";
+import PerformanceSemanal from "@/components/PerformanceSemanal";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import {
@@ -830,6 +831,11 @@ export default function Dashboard() {
                 <LeadsUrgentesCard leads={allLeads} />
               </div>
             )}
+
+            {/* Relatório de Performance Semanal */}
+            <div className="mb-8">
+              <PerformanceSemanal />
+            </div>
 
             {/* Tabelas de ranking */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

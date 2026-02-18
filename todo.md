@@ -4245,4 +4245,15 @@
 - [x] Remover arquivos das páginas
 - [x] Atualizar rotas no App.tsx
 - [x] Remover referências no menu/sidebar - DashboardLayout gerencia menu automaticamente
-- [ ] Testar que páginas não aparecem mais no sistema
+- [x] Testar que páginas não aparecem mais no sistema - Confirmado via screenshot
+
+## Feature: Relatório de Performance Semanal no Dashboard do Gestor
+- [x] Analisar estrutura atual do Dashboard e banco de dados
+- [x] Criar procedure backend para dados de performance semanal por corretor
+- [x] Implementar componente frontend com gráficos de evolução de conversão
+- [x] Integrar componente no Dashboard do Gestor
+- [x] Testar gráficos e métricas de conversão
+## Estudo Completo Dashboard e Kanban
+- [x] Estudo profundo da página Dashboard (código, UX, funcionalidades)
+- [x] Estudo profundo da página Kanban (código, UX, funcionalidades)
+- [x] Documento detalhado de melhorias propostas

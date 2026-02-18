@@ -9343,3 +9343,260 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
   
   return resultado;
 }
+
+
+// ============================================================================
+// RELATÓRIO DE PERFORMANCE SEMANAL POR CORRETOR
+// ============================================================================
+
+export interface PerformanceSemanalCorretor {
+  corretorId: number;
+  corretorNome: string;
+  corretorFoto: string | null;
+  semanas: {
+    semana: string; // "Sem 1", "Sem 2", etc.
+    dataInicio: string; // ISO date
+    dataFim: string; // ISO date
+    leadsRecebidos: number;
+    leadsContatados: number; // em_atendimento ou superior
+    agendamentos: number;
+    visitas: number;
+    analisesCredito: number;
+    contratosFechados: number;
+    taxaConversao: number; // % leads que viraram contrato
+    taxaContato: number; // % leads contatados
+    taxaAgendamento: number; // % leads que tiveram agendamento
+  }[];
+}
+
+export interface PerformanceSemanalResumo {
+  semanas: string[];
+  corretores: PerformanceSemanalCorretor[];
+  totaisPorSemana: {
+    semana: string;
+    leadsRecebidos: number;
+    leadsContatados: number;
+    agendamentos: number;
+    visitas: number;
+    analisesCredito: number;
+    contratosFechados: number;
+    taxaConversao: number;
+  }[];
+}
+
+export async function getPerformanceSemanal(
+  numSemanas: number = 8,
+  corretoresIds?: number[] | null
+): Promise<PerformanceSemanalResumo> {
+  const db = await getDb();
+  if (!db) return { semanas: [], corretores: [], totaisPorSemana: [] };
+
+  const { agora: agoraSP } = await import('./timezone');
+  const hoje = agoraSP();
+
+  // Calcular as datas de início e fim de cada semana (domingo a sábado)
+  const semanas: { label: string; inicio: Date; fim: Date }[] = [];
+  
+  for (let i = numSemanas - 1; i >= 0; i--) {
+    const dataRef = new Date(hoje);
+    dataRef.setDate(dataRef.getDate() - (i * 7));
+    
+    // Encontrar o domingo dessa semana
+    const diaSemana = dataRef.getDay(); // 0 = domingo
+    const domingo = new Date(dataRef);
+    domingo.setDate(dataRef.getDate() - diaSemana);
+    domingo.setHours(0, 0, 0, 0);
+    
+    // Sábado dessa semana
+    const sabado = new Date(domingo);
+    sabado.setDate(domingo.getDate() + 6);
+    sabado.setHours(23, 59, 59, 999);
+    
+    const labelDia = String(domingo.getDate()).padStart(2, '0');
+    const labelMes = String(domingo.getMonth() + 1).padStart(2, '0');
+    
+    semanas.push({
+      label: `${labelDia}/${labelMes}`,
+      inicio: domingo,
+      fim: sabado,
+    });
+  }
+
+  // Deduplicate semanas (se a mesma semana aparece mais de uma vez)
+  const semanasUnicas: typeof semanas = [];
+  const semanasVistas = new Set<string>();
+  for (const s of semanas) {
+    const key = s.inicio.toISOString().split('T')[0];
+    if (!semanasVistas.has(key)) {
+      semanasVistas.add(key);
+      semanasUnicas.push(s);
+    }
+  }
+
+  // Buscar todos os corretores relevantes
+  let corretoresQuery = db.select({
+    id: users.id,
+    nome: users.name,
+    foto: users.fotoUrl,
+  }).from(users);
+
+  if (corretoresIds && corretoresIds.length > 0) {
+    corretoresQuery = corretoresQuery.where(inArray(users.id, corretoresIds)) as any;
+  } else {
+    corretoresQuery = corretoresQuery.where(
+      or(eq(users.role, 'corretor'), eq(users.role, 'gestor'), eq(users.role, 'admin'))
+    ) as any;
+  }
+
+  const corretoresResult = await corretoresQuery;
+
+  // Para cada corretor e cada semana, buscar métricas
+  const corretoresPerformance: PerformanceSemanalCorretor[] = [];
+
+  for (const corretor of corretoresResult) {
+    const semanasData: PerformanceSemanalCorretor['semanas'] = [];
+
+    for (const semana of semanasUnicas) {
+      // Leads recebidos nessa semana
+      const leadsRecebidosResult = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+        .from(leads)
+        .where(and(
+          eq(leads.corretorId, corretor.id),
+          gte(leads.createdAt, semana.inicio),
+          lte(leads.createdAt, semana.fim)
+        ));
+      const leadsRecebidos = Number(leadsRecebidosResult[0]?.count || 0);
+
+      // Leads contatados (status >= em_atendimento) - usando transições de status
+      const leadsContatadosResult = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
+      })
+        .from(leadStatusTransitions)
+        .where(and(
+          eq(leadStatusTransitions.corretorId, corretor.id),
+          inArray(leadStatusTransitions.statusNovo, ['em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado']),
+          gte(leadStatusTransitions.createdAt, semana.inicio),
+          lte(leadStatusTransitions.createdAt, semana.fim)
+        ));
+      const leadsContatados = Number(leadsContatadosResult[0]?.count || 0);
+
+      // Agendamentos nessa semana (transições para status agendado)
+      const agendamentosResult = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
+      })
+        .from(leadStatusTransitions)
+        .where(and(
+          eq(leadStatusTransitions.corretorId, corretor.id),
+          eq(leadStatusTransitions.statusNovo, 'agendado'),
+          gte(leadStatusTransitions.createdAt, semana.inicio),
+          lte(leadStatusTransitions.createdAt, semana.fim)
+        ));
+      const agendamentosCount = Number(agendamentosResult[0]?.count || 0);
+
+      // Visitas realizadas nessa semana
+      const visitasResult = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
+      })
+        .from(leadStatusTransitions)
+        .where(and(
+          eq(leadStatusTransitions.corretorId, corretor.id),
+          eq(leadStatusTransitions.statusNovo, 'visita_realizada'),
+          gte(leadStatusTransitions.createdAt, semana.inicio),
+          lte(leadStatusTransitions.createdAt, semana.fim)
+        ));
+      const visitasCount = Number(visitasResult[0]?.count || 0);
+
+      // Análises de crédito nessa semana
+      const analisesResult = await db.select({
+        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
+      })
+        .from(leadStatusTransitions)
+        .where(and(
+          eq(leadStatusTransitions.corretorId, corretor.id),
+          eq(leadStatusTransitions.statusNovo, 'analise_credito'),
+          gte(leadStatusTransitions.createdAt, semana.inicio),
+          lte(leadStatusTransitions.createdAt, semana.fim)
+        ));
+      const analisesCount = Number(analisesResult[0]?.count || 0);
+
+      // Contratos fechados nessa semana
+      const contratosResult = await db.select({
+        count: sql<number>`COUNT(*)`
+      })
+        .from(contratos)
+        .where(and(
+          eq(contratos.corretorId, corretor.id),
+          gte(contratos.createdAt, semana.inicio),
+          lte(contratos.createdAt, semana.fim)
+        ));
+      const contratosCount = Number(contratosResult[0]?.count || 0);
+
+      semanasData.push({
+        semana: semana.label,
+        dataInicio: semana.inicio.toISOString(),
+        dataFim: semana.fim.toISOString(),
+        leadsRecebidos,
+        leadsContatados,
+        agendamentos: agendamentosCount,
+        visitas: visitasCount,
+        analisesCredito: analisesCount,
+        contratosFechados: contratosCount,
+        taxaConversao: leadsRecebidos > 0 ? Math.round((contratosCount / leadsRecebidos) * 10000) / 100 : 0,
+        taxaContato: leadsRecebidos > 0 ? Math.round((leadsContatados / leadsRecebidos) * 10000) / 100 : 0,
+        taxaAgendamento: leadsRecebidos > 0 ? Math.round((agendamentosCount / leadsRecebidos) * 10000) / 100 : 0,
+      });
+    }
+
+    // Só incluir corretores que tiveram alguma atividade
+    const temAtividade = semanasData.some(s => 
+      s.leadsRecebidos > 0 || s.leadsContatados > 0 || s.agendamentos > 0 || 
+      s.visitas > 0 || s.contratosFechados > 0
+    );
+
+    if (temAtividade) {
+      corretoresPerformance.push({
+        corretorId: corretor.id,
+        corretorNome: corretor.nome || 'Sem nome',
+        corretorFoto: corretor.foto || null,
+        semanas: semanasData,
+      });
+    }
+  }
+
+  // Calcular totais por semana
+  const totaisPorSemana = semanasUnicas.map((semana, idx) => {
+    let totalLeads = 0, totalContatados = 0, totalAgendamentos = 0;
+    let totalVisitas = 0, totalAnalises = 0, totalContratos = 0;
+
+    for (const corretor of corretoresPerformance) {
+      const s = corretor.semanas[idx];
+      if (s) {
+        totalLeads += s.leadsRecebidos;
+        totalContatados += s.leadsContatados;
+        totalAgendamentos += s.agendamentos;
+        totalVisitas += s.visitas;
+        totalAnalises += s.analisesCredito;
+        totalContratos += s.contratosFechados;
+      }
+    }
+
+    return {
+      semana: semana.label,
+      leadsRecebidos: totalLeads,
+      leadsContatados: totalContatados,
+      agendamentos: totalAgendamentos,
+      visitas: totalVisitas,
+      analisesCredito: totalAnalises,
+      contratosFechados: totalContratos,
+      taxaConversao: totalLeads > 0 ? Math.round((totalContratos / totalLeads) * 10000) / 100 : 0,
+    };
+  });
+
+  return {
+    semanas: semanasUnicas.map(s => s.label),
+    corretores: corretoresPerformance,
+    totaisPorSemana,
+  };
+}

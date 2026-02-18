@@ -1829,6 +1829,15 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await db.getEvolucaoFunil(input?.dias || 30, corretoresIds);
       }),
+    
+    // Performance semanal por corretor (evolução de conversão)
+    performanceSemanal: gestorProcedure
+      .input(z.object({ numSemanas: z.number().min(2).max(24).default(8) }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getPerformanceSemanal(input?.numSemanas || 8, corretoresIds);
+      }),
   }),
 
   // ============================================================================
