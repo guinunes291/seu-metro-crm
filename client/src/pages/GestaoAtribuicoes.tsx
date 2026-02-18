@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Redirect } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -40,8 +41,8 @@ export default function GestaoAtribuicoes() {
     );
   }
   
-  if (!user || user.role !== 'gestor') {
-    return <Navigate to="/" replace />;
+  if (!user || (user.role !== 'gestor' && user.role !== 'admin')) {
+    return <Redirect to="/" />;
   }
   
   const [searchTerm, setSearchTerm] = useState('');

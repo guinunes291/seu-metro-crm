@@ -4239,3 +4239,10 @@
 - [x] Identificar problema: filtro de status 'presente' excluía corretores
 - [x] Corrigir função getVendasPorCorretor para exibir todos com vendas
 - [x] Testar no ambiente de produção após deploy - Testes passaram!
+
+## Bug: Erro ao acessar página "Gestão de Atribuições"
+- [x] Identificar código da página Gestão de Atribuições
+- [x] Analisar stack trace do erro - Faltava import do Navigate
+- [x] Corrigir erro no código - Adicionado import e ajustado permissões
+- [x] Testar página em desenvolvimento
+- [ ] Verificar funcionamento em produção - Aguardando deploy
