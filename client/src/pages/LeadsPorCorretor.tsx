@@ -62,7 +62,7 @@ export default function LeadsPorCorretor() {
   const [pageSize] = useState<number>(50);
 
   // Buscar corretores
-  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
+  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.listParaTransferencia.useQuery();
 
   // Buscar estatísticas por corretor
   const { data: estatisticas, isLoading: loadingEstatisticas, refetch: refetchEstatisticas } = 

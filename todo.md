@@ -4257,3 +4257,6 @@
 - [x] Estudo profundo da página Dashboard (código, UX, funcionalidades)
 - [x] Estudo profundo da página Kanban (código, UX, funcionalidades)
 - [x] Documento detalhado de melhorias propostas
+
+## Gestores na Lista de Transferência
+- [x] Incluir gestores na lista de corretores disponíveis para transferência de leads

@@ -25,7 +25,7 @@ interface TransferirEmLoteDialogProps {
 export function TransferirEmLoteDialog({ open, onOpenChange, leadIds, onSuccess }: TransferirEmLoteDialogProps) {
   const [corretorId, setCorretorId] = useState<string>("");
   
-  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.list.useQuery();
+  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.listParaTransferencia.useQuery();
   const transferirMutation = trpc.leads.transferirEmLote.useMutation({
     onSuccess: (data) => {
       if (data.erros > 0) {
@@ -93,7 +93,7 @@ export function TransferirEmLoteDialog({ open, onOpenChange, leadIds, onSuccess 
                 <SelectContent>
                   {corretores?.map((corretor) => (
                     <SelectItem key={corretor.id} value={corretor.id.toString()}>
-                      {corretor.name}
+                      {corretor.name}{corretor.role === 'gestor' ? ' (Gestor)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

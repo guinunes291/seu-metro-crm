@@ -9600,3 +9600,41 @@ export async function getPerformanceSemanal(
     totaisPorSemana,
   };
 }
+
+/**
+ * Buscar todos os corretores E gestores (para transferência de leads)
+ * Inclui gestores na lista para permitir que leads sejam transferidos para eles
+ */
+export async function getAllCorretoresEGestores() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const resultado = await db.select().from(users)
+    .where(or(eq(users.role, "corretor"), eq(users.role, "gestor")));
+  
+  return resultado.map(c => ({
+    ...c,
+    nome: c.name
+  }));
+}
+
+/**
+ * Buscar corretores E gestores por IDs (para transferência de leads com filtro de equipe)
+ * Inclui gestores na lista para permitir que leads sejam transferidos para eles
+ */
+export async function getCorretoresEGestoresByIds(ids: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+  if (ids.length === 0) return [];
+  
+  const resultado = await db.select().from(users)
+    .where(and(
+      or(eq(users.role, "corretor"), eq(users.role, "gestor")),
+      inArray(users.id, ids)
+    ));
+  
+  return resultado.map(c => ({
+    ...c,
+    nome: c.name
+  }));
+}

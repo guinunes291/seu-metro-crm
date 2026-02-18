@@ -885,6 +885,29 @@ export const appRouter = router({
       return result;
     }),
     
+    // Lista de corretores + gestores para transferência de leads
+    listParaTransferencia: gestorProcedure.query(async ({ ctx }) => {
+      const { getCorretoresIdsParaFiltro, getEquipeByGestor } = await import('./equipes');
+      const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+      
+      // Se for admin, retorna todos os corretores + gestores
+      if (!corretoresIds) {
+        const result = await db.getAllCorretoresEGestores();
+        return result;
+      }
+      
+      // Se for gestor, retorna corretores da equipe + o próprio gestor + outros gestores
+      // Buscar todos os gestores do sistema para incluir na lista
+      const corretoresEGestores = await db.getAllCorretoresEGestores();
+      const corretoresEquipe = await db.getCorretoresEGestoresByIds(corretoresIds);
+      
+      // Combinar: corretores da equipe + todos os gestores (sem duplicatas)
+      const idsJaIncluidos = new Set(corretoresEquipe.map(c => c.id));
+      const gestoresExtras = corretoresEGestores.filter(u => u.role === 'gestor' && !idsJaIncluidos.has(u.id));
+      
+      return [...corretoresEquipe, ...gestoresExtras];
+    }),
+
     // Lista de todos os usuários (filtrado por equipe para gestores)
     listAll: gestorProcedure.query(async ({ ctx }) => {
       // Obter IDs dos corretores para filtro baseado no role

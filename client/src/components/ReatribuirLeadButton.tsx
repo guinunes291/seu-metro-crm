@@ -24,7 +24,7 @@ interface ReatribuirLeadButtonProps {
   leadId: number;
   leadNome: string;
   leadStatus: string;
-  corretores: Array<{ id: number; name: string; email: string }>;
+  corretores: Array<{ id: number; name: string; email: string; role?: string }>;
   onSuccess?: () => void;
   variant?: "default" | "ghost" | "outline";
   size?: "default" | "sm" | "lg" | "icon";
@@ -101,7 +101,7 @@ export default function ReatribuirLeadButton({
               <SelectContent>
                 {corretores.map((corretor) => (
                   <SelectItem key={corretor.id} value={corretor.id.toString()}>
-                    {corretor.name} ({corretor.email})
+                    {corretor.name}{corretor.role === 'gestor' ? ' (Gestor)' : ''} ({corretor.email})
                   </SelectItem>
                 ))}
               </SelectContent>

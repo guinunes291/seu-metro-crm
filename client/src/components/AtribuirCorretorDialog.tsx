@@ -27,7 +27,7 @@ interface AtribuirCorretorDialogProps {
 export function AtribuirCorretorDialog({ open, onOpenChange, lead, onSuccess }: AtribuirCorretorDialogProps) {
   const [corretorId, setCorretorId] = useState<string>("");
   
-  const { data: corretores, isLoading: loadingCorretores } = trpc.users.listCorretores.useQuery();
+  const { data: corretores, isLoading: loadingCorretores } = trpc.corretores.listParaTransferencia.useQuery();
   const atribuirMutation = trpc.leads.atribuirCorretor.useMutation({
     onSuccess: (data) => {
       toast.success(`Lead atribuído para ${data.corretor} com sucesso!`);
@@ -78,7 +78,7 @@ export function AtribuirCorretorDialog({ open, onOpenChange, lead, onSuccess }: 
                 <SelectContent>
                   {corretores?.map((corretor) => (
                     <SelectItem key={corretor.id} value={corretor.id.toString()}>
-                      {corretor.name}
+                      {corretor.name}{corretor.role === 'gestor' ? ' (Gestor)' : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

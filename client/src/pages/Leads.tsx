@@ -145,7 +145,7 @@ export default function Leads() {
   const totalLeads = leadsData?.total || 0;
   
   const { data: projects } = trpc.projects.list.useQuery();
-  const { data: corretores } = trpc.corretores.list.useQuery();
+  const { data: corretores } = trpc.corretores.listParaTransferencia.useQuery();
   const { data: user } = trpc.auth.me.useQuery();
   const isGestor = user?.role === 'gestor' || user?.role === 'admin';
   const [selectedLead, setSelectedLead] = useState<any>(null);
