@@ -568,21 +568,6 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Proteção contra registros duplicados: verificar se já existe interação
-        // do mesmo tipo criada nos últimos 5 segundos pelo mesmo corretor
-        const recentInteractions = await db.getInteracoesByLeadId(input.leadId);
-        const fiveSecondsAgo = new Date(Date.now() - 5000);
-        const duplicateCheck = recentInteractions.find(i => 
-          i.corretorId === ctx.user.id && 
-          i.tipo === input.tipo &&
-          new Date(i.createdAt) > fiveSecondsAgo
-        );
-        
-        if (duplicateCheck) {
-          console.warn(`[Duplicate Prevention] Blocked duplicate ${input.tipo} interaction for lead ${input.leadId} by user ${ctx.user.id}`);
-          return { success: true, duplicate: true };
-        }
-        
         // Se o lead não tem corretor, atribuir ao corretor que está registrando a interação
         if (!lead.corretorId) {
           await db.updateLead(input.leadId, {
@@ -599,7 +584,6 @@ export const appRouter = router({
         }
         
         // Registrar interação na tabela interacoes
-        console.log(`[Interaction Created] Lead: ${input.leadId}, User: ${ctx.user.id}, Type: ${input.tipo}, Result: ${input.resultado}`);
         await db.createInteracao({
           leadId: input.leadId,
           corretorId: ctx.user.id,

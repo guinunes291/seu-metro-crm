@@ -1,8 +1,0 @@
-{
-  "query": "\nSELECT \n  DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s') as timestamp,\n  COUNT(*) as quantidade\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE u.name = 'Andrew'\n  AND i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s')\nORDER BY timestamp DESC;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s') as timestamp,\n  COUNT(*) as quantidade\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE u.name = 'Andrew'\n  AND i.tipo = 'whatsapp'\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i:%s')\nORDER BY timestamp DESC;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1052 (23000) at line 2: Column 'createdat' in field list is ambiguous"
-  ]
-}

@@ -175,13 +175,12 @@ export default function TarefasDoDia() {
 
   const registrarTentativaMutation = trpc.followUps.registrarTentativa.useMutation({
     onSuccess: (data) => {
-      // Só mostra toast e limpa estado se não for chamado via addInteractionMutation
-      if (!showRegistrarInteracao) {
-        toast.success(data.mensagem);
-        setShowRegistrarTentativa(null);
-        setObservacaoTentativa("");
-        refetch();
-      }
+      toast.success(data.mensagem);
+      setShowRegistrarTentativa(null);
+      setShowRegistrarInteracao(null);
+      setObservacaoTentativa("");
+      setInteracaoForm({ tipoContato: "whatsapp", resultado: "contato_realizado", observacoes: "" });
+      refetch();
     },
     onError: (error) => {
       toast.error(`Erro ao registrar tentativa: ${error.message}`);
@@ -190,22 +189,14 @@ export default function TarefasDoDia() {
 
   // Mutation para adicionar interação ao histórico do lead
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
-    onSuccess: async () => {
+    onSuccess: () => {
       // Após salvar a interação, registrar a tentativa de follow-up
       if (showRegistrarInteracao) {
-        try {
-          const resultado = await registrarTentativaMutation.mutateAsync({
-            followUpId: showRegistrarInteracao.followUpId,
-            resultado: showRegistrarInteracao.tipoResultado,
-            observacao: interacaoForm.observacoes || undefined,
-          });
-          toast.success(resultado.mensagem);
-          setShowRegistrarInteracao(null);
-          setInteracaoForm({ tipoContato: "whatsapp", resultado: "contato_realizado", observacoes: "" });
-          refetch();
-        } catch (error: any) {
-          toast.error(`Erro ao registrar tentativa: ${error.message}`);
-        }
+        registrarTentativaMutation.mutate({
+          followUpId: showRegistrarInteracao.followUpId,
+          resultado: showRegistrarInteracao.tipoResultado,
+          observacao: interacaoForm.observacoes || undefined,
+        });
       }
     },
     onError: (error) => {
