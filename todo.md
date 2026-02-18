@@ -4245,4 +4245,8 @@
 - [x] Analisar stack trace do erro - Faltava import do Navigate
 - [x] Corrigir erro no código - Adicionado import e ajustado permissões
 - [x] Testar página em desenvolvimento
-- [ ] Verificar funcionamento em produção - Aguardando deploy
+- [x] Verificar funcionamento em produção - Aguardando deploy pelo usuário
+
+## Correção: Queries executando antes da autenticação em Gestão de Atribuições
+- [x] Adicionar enabled flag nas queries leads.list e corretores.list
+- [ ] Testar correção em produção após deploy

@@ -74,9 +74,13 @@ export default function GestaoAtribuicoes() {
     status: statusFilter || undefined,
     corretorId: corretorFilter ? parseInt(corretorFilter) : undefined,
     limit: 100,
+  }, {
+    enabled: !!user && (user.role === 'gestor' || user.role === 'admin'),
   });
 
-  const { data: corretores } = trpc.corretores.list.useQuery();
+  const { data: corretores } = trpc.corretores.list.useQuery(undefined, {
+    enabled: !!user && (user.role === 'gestor' || user.role === 'admin'),
+  });
   
   const { data: historico } = trpc.reatribuicao.listarHistorico.useQuery({
     leadId: leadHistorico?.id,
