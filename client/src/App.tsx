@@ -48,12 +48,11 @@ import ConfiguracaoWebhooks from "@/pages/ConfiguracaoWebhooks";
 import ControleLimites from "@/pages/ControleLimites";
 import ProjetoFoco from "@/pages/ProjetoFoco";
 import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
-import ControleBloqueio from "@/pages/ControleBloqueio";
 import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
 import GestaoEquipes from "@/pages/GestaoEquipes";
 import MinhaEquipe from "@/pages/MinhaEquipe";
-import GestaoAtribuicoes from "@/pages/GestaoAtribuicoes";
+
 import { AlertasNotification } from "./components/AlertasNotification";
 
 
@@ -85,7 +84,7 @@ function Router() {
       <Route path="/boas-vindas" component={BoasVindas} />
       <Route path="/tarefas-do-dia" component={TarefasDoDia} />
       <Route path="/monitoramento-followups" component={MonitoramentoFollowUps} />
-      <Route path="/controle-bloqueio" component={ControleBloqueio} />
+
       <Route path="/modo-blitz" component={ModoBlitz} />
       <Route path="/ranking-tv" component={RankingTV} />
       <Route path="/performance-tv" component={PerformanceTV} />
@@ -104,7 +103,7 @@ function Router() {
       <Route path="/log-transferencias" component={LogTransferencias} />
       <Route path="/gestao-equipes" component={GestaoEquipes} />
       <Route path="/minha-equipe" component={MinhaEquipe} />
-      <Route path="/gestao-atribuicoes" component={GestaoAtribuicoes} />
+
       
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

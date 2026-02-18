@@ -4239,3 +4239,10 @@
 - [x] Identificar problema: filtro de status 'presente' excluía corretores
 - [x] Corrigir função getVendasPorCorretor para exibir todos com vendas
 - [x] Testar no ambiente de produção após deploy - Testes passaram!
+
+## Remoção: Páginas "Gestão de Atribuições" e "Controle de Bloqueio"
+- [x] Identificar arquivos das páginas
+- [x] Remover arquivos das páginas
+- [x] Atualizar rotas no App.tsx
+- [x] Remover referências no menu/sidebar - DashboardLayout gerencia menu automaticamente
+- [ ] Testar que páginas não aparecem mais no sistema
