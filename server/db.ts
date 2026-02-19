@@ -38,7 +38,8 @@ import {
   documentacoes, InsertDocumentacao, Documentacao,
   analises_credito, InsertAnaliseCredito, AnaliseCredito,
   contratos, InsertContrato, Contrato,
-  metasGlobais
+  metasGlobais,
+  equipes
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -9633,4 +9634,166 @@ export async function distribuirLeadsSemCorretor(): Promise<{ distribuidos: numb
   console.log(`[Distribuição] Resultado: ${distribuidos} distribuídos, ${semCorretorDisponivel} sem corretor disponível, ${erros} erros`);
   
   return { distribuidos, erros, semCorretorDisponivel };
+}
+
+
+// ============================================================================
+// TABELAS DE CONTRATOS PARA DASHBOARD DO GESTOR
+// ============================================================================
+
+/**
+ * Lista detalhada de contratos fechados com dados de corretor, cliente, projeto, VGV e data
+ */
+export async function getContratosFechados(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(contratos.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(contratos.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
+  }
+  
+  const result = await db.select({
+    id: contratos.id,
+    corretorId: contratos.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    clienteNome: leads.nome,
+    clienteTelefone: leads.telefone,
+    clienteEmail: leads.email,
+    projectId: leads.projectId,
+    projetoCustom: leads.projetoCustom,
+    valorVenda: contratos.valorVenda,
+    dataVenda: contratos.createdAt,
+    observacoes: contratos.observacoes,
+  })
+    .from(contratos)
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(contratos.createdAt));
+  
+  // Buscar nomes dos projetos
+  const projectIds = [...new Set(result.filter(r => r.projectId).map(r => r.projectId!))];
+  let projectsMap = new Map<number, string>();
+  
+  if (projectIds.length > 0) {
+    const projectsData = await db.select({
+      id: projects.id,
+      nome: projects.nome,
+    })
+      .from(projects)
+      .where(inArray(projects.id, projectIds));
+    
+    projectsMap = new Map(projectsData.map(p => [p.id, p.nome]));
+  }
+  
+  return result.map(r => ({
+    id: r.id,
+    corretor: r.corretorNome || 'Sem nome',
+    corretorFoto: r.corretorFoto,
+    cliente: r.clienteNome || 'Sem nome',
+    clienteTelefone: r.clienteTelefone || '',
+    clienteEmail: r.clienteEmail || '',
+    projeto: r.projectId ? (projectsMap.get(r.projectId) || 'Projeto removido') : (r.projetoCustom || 'Não informado'),
+    vgv: Number(r.valorVenda || 0),
+    dataVenda: r.dataVenda,
+  }));
+}
+
+/**
+ * VGV agrupado por equipe e projeto
+ */
+export async function getVGVPorEquipeProjeto(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const conditions: any[] = [];
+  
+  if (filtros?.dataInicio) {
+    conditions.push(gte(contratos.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(contratos.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
+  }
+  
+  // Buscar todos os contratos com dados do corretor (para pegar equipeId)
+  const result = await db.select({
+    contratoId: contratos.id,
+    corretorId: contratos.corretorId,
+    equipeId: users.equipeId,
+    leadId: contratos.leadId,
+    valorVenda: contratos.valorVenda,
+    projectId: leads.projectId,
+    projetoCustom: leads.projetoCustom,
+  })
+    .from(contratos)
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
+  
+  // Buscar nomes das equipes
+  const equipeIds = [...new Set(result.filter(r => r.equipeId).map(r => r.equipeId!))];
+  let equipesMap = new Map<number, string>();
+  
+  if (equipeIds.length > 0) {
+    const equipesData = await db.select({
+      id: equipes.id,
+      nome: equipes.nome,
+    })
+      .from(equipes)
+      .where(inArray(equipes.id, equipeIds));
+    
+    equipesMap = new Map(equipesData.map(e => [e.id, e.nome]));
+  }
+  
+  // Buscar nomes dos projetos
+  const projectIds = [...new Set(result.filter(r => r.projectId).map(r => r.projectId!))];
+  let projectsMap = new Map<number, string>();
+  
+  if (projectIds.length > 0) {
+    const projectsData = await db.select({
+      id: projects.id,
+      nome: projects.nome,
+    })
+      .from(projects)
+      .where(inArray(projects.id, projectIds));
+    
+    projectsMap = new Map(projectsData.map(p => [p.id, p.nome]));
+  }
+  
+  // Agrupar por equipe + projeto
+  const agrupado = new Map<string, { equipe: string; projeto: string; vgv: number; contratos: number }>();
+  
+  for (const r of result) {
+    const equipeNome = r.equipeId ? (equipesMap.get(r.equipeId) || 'Equipe removida') : 'Sem equipe';
+    const projetoNome = r.projectId ? (projectsMap.get(r.projectId) || 'Projeto removido') : (r.projetoCustom || 'Não informado');
+    const key = `${equipeNome}|||${projetoNome}`;
+    
+    const existing = agrupado.get(key);
+    if (existing) {
+      existing.vgv += Number(r.valorVenda || 0);
+      existing.contratos += 1;
+    } else {
+      agrupado.set(key, {
+        equipe: equipeNome,
+        projeto: projetoNome,
+        vgv: Number(r.valorVenda || 0),
+        contratos: 1,
+      });
+    }
+  }
+  
+  // Converter para array e ordenar por VGV
+  return Array.from(agrupado.values()).sort((a, b) => b.vgv - a.vgv);
 }

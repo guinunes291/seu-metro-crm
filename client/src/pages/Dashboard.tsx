@@ -189,6 +189,16 @@ export default function Dashboard() {
     { enabled: isGestor }
   );
   
+  // Queries para tabelas de contratos fechados
+  const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(
+    dateFilter,
+    { enabled: isGestor }
+  );
+  const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(
+    dateFilter,
+    { enabled: isGestor }
+  );
+  
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR
   // ============================================================================
@@ -763,6 +773,156 @@ export default function Dashboard() {
                   <div className="text-2xl font-bold text-green-700 dark:text-green-300">
                     {formatCurrency(metrics?.vgv || 0)}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tabela de Contratos Fechados */}
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        Contratos Fechados
+                      </CardTitle>
+                      <CardDescription>Detalhamento de vendas por corretor, cliente e projeto</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-sm">
+                      {contratosFechados?.length || 0} contratos | VGV Total: {formatCurrency(contratosFechados?.reduce((sum, c) => sum + c.vgv, 0) || 0)}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {contratosFechados && contratosFechados.length > 0 ? (
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="font-semibold">Corretor</TableHead>
+                              <TableHead className="font-semibold">Cliente</TableHead>
+                              <TableHead className="font-semibold">Projeto</TableHead>
+                              <TableHead className="text-right font-semibold">VGV</TableHead>
+                              <TableHead className="text-right font-semibold">Data da Venda</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {contratosFechados.map((contrato, index) => (
+                              <TableRow key={contrato.id} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
+                                <TableCell>
+                                  <div className="flex items-center gap-2">
+                                    {contrato.corretorFoto ? (
+                                      <img 
+                                        src={contrato.corretorFoto} 
+                                        alt={contrato.corretor}
+                                        className="w-7 h-7 rounded-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <Users className="h-3.5 w-3.5 text-primary" />
+                                      </div>
+                                    )}
+                                    <span className="font-medium text-sm">{contrato.corretor}</span>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div>
+                                    <p className="text-sm font-medium">{contrato.cliente}</p>
+                                    {contrato.clienteTelefone && (
+                                      <p className="text-xs text-muted-foreground">{contrato.clienteTelefone}</p>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <span className="text-sm">{contrato.projeto}</span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className="font-semibold text-green-600 dark:text-green-400">
+                                    {formatCurrency(contrato.vgv)}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className="text-sm text-muted-foreground">
+                                    {format(new Date(contrato.dataVenda), "dd/MM/yyyy", { locale: ptBR })}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhum contrato fechado no período selecionado</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tabela de VGV por Equipe e Projeto */}
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5 text-blue-500" />
+                        VGV por Equipe de Vendas e Projeto
+                      </CardTitle>
+                      <CardDescription>Visão consolidada de vendas por equipe e empreendimento</CardDescription>
+                    </div>
+                    <Badge variant="outline" className="text-sm">
+                      VGV Total: {formatCurrency(vgvPorEquipeProjeto?.reduce((sum, item) => sum + item.vgv, 0) || 0)}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {vgvPorEquipeProjeto && vgvPorEquipeProjeto.length > 0 ? (
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-muted/50">
+                              <TableHead className="font-semibold">Equipe de Vendas</TableHead>
+                              <TableHead className="font-semibold">Projeto</TableHead>
+                              <TableHead className="text-center font-semibold">Contratos</TableHead>
+                              <TableHead className="text-right font-semibold">VGV</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {vgvPorEquipeProjeto.map((item, index) => (
+                              <TableRow key={`${item.equipe}-${item.projeto}-${index}`} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
+                                <TableCell>
+                                  <span className="font-medium text-sm">{item.equipe}</span>
+                                </TableCell>
+                                <TableCell>
+                                  <span className="text-sm">{item.projeto}</span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  <Badge variant="secondary">{item.contratos}</Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <span className="font-semibold text-green-600 dark:text-green-400">
+                                    {formatCurrency(item.vgv)}
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Nenhuma venda por equipe no período selecionado</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

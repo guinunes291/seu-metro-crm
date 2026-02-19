@@ -4288,3 +4288,11 @@
 - [x] Identificar todos os dados de teste no banco (corretores, leads, interações, etc.)
 - [x] Apagar corretores de teste criados (18 removidos)
 - [x] Apagar quaisquer outros dados de teste (157 leads, 85 distribution_log, 16 conquistas, 84 notificações, 16 fila_distribuicao, 2 leads órfãos)
+
+## Tabelas de Contratos no Dashboard do Gestor
+- [x] Criar procedure backend para listar contratos com dados de corretor, cliente, projeto, VGV e data
+- [x] Criar procedure backend para agrupar contratos por equipe e projeto com VGV total
+- [x] Implementar tabela "Contratos Fechados" (Corretor/Cliente/Projeto/VGV/Data da venda)
+- [x] Implementar tabela "VGV por Equipe e Projeto" (Equipe de Vendas/Projeto/VGV)
+- [x] Aplicar filtro de período existente do dashboard às tabelas
+- [x] Escrever testes unitários para as novas procedures (15 testes passando)

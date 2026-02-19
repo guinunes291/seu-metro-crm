@@ -1821,6 +1821,42 @@ export const appRouter = router({
         return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim, corretoresIds);
       }),
     
+    // Lista detalhada de contratos fechados
+    contratosFechados: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await db.getContratosFechados(filtros);
+      }),
+    
+    // VGV agrupado por equipe e projeto
+    vgvPorEquipeProjeto: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await db.getVGVPorEquipeProjeto(filtros);
+      }),
+    
     // Relatório detalhado de leads criados por corretor
     relatorioLeadsCriados: gestorProcedure
       .input(z.object({
