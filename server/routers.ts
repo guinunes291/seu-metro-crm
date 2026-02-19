@@ -2615,9 +2615,11 @@ export const appRouter = router({
       .input(z.object({
         mes: z.number().nullable().optional(),
         ano: z.number().nullable().optional(),
+        dataInicio: z.date().nullable().optional(),
+        dataFim: z.date().nullable().optional(),
       }).optional())
       .query(async ({ input }) => {
-        return await db.getRankingCorretores(input?.mes, input?.ano);
+        return await db.getRankingCorretores(input?.mes, input?.ano, input?.dataInicio, input?.dataFim);
       }),
     
     // Performance individual do corretor

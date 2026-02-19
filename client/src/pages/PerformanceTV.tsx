@@ -595,11 +595,12 @@ export default function PerformanceTV() {
     dataInicio: dateRange.from, dataFim: dateRange.to,
   }), [dateRange.from?.getTime(), dateRange.to?.getTime()]);
   
-  // Ranking VGV sempre mostra todos os dados (sem filtro de período)
-  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery({ 
-    mes: null, 
-    ano: null 
-  });
+  // Ranking VGV usa o filtro de período selecionado (usa dateRangeInput memoizado para estabilidade)
+  const rankingVGVInput = useMemo(() => ({
+    dataInicio: dateRange.from || null,
+    dataFim: dateRange.to || null,
+  }), [dateRange.from?.getTime(), dateRange.to?.getTime()]);
+  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery(rankingVGVInput);
   const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery(dateRangeInput);
   const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery({ 
     mes: selectedMes, 
@@ -687,36 +688,39 @@ export default function PerformanceTV() {
       {/* Header */}
       <div className="border-b border-slate-800/50 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                  <Trophy className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-white">SEU METRO QUADRADO</h1>
-                  <p className="text-[10px] text-cyan-300 uppercase tracking-wider font-medium">
-                    Performance em Vendas {user?.role === 'gestor' ? '(Minha Equipe)' : '(Operação Completa)'}
-                  </p>
-                </div>
+          <div className="flex items-center gap-3">
+            {/* Logo + Title - fixed width */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">SEU METRO QUADRADO</h1>
+                <p className="text-[10px] text-cyan-300 uppercase tracking-wider font-medium">
+                  Performance em Vendas {user?.role === 'gestor' ? '(Minha Equipe)' : '(Operação Completa)'}
+                </p>
               </div>
             </div>
             
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mx-4">
-              <TabsList className="bg-slate-800/50 border border-slate-700/50">
-                <TabsTrigger value="realxmeta" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300">
-                  <Target className="w-4 h-4 mr-2" /> Real x Meta
-                </TabsTrigger>
-                <TabsTrigger value="vgv" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300">
-                  <DollarSign className="w-4 h-4 mr-2" /> VGV / Vendas
-                </TabsTrigger>
-                <TabsTrigger value="produtividade" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-gray-300">
-                  <Activity className="w-4 h-4 mr-2" /> Produtividade
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* Tabs - centered */}
+            <div className="flex-1 flex justify-center">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+                <TabsList className="bg-slate-800/50 border border-slate-700/50">
+                  <TabsTrigger value="realxmeta" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300">
+                    <Target className="w-4 h-4 mr-2" /> Real x Meta
+                  </TabsTrigger>
+                  <TabsTrigger value="vgv" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300">
+                    <DollarSign className="w-4 h-4 mr-2" /> VGV / Vendas
+                  </TabsTrigger>
+                  <TabsTrigger value="produtividade" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white text-gray-300">
+                    <Activity className="w-4 h-4 mr-2" /> Produtividade
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
             
-            <div className="flex items-center gap-2">
+            {/* Filters - always right-aligned, fixed structure */}
+            <div className="flex items-center gap-2 shrink-0">
               {/* Filtro de Equipe (apenas admin) */}
               {user?.role === 'admin' && equipes && equipes.length > 0 && (
                 <DropdownMenu>
@@ -746,12 +750,14 @@ export default function PerformanceTV() {
                 </DropdownMenu>
               )}
               
-              {activeTab === 'realxmeta' && (
+              {/* Date filter - always shows, content changes per tab */}
+              {activeTab === 'realxmeta' ? (
                 <>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">
-                        <Calendar className="h-4 w-4" /> {meses[selectedMes - 1]} {selectedAno} <ChevronDown className="h-4 w-4" />
+                      <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white min-w-[180px] justify-between">
+                        <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {meses[selectedMes - 1]} {selectedAno}</span>
+                        <ChevronDown className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 max-h-80 overflow-y-auto">
@@ -771,13 +777,12 @@ export default function PerformanceTV() {
                   </DropdownMenu>
                   <MetasConfigModal mes={selectedMes} ano={selectedAno} />
                 </>
-              )}
-              
-              {activeTab !== 'realxmeta' && (
+              ) : (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">
-                      <Calendar className="h-4 w-4" /> {periodLabel} <ChevronDown className="h-4 w-4" />
+                    <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white min-w-[180px] justify-between">
+                      <span className="flex items-center gap-2"><Calendar className="h-4 w-4" /> {periodLabel}</span>
+                      <ChevronDown className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">

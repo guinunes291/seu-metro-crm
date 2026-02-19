@@ -4279,3 +4279,12 @@
 - [x] Corrigir queries de vendas e VGV
 - [x] Implementar ranking correto de corretores
 - [x] Testar com dados reais
+
+## Bug - Performance TV: Filtros e Layout
+- [x] Filtros de data não afetam valores da aba VGV/Vendas (mostra sempre os mesmos dados)
+- [x] Layout dos filtros muda de posição ao alternar entre abas (esquerda vs direita)
+
+## Limpeza de Dados de Teste
+- [ ] Identificar todos os dados de teste no banco (corretores, leads, interações, etc.)
+- [ ] Apagar corretores de teste criados
+- [ ] Apagar quaisquer outros dados de teste (leads, contratos, etc.)

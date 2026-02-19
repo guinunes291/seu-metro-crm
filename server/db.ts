@@ -2381,19 +2381,25 @@ export async function getProgressoMetasTodosCorretores(mes: number, ano: number)
 // RANKING DE CORRETORES
 // ============================================================================
 
-export async function getRankingCorretores(mes?: number | null, ano?: number | null) {
+export async function getRankingCorretores(mes?: number | null, ano?: number | null, dataInicio?: Date | null, dataFim?: Date | null) {
   const db = await getDb();
   if (!db) return [];
   
   try {
     // Definir filtro de data para contratos
     let contratosWhere = undefined;
-    if (mes !== null && mes !== undefined && ano !== null && ano !== undefined) {
-      const dataInicio = new Date(ano, mes - 1, 1);
-      const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
+    if (dataInicio && dataFim) {
+      // Filtro por range de datas (prioridade)
       contratosWhere = and(
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
+      );
+    } else if (mes !== null && mes !== undefined && ano !== null && ano !== undefined) {
+      const inicio = new Date(ano, mes - 1, 1);
+      const fim = new Date(ano, mes, 0, 23, 59, 59, 999);
+      contratosWhere = and(
+        gte(contratos.createdAt, inicio),
+        lte(contratos.createdAt, fim)
       );
     }
     
