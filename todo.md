@@ -4273,3 +4273,9 @@
 - [x] Verificar query de contratos e filtros aplicados
 - [x] Verificar sincronização com Google Sheets
 - [x] Transferir todos os contratos do Guilherme admin para o Guilherme gestor
+
+## Bug - Performance TV não exibe dados reais
+- [x] Identificar arquivo da página Performance TV
+- [x] Corrigir queries de vendas e VGV
+- [x] Implementar ranking correto de corretores
+- [x] Testar com dados reais

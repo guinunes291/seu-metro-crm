@@ -595,7 +595,11 @@ export default function PerformanceTV() {
     dataInicio: dateRange.from, dataFim: dateRange.to,
   }), [dateRange.from?.getTime(), dateRange.to?.getTime()]);
   
-  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery();
+  // Ranking VGV sempre mostra todos os dados (sem filtro de período)
+  const { data: rankingVGV, refetch: refetchVGV } = trpc.ranking.getCompleto.useQuery({ 
+    mes: null, 
+    ano: null 
+  });
   const { data: rankingPeriodo, refetch: refetchPeriodo } = trpc.ranking.porPeriodo.useQuery(dateRangeInput);
   const { data: dashboardData, refetch: refetchDashboard } = trpc.dashboardPerformance.getData.useQuery({ 
     mes: selectedMes, 

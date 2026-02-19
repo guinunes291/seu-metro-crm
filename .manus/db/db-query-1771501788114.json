@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, corretorId, valorVenda, createdAt FROM contratos ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, corretorId, valorVenda, createdAt FROM contratos ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "210004",
+      "corretorId": "5055943",
+      "valorVenda": "283600.00",
+      "createdAt": "2026-02-18 00:00:00"
+    },
+    {
+      "id": "210001",
+      "corretorId": "11184140",
+      "valorVenda": "416546.72",
+      "createdAt": "2026-02-15 00:00:00"
+    },
+    {
+      "id": "180001",
+      "corretorId": "7862260",
+      "valorVenda": "310121.39",
+      "createdAt": "2026-02-09 00:00:00"
+    },
+    {
+      "id": "120001",
+      "corretorId": "5055943",
+      "valorVenda": "380000.00",
+      "createdAt": "2026-02-07 00:00:00"
+    },
+    {
+      "id": "90001",
+      "corretorId": "5055943",
+      "valorVenda": "323000.00",
+      "createdAt": "2026-02-05 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tvalorVenda\tcreatedAt\n210004\t5055943\t283600.00\t2026-02-18 00:00:00\n210001\t11184140\t416546.72\t2026-02-15 00:00:00\n180001\t7862260\t310121.39\t2026-02-09 00:00:00\n120001\t5055943\t380000.00\t2026-02-07 00:00:00\n90001\t5055943\t323000.00\t2026-02-05 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

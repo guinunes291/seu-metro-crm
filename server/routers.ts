@@ -2611,10 +2611,10 @@ export const appRouter = router({
   // ============================================================================
   ranking: router({
     // Ranking completo de corretores com fotos (para Minha Performance)
-    getCompleto: corretorProcedure
+    getCompleto: protectedProcedure
       .input(z.object({
-        mes: z.number().optional(),
-        ano: z.number().optional(),
+        mes: z.number().nullable().optional(),
+        ano: z.number().nullable().optional(),
       }).optional())
       .query(async ({ input }) => {
         return await db.getRankingCorretores(input?.mes, input?.ano);

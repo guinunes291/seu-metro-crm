@@ -2381,99 +2381,49 @@ export async function getProgressoMetasTodosCorretores(mes: number, ano: number)
 // RANKING DE CORRETORES
 // ============================================================================
 
-export async function getRankingCorretores(mes?: number, ano?: number) {
+export async function getRankingCorretores(mes?: number | null, ano?: number | null) {
   const db = await getDb();
   if (!db) return [];
   
-  // Se não especificado, usa o mês/ano atual
-  const dataAtual = new Date();
-  const mesAtual = mes || dataAtual.getMonth() + 1;
-  const anoAtual = ano || dataAtual.getFullYear();
-  
-  // Período do mês
-  const dataInicio = new Date(anoAtual, mesAtual - 1, 1);
-  const dataFim = new Date(anoAtual, mesAtual, 0, 23, 59, 59, 999);
-  
-  // Buscar todos os corretores
-  const corretores = await db.select()
-    .from(users)
-    .where(eq(users.role, 'corretor'));
-  
-  const ranking = [];
-  
-  for (const corretor of corretores) {
-    // Buscar métricas do corretor no período
-    const leadsDoMes = await db.select({
-      status: leads.status,
-      count: sql<number>`count(*)`
-    })
-      .from(leads)
-      .where(and(
-        eq(leads.corretorId, corretor.id),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim)
-      ))
-      .groupBy(leads.status);
-    
-    let totalLeads = 0;
-    let agendamentos = 0;
-    let visitas = 0;
-    let contratos = 0;
-    
-    for (const row of leadsDoMes) {
-      const count = Number(row.count);
-      totalLeads += count;
-      
-      if (row.status === 'agendado') agendamentos = count;
-      if (row.status === 'visita_realizada') visitas = count;
-      if (row.status === 'contrato_fechado') contratos = count;
+  try {
+    // Definir filtro de data para contratos
+    let contratosWhere = undefined;
+    if (mes !== null && mes !== undefined && ano !== null && ano !== undefined) {
+      const dataInicio = new Date(ano, mes - 1, 1);
+      const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
+      contratosWhere = and(
+        gte(contratos.createdAt, dataInicio),
+        lte(contratos.createdAt, dataFim)
+      );
     }
     
-    // Calcular VGV
-    const vgvResult = await db.select({
-      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`
-    })
-      .from(leads)
-      .leftJoin(projects, eq(leads.projectId, projects.id))
-      .where(and(
-        eq(leads.corretorId, corretor.id),
-        eq(leads.status, 'contrato_fechado'),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim)
-      ));
+    // Buscar contratos agrupados por corretor usando Drizzle ORM
+    const result = await db
+      .select({
+        corretorId: contratos.corretorId,
+        corretorNome: users.name,
+        corretorFoto: users.fotoUrl,
+        contratosFechados: sql<number>`COUNT(${contratos.id})`.as('contratosFechados'),
+        vgvTotal: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`.as('vgvTotal'),
+      })
+      .from(contratos)
+      .innerJoin(users, eq(contratos.corretorId, users.id))
+      .where(contratosWhere)
+      .groupBy(contratos.corretorId, users.name, users.fotoUrl)
+      .orderBy(sql`vgvTotal DESC`);
     
-    const vgv = Number(vgvResult[0]?.total || 0);
-    
-    // Calcular pontuação (peso maior para contratos e VGV)
-    const pontuacao = (totalLeads * 1) + (agendamentos * 5) + (visitas * 10) + (contratos * 50) + (vgv / 10000);
-    
-    ranking.push({
-      corretor: {
-        id: corretor.id,
-        nome: corretor.name || 'Sem nome',
-        email: corretor.email,
-        fotoUrl: corretor.fotoUrl,
-        status: corretor.status,
-      },
-      metricas: {
-        totalLeads,
-        agendamentos,
-        visitas,
-        contratos,
-        vgv,
-      },
-      pontuacao: Math.round(pontuacao),
-    });
+    return result.map((row, index) => ({
+      corretorId: Number(row.corretorId),
+      corretorNome: row.corretorNome || 'Sem nome',
+      corretorFoto: row.corretorFoto || null,
+      vgvTotal: Number(row.vgvTotal || 0),
+      contratosFechados: Number(row.contratosFechados || 0),
+      posicao: index + 1,
+    }));
+  } catch (error) {
+    console.error('[getRankingCorretores] Erro:', error);
+    return [];
   }
-  
-  // Ordenar por pontuação (maior primeiro)
-  ranking.sort((a, b) => b.pontuacao - a.pontuacao);
-  
-  // Adicionar posição
-  return ranking.map((item, index) => ({
-    ...item,
-    posicao: index + 1,
-  }));
 }
 
 export async function getPerformanceCorretor(corretorId: number, mes?: number, ano?: number) {
