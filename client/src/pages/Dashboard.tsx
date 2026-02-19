@@ -6,9 +6,10 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download
+  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
+import EditarContratoDialog from "@/components/EditarContratoDialog";
 import { Button } from "@/components/ui/button";
 import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
 import FunilVendasVisual from "@/components/FunilVendasVisual";
@@ -127,6 +128,11 @@ function formatDateShort(dateStr: string): string {
 export default function Dashboard() {
   const { user } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isAdmin = user?.role === "admin";
+  
+  // Estado de edição de contrato
+  const [editContratoId, setEditContratoId] = useState<number | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   
   // Estado do filtro
   const [filterPreset, setFilterPreset] = useState("all");
@@ -806,6 +812,7 @@ export default function Dashboard() {
                               <TableHead className="font-semibold">Projeto</TableHead>
                               <TableHead className="text-right font-semibold">VGV</TableHead>
                               <TableHead className="text-right font-semibold">Data da Venda</TableHead>
+                              {isAdmin && <TableHead className="w-10"></TableHead>}
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -848,6 +855,20 @@ export default function Dashboard() {
                                     {format(new Date(contrato.dataVenda), "dd/MM/yyyy", { locale: ptBR })}
                                   </span>
                                 </TableCell>
+                                {isAdmin && (
+                                  <TableCell className="text-center">
+                                    <button
+                                      onClick={() => {
+                                        setEditContratoId(contrato.id);
+                                        setEditDialogOpen(true);
+                                      }}
+                                      className="p-1.5 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                                      title="Editar contrato"
+                                    >
+                                      <Pencil className="h-3.5 w-3.5" />
+                                    </button>
+                                  </TableCell>
+                                )}
                               </TableRow>
                             ))}
                           </TableBody>
@@ -1305,6 +1326,15 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Dialog de edição de contrato (admin only) */}
+      {isAdmin && (
+        <EditarContratoDialog
+          contratoId={editContratoId}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+        />
+      )}
     </DashboardLayout>
   );
 }

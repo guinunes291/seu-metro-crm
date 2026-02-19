@@ -4303,3 +4303,13 @@
 - [x] Corrigir equipe de sheldonbarbosaa (MUNDO APTO ESTAÇÃO CONCEIÇÃO) → Equipe Sheldon
 - [x] Alterar tabela VGV para agrupar apenas por equipe (sem separar por projeto)
 - [x] Reduzir altura das tabelas e adicionar scroll vertical
+
+## Nova Feature: Edição de Contratos no Dashboard
+- [x] Analisar estrutura dos contratos no schema e backend
+- [x] Criar função de atualização de contrato no db.ts
+- [x] Criar procedure tRPC para atualizar contrato (admin only)
+- [x] Implementar modal de edição na tabela de contratos
+- [x] Campos editáveis: Corretor, Cliente, Projeto, Equipe, Data, Valor
+- [x] Selects para Corretor, Projeto e Equipe (com dados do banco)
+- [x] Validação de dados e feedback ao usuário
+- [x] Escrever testes unitários (23 testes passando)

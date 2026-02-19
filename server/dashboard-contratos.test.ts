@@ -170,3 +170,111 @@ describe('VGV por Equipe (getVGVPorEquipeProjeto)', () => {
     expect(resultado).toEqual([]);
   });
 });
+
+describe('Edição de Contratos (getContratoParaEdicao)', () => {
+  it('deve retornar null para contrato inexistente', async () => {
+    const resultado = await db.getContratoParaEdicao(999999);
+    expect(resultado).toBeNull();
+  });
+
+  it('deve retornar dados completos para contrato existente', async () => {
+    // Primeiro buscar um contrato existente
+    const contratos = await db.getContratosFechados();
+    if (contratos.length === 0) return; // Skip se não há contratos
+
+    const contrato = await db.getContratoParaEdicao(contratos[0].id);
+    expect(contrato).not.toBeNull();
+    
+    if (contrato) {
+      expect(contrato).toHaveProperty('id');
+      expect(contrato).toHaveProperty('leadId');
+      expect(contrato).toHaveProperty('corretorId');
+      expect(contrato).toHaveProperty('corretorNome');
+      expect(contrato).toHaveProperty('clienteNome');
+      expect(contrato).toHaveProperty('clienteTelefone');
+      expect(contrato).toHaveProperty('clienteEmail');
+      expect(contrato).toHaveProperty('valorVenda');
+      expect(contrato).toHaveProperty('dataVenda');
+      
+      expect(typeof contrato.id).toBe('number');
+      expect(typeof contrato.corretorId).toBe('number');
+      expect(typeof contrato.corretorNome).toBe('string');
+      expect(typeof contrato.clienteNome).toBe('string');
+      expect(typeof contrato.valorVenda).toBe('number');
+    }
+  });
+
+  it('deve retornar dados consistentes com getContratosFechados', async () => {
+    const contratos = await db.getContratosFechados();
+    if (contratos.length === 0) return;
+
+    const primeiro = contratos[0];
+    const detalhe = await db.getContratoParaEdicao(primeiro.id);
+    
+    expect(detalhe).not.toBeNull();
+    if (detalhe) {
+      expect(detalhe.id).toBe(primeiro.id);
+      expect(detalhe.clienteNome).toBe(primeiro.cliente);
+      expect(detalhe.valorVenda).toBe(primeiro.vgv);
+    }
+  });
+});
+
+describe('Opções de Contrato (getOpcoesContrato)', () => {
+  it('deve retornar objeto com corretores, projetos e equipes', async () => {
+    const opcoes = await db.getOpcoesContrato();
+    
+    expect(opcoes).toHaveProperty('corretores');
+    expect(opcoes).toHaveProperty('projetos');
+    expect(opcoes).toHaveProperty('equipes');
+    
+    expect(Array.isArray(opcoes.corretores)).toBe(true);
+    expect(Array.isArray(opcoes.projetos)).toBe(true);
+    expect(Array.isArray(opcoes.equipes)).toBe(true);
+  });
+
+  it('corretores devem ter id, nome e equipeId', async () => {
+    const opcoes = await db.getOpcoesContrato();
+    
+    if (opcoes.corretores.length > 0) {
+      const primeiro = opcoes.corretores[0];
+      expect(primeiro).toHaveProperty('id');
+      expect(primeiro).toHaveProperty('nome');
+      expect(primeiro).toHaveProperty('equipeId');
+      expect(typeof primeiro.id).toBe('number');
+      expect(typeof primeiro.nome).toBe('string');
+    }
+  });
+
+  it('projetos devem ter id e nome', async () => {
+    const opcoes = await db.getOpcoesContrato();
+    
+    if (opcoes.projetos.length > 0) {
+      const primeiro = opcoes.projetos[0];
+      expect(primeiro).toHaveProperty('id');
+      expect(primeiro).toHaveProperty('nome');
+      expect(typeof primeiro.id).toBe('number');
+      expect(typeof primeiro.nome).toBe('string');
+    }
+  });
+
+  it('equipes devem ter id e nome', async () => {
+    const opcoes = await db.getOpcoesContrato();
+    
+    if (opcoes.equipes.length > 0) {
+      const primeiro = opcoes.equipes[0];
+      expect(primeiro).toHaveProperty('id');
+      expect(primeiro).toHaveProperty('nome');
+      expect(typeof primeiro.id).toBe('number');
+      expect(typeof primeiro.nome).toBe('string');
+    }
+  });
+});
+
+describe('Atualizar Contrato (atualizarContrato)', () => {
+  it('deve lançar erro para contrato inexistente', async () => {
+    await expect(
+      db.atualizarContrato(999999, { clienteNome: 'Teste' })
+    ).rejects.toThrow('Contrato não encontrado');
+  });
+});

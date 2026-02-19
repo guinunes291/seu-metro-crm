@@ -9794,3 +9794,167 @@ export async function getVGVPorEquipeProjeto(filtros?: DashboardFilters) {
   // Converter para array e ordenar por VGV
   return Array.from(agrupado.values()).sort((a, b) => b.vgv - a.vgv);
 }
+
+
+/**
+ * Atualizar um contrato fechado (admin only)
+ * Atualiza dados do contrato, do lead associado e do corretor vinculado
+ */
+export async function atualizarContrato(contratoId: number, dados: {
+  corretorId?: number;
+  clienteNome?: string;
+  clienteTelefone?: string;
+  clienteEmail?: string;
+  projectId?: number | null;
+  projetoCustom?: string | null;
+  valorVenda?: number;
+  dataVenda?: Date;
+  equipeCorretorId?: number | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Buscar contrato atual para obter leadId
+  const [contratoAtual] = await db.select({
+    id: contratos.id,
+    leadId: contratos.leadId,
+    corretorId: contratos.corretorId,
+  })
+    .from(contratos)
+    .where(eq(contratos.id, contratoId))
+    .limit(1);
+
+  if (!contratoAtual) throw new Error('Contrato não encontrado');
+
+  // Atualizar contrato
+  const contratoUpdate: Record<string, any> = {};
+  if (dados.corretorId !== undefined) contratoUpdate.corretorId = dados.corretorId;
+  if (dados.valorVenda !== undefined) contratoUpdate.valorVenda = String(dados.valorVenda);
+  if (dados.dataVenda !== undefined) contratoUpdate.createdAt = dados.dataVenda;
+
+  if (Object.keys(contratoUpdate).length > 0) {
+    await db.update(contratos)
+      .set(contratoUpdate)
+      .where(eq(contratos.id, contratoId));
+  }
+
+  // Atualizar lead associado (cliente, projeto)
+  const leadUpdate: Record<string, any> = {};
+  if (dados.clienteNome !== undefined) leadUpdate.nome = dados.clienteNome;
+  if (dados.clienteTelefone !== undefined) leadUpdate.telefone = dados.clienteTelefone;
+  if (dados.clienteEmail !== undefined) leadUpdate.email = dados.clienteEmail;
+  if (dados.projectId !== undefined) {
+    leadUpdate.projectId = dados.projectId;
+    if (dados.projectId !== null) {
+      leadUpdate.projetoCustom = null; // Limpar projeto custom se selecionou um projeto real
+    }
+  }
+  if (dados.projetoCustom !== undefined) {
+    leadUpdate.projetoCustom = dados.projetoCustom;
+    if (dados.projetoCustom !== null) {
+      leadUpdate.projectId = null; // Limpar projectId se digitou projeto custom
+    }
+  }
+  if (dados.corretorId !== undefined) leadUpdate.corretorId = dados.corretorId;
+
+  if (Object.keys(leadUpdate).length > 0) {
+    await db.update(leads)
+      .set(leadUpdate)
+      .where(eq(leads.id, contratoAtual.leadId));
+  }
+
+  // Atualizar equipe do corretor se necessário
+  if (dados.equipeCorretorId !== undefined && dados.corretorId) {
+    await db.update(users)
+      .set({ equipeId: dados.equipeCorretorId })
+      .where(eq(users.id, dados.corretorId));
+  }
+
+  return { success: true };
+}
+
+/**
+ * Obter detalhes completos de um contrato para edição
+ */
+export async function getContratoParaEdicao(contratoId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [result] = await db.select({
+    id: contratos.id,
+    leadId: contratos.leadId,
+    corretorId: contratos.corretorId,
+    corretorNome: users.name,
+    corretorEquipeId: users.equipeId,
+    clienteNome: leads.nome,
+    clienteTelefone: leads.telefone,
+    clienteEmail: leads.email,
+    projectId: leads.projectId,
+    projetoCustom: leads.projetoCustom,
+    valorVenda: contratos.valorVenda,
+    dataVenda: contratos.createdAt,
+    observacoes: contratos.observacoes,
+  })
+    .from(contratos)
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .where(eq(contratos.id, contratoId))
+    .limit(1);
+
+  if (!result) return null;
+
+  return {
+    id: result.id,
+    leadId: result.leadId,
+    corretorId: result.corretorId,
+    corretorNome: result.corretorNome || '',
+    corretorEquipeId: result.corretorEquipeId,
+    clienteNome: result.clienteNome || '',
+    clienteTelefone: result.clienteTelefone || '',
+    clienteEmail: result.clienteEmail || '',
+    projectId: result.projectId,
+    projetoCustom: result.projetoCustom || '',
+    valorVenda: Number(result.valorVenda || 0),
+    dataVenda: result.dataVenda,
+    observacoes: result.observacoes || '',
+  };
+}
+
+/**
+ * Listar opções para selects de edição de contrato
+ */
+export async function getOpcoesContrato() {
+  const db = await getDb();
+  if (!db) return { corretores: [], projetos: [], equipes: [] };
+
+  const [corretoresData, projetosData, equipesData] = await Promise.all([
+    db.select({
+      id: users.id,
+      nome: users.name,
+      equipeId: users.equipeId,
+    })
+      .from(users)
+      .where(inArray(users.role, ['corretor', 'gestor', 'admin']))
+      .orderBy(users.name),
+    db.select({
+      id: projects.id,
+      nome: projects.nome,
+    })
+      .from(projects)
+      .where(eq(projects.status, 'ativo'))
+      .orderBy(projects.nome),
+    db.select({
+      id: equipes.id,
+      nome: equipes.nome,
+    })
+      .from(equipes)
+      .where(eq(equipes.ativa, true))
+      .orderBy(equipes.nome),
+  ]);
+
+  return {
+    corretores: corretoresData.map(c => ({ id: c.id, nome: c.nome || 'Sem nome', equipeId: c.equipeId })),
+    projetos: projetosData.map(p => ({ id: p.id, nome: p.nome })),
+    equipes: equipesData.map(e => ({ id: e.id, nome: e.nome })),
+  };
+}

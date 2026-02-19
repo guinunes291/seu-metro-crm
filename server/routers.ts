@@ -1839,6 +1839,41 @@ export const appRouter = router({
         return await db.getContratosFechados(filtros);
       }),
     
+    // Obter detalhes de um contrato para edição (admin only)
+    getContratoParaEdicao: adminProcedure
+      .input(z.object({ contratoId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getContratoParaEdicao(input.contratoId);
+      }),
+    
+    // Atualizar contrato (admin only)
+    atualizarContrato: adminProcedure
+      .input(z.object({
+        contratoId: z.number(),
+        corretorId: z.number().optional(),
+        clienteNome: z.string().optional(),
+        clienteTelefone: z.string().optional(),
+        clienteEmail: z.string().optional(),
+        projectId: z.number().nullable().optional(),
+        projetoCustom: z.string().nullable().optional(),
+        valorVenda: z.number().optional(),
+        dataVenda: z.string().optional(),
+        equipeCorretorId: z.number().nullable().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { contratoId, ...dados } = input;
+        return await db.atualizarContrato(contratoId, {
+          ...dados,
+          dataVenda: dados.dataVenda ? new Date(dados.dataVenda) : undefined,
+        });
+      }),
+    
+    // Opções para selects de edição de contrato
+    opcoesContrato: gestorProcedure
+      .query(async () => {
+        return await db.getOpcoesContrato();
+      }),
+    
     // VGV agrupado por equipe e projeto
     vgvPorEquipeProjeto: gestorProcedure
       .input(z.object({
