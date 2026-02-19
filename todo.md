@@ -4296,3 +4296,10 @@
 - [x] Implementar tabela "VGV por Equipe e Projeto" (Equipe de Vendas/Projeto/VGV)
 - [x] Aplicar filtro de período existente do dashboard às tabelas
 - [x] Escrever testes unitários para as novas procedures (15 testes passando)
+
+## Correções nas Tabelas de Contratos do Dashboard
+- [x] Corrigir equipe de Luis Carlos De Veras → Equipe Guilherme Nunes
+- [x] Corrigir equipe de Guilherme Nunes (ESTACAO VILA SONIA) → Equipe Guilherme Nunes
+- [x] Corrigir equipe de sheldonbarbosaa (MUNDO APTO ESTAÇÃO CONCEIÇÃO) → Equipe Sheldon
+- [x] Alterar tabela VGV para agrupar apenas por equipe (sem separar por projeto)
+- [x] Reduzir altura das tabelas e adicionar scroll vertical

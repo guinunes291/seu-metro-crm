@@ -797,9 +797,9 @@ export default function Dashboard() {
                 <CardContent>
                   {contratosFechados && contratosFechados.length > 0 ? (
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="overflow-x-auto">
+                      <div className="max-h-[400px] overflow-y-auto overflow-x-auto">
                         <Table>
-                          <TableHeader>
+                          <TableHeader className="sticky top-0 z-10 bg-background">
                             <TableRow className="bg-muted/50">
                               <TableHead className="font-semibold">Corretor</TableHead>
                               <TableHead className="font-semibold">Cliente</TableHead>
@@ -872,9 +872,9 @@ export default function Dashboard() {
                     <div>
                       <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-blue-500" />
-                        VGV por Equipe de Vendas e Projeto
+                        VGV por Equipe de Vendas
                       </CardTitle>
-                      <CardDescription>Visão consolidada de vendas por equipe e empreendimento</CardDescription>
+                      <CardDescription>Visão consolidada de vendas por equipe</CardDescription>
                     </div>
                     <Badge variant="outline" className="text-sm">
                       VGV Total: {formatCurrency(vgvPorEquipeProjeto?.reduce((sum, item) => sum + item.vgv, 0) || 0)}
@@ -884,24 +884,20 @@ export default function Dashboard() {
                 <CardContent>
                   {vgvPorEquipeProjeto && vgvPorEquipeProjeto.length > 0 ? (
                     <div className="border rounded-lg overflow-hidden">
-                      <div className="overflow-x-auto">
+                      <div className="max-h-[300px] overflow-y-auto overflow-x-auto">
                         <Table>
-                          <TableHeader>
+                          <TableHeader className="sticky top-0 z-10 bg-background">
                             <TableRow className="bg-muted/50">
                               <TableHead className="font-semibold">Equipe de Vendas</TableHead>
-                              <TableHead className="font-semibold">Projeto</TableHead>
                               <TableHead className="text-center font-semibold">Contratos</TableHead>
                               <TableHead className="text-right font-semibold">VGV</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {vgvPorEquipeProjeto.map((item, index) => (
-                              <TableRow key={`${item.equipe}-${item.projeto}-${index}`} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
+                              <TableRow key={`${item.equipe}-${index}`} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
                                 <TableCell>
                                   <span className="font-medium text-sm">{item.equipe}</span>
-                                </TableCell>
-                                <TableCell>
-                                  <span className="text-sm">{item.projeto}</span>
                                 </TableCell>
                                 <TableCell className="text-center">
                                   <Badge variant="secondary">{item.contratos}</Badge>

@@ -91,7 +91,7 @@ describe('Tabela de Contratos Fechados (getContratosFechados)', () => {
   });
 });
 
-describe('VGV por Equipe e Projeto (getVGVPorEquipeProjeto)', () => {
+describe('VGV por Equipe (getVGVPorEquipeProjeto)', () => {
   it('deve retornar array quando chamado sem filtros', async () => {
     const resultado = await db.getVGVPorEquipeProjeto();
     expect(Array.isArray(resultado)).toBe(true);
@@ -103,14 +103,14 @@ describe('VGV por Equipe e Projeto (getVGVPorEquipeProjeto)', () => {
     if (resultado.length > 0) {
       const primeiro = resultado[0];
       expect(primeiro).toHaveProperty('equipe');
-      expect(primeiro).toHaveProperty('projeto');
       expect(primeiro).toHaveProperty('vgv');
       expect(primeiro).toHaveProperty('contratos');
       
       expect(typeof primeiro.equipe).toBe('string');
-      expect(typeof primeiro.projeto).toBe('string');
       expect(typeof primeiro.vgv).toBe('number');
       expect(typeof primeiro.contratos).toBe('number');
+      // Não deve ter campo 'projeto' (agrupamento apenas por equipe)
+      expect(primeiro).not.toHaveProperty('projeto');
     }
   });
 

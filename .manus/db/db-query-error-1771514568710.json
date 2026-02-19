@@ -1,0 +1,8 @@
+{
+  "query": "SELECT e.id, e.nome, e.lider_id, u.name as lider_nome FROM equipes e LEFT JOIN users u ON e.lider_id = u.id ORDER BY e.nome;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT e.id, e.nome, e.lider_id, u.name as lider_nome FROM equipes e LEFT JOIN users u ON e.lider_id = u.id ORDER BY e.nome;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'e.lider_id' in 'on clause'"
+  ]
+}

@@ -9772,22 +9772,19 @@ export async function getVGVPorEquipeProjeto(filtros?: DashboardFilters) {
     projectsMap = new Map(projectsData.map(p => [p.id, p.nome]));
   }
   
-  // Agrupar por equipe + projeto
-  const agrupado = new Map<string, { equipe: string; projeto: string; vgv: number; contratos: number }>();
+  // Agrupar apenas por equipe (uma linha por equipe)
+  const agrupado = new Map<string, { equipe: string; vgv: number; contratos: number }>();
   
   for (const r of result) {
     const equipeNome = r.equipeId ? (equipesMap.get(r.equipeId) || 'Equipe removida') : 'Sem equipe';
-    const projetoNome = r.projectId ? (projectsMap.get(r.projectId) || 'Projeto removido') : (r.projetoCustom || 'Não informado');
-    const key = `${equipeNome}|||${projetoNome}`;
     
-    const existing = agrupado.get(key);
+    const existing = agrupado.get(equipeNome);
     if (existing) {
       existing.vgv += Number(r.valorVenda || 0);
       existing.contratos += 1;
     } else {
-      agrupado.set(key, {
+      agrupado.set(equipeNome, {
         equipe: equipeNome,
-        projeto: projetoNome,
         vgv: Number(r.valorVenda || 0),
         contratos: 1,
       });
