@@ -1,0 +1,73 @@
+{
+  "query": "SELECT \n  u.id as user_id,\n  u.name,\n  u.email,\n  u.role,\n  c.id as contrato_id,\n  c.valorVenda,\n  c.createdAt\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%Nunes%'\nORDER BY u.email, c.createdAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id as user_id,\n  u.name,\n  u.email,\n  u.role,\n  c.id as contrato_id,\n  c.valorVenda,\n  c.createdAt\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%Nunes%'\nORDER BY u.email, c.createdAt DESC;",
+  "rows": [
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "120001",
+      "valorVenda": "380000.00",
+      "createdAt": "2026-02-07 00:00:00"
+    },
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "150001",
+      "valorVenda": "310800.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "90001",
+      "valorVenda": "323000.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "30002",
+      "valorVenda": "275000.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "30001",
+      "valorVenda": "265000.00",
+      "createdAt": "2026-01-27 00:00:00"
+    },
+    {
+      "user_id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "contrato_id": "2",
+      "valorVenda": "299800.00",
+      "createdAt": "2026-01-26 00:00:00"
+    },
+    {
+      "user_id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "contrato_id": "210004",
+      "valorVenda": "283600.00",
+      "createdAt": "2026-02-18 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "user_id\tname\temail\trole\tcontrato_id\tvalorVenda\tcreatedAt\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t120001\t380000.00\t2026-02-07 00:00:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t150001\t310800.00\t2026-02-05 00:00:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t90001\t323000.00\t2026-02-05 00:00:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t30002\t275000.00\t2026-01-29 00:00:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t30001\t265000.00\t2026-01-27 00:00:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t2\t299800.00\t2026-01-26 00:00:00\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\t210004\t283600.00\t2026-02-18 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

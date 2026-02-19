@@ -4267,3 +4267,9 @@
 ## Distribuição de Leads Sem Corretor
 - [x] Identificar onde está a lista de leads por corretor
 - [x] Implementar botão para distribuir leads sem corretor automaticamente
+
+## Bug - Contagem de Contratos Incorreta
+- [x] Investigar por que Guilherme Nunes mostra 6 contratos ao invés de 7
+- [x] Verificar query de contratos e filtros aplicados
+- [x] Verificar sincronização com Google Sheets
+- [x] Transferir todos os contratos do Guilherme admin para o Guilherme gestor
