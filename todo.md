@@ -4285,6 +4285,6 @@
 - [x] Layout dos filtros muda de posição ao alternar entre abas (esquerda vs direita)
 
 ## Limpeza de Dados de Teste
-- [ ] Identificar todos os dados de teste no banco (corretores, leads, interações, etc.)
-- [ ] Apagar corretores de teste criados
-- [ ] Apagar quaisquer outros dados de teste (leads, contratos, etc.)
+- [x] Identificar todos os dados de teste no banco (corretores, leads, interações, etc.)
+- [x] Apagar corretores de teste criados (18 removidos)
+- [x] Apagar quaisquer outros dados de teste (157 leads, 85 distribution_log, 16 conquistas, 84 notificações, 16 fila_distribuicao, 2 leads órfãos)
