@@ -38,6 +38,12 @@ type Lead = {
 export default function Kanban() {
   const { user } = useAuth();
   
+  // Filtrar colunas baseado no role do usuário
+  // Admin não vê "Novos" e "Aguardando" para evitar travamento
+  const visibleColumns = user?.role === 'admin' 
+    ? KANBAN_COLUMNS.filter(col => col.id !== 'novo' && col.id !== 'aguardando_atendimento')
+    : KANBAN_COLUMNS;
+  
   // Buscar leads - corretor vê apenas seus leads, gestor vê todos
   // Kanban precisa de TODOS os leads sem paginação
   const { data, isLoading, refetch } = trpc.leads.list.useQuery({ limit: 9999 });
@@ -67,7 +73,7 @@ export default function Kanban() {
   const [leadAnaliseSelecionado, setLeadAnaliseSelecionado] = useState<Lead | null>(null);
 
   // Agrupar leads por status
-  const leadsByStatus = KANBAN_COLUMNS.reduce((acc, column) => {
+  const leadsByStatus = visibleColumns.reduce((acc, column) => {
     acc[column.id] = leads.filter((lead: Lead) => lead.status === column.id);
     return acc;
   }, {} as Record<string, Lead[]>);
@@ -159,7 +165,7 @@ export default function Kanban() {
 
         {/* Kanban Board */}
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {KANBAN_COLUMNS.map((column) => (
+          {visibleColumns.map((column) => (
             <div
               key={column.id}
               className={`flex-shrink-0 w-80 rounded-lg border bg-muted/30 transition-colors ${

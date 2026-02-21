@@ -4343,3 +4343,7 @@
 - [x] Ao arrastar lead para "Contrato Fechado": abrir modal de registro de contrato (projeto, VGV, data assinatura)
 - [x] Validar dados antes de confirmar mudança de status
 - [x] Reverter drag se usuário cancelar o modal
+
+## Bug: Kanban - Travamento na Visão Admin
+- [x] Remover colunas "Novos" e "Aguardando Atendimento" do Kanban quando usuário é admin
+- [x] Admin deve ver apenas: Em Atendimento, Agendado, Visita Realizada, Análise de Crédito, Contrato Fechado, Perdidos
