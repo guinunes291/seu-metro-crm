@@ -592,7 +592,7 @@ function DashboardContent({
                 <p className="text-sm font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
                 <Badge variant="secondary" className="mt-1 text-[10px]">
-                  {user?.role === 'gestor' ? 'Gestor' : user?.role === 'admin' ? 'Admin' : 'Corretor'}
+                  {user?.role === 'gestor' ? 'Gestor' : user?.role === 'admin' ? 'Admin' : user?.role === 'superintendente' ? 'Superintendente' : 'Corretor'}
                 </Badge>
               </div>
               <DropdownMenuSeparator />

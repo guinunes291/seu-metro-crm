@@ -21,7 +21,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["admin", "gestor", "corretor"]).default("corretor").notNull(),
+  role: mysqlEnum("role", ["admin", "superintendente", "gestor", "corretor"]).default("corretor").notNull(),
   
   // Campos específicos para corretores
   status: mysqlEnum("status", ["presente", "ausente"]).default("ausente").notNull(),

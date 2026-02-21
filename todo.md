@@ -4347,3 +4347,16 @@
 ## Bug: Kanban - Travamento na Visão Admin
 - [x] Remover colunas "Novos" e "Aguardando Atendimento" do Kanban quando usuário é admin
 - [x] Admin deve ver apenas: Em Atendimento, Agendado, Visita Realizada, Análise de Crédito, Contrato Fechado, Perdidos
+
+## Nova Feature: Role Superintendente
+- [ ] Adicionar "superintendente" ao enum de roles no schema (users table)
+- [ ] Atualizar getCorretoresIdsParaFiltro para superintendente ver todas as equipes
+- [ ] Atualizar todas as queries que filtram por equipe para incluir superintendente
+- [ ] Atualizar frontend para reconhecer superintendente (Dashboard, Kanban, Performance TV)
+- [ ] Testar visão de superintendente em todas as páginas
+
+## Nova Feature: Role Superintendente
+- [x] Adicionar 'superintendente' ao enum de roles no schema do banco
+- [x] Atualizar getCorretoresIdsParaFiltro para superintendente ver todas as equipes
+- [x] Atualizar frontend para reconhecer superintendente (badge, filtros, etc.)
+- [x] Superintendente deve ter visão completa de toda a operação (todas as equipes)

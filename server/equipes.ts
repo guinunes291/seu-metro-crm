@@ -227,8 +227,8 @@ export async function usuarioPertenceAEquipe(userId: number, equipeId: number): 
  * Se o usuário for gestor, retorna array com IDs dos corretores da sua equipe
  */
 export async function getCorretoresIdsParaFiltro(userId: number, userRole: string): Promise<number[] | null> {
-  // Admin vê tudo
-  if (userRole === 'admin') {
+  // Admin e Superintendente veem tudo
+  if (userRole === 'admin' || userRole === 'superintendente') {
     return null;
   }
   

@@ -84,7 +84,7 @@ export default function CalendarioAgendamentos({
   onSelectAgendamento,
 }: CalendarioAgendamentosProps) {
   const { user } = useAuth();
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
