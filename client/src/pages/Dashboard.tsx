@@ -1349,6 +1349,18 @@ export default function Dashboard() {
           onOpenChange={setEditDialogOpen}
         />
       )}
+
+      {/* Dialog de criação de contrato (admin only) */}
+      {isAdmin && (
+        <CriarContratoDialog
+          open={criarContratoOpen}
+          onOpenChange={setCriarContratoOpen}
+          onSuccess={() => {
+            // Recarregar dados do dashboard
+            window.location.reload();
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 }

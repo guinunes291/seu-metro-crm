@@ -4367,3 +4367,13 @@
 - [x] Adicionar verificação isAdmin nos botões ExportCSVButton do Dashboard
 - [x] Adicionar verificação isAdmin no botão de exportação da página Lixeira
 - [x] Confirmar que superintendente tem visão gerencial sem recursos administrativos
+
+## Integração Botão "Novo Contrato" no Dashboard
+- [x] Verificar componente CriarContratoDialog existente
+- [x] Conectar botão "Novo Contrato" ao dialog
+- [x] Garantir que o dialog abre corretamente
+- [x] Implementar reload da página após criação bem-sucedida
+- [x] Testar criação de contrato pelo Dashboard
+- [x] Criar testes unitários para criarNovoContrato (4 testes passando)
+- [x] Corrigir campo origem para usar valor válido do enum
+- [x] Adicionar corretorId ao insert de contrato

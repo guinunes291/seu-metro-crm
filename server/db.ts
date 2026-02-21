@@ -10018,7 +10018,7 @@ export async function criarNovoContrato(dados: {
         projectId: dados.projectId,
         projetoCustom: dados.projetoCustom,
         status: 'contrato_fechado',
-        origem: 'manual',
+        origem: 'captacao_corretor',
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -10031,6 +10031,7 @@ export async function criarNovoContrato(dados: {
   const [novoContrato] = await db.insert(contratos)
     .values({
       leadId,
+      corretorId: dados.corretorId,
       valorVenda: dados.valorVenda,
       observacoes: dados.observacoes || '',
       createdAt: dados.dataVenda,
