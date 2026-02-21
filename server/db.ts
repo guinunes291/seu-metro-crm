@@ -2407,16 +2407,17 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
     // Buscar contratos agrupados por corretor usando Drizzle ORM
     const result = await db
       .select({
-        corretorId: contratos.corretorId,
+        corretorId: leads.corretorId,
         corretorNome: users.name,
         corretorFoto: users.fotoUrl,
         contratosFechados: sql<number>`COUNT(${contratos.id})`.as('contratosFechados'),
         vgvTotal: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`.as('vgvTotal'),
       })
       .from(contratos)
-      .innerJoin(users, eq(contratos.corretorId, users.id))
+      .innerJoin(leads, eq(contratos.leadId, leads.id))
+      .innerJoin(users, eq(leads.corretorId, users.id))
       .where(contratosWhere)
-      .groupBy(contratos.corretorId, users.name, users.fotoUrl)
+      .groupBy(leads.corretorId, users.name, users.fotoUrl)
       .orderBy(sql`vgvTotal DESC`);
     
     return result.map((row, index) => ({

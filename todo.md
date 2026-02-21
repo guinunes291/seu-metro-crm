@@ -4319,3 +4319,12 @@
 - [x] Criar contrato para Eduardo Phillipe Santos Gomes (R$ 328.121,39)
 - [x] Vincular Guilherme Nunes admin (ID 7722800) à Equipe Guilherme Nunes (equipeId 1)
 - [ ] Aguardando valor do Ricardinho para criar contrato (lead já tem status contrato_fechado)
+
+## Bug: Performance TV - Igor e Equipe Sheldon não aparecem no ranking
+- [x] Investigar por que Igor (Equipe Sheldon) não aparece com VGV no ranking
+- [x] Verificar se há filtro de equipe na query do ranking (erro: usava contratos.corretorId que não existe)
+- [x] Corrigir para incluir todas as equipes no ranking (corrigido join: contratos -> leads -> users)
+
+## Bug: Performance TV - Filtros sobrepostos no header
+- [x] Ajustar layout do header para evitar sobreposição de filtros (adicionado flex-wrap)
+- [x] Garantir que todos os filtros sejam clicáveis
