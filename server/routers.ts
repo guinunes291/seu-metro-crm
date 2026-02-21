@@ -846,8 +846,8 @@ export const appRouter = router({
         return await db.countLeadsNaLixeira();
       }),
     
-    // Exportar leads em CSV
-    exportCSV: gestorProcedure
+    // Exportar leads em CSV (apenas admin)
+    exportCSV: adminProcedure
       .input(z.object({
         status: z.string().optional(),
         corretorId: z.number().optional(),

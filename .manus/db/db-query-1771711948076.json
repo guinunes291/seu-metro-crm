@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE email = 'dpconsultoria10@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role FROM users WHERE email = 'dpconsultoria10@gmail.com';",
+  "rows": [
+    {
+      "id": "11649527",
+      "name": "Dayane Prince",
+      "email": "dpconsultoria10@gmail.com",
+      "role": "corretor"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n11649527\tDayane Prince\tdpconsultoria10@gmail.com\tcorretor\n",
+  "stderr": "",
+  "execution_time_ms": 107
+}

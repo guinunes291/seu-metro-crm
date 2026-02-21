@@ -4360,3 +4360,10 @@
 - [x] Atualizar getCorretoresIdsParaFiltro para superintendente ver todas as equipes
 - [x] Atualizar frontend para reconhecer superintendente (badge, filtros, etc.)
 - [x] Superintendente deve ter visão completa de toda a operação (todas as equipes)
+
+## Restrição de Exportação de Leads
+- [x] Promover Dayane Prince (dpconsultoria10@gmail.com) para role superintendente
+- [x] Restringir exportação de leads apenas para admin (alterar exportCSV de gestorProcedure para adminProcedure)
+- [x] Adicionar verificação isAdmin nos botões ExportCSVButton do Dashboard
+- [x] Adicionar verificação isAdmin no botão de exportação da página Lixeira
+- [x] Confirmar que superintendente tem visão gerencial sem recursos administrativos

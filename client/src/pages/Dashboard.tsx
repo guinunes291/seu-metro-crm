@@ -658,7 +658,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.total || 0}</div>
-                    {(metrics?.total || 0) > 0 && (
+                    {isAdmin && (metrics?.total || 0) > 0 && (
                       <ExportCSVButton size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -673,7 +673,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.aguardando || 0}</div>
-                    {(metrics?.aguardando || 0) > 0 && (
+                    {isAdmin && (metrics?.aguardando || 0) > 0 && (
                       <ExportCSVButton status="aguardando_atendimento" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -688,7 +688,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.emAtendimento || 0}</div>
-                    {(metrics?.emAtendimento || 0) > 0 && (
+                    {isAdmin && (metrics?.emAtendimento || 0) > 0 && (
                       <ExportCSVButton status="em_atendimento" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -703,7 +703,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.agendado || 0}</div>
-                    {(metrics?.agendado || 0) > 0 && (
+                    {isAdmin && (metrics?.agendado || 0) > 0 && (
                       <ExportCSVButton status="agendado" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -718,7 +718,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.visitaRealizada || 0}</div>
-                    {(metrics?.visitaRealizada || 0) > 0 && (
+                    {isAdmin && (metrics?.visitaRealizada || 0) > 0 && (
                       <ExportCSVButton status="visita_realizada" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -735,7 +735,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.analiseCredito || 0}</div>
-                    {(metrics?.analiseCredito || 0) > 0 && (
+                    {isAdmin && (metrics?.analiseCredito || 0) > 0 && (
                       <ExportCSVButton status="analise_credito" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -750,7 +750,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.contratoFechado || 0}</div>
-                    {(metrics?.contratoFechado || 0) > 0 && (
+                    {isAdmin && (metrics?.contratoFechado || 0) > 0 && (
                       <ExportCSVButton status="contrato_fechado" size="icon" variant="ghost" label="" />
                     )}
                   </div>
@@ -765,7 +765,7 @@ export default function Dashboard() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="text-2xl font-bold">{metrics?.perdido || 0}</div>
-                    {(metrics?.perdido || 0) > 0 && (
+                    {isAdmin && (metrics?.perdido || 0) > 0 && (
                       <ExportCSVButton status="perdido" size="icon" variant="ghost" label="" />
                     )}
                   </div>

@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,8 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 export default function Lixeira() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [page, setPage] = useState(1);
   const limit = 20;
   
@@ -83,15 +86,17 @@ export default function Lixeira() {
               {countData || 0} leads na lixeira
             </Badge>
             
-            <Button 
-              onClick={handleExportCSV}
-              variant="outline"
-              className="gap-2"
-              disabled={!exportData || exportData.length === 0}
-            >
-              <Download className="h-4 w-4" />
-              Exportar CSV
-            </Button>
+            {isAdmin && (
+              <Button 
+                onClick={handleExportCSV}
+                variant="outline"
+                className="gap-2"
+                disabled={!exportData || exportData.length === 0}
+              >
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+            )}
           </div>
         </div>
         
