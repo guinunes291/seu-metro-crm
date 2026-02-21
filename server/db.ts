@@ -9959,3 +9959,84 @@ export async function getOpcoesContrato() {
     equipes: equipesData.map(e => ({ id: e.id, nome: e.nome })),
   };
 }
+
+/**
+ * Criar novo contrato
+ */
+export async function criarNovoContrato(dados: {
+  corretorId: number;
+  clienteNome: string;
+  clienteTelefone: string;
+  clienteEmail: string;
+  projectId: number | null;
+  projetoCustom: string;
+  valorVenda: number;
+  dataVenda: Date;
+  observacoes?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // 1. Criar ou encontrar o lead
+  let leadId: number;
+  
+  // Verificar se já existe um lead com esse telefone ou email
+  const leadExistente = await db.select()
+    .from(leads)
+    .where(
+      or(
+        eq(leads.telefone, dados.clienteTelefone),
+        eq(leads.email, dados.clienteEmail)
+      )
+    )
+    .limit(1);
+
+  if (leadExistente.length > 0) {
+    leadId = leadExistente[0].id;
+    
+    // Atualizar o lead existente
+    await db.update(leads)
+      .set({
+        nome: dados.clienteNome,
+        telefone: dados.clienteTelefone,
+        email: dados.clienteEmail,
+        corretorId: dados.corretorId,
+        projectId: dados.projectId,
+        projetoCustom: dados.projetoCustom,
+        status: 'contrato_fechado',
+        updatedAt: new Date(),
+      })
+      .where(eq(leads.id, leadId));
+  } else {
+    // Criar novo lead
+    const [novoLead] = await db.insert(leads)
+      .values({
+        nome: dados.clienteNome,
+        telefone: dados.clienteTelefone,
+        email: dados.clienteEmail,
+        corretorId: dados.corretorId,
+        projectId: dados.projectId,
+        projetoCustom: dados.projetoCustom,
+        status: 'contrato_fechado',
+        origem: 'manual',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .$returningId();
+    
+    leadId = novoLead.id;
+  }
+
+  // 2. Criar o contrato
+  const [novoContrato] = await db.insert(contratos)
+    .values({
+      leadId,
+      valorVenda: dados.valorVenda,
+      observacoes: dados.observacoes || '',
+      createdAt: dados.dataVenda,
+      updatedAt: new Date(),
+    })
+    .$returningId();
+
+  return { contratoId: novoContrato.id, leadId };
+}

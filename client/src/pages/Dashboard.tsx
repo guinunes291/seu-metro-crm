@@ -6,10 +6,11 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil
+  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";
+import { CriarContratoDialog } from "@/components/CriarContratoDialog";
 import { Button } from "@/components/ui/button";
 import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
 import FunilVendasVisual from "@/components/FunilVendasVisual";
@@ -133,6 +134,7 @@ export default function Dashboard() {
   // Estado de edição de contrato
   const [editContratoId, setEditContratoId] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [criarContratoOpen, setCriarContratoOpen] = useState(false);
   
   // Estado do filtro
   const [filterPreset, setFilterPreset] = useState("all");
@@ -795,9 +797,21 @@ export default function Dashboard() {
                       </CardTitle>
                       <CardDescription>Detalhamento de vendas por corretor, cliente e projeto</CardDescription>
                     </div>
-                    <Badge variant="outline" className="text-sm">
-                      {contratosFechados?.length || 0} contratos | VGV Total: {formatCurrency(contratosFechados?.reduce((sum, c) => sum + c.vgv, 0) || 0)}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-sm">
+                        {contratosFechados?.length || 0} contratos | VGV Total: {formatCurrency(contratosFechados?.reduce((sum, c) => sum + c.vgv, 0) || 0)}
+                      </Badge>
+                      {user?.role === 'admin' && (
+                        <Button
+                          size="sm"
+                          onClick={() => setCriarContratoOpen(true)}
+                          className="gap-2"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Novo Contrato
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

@@ -4328,3 +4328,18 @@
 ## Bug: Performance TV - Filtros sobrepostos no header
 - [x] Ajustar layout do header para evitar sobreposição de filtros (adicionado flex-wrap)
 - [x] Garantir que todos os filtros sejam clicáveis
+
+## Nova Feature: Criação de Novo Contrato pelo Dashboard
+- [ ] Backend: procedure para criar novo contrato (admin only)
+- [ ] Frontend: componente CriarContratoDialog com formulário completo
+- [ ] Botão "Novo Contrato" na tabela de contratos do Dashboard
+- [ ] Validação de dados e feedback ao usuário
+- [ ] Escrever testes unitários
+
+## Bug: Kanban - Validação ao Arrastar Leads
+- [x] Ao arrastar lead para "Agendado": mostrar alerta para usar botão de agendar (não permite drag direto)
+- [x] Ao arrastar lead para "Visita Realizada": abrir modal de confirmação de visita (data, hora, observações)
+- [x] Ao arrastar lead para "Análise de Crédito": abrir modal de registro de análise (documentos, observações)
+- [x] Ao arrastar lead para "Contrato Fechado": abrir modal de registro de contrato (projeto, VGV, data assinatura)
+- [x] Validar dados antes de confirmar mudança de status
+- [x] Reverter drag se usuário cancelar o modal

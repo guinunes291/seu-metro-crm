@@ -1868,6 +1868,26 @@ export const appRouter = router({
         });
       }),
     
+    // Criar novo contrato (admin only)
+    criarContrato: adminProcedure
+      .input(z.object({
+        corretorId: z.number(),
+        clienteNome: z.string().min(1, 'Nome do cliente é obrigatório'),
+        clienteTelefone: z.string().min(1, 'Telefone é obrigatório'),
+        clienteEmail: z.string().email('Email inválido'),
+        projectId: z.number().nullable(),
+        projetoCustom: z.string(),
+        valorVenda: z.number().positive('Valor deve ser positivo'),
+        dataVenda: z.string(),
+        observacoes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        return await db.criarNovoContrato({
+          ...input,
+          dataVenda: new Date(input.dataVenda),
+        });
+      }),
+    
     // Opções para selects de edição de contrato
     opcoesContrato: gestorProcedure
       .query(async () => {

@@ -99,7 +99,33 @@ export default function Kanban() {
     setDragOverColumn(null);
 
     if (draggedLead && draggedLead.status !== newStatus) {
-      // Atualiza o status no banco de dados
+      // Verificar se o novo status exige dados adicionais
+      if (newStatus === "agendado") {
+        // Para agendado, impedir drag direto e mostrar toast
+        alert("Para agendar uma visita, use o botão 'Agendar Visita' no card do lead.");
+        setDraggedLead(null);
+        return;
+      } else if (newStatus === "visita_realizada") {
+        // Abrir modal de registro de visita
+        setLeadSelecionado(draggedLead);
+        setModalVisitaOpen(true);
+        setDraggedLead(null);
+        return;
+      } else if (newStatus === "analise_credito") {
+        // Abrir modal de registro de análise de crédito
+        setLeadAnaliseSelecionado(draggedLead);
+        setModalAnaliseOpen(true);
+        setDraggedLead(null);
+        return;
+      } else if (newStatus === "contrato_fechado") {
+        // Abrir modal de fechamento de contrato
+        setLeadContratoSelecionado(draggedLead);
+        setModalContratoOpen(true);
+        setDraggedLead(null);
+        return;
+      }
+
+      // Para outros status, atualizar diretamente
       updateLead.mutate({
         id: draggedLead.id,
         data: {
