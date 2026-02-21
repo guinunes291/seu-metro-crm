@@ -4313,3 +4313,9 @@
 - [x] Selects para Corretor, Projeto e Equipe (com dados do banco)
 - [x] Validação de dados e feedback ao usuário
 - [x] Escrever testes unitários (23 testes passando)
+
+## Bug: Divergência de Contratos entre Kanban e Dashboard
+- [x] Investigar por que o Kanban mostra 13 contratos e o Dashboard mostra 14
+- [x] Criar contrato para Eduardo Phillipe Santos Gomes (R$ 328.121,39)
+- [x] Vincular Guilherme Nunes admin (ID 7722800) à Equipe Guilherme Nunes (equipeId 1)
+- [ ] Aguardando valor do Ricardinho para criar contrato (lead já tem status contrato_fechado)
