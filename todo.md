@@ -4468,3 +4468,10 @@
 - [x] Adicionar busca em lote por email normalizado (lowercase)
 - [x] Testar correção com planilha real (17.798 → 17.800, apenas 2 novos)
 - [x] Reativar job após validação (funcionando corretamente)
+
+## Desativação Permanente da Importação Automática de Leads
+- [x] Desativar job de importação automática (sheetsImportJob.ts)
+- [x] Remover inicialização do job no servidor (_core/index.ts)
+- [x] Manter apenas importação manual via interface (Sistema → Importação de Leads)
+- [x] Reiniciar servidor para aplicar mudanças
+- [x] Validar que job não está mais executando (total de leads estável em 17.800)

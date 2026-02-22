@@ -17,20 +17,12 @@ let isRunning = false;
  * Executa a cada 5 minutos
  */
 export async function startSheetsImportJob() {
-  console.log("[Sheets Import Job] Inicializando job de importação automática (intervalo: 5 minutos)");
-  console.log("[Sheets Import Job] Verificação de duplicatas: idPrincipal, telefone e email");
+  console.log("[Sheets Import Job] Importação automática DESATIVADA permanentemente");
+  console.log("[Sheets Import Job] Leads devem ser importados manualmente via Sistema → Importação de Leads");
   
-  // Executar imediatamente na inicialização (após 30 segundos)
-  setTimeout(async () => {
-    await runImport();
-  }, 30000); // 30 segundos
-  
-  // Executar a cada 5 minutos
-  setInterval(async () => {
-    await runImport();
-  }, 5 * 60 * 1000); // 5 minutos
-  
-  console.log("[Sheets Import Job] Job de importação automática inicializado com sucesso");
+  // JOB DESATIVADO PERMANENTEMENTE
+  // Motivo: Requisição do usuário - importação apenas manual
+  // Importação manual disponível em: Sistema → Importação de Leads
 }
 
 /**

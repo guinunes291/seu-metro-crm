@@ -157,13 +157,9 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de reset de contadores:", err);
     });
     
-    // Inicializar job de importação automática de leads da planilha
-    import("../sheetsImportJob").then(({ startSheetsImportJob }) => {
-      startSheetsImportJob();
-      console.log("[Job] Importação automática de leads da planilha inicializada (a cada 5 minutos)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de importação de leads:", err);
-    });
+    // Job de importação automática de leads DESATIVADO permanentemente
+    // Motivo: Requisição do usuário - importação apenas manual
+    // Importação manual disponível em: Sistema → Importação de Leads
   });
 }
 
