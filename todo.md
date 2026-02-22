@@ -4535,3 +4535,15 @@
 - [x] Implementar preview/estatísticas antes de confirmar
 - [x] Criar testes unitários validando normalização e estatísticas
 - [ ] Executar atualização em produção e validar resultados
+
+## Limpeza de Projetos Inválidos
+- [x] Criar ferramenta para identificar projetos criados automaticamente
+- [x] Implementar procedure para limpar projetos sem leads associados (módulo limparProjetosOrfaos)
+- [x] Criar interface admin-only para executar limpeza (página LimparProjetosOrfaos)
+- [x] Testar limpeza de projetos (2 testes unitários passando)
+- [ ] Executar limpeza em produção
+
+## Ajuste de Exibição de Projeto nos Cards
+- [x] Verificar como projetoCustom está sendo exibido nos cards dos corretores
+- [x] Confirmar que exibição já mostra projetoCustom corretamente (linha 842-846 de Leads.tsx)
+- [x] Sistema já exibe project?.nome || lead.projetoCustom nos cards

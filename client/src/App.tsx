@@ -55,6 +55,7 @@ import GestaoEquipes from "@/pages/GestaoEquipes";
 import MinhaEquipe from "@/pages/MinhaEquipe";
 import LimpezaDuplicatas from "@/pages/LimpezaDuplicatas";
 import AtualizarProjetosEmMassa from "@/pages/AtualizarProjetosEmMassa";
+import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
 
 import { AlertasNotification } from "./components/AlertasNotification";
 
@@ -100,6 +101,7 @@ function Router() {
       <Route path="/sincronizacao-bi" component={SincronizacaoBI} />
       <Route path="/limpeza-duplicatas" component={LimpezaDuplicatas} />
       <Route path="/atualizar-projetos" component={AtualizarProjetosEmMassa} />
+      <Route path="/limpar-projetos" component={LimparProjetosOrfaos} />
       <Route path="/minha-agenda" component={MinhaAgenda} />
       <Route path="/propostas" component={Propostas} />
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />

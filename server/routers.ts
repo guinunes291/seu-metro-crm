@@ -13,6 +13,7 @@ import * as sheetsSync from "./googleSheetsSync";
 import * as biSync from "./biSync";
 import * as duplicatasCleanup from "./duplicatasCleanup";
 import * as updateProjetosEmMassa from "./modules/updateProjetosEmMassa";
+import * as limparProjetosOrfaos from "./modules/limparProjetosOrfaos";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -6633,6 +6634,22 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     // Executar atualização em massa (apenas admin)
     executar: adminProcedure.mutation(async () => {
       return await updateProjetosEmMassa.updateProjetosEmMassa();
+    }),
+  }),
+
+  // ============================================================================
+  // LIMPEZA DE PROJETOS ÓRFÃOS
+  // ============================================================================
+  
+  limparProjetos: router({
+    // Identificar projetos órfãos (apenas admin)
+    identificar: adminProcedure.query(async () => {
+      return await limparProjetosOrfaos.identificarProjetosOrfaos();
+    }),
+    
+    // Executar limpeza de projetos órfãos (apenas admin)
+    executar: adminProcedure.mutation(async () => {
+      return await limparProjetosOrfaos.limparProjetosOrfaos();
     }),
   }),
 });
