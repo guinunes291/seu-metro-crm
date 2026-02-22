@@ -10,6 +10,7 @@ import * as sheetsImport from "./sheetsImport";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
+import * as biSync from "./biSync";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -3951,6 +3952,74 @@ export const appRouter = router({
         return {
           url: sheetsSync.getSpreadsheetUrl(),
           spreadsheetId: sheetsSync.getSpreadsheetId()
+        };
+      }),
+  }),
+
+  // ============================================================================
+  // SINCRONIZAÇÃO BI (GOOGLE SHEETS PARA POWER BI / LOOKER STUDIO)
+  // ============================================================================
+  biSync: router({
+    // Testar conexão
+    testConnection: gestorProcedure
+      .query(async () => {
+        return await biSync.testBIConnection();
+      }),
+    
+    // Sincronizar contratos
+    syncContratos: gestorProcedure
+      .mutation(async () => {
+        const result = await biSync.syncContratos();
+        return {
+          success: result.errors === 0,
+          message: `${result.success} contratos sincronizados, ${result.errors} erros`,
+          ...result
+        };
+      }),
+    
+    // Sincronizar métricas diárias
+    syncMetricas: gestorProcedure
+      .input(z.object({ dias: z.number().default(90) }).optional())
+      .mutation(async ({ input }) => {
+        const result = await biSync.syncMetricasDiarias(input?.dias || 90);
+        return {
+          success: result.errors === 0,
+          message: `${result.success} dias de métricas sincronizados, ${result.errors} erros`,
+          ...result
+        };
+      }),
+    
+    // Sincronizar performance dos corretores
+    syncPerformance: gestorProcedure
+      .mutation(async () => {
+        const result = await biSync.syncPerformanceCorretores();
+        return {
+          success: result.errors === 0,
+          message: `${result.success} corretores sincronizados, ${result.errors} erros`,
+          ...result
+        };
+      }),
+    
+    // Sincronizar tudo (Contratos + Métricas + Performance)
+    syncAll: gestorProcedure
+      .mutation(async () => {
+        const result = await biSync.syncAllBI();
+        const totalSuccess = result.contratos.success + result.metricas.success + result.performance.success;
+        const totalErrors = result.contratos.errors + result.metricas.errors + result.performance.errors;
+        
+        return {
+          success: totalErrors === 0,
+          message: `Sincronização completa: ${result.contratos.success} contratos, ${result.metricas.success} dias de métricas, ${result.performance.success} corretores`,
+          ...result
+        };
+      }),
+    
+    // Obter URL da planilha
+    getSpreadsheetUrl: gestorProcedure
+      .query(() => {
+        return {
+          url: "https://docs.google.com/spreadsheets/d/1or0l4OToJUsGW8FpyGjSOovjc27riV4Wmi0YWQze8X8",
+          spreadsheetId: "1or0l4OToJUsGW8FpyGjSOovjc27riV4Wmi0YWQze8X8"
         };
       }),
   }),

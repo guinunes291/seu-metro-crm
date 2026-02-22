@@ -4397,3 +4397,18 @@
 - [x] Adicionar indicador visual quando não houver anexos (badge com quantidade)
 - [x] Adicionar campo anexos no retorno da query getContratosFechados
 - [x] Integrar AnexosDialog no Dashboard com estado de visualização
+
+## Sincronização Automática com Google Sheets e Power BI
+- [x] Analisar integrações existentes com Google Sheets no código
+- [x] Criar estrutura de planilha Google Sheets para receber dados do CRM
+- [x] Implementar abas: Leads (existente), Contratos, Métricas Diárias, Performance por Corretor
+- [x] Criar sincronização automática de leads (já existia, mantida)
+- [x] Criar sincronização automática de contratos fechados (biSync.syncContratos)
+- [x] Criar sincronização automática de métricas e KPIs (biSync.syncMetricasDiarias)
+- [x] Criar sincronização de performance dos corretores (biSync.syncPerformanceCorretores)
+- [x] Adicionar painel de controle no sistema (página Sincronização BI)
+- [x] Implementar job de sincronização periódica (biSyncJob - a cada 1 hora)
+- [x] Documentar como conectar Google Sheets ao Power BI (instruções na página)
+- [x] Documentar como conectar ao Looker Studio (instruções na página)
+- [x] Adicionar procedures no router (biSync.syncAll, syncContratos, syncMetricas, syncPerformance)
+- [x] Criar página de gerenciamento com botões de sincronização manual

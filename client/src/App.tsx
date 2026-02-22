@@ -38,6 +38,7 @@ import Agendamentos from "@/pages/Agendamentos";
 import AprovarProjetos from "@/pages/AprovarProjetos";
 import Conquistas from "@/pages/Conquistas";
 import GoogleSheetsSync from "@/pages/GoogleSheetsSync";
+import SincronizacaoBI from "@/pages/SincronizacaoBI";
 import MinhaAgenda from "@/pages/MinhaAgenda";
 import Propostas from "@/pages/Propostas";
 import AgendamentoPublico from "@/pages/AgendamentoPublico";
@@ -94,6 +95,7 @@ function Router() {
       <Route path="/historico-presenca" component={HistoricoPresenca} />
       <Route path="/conquistas" component={Conquistas} />
       <Route path="/google-sheets-sync" component={GoogleSheetsSync} />
+      <Route path="/sincronizacao-bi" component={SincronizacaoBI} />
       <Route path="/minha-agenda" component={MinhaAgenda} />
       <Route path="/propostas" component={Propostas} />
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />

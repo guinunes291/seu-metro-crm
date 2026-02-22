@@ -35,7 +35,7 @@ import {
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
-  FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft
+  FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -126,6 +126,7 @@ const menuGroups = [
     items: [
       { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
       { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync", roles: ["gestor", "admin"] },
+      { icon: Database, label: "Sincronização BI", path: "/sincronizacao-bi", roles: ["gestor", "admin"] },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
       { icon: FileText, label: "Log de Transferências", path: "/log-transferencias", roles: ["admin"] },
     ],

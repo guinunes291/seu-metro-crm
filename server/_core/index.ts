@@ -133,6 +133,14 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de backup:", err);
     });
     
+    // Inicializar job de sincronização BI (Google Sheets para Power BI/Looker Studio)
+    import("../biSyncJob").then(({ startBISyncJob }) => {
+      startBISyncJob();
+      console.log("[Job] Sincronização BI inicializada (a cada 1 hora)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de sincronização BI:", err);
+    });
+    
     // Inicializar job de recálculo de pontuação
     import("../pontuacaoJob").then(({ iniciarJobPontuacao }) => {
       iniciarJobPontuacao();
