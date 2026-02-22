@@ -156,6 +156,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de reset de contadores:", err);
     });
+    
+    // Inicializar job de importação automática de leads da planilha
+    import("../sheetsImportJob").then(({ startSheetsImportJob }) => {
+      startSheetsImportJob();
+      console.log("[Job] Importação automática de leads da planilha inicializada (a cada 5 minutos)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de importação de leads:", err);
+    });
   });
 }
 

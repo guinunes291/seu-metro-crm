@@ -4433,3 +4433,13 @@
 - [x] Atualizar todas as 10 procedures do Dashboard para usar o novo procedure
 - [x] Verificar função getCorretoresIdsParaFiltro (já incluía superintendente)
 - [x] Reiniciar servidor para aplicar mudanças
+
+## Bug: Sincronização de Leads Parou Após 15/01/2026
+- [x] Investigar por que a sincronização automática parou de funcionar
+- [x] Verificar logs do job de sincronização
+- [x] Identificado: sincronização era unidirecional (CRM → Planilha), faltava Planilha → CRM
+- [x] Criar job automático de importação de leads da planilha (sheetsImportJob.ts)
+- [x] Adicionar job no startup do servidor (executa a cada 5 minutos)
+- [x] Corrigir mapeamento de origem (Facebook → facebook, etc) em sheetsImport.ts
+- [x] Aplicar correção nas funções importLeadsFromSheet e syncLeadsFromSheet
+- [x] Reiniciar servidor e validar que leads estão sendo importados (11568 → 11569)

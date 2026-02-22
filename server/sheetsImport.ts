@@ -41,10 +41,38 @@ function extractPhoneNumbers(telefone: string): string {
 }
 
 /**
- * Mapeia o status da planilha para o status do sistema
+ * Mapeia origem da planilha para valores válidos do enum
  */
-function mapStatus(sheetStatus: string): string {
-  if (!sheetStatus) return "novo";
+function mapOrigem(origem: string | undefined | null): string | null {
+  if (!origem || origem.trim() === "") return "google_sheets";
+  
+  const origemLower = origem.trim().toLowerCase();
+  
+  // Mapeamento de valores comuns da planilha para o enum
+  const origemMap: Record<string, string> = {
+    "facebook": "facebook",
+    "google sheets": "google_sheets",
+    "google_sheets": "google_sheets",
+    "site": "site",
+    "indicação": "indicacao",
+    "indicacao": "indicacao",
+    "captação corretor": "captacao_corretor",
+    "captacao corretor": "captacao_corretor",
+    "captacao_corretor": "captacao_corretor",
+    "instagram": "instagram",
+    "whatsapp": "whatsapp",
+    "telefone": "telefone",
+    "outro": "outro",
+  };
+  
+  return origemMap[origemLower] || "google_sheets";
+}
+
+/**
+ * Mapeia status da planilha para status do sistema
+ */
+function mapStatus(status: string): string {
+  if (!status) return "novo";
   
   const statusMap: Record<string, string> = {
     "novo": "novo",
@@ -63,7 +91,7 @@ function mapStatus(sheetStatus: string): string {
     "perdido": "perdido",
   };
 
-  const normalized = sheetStatus.toLowerCase().trim();
+  const normalized = status.toLowerCase().trim();
   return statusMap[normalized] || "novo";
 }
 
@@ -257,6 +285,7 @@ export async function importLeadsFromSheet(
 
           // Preparar dados do lead
           const leadStatus = mapStatus(row.status || "");
+          const leadOrigem = mapOrigem(row.origem);
           
           // Importar lead
           await db.insert(leads).values({
@@ -264,7 +293,7 @@ export async function importLeadsFromSheet(
             nome: row.nome.trim(),
             email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
             telefone: normalizedPhone,
-            origem: row.origem && row.origem.trim() !== "" ? row.origem.trim() : null,
+            origem: leadOrigem as any,
             projectId: projectId,
             projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
             status: leadStatus as any,
@@ -453,13 +482,14 @@ export async function syncLeadsFromSheet(
           const projectName = row.projeto || row.origem;
           const projectId = await findExistingProject(projectName);
           const leadStatus = mapStatus(row.status || "");
+          const leadOrigem = mapOrigem(row.origem);
           
           await db.insert(leads).values({
             idPrincipal: row.id || null,
             nome: row.nome.trim(),
             email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
             telefone: normalizedPhone,
-            origem: row.origem && row.origem.trim() !== "" ? row.origem.trim() : null,
+            origem: leadOrigem as any,
             projectId: projectId,
             projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
             status: leadStatus as any,
