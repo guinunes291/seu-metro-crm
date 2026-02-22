@@ -4377,3 +4377,15 @@
 - [x] Criar testes unitários para criarNovoContrato (4 testes passando)
 - [x] Corrigir campo origem para usar valor válido do enum
 - [x] Adicionar corretorId ao insert de contrato
+
+## Upload de Arquivos no Formulário de Novo Contrato
+- [x] Adicionar campo 'anexos' na tabela contratos para armazenar URLs dos arquivos (JSON array)
+- [x] Atualizar schema do banco de dados e fazer push das mudanças
+- [x] Implementar componente de upload de arquivos no CriarContratoDialog
+- [x] Adicionar lógica de upload para S3 no frontend
+- [x] Atualizar procedure criarContrato para aceitar array de URLs de arquivos
+- [x] Atualizar função criarNovoContrato no db.ts para salvar URLs dos anexos
+- [x] Adicionar endpoint /api/upload no uploadRoutes.ts com multer
+- [x] Instalar pacote multer para upload de arquivos
+- [ ] Adicionar visualização de anexos na tabela de contratos (futura melhoria)
+- [ ] Criar testes unitários para upload de arquivos (futura melhoria)

@@ -1880,6 +1880,7 @@ export const appRouter = router({
         valorVenda: z.number().positive('Valor deve ser positivo'),
         dataVenda: z.string(),
         observacoes: z.string().optional(),
+        anexos: z.array(z.string()).optional(),
       }))
       .mutation(async ({ input }) => {
         return await db.criarNovoContrato({

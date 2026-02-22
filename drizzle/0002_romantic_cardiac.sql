@@ -1,0 +1,1 @@
+ALTER TABLE `contratos` ADD `anexos` json DEFAULT ('[]');

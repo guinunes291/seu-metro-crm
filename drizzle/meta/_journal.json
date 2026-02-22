@@ -15,6 +15,13 @@
       "when": 1771708444638,
       "tag": "0001_exotic_kitty_pryde",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771763758349,
+      "tag": "0002_romantic_cardiac",
+      "breakpoints": true
     }
   ]
 }

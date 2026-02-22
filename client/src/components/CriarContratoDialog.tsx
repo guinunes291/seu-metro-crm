@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, X, FileText } from 'lucide-react';
 
 interface CriarContratoDialogProps {
   open: boolean;
@@ -29,6 +29,8 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
   const [dataVenda, setDataVenda] = useState(new Date().toISOString().split('T')[0]);
   const [observacoes, setObservacoes] = useState('');
   const [usarProjetoCustom, setUsarProjetoCustom] = useState(false);
+  const [arquivos, setArquivos] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   // Queries
   const { data: opcoes, isLoading: loadingOpcoes } = trpc.dashboard.opcoesContrato.useQuery();
@@ -67,9 +69,10 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
     setDataVenda(new Date().toISOString().split('T')[0]);
     setObservacoes('');
     setUsarProjetoCustom(false);
+    setArquivos([]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!corretorId) {
@@ -98,6 +101,38 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       return;
     }
 
+    // Upload de arquivos se houver
+    let anexosUrls: string[] = [];
+    if (arquivos.length > 0) {
+      setUploadingFiles(true);
+      try {
+        const uploadPromises = arquivos.map(async (arquivo) => {
+          const formData = new FormData();
+          formData.append('file', arquivo);
+          
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Erro ao fazer upload de ${arquivo.name}`);
+          }
+          
+          const data = await response.json();
+          return data.url;
+        });
+        
+        anexosUrls = await Promise.all(uploadPromises);
+      } catch (error) {
+        toast.error('Erro ao fazer upload dos arquivos');
+        setUploadingFiles(false);
+        return;
+      } finally {
+        setUploadingFiles(false);
+      }
+    }
+
     criarMutation.mutate({
       corretorId,
       clienteNome,
@@ -108,6 +143,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       valorVenda: valorNumerico,
       dataVenda,
       observacoes,
+      anexos: anexosUrls,
     });
   };
 
@@ -279,6 +315,71 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
               placeholder="Informações adicionais sobre o contrato"
               rows={3}
             />
+          </div>
+
+          {/* Upload de Arquivos */}
+          <div className="space-y-2">
+            <Label htmlFor="arquivos">Anexar Documentos</Label>
+            <div className="border-2 border-dashed rounded-lg p-4 hover:border-primary/50 transition-colors">
+              <input
+                id="arquivos"
+                type="file"
+                multiple
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  setArquivos(prev => [...prev, ...files]);
+                  e.target.value = ''; // Limpar input para permitir adicionar o mesmo arquivo novamente
+                }}
+                className="hidden"
+              />
+              <label
+                htmlFor="arquivos"
+                className="flex flex-col items-center justify-center cursor-pointer"
+              >
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground text-center">
+                  Clique para adicionar arquivos
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PDF, DOC, DOCX, JPG, PNG (máx. 10MB cada)
+                </p>
+              </label>
+            </div>
+            
+            {/* Lista de arquivos selecionados */}
+            {arquivos.length > 0 && (
+              <div className="space-y-2 mt-3">
+                <p className="text-sm font-medium">Arquivos selecionados ({arquivos.length}):</p>
+                <div className="space-y-1">
+                  {arquivos.map((arquivo, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-md"
+                    >
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm truncate">{arquivo.name}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">
+                          ({(arquivo.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setArquivos(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="h-6 w-6 p-0 flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

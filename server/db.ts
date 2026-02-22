@@ -9973,6 +9973,7 @@ export async function criarNovoContrato(dados: {
   valorVenda: number;
   dataVenda: Date;
   observacoes?: string;
+  anexos?: string[];
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
@@ -10034,6 +10035,7 @@ export async function criarNovoContrato(dados: {
       corretorId: dados.corretorId,
       valorVenda: dados.valorVenda,
       observacoes: dados.observacoes || '',
+      anexos: dados.anexos || [],
       createdAt: dados.dataVenda,
       updatedAt: new Date(),
     })

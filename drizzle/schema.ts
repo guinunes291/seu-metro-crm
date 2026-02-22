@@ -1833,6 +1833,9 @@ export const contratos = mysqlTable("contratos", {
   // Valor da venda (VGV)
   valorVenda: decimal("valorVenda", { precision: 15, scale: 2 }),
   
+  // Anexos (URLs dos arquivos no S3)
+  anexos: json("anexos").$type<string[]>().default([]),
+  
   // Metadata
   observacoes: text("observacoes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
