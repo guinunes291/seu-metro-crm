@@ -4504,3 +4504,12 @@
 - [x] Otimizar queries usando LEFT JOIN para contar agendamentos/follow-ups
 - [x] Limitar resultados a 50 grupos de duplicatas para evitar timeout
 - [x] Testar carregamento da página (carregando corretamente)
+
+## Bug CRÍTICO: Importação de Leads Não Mapeia Coluna de Projeto
+- [x] Investigar código de importação (sheetsImport.ts)
+- [x] Verificar se coluna "Projeto" está sendo lida da planilha
+- [x] Identificado: campo "projeto" não estava na interface SheetRow
+- [x] Corrigir mapeamento da coluna de projeto (googleSheets.ts linha 70)
+- [x] Adicionar campo projeto na interface SheetRow
+- [x] Criação automática de projeto já existe (findExistingProject)
+- [x] Reiniciar servidor para aplicar correção

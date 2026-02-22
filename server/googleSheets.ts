@@ -11,6 +11,7 @@ interface SheetRow {
   email: string;
   telefone: string;
   origem: string;
+  projeto?: string;
   status?: string;
   dataDistribuicao?: string;
   distribuido?: string;
@@ -67,6 +68,7 @@ export async function readGoogleSheet(
         email: obj.email || obj["e-mail"] || "",
         telefone: obj.telefone || obj.phone || "",
         origem: obj.origem || obj.origin || "",
+        projeto: obj.projeto || obj.project || obj.empreendimento || "",
         status: obj.status || "",
         dataDistribuicao: obj["data distribuição"] || obj["data_distribuicao"] || "",
         distribuido: obj.distribuido || obj.distributed || "",
