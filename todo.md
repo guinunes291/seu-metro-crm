@@ -4412,3 +4412,11 @@
 - [x] Documentar como conectar ao Looker Studio (instruções na página)
 - [x] Adicionar procedures no router (biSync.syncAll, syncContratos, syncMetricas, syncPerformance)
 - [x] Criar página de gerenciamento com botões de sincronização manual
+
+## Upload de Anexos na Edição de Contratos
+- [x] Adicionar campo de upload de arquivos no dialog de edição de contratos
+- [x] Implementar lógica de upload para adicionar novos anexos aos existentes
+- [x] Atualizar procedure editarContrato para aceitar novos anexos
+- [x] Atualizar função no db.ts para mesclar anexos novos com existentes
+- [x] Adicionar visualização de anexos existentes no dialog de edição
+- [x] Adicionar campo anexos no retorno de getContratoParaEdicao

@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Upload, X, FileText, Paperclip } from "lucide-react";
+import { storagePut } from "@/lib/storage";
 
 interface EditarContratoDialogProps {
   contratoId: number | null;
@@ -57,6 +58,8 @@ export default function EditarContratoDialog({
   const [dataVenda, setDataVenda] = useState("");
   const [equipeId, setEquipeId] = useState<number | null>(null);
   const [projetoMode, setProjetoMode] = useState<"select" | "custom">("select");
+  const [novosAnexos, setNovosAnexos] = useState<File[]>([]);
+  const [uploadingAnexos, setUploadingAnexos] = useState(false);
 
   // Preencher formulário quando os dados carregarem
   useEffect(() => {
@@ -99,12 +102,43 @@ export default function EditarContratoDialog({
     },
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!contratoId) return;
+
+    // Upload dos novos anexos primeiro
+    let anexosUrls: string[] = [];
+    if (novosAnexos.length > 0) {
+      setUploadingAnexos(true);
+      try {
+        const uploadPromises = novosAnexos.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!response.ok) throw new Error('Falha no upload');
+          const data = await response.json();
+          return data.url;
+        });
+        anexosUrls = await Promise.all(uploadPromises);
+      } catch (error) {
+        toast.error('Erro ao fazer upload dos anexos');
+        setUploadingAnexos(false);
+        return;
+      }
+      setUploadingAnexos(false);
+    }
 
     const dados: Record<string, any> = {
       contratoId,
     };
+
+    // Adicionar novos anexos aos existentes
+    if (anexosUrls.length > 0) {
+      const anexosExistentes = contrato?.anexos || [];
+      dados.anexos = [...anexosExistentes, ...anexosUrls];
+    }
 
     if (corretorId !== contrato?.corretorId) dados.corretorId = corretorId;
     if (clienteNome !== contrato?.clienteNome) dados.clienteNome = clienteNome;
@@ -314,6 +348,93 @@ export default function EditarContratoDialog({
                 value={dataVenda}
                 onChange={(e) => setDataVenda(e.target.value)}
               />
+            </div>
+
+            {/* Anexos Existentes */}
+            {contrato?.anexos && contrato.anexos.length > 0 && (
+              <div className="space-y-2">
+                <Label>Anexos Existentes</Label>
+                <div className="flex flex-wrap gap-2">
+                  {contrato.anexos.map((anexo: string, idx: number) => {
+                    const fileName = anexo.split('/').pop() || `Anexo ${idx + 1}`;
+                    return (
+                      <a
+                        key={idx}
+                        href={anexo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md text-sm hover:bg-muted/80 transition-colors"
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span className="max-w-[200px] truncate">{fileName}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Novos Anexos */}
+            <div className="space-y-2">
+              <Label htmlFor="anexos">Adicionar Novos Anexos</Label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('file-input-edit')?.click()}
+                    disabled={uploadingAnexos}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Selecionar Arquivos
+                  </Button>
+                  <input
+                    id="file-input-edit"
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setNovosAnexos(prev => [...prev, ...files]);
+                      e.target.value = '';
+                    }}
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    PDF, DOC, DOCX, JPG, PNG (máx. 10MB cada)
+                  </span>
+                </div>
+
+                {novosAnexos.length > 0 && (
+                  <div className="space-y-2">
+                    {novosAnexos.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Paperclip className="h-4 w-4" />
+                          <span className="text-sm">{file.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNovosAnexos(prev => prev.filter((_, i) => i !== idx));
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

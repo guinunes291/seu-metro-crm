@@ -9813,6 +9813,7 @@ export async function atualizarContrato(contratoId: number, dados: {
   valorVenda?: number;
   dataVenda?: Date;
   equipeCorretorId?: number | null;
+  anexos?: string[];
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
@@ -9834,6 +9835,7 @@ export async function atualizarContrato(contratoId: number, dados: {
   if (dados.corretorId !== undefined) contratoUpdate.corretorId = dados.corretorId;
   if (dados.valorVenda !== undefined) contratoUpdate.valorVenda = String(dados.valorVenda);
   if (dados.dataVenda !== undefined) contratoUpdate.createdAt = dados.dataVenda;
+  if (dados.anexos !== undefined) contratoUpdate.anexos = JSON.stringify(dados.anexos);
 
   if (Object.keys(contratoUpdate).length > 0) {
     await db.update(contratos)
@@ -9897,6 +9899,7 @@ export async function getContratoParaEdicao(contratoId: number) {
     valorVenda: contratos.valorVenda,
     dataVenda: contratos.createdAt,
     observacoes: contratos.observacoes,
+    anexos: contratos.anexos,
   })
     .from(contratos)
     .innerJoin(users, eq(contratos.corretorId, users.id))
@@ -9920,6 +9923,7 @@ export async function getContratoParaEdicao(contratoId: number) {
     valorVenda: Number(result.valorVenda || 0),
     dataVenda: result.dataVenda,
     observacoes: result.observacoes || '',
+    anexos: result.anexos ? JSON.parse(result.anexos) : [],
   };
 }
 
