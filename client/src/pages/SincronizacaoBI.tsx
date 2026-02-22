@@ -286,11 +286,93 @@ export default function SincronizacaoBI() {
           </Card>
         </div>
 
+        {/* Dashboards Looker Studio */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Dashboards Looker Studio
+            </CardTitle>
+            <CardDescription>Dashboards visuais e interativos para análise em tempo real</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-3">
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
+                <div>
+                  <h4 className="font-semibold text-sm">Performance Geral</h4>
+                  <p className="text-xs text-muted-foreground">KPIs principais, funil de vendas e evolução temporal</p>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="https://lookerstudio.google.com/create" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Criar
+                  </a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
+                <div>
+                  <h4 className="font-semibold text-sm">Análise de Equipes</h4>
+                  <p className="text-xs text-muted-foreground">Comparação entre equipes, metas e ranking</p>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="https://lookerstudio.google.com/create" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Criar
+                  </a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
+                <div>
+                  <h4 className="font-semibold text-sm">Performance Individual</h4>
+                  <p className="text-xs text-muted-foreground">Métricas detalhadas de cada corretor</p>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="https://lookerstudio.google.com/create" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Criar
+                  </a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors">
+                <div>
+                  <h4 className="font-semibold text-sm">Análise de Projetos</h4>
+                  <p className="text-xs text-muted-foreground">VGV por projeto e leads por empreendimento</p>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="https://lookerstudio.google.com/create" target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Criar
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-muted p-4 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Guia Completo de Configuração
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Consulte o guia detalhado com passo a passo, campos calculados, componentes recomendados e dicas de design.
+              </p>
+              <Button size="sm" variant="secondary" asChild className="w-full">
+                <a href="/docs/looker-studio-dashboards.md" target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ver Documentação Completa
+                </a>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Instruções de Integração */}
         <Card>
           <CardHeader>
-            <CardTitle>Como Integrar com Ferramentas de BI</CardTitle>
-            <CardDescription>Conecte o Google Sheets ao Power BI, Looker Studio ou outras ferramentas</CardDescription>
+            <CardTitle>Como Integrar com Outras Ferramentas de BI</CardTitle>
+            <CardDescription>Conecte o Google Sheets ao Power BI ou outras ferramentas</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>

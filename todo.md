@@ -4443,3 +4443,17 @@
 - [x] Corrigir mapeamento de origem (Facebook → facebook, etc) em sheetsImport.ts
 - [x] Aplicar correção nas funções importLeadsFromSheet e syncLeadsFromSheet
 - [x] Reiniciar servidor e validar que leads estão sendo importados (11568 → 11569)
+
+## Dashboards Looker Studio para Análises em Tempo Real
+- [x] Criar guia completo de configuração (looker-studio-dashboards.md)
+- [x] Documentar dashboard de Performance Geral (KPIs principais, funil de vendas, evolução temporal)
+- [x] Documentar dashboard de Análise de Equipes (comparação entre equipes, metas, ranking)
+- [x] Documentar dashboard de Performance Individual (métricas por corretor, taxa de conversão)
+- [x] Documentar dashboard de Análise de Projetos (VGV por projeto, leads por empreendimento)
+- [x] Documentar como conectar planilha ao Looker Studio (passo a passo detalhado)
+- [x] Adicionar seção de dashboards na página de Sincronização BI
+- [x] Adicionar links para criar dashboards diretamente no Looker Studio
+- [x] Adicionar link para documentação completa na interface
+- [x] Documentar campos calculados (Taxa de Conversão, VGV Médio, etc)
+- [x] Documentar componentes recomendados para cada dashboard
+- [x] Adicionar dicas de design e boas práticas
