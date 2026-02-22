@@ -63,42 +63,44 @@ export async function identificarDuplicatasPorTelefone(): Promise<GrupoDuplicata
 
   const grupos: GrupoDuplicatas[] = [];
 
-  for (const dup of duplicates) {
-    // Buscar todos os leads com este telefone
+  // Limitar a 50 grupos para evitar timeout
+  const limitedDuplicates = duplicates.slice(0, 50);
+
+  for (const dup of limitedDuplicates) {
+    // Buscar todos os leads com este telefone usando JOIN para contar agendamentos e follow-ups
     const leadsComTelefone = await db
-      .select()
+      .select({
+        id: leads.id,
+        idPrincipal: leads.idPrincipal,
+        nome: leads.nome,
+        email: leads.email,
+        telefone: leads.telefone,
+        origem: leads.origem,
+        status: leads.status,
+        corretorId: leads.corretorId,
+        projectId: leads.projectId,
+        projetoCustom: leads.projetoCustom,
+        dataDistribuicao: leads.dataDistribuicao,
+        observacoes: leads.observacoes,
+        createdAt: leads.createdAt,
+        updatedAt: leads.updatedAt,
+        totalAgendamentos: sql<number>`COALESCE(COUNT(DISTINCT ${agendamentos.id}), 0)`,
+        totalFollowUps: sql<number>`COALESCE(COUNT(DISTINCT ${followUps.id}), 0)`,
+      })
       .from(leads)
+      .leftJoin(agendamentos, eq(leads.id, agendamentos.leadId))
+      .leftJoin(followUps, eq(leads.id, followUps.leadId))
       .where(
         sql`REGEXP_REPLACE(${leads.telefone}, '[^0-9]', '') = ${dup.telefoneNormalizado} AND ${leads.naLixeira} = 0`
-      );
+      )
+      .groupBy(leads.id);
 
     if (leadsComTelefone.length > 1) {
-      // Contar agendamentos e follow-ups para cada lead
-      const leadsComHistorico: LeadDuplicado[] = [];
-      
-      for (const lead of leadsComTelefone) {
-        const [agendamentosCount] = await db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(agendamentos)
-          .where(eq(agendamentos.leadId, lead.id));
-
-        const [followUpsCount] = await db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(followUps)
-          .where(eq(followUps.leadId, lead.id));
-
-        leadsComHistorico.push({
-          ...lead,
-          totalAgendamentos: Number(agendamentosCount.count) || 0,
-          totalFollowUps: Number(followUpsCount.count) || 0,
-        });
-      }
-
       grupos.push({
         criterio: "telefone",
         valor: leadsComTelefone[0].telefone,
-        leads: leadsComHistorico,
-        totalLeads: leadsComHistorico.length,
+        leads: leadsComTelefone as LeadDuplicado[],
+        totalLeads: leadsComTelefone.length,
       });
     }
   }
@@ -126,42 +128,44 @@ export async function identificarDuplicatasPorEmail(): Promise<GrupoDuplicatas[]
 
   const grupos: GrupoDuplicatas[] = [];
 
-  for (const dup of duplicates) {
+  // Limitar a 50 grupos para evitar timeout
+  const limitedDuplicates = duplicates.slice(0, 50);
+
+  for (const dup of limitedDuplicates) {
     if (!dup.email) continue;
 
-    // Buscar todos os leads com este email
+    // Buscar todos os leads com este email usando JOIN para contar agendamentos e follow-ups
     const leadsComEmail = await db
-      .select()
+      .select({
+        id: leads.id,
+        idPrincipal: leads.idPrincipal,
+        nome: leads.nome,
+        email: leads.email,
+        telefone: leads.telefone,
+        origem: leads.origem,
+        status: leads.status,
+        corretorId: leads.corretorId,
+        projectId: leads.projectId,
+        projetoCustom: leads.projetoCustom,
+        dataDistribuicao: leads.dataDistribuicao,
+        observacoes: leads.observacoes,
+        createdAt: leads.createdAt,
+        updatedAt: leads.updatedAt,
+        totalAgendamentos: sql<number>`COALESCE(COUNT(DISTINCT ${agendamentos.id}), 0)`,
+        totalFollowUps: sql<number>`COALESCE(COUNT(DISTINCT ${followUps.id}), 0)`,
+      })
       .from(leads)
-      .where(sql`${leads.email} = ${dup.email} AND ${leads.naLixeira} = 0`);
+      .leftJoin(agendamentos, eq(leads.id, agendamentos.leadId))
+      .leftJoin(followUps, eq(leads.id, followUps.leadId))
+      .where(sql`${leads.email} = ${dup.email} AND ${leads.naLixeira} = 0`)
+      .groupBy(leads.id);
 
     if (leadsComEmail.length > 1) {
-      // Contar agendamentos e follow-ups para cada lead
-      const leadsComHistorico: LeadDuplicado[] = [];
-      
-      for (const lead of leadsComEmail) {
-        const [agendamentosCount] = await db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(agendamentos)
-          .where(eq(agendamentos.leadId, lead.id));
-
-        const [followUpsCount] = await db
-          .select({ count: sql<number>`COUNT(*)` })
-          .from(followUps)
-          .where(eq(followUps.leadId, lead.id));
-
-        leadsComHistorico.push({
-          ...lead,
-          totalAgendamentos: Number(agendamentosCount.count) || 0,
-          totalFollowUps: Number(followUpsCount.count) || 0,
-        });
-      }
-
       grupos.push({
         criterio: "email",
         valor: dup.email,
-        leads: leadsComHistorico,
-        totalLeads: leadsComHistorico.length,
+        leads: leadsComEmail as LeadDuplicado[],
+        totalLeads: leadsComEmail.length,
       });
     }
   }

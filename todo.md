@@ -4496,3 +4496,11 @@
 - [x] Adicionar rota /limpeza-duplicatas no App.tsx
 - [x] Adicionar item no menu Sistema (apenas admin)
 - [x] Corrigir imports e testar funcionalidade
+
+## Bug: Página de Limpeza de Duplicatas Travada no Carregamento
+- [x] Investigar erro no console do navegador
+- [x] Verificar logs do servidor para erros nas procedures tRPC
+- [x] Identificado: N+1 queries causando timeout (loops aninhados para cada lead)
+- [x] Otimizar queries usando LEFT JOIN para contar agendamentos/follow-ups
+- [x] Limitar resultados a 50 grupos de duplicatas para evitar timeout
+- [x] Testar carregamento da página (carregando corretamente)
