@@ -403,16 +403,47 @@ export async function syncLeadsFromSheet(
     for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
       const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
       
-      // Buscar todos os telefones existentes deste lote de uma vez
-      const batchTelefones = batch
-        .filter(row => row.telefone)
-        .map(row => normalizeTelefone(row.telefone));
+      // Buscar leads existentes por idPrincipal, telefone e email
+      const batchIdsPrincipais = batch.filter(row => row.id).map(row => String(row.id));
+      const batchTelefones = batch.filter(row => row.telefone).map(row => extractPhoneNumbers(normalizeTelefone(row.telefone)));
+      const batchEmails = batch.filter(row => row.email).map(row => row.email.toLowerCase().trim());
       
-      const existingPhones = await getExistingLeads(batchTelefones);
+      const existingIds = new Set<string>();
+      const existingPhones = new Set<string>();
+      const existingEmails = new Set<string>();
+      
+      // Buscar por idPrincipal
+      if (batchIdsPrincipais.length > 0) {
+        const byId = await db
+          .select({ idPrincipal: leads.idPrincipal })
+          .from(leads)
+          .where(inArray(leads.idPrincipal, batchIdsPrincipais));
+        byId.forEach(l => existingIds.add(l.idPrincipal));
+      }
+      
+      // Buscar por telefone
+      if (batchTelefones.length > 0) {
+        const byPhone = await db
+          .select({ telefone: leads.telefone })
+          .from(leads)
+          .where(
+            sql`REGEXP_REPLACE(${leads.telefone}, '[^0-9]', '') IN (${sql.join(batchTelefones.map(p => sql`${p}`), sql`, `)})`
+          );
+        byPhone.forEach(l => existingPhones.add(extractPhoneNumbers(l.telefone)));
+      }
+      
+      // Buscar por email
+      if (batchEmails.length > 0) {
+        const byEmail = await db
+          .select({ email: leads.email })
+          .from(leads)
+          .where(inArray(leads.email, batchEmails));
+        byEmail.forEach(l => l.email && existingEmails.add(l.email.toLowerCase().trim()));
+      }
 
       for (let i = 0; i < batch.length; i++) {
         const row = batch[i];
-        const rowNumber = batchStart + i + 2; // +2 porque começa em 1 e tem cabeçalho
+        const rowNumber = batchStart + i + 2;
 
         try {
           // Validar dados obrigatórios
@@ -427,11 +458,13 @@ export async function syncLeadsFromSheet(
             continue;
           }
 
+          const idPrincipal = String(row.id);
           const normalizedPhone = normalizeTelefone(row.telefone);
           const phoneNumbers = extractPhoneNumbers(normalizedPhone);
+          const normalizedEmail = row.email ? row.email.toLowerCase().trim() : null;
 
-          // Verificar se já existe
-          if (existingPhones.has(phoneNumbers)) {
+          // Verificar duplicatas por idPrincipal, telefone ou email
+          if (existingIds.has(idPrincipal) || existingPhones.has(phoneNumbers) || (normalizedEmail && existingEmails.has(normalizedEmail))) {
             // Lead existente - atualizar projetoCustom se necessário
             const projectName = row.projeto || row.origem;
             if (projectName && projectName.trim() !== "") {

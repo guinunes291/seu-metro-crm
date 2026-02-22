@@ -18,6 +18,7 @@ let isRunning = false;
  */
 export async function startSheetsImportJob() {
   console.log("[Sheets Import Job] Inicializando job de importação automática (intervalo: 5 minutos)");
+  console.log("[Sheets Import Job] Verificação de duplicatas: idPrincipal, telefone e email");
   
   // Executar imediatamente na inicialização (após 30 segundos)
   setTimeout(async () => {
@@ -29,7 +30,7 @@ export async function startSheetsImportJob() {
     await runImport();
   }, 5 * 60 * 1000); // 5 minutos
   
-  console.log("[Sheets Import Job] Job de importação automática inicializado");
+  console.log("[Sheets Import Job] Job de importação automática inicializado com sucesso");
 }
 
 /**

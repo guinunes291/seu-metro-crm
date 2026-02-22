@@ -4457,3 +4457,14 @@
 - [x] Documentar campos calculados (Taxa de Conversão, VGV Médio, etc)
 - [x] Documentar componentes recomendados para cada dashboard
 - [x] Adicionar dicas de design e boas práticas
+
+## Bug CRÍTICO: Importação em Massa de Leads Duplicados
+- [x] Investigar logs do job de importação automática (sheetsImportJob.ts)
+- [x] Identificar por que está importando leads em massa ao invés de apenas novos
+- [x] Desativar job temporariamente para parar importação
+- [x] Identificado: syncLeadsFromSheet verificava apenas telefone, não idPrincipal
+- [x] Corrigir lógica para verificar duplicatas por idPrincipal, telefone E email
+- [x] Adicionar busca em lote por idPrincipal usando inArray
+- [x] Adicionar busca em lote por email normalizado (lowercase)
+- [x] Testar correção com planilha real (17.798 → 17.800, apenas 2 novos)
+- [x] Reativar job após validação (funcionando corretamente)
