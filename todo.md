@@ -4389,3 +4389,11 @@
 - [x] Instalar pacote multer para upload de arquivos
 - [ ] Adicionar visualização de anexos na tabela de contratos (futura melhoria)
 - [ ] Criar testes unitários para upload de arquivos (futura melhoria)
+
+## Visualização de Anexos na Tabela de Contratos
+- [x] Adicionar coluna "Anexos" na tabela de contratos do Dashboard
+- [x] Criar componente AnexosDialog para exibir lista de anexos com ícones e nomes
+- [x] Implementar botões de download/visualização para cada anexo
+- [x] Adicionar indicador visual quando não houver anexos (badge com quantidade)
+- [x] Adicionar campo anexos no retorno da query getContratosFechados
+- [x] Integrar AnexosDialog no Dashboard com estado de visualização

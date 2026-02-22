@@ -9674,6 +9674,7 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
     valorVenda: contratos.valorVenda,
     dataVenda: contratos.createdAt,
     observacoes: contratos.observacoes,
+    anexos: contratos.anexos,
   })
     .from(contratos)
     .innerJoin(users, eq(contratos.corretorId, users.id))
@@ -9706,6 +9707,7 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
     projeto: r.projectId ? (projectsMap.get(r.projectId) || 'Projeto removido') : (r.projetoCustom || 'Não informado'),
     vgv: Number(r.valorVenda || 0),
     dataVenda: r.dataVenda,
+    anexos: r.anexos || [],
   }));
 }
 

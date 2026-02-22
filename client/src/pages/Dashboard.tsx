@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";
-import { CriarContratoDialog } from "@/components/CriarContratoDialog";
+import { CriarContratoDialog } from '@/components/CriarContratoDialog';
+import { AnexosDialog } from '@/components/AnexosDialog';
 import { Button } from "@/components/ui/button";
 import LeadsUrgentesCard from "@/components/LeadsUrgentesCard";
 import FunilVendasVisual from "@/components/FunilVendasVisual";
@@ -135,6 +136,8 @@ export default function Dashboard() {
   const [editContratoId, setEditContratoId] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [criarContratoOpen, setCriarContratoOpen] = useState(false);
+  const [anexosDialogOpen, setAnexosDialogOpen] = useState(false);
+  const [anexosVisualizacao, setAnexosVisualizacao] = useState<{ contratoId: number; anexos: string[] }>({ contratoId: 0, anexos: [] });
   
   // Estado do filtro
   const [filterPreset, setFilterPreset] = useState("all");
@@ -826,6 +829,7 @@ export default function Dashboard() {
                               <TableHead className="font-semibold">Projeto</TableHead>
                               <TableHead className="text-right font-semibold">VGV</TableHead>
                               <TableHead className="text-right font-semibold">Data da Venda</TableHead>
+                              <TableHead className="text-center font-semibold">Anexos</TableHead>
                               {isAdmin && <TableHead className="w-10"></TableHead>}
                             </TableRow>
                           </TableHeader>
@@ -868,6 +872,28 @@ export default function Dashboard() {
                                   <span className="text-sm text-muted-foreground">
                                     {format(new Date(contrato.dataVenda), "dd/MM/yyyy", { locale: ptBR })}
                                   </span>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {contrato.anexos && contrato.anexos.length > 0 ? (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {contrato.anexos.length} {contrato.anexos.length === 1 ? 'arquivo' : 'arquivos'}
+                                      </Badge>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 w-7 p-0"
+                                        onClick={() => {
+                                          setAnexosVisualizacao({ contratoId: contrato.id, anexos: contrato.anexos });
+                                          setAnexosDialogOpen(true);
+                                        }}
+                                      >
+                                        <FileText className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">-</span>
+                                  )}
                                 </TableCell>
                                 {isAdmin && (
                                   <TableCell className="text-center">
@@ -1361,6 +1387,14 @@ export default function Dashboard() {
           }}
         />
       )}
+
+      {/* Dialog de visualização de anexos */}
+      <AnexosDialog
+        open={anexosDialogOpen}
+        onOpenChange={setAnexosDialogOpen}
+        anexos={anexosVisualizacao.anexos}
+        contratoId={anexosVisualizacao.contratoId}
+      />
     </DashboardLayout>
   );
 }
