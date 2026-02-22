@@ -4475,3 +4475,24 @@
 - [x] Manter apenas importação manual via interface (Sistema → Importação de Leads)
 - [x] Reiniciar servidor para aplicar mudanças
 - [x] Validar que job não está mais executando (total de leads estável em 17.800)
+
+## Limpeza de Leads Duplicados
+- [ ] Criar script de identificação de duplicatas por telefone e email
+- [ ] Criar procedure para listar grupos de leads duplicados
+- [ ] Criar interface de gerenciamento de duplicatas (Sistema → Limpeza de Duplicatas)
+- [ ] Implementar visualização de grupos de duplicatas com detalhes de cada lead
+- [ ] Implementar lógica de mesclagem automática (manter lead mais completo)
+- [ ] Preservar histórico: agendamentos, follow-ups, observações, interações
+- [ ] Adicionar confirmação antes de mesclar duplicatas
+- [ ] Criar log de auditoria de mesclagens realizadas
+- [ ] Testar mesclagem com leads duplicados reais
+
+## Limpeza de Leads Duplicados
+- [x] Criar script de identificação de duplicatas por telefone e email (duplicatasCleanup.ts)
+- [x] Criar interface de gerenciamento de duplicatas no sistema (LimpezaDuplicatas.tsx)
+- [x] Implementar lógica de mesclagem de leads duplicados (mesclarLeadsDuplicados)
+- [x] Adicionar procedures no router (duplicatas.stats, listByTelefone, listByEmail, merge)
+- [x] Criar página de limpeza de duplicatas com tabs e seleção de leads
+- [x] Adicionar rota /limpeza-duplicatas no App.tsx
+- [x] Adicionar item no menu Sistema (apenas admin)
+- [x] Corrigir imports e testar funcionalidade

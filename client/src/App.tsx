@@ -53,6 +53,7 @@ import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
 import GestaoEquipes from "@/pages/GestaoEquipes";
 import MinhaEquipe from "@/pages/MinhaEquipe";
+import LimpezaDuplicatas from "@/pages/LimpezaDuplicatas";
 
 import { AlertasNotification } from "./components/AlertasNotification";
 
@@ -96,6 +97,7 @@ function Router() {
       <Route path="/conquistas" component={Conquistas} />
       <Route path="/google-sheets-sync" component={GoogleSheetsSync} />
       <Route path="/sincronizacao-bi" component={SincronizacaoBI} />
+      <Route path="/limpeza-duplicatas" component={LimpezaDuplicatas} />
       <Route path="/minha-agenda" component={MinhaAgenda} />
       <Route path="/propostas" component={Propostas} />
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />

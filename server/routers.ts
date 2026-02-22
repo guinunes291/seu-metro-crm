@@ -11,6 +11,7 @@ import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./goog
 import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
 import * as biSync from "./biSync";
+import * as duplicatasCleanup from "./duplicatasCleanup";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -6581,6 +6582,40 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           ));
         
         return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // LIMPEZA DE DUPLICATAS
+  // ============================================================================
+  
+  duplicatas: router({
+    // Estatísticas de duplicatas (apenas admin)
+    stats: adminProcedure.query(async () => {
+      return await duplicatasCleanup.getEstatisticasDuplicatas();
+    }),
+    
+    // Listar grupos de duplicatas por telefone (apenas admin)
+    listByTelefone: adminProcedure.query(async () => {
+      return await duplicatasCleanup.identificarDuplicatasPorTelefone();
+    }),
+    
+    // Listar grupos de duplicatas por email (apenas admin)
+    listByEmail: adminProcedure.query(async () => {
+      return await duplicatasCleanup.identificarDuplicatasPorEmail();
+    }),
+    
+    // Mesclar leads duplicados (apenas admin)
+    merge: adminProcedure
+      .input(z.object({
+        leadPrincipalId: z.number(),
+        leadsDuplicadosIds: z.array(z.number()),
+      }))
+      .mutation(async ({ input }) => {
+        return await duplicatasCleanup.mesclarLeadsDuplicados(
+          input.leadPrincipalId,
+          input.leadsDuplicadosIds
+        );
       }),
   }),
 });
