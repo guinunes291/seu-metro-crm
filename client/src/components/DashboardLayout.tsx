@@ -128,6 +128,7 @@ const menuGroups = [
       { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync", roles: ["gestor", "admin"] },
       { icon: Database, label: "Sincronização BI", path: "/sincronizacao-bi", roles: ["gestor", "admin"] },
       { icon: Trash, label: "Limpeza de Duplicatas", path: "/limpeza-duplicatas", roles: ["admin"] },
+      { icon: Database, label: "Atualizar Projetos", path: "/atualizar-projetos", roles: ["admin"] },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
       { icon: FileText, label: "Log de Transferências", path: "/log-transferencias", roles: ["admin"] },
     ],

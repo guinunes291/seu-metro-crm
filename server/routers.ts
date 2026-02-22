@@ -12,6 +12,7 @@ import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
 import * as biSync from "./biSync";
 import * as duplicatasCleanup from "./duplicatasCleanup";
+import * as updateProjetosEmMassa from "./modules/updateProjetosEmMassa";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -6617,6 +6618,22 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           input.leadsDuplicadosIds
         );
       }),
+  }),
+
+  // ============================================================================
+  // ATUALIZAÇÃO EM MASSA DE PROJETOS
+  // ============================================================================
+  
+  updateProjetos: router({
+    // Estatísticas de leads sem projeto (apenas admin)
+    stats: adminProcedure.query(async () => {
+      return await updateProjetosEmMassa.getEstatisticasProjetosPendentes();
+    }),
+    
+    // Executar atualização em massa (apenas admin)
+    executar: adminProcedure.mutation(async () => {
+      return await updateProjetosEmMassa.updateProjetosEmMassa();
+    }),
   }),
 });
 export type AppRouter = typeof appRouter;

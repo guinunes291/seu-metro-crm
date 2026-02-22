@@ -4527,3 +4527,11 @@
 - [x] Adicionar aviso de deprecação na função findExistingProject
 - [x] Criar testes unitários validando que projetos não são criados automaticamente
 - [ ] Considerar ferramenta de atualização em massa para corrigir leads já importados sem projeto
+
+## Nova Feature: Atualização em Massa de Projetos
+- [x] Analisar quantos leads estão sem projetoCustom
+- [x] Criar procedure backend para atualização em massa baseada na planilha (busca por telefone e email)
+- [x] Criar interface admin-only para executar atualização
+- [x] Implementar preview/estatísticas antes de confirmar
+- [x] Criar testes unitários validando normalização e estatísticas
+- [ ] Executar atualização em produção e validar resultados
