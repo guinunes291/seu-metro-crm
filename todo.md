@@ -4513,3 +4513,17 @@
 - [x] Adicionar campo projeto na interface SheetRow
 - [x] Criação automática de projeto já existe (findExistingProject)
 - [x] Reiniciar servidor para aplicar correção
+
+## Ajuste: Importação Deve Usar projetoCustom ao Invés de Criar Projetos
+- [ ] Modificar sheetsImport.ts para NÃO chamar findExistingProject
+- [ ] Armazenar nome do projeto da planilha diretamente em projetoCustom (texto livre)
+- [ ] Garantir que projetoCustom aparece no card do corretor
+- [ ] Testar importação com planilha contendo projetos
+- [ ] Validar que nenhum projeto é criado automaticamente na tabela projects
+
+## Bug Crítico: Campo "projeto" criando projetos automaticamente
+- [x] Corrigir importação de leads para armazenar projeto em projetoCustom (texto livre)
+- [x] Remover chamadas a findExistingProject na importação de leads
+- [x] Adicionar aviso de deprecação na função findExistingProject
+- [x] Criar testes unitários validando que projetos não são criados automaticamente
+- [ ] Considerar ferramenta de atualização em massa para corrigir leads já importados sem projeto

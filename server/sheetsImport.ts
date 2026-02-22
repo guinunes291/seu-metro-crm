@@ -116,6 +116,10 @@ function normalizeProjectName(name: string): string {
 }
 
 /**
+ * @deprecated Esta função NÃO DEVE MAIS SER USADA na importação de leads.
+ * O campo "projeto" da planilha deve ser armazenado em projetoCustom (texto livre).
+ * Esta função está mantida apenas para compatibilidade com testes antigos.
+ * 
  * Busca um projeto existente baseado na origem
  * Se não encontrar, CRIA automaticamente um novo projeto
  * Usa normalização de nomes para evitar duplicatas
@@ -278,10 +282,9 @@ export async function importLeadsFromSheet(
             continue;
           }
 
-          // Buscar projeto existente (não cria automaticamente)
-          // Primeiro tenta buscar pelo campo 'projeto', depois por 'origem'
-          const projectName = row.projeto || row.origem;
-          const projectId = await findExistingProject(projectName);
+          // Armazenar projeto como texto livre (projetoCustom)
+          // NÃO criar projetos automaticamente na tabela projects
+          const projectName = row.projeto && row.projeto.trim() !== "" ? row.projeto.trim() : null;
 
           // Preparar dados do lead
           const leadStatus = mapStatus(row.status || "");
@@ -294,8 +297,8 @@ export async function importLeadsFromSheet(
             email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
             telefone: normalizedPhone,
             origem: leadOrigem as any,
-            projectId: projectId,
-            projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
+            projectId: null,
+            projetoCustom: projectName,
             status: leadStatus as any,
             dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
               ? new Date(row.dataDistribuicao) 
@@ -466,10 +469,8 @@ export async function syncLeadsFromSheet(
           // Verificar duplicatas por idPrincipal, telefone ou email
           if (existingIds.has(idPrincipal) || existingPhones.has(phoneNumbers) || (normalizedEmail && existingEmails.has(normalizedEmail))) {
             // Lead existente - atualizar projetoCustom se necessário
-            const projectName = row.projeto || row.origem;
-            if (projectName && projectName.trim() !== "") {
-              const projectId = await findExistingProject(projectName);
-              
+            const projectName = row.projeto && row.projeto.trim() !== "" ? row.projeto.trim() : null;
+            if (projectName) {
               // Buscar lead existente pelo telefone
               const existingLead = await db
                 .select()
@@ -485,8 +486,7 @@ export async function syncLeadsFromSheet(
                   await db
                     .update(leads)
                     .set({
-                      projetoCustom: !projectId && projectName ? projectName.trim() : null,
-                      projectId: projectId,
+                      projetoCustom: projectName,
                     })
                     .where(eq(leads.id, lead.id));
                   
@@ -512,8 +512,7 @@ export async function syncLeadsFromSheet(
           }
 
           // Lead novo - importar normalmente
-          const projectName = row.projeto || row.origem;
-          const projectId = await findExistingProject(projectName);
+          const projectName = row.projeto && row.projeto.trim() !== "" ? row.projeto.trim() : null;
           const leadStatus = mapStatus(row.status || "");
           const leadOrigem = mapOrigem(row.origem);
           
@@ -523,8 +522,8 @@ export async function syncLeadsFromSheet(
             email: row.email && row.email.trim() !== "" ? row.email.trim() : null,
             telefone: normalizedPhone,
             origem: leadOrigem as any,
-            projectId: projectId,
-            projetoCustom: !projectId && projectName && projectName.trim() !== "" ? projectName.trim() : null,
+            projectId: null,
+            projetoCustom: projectName,
             status: leadStatus as any,
             dataDistribuicao: row.dataDistribuicao && row.dataDistribuicao.trim() !== "" 
               ? new Date(row.dataDistribuicao) 
