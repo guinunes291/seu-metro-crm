@@ -4547,3 +4547,9 @@
 - [x] Verificar como projetoCustom está sendo exibido nos cards dos corretores
 - [x] Confirmar que exibição já mostra projetoCustom corretamente (linha 842-846 de Leads.tsx)
 - [x] Sistema já exibe project?.nome || lead.projetoCustom nos cards
+
+## Atualização Manual de Projetos via Planilha
+- [x] Ler planilha do Google Sheets e analisar estrutura (29.168 registros, 22.882 com projeto)
+- [x] Buscar leads sem projeto no banco de dados (20.541 leads encontrados)
+- [x] Cruzar dados por telefone/email e atualizar projetoCustom
+- [x] Executar atualização: 12.605 leads atualizados, 7.936 não encontrados, 0 erros
