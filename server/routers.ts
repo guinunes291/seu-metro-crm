@@ -33,6 +33,14 @@ const gestorProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+// Middleware para gestor ou superintendente (visualização de dados consolidados)
+const gestorOuSuperintendenteProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin' && ctx.user.role !== 'superintendente') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
+  }
+  return next({ ctx });
+});
+
 // Middleware para admin (apenas admin, não gestor)
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== 'admin') {
@@ -1701,7 +1709,7 @@ export const appRouter = router({
   // ============================================================================
   dashboard: router({
     // Métricas gerais do dashboard
-    metrics: gestorProcedure
+    metrics: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1721,7 +1729,7 @@ export const appRouter = router({
       }),
     
     // Leads por corretor
-    leadsPorCorretor: gestorProcedure
+    leadsPorCorretor: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1739,7 +1747,7 @@ export const appRouter = router({
       }),
     
     // Agendamentos por corretor
-    agendamentosPorCorretor: gestorProcedure
+    agendamentosPorCorretor: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1757,7 +1765,7 @@ export const appRouter = router({
       }),
     
     // Visitas por corretor
-    visitasPorCorretor: gestorProcedure
+    visitasPorCorretor: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1775,7 +1783,7 @@ export const appRouter = router({
       }),
     
     // Vendas por corretor
-    vendasPorCorretor: gestorProcedure
+    vendasPorCorretor: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1793,7 +1801,7 @@ export const appRouter = router({
       }),
     
     // Métricas do funil baseadas em transições de status
-    metricasFunil: gestorProcedure
+    metricasFunil: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1808,7 +1816,7 @@ export const appRouter = router({
       }),
     
     // Métricas do funil por corretor (baseadas em transições)
-    metricasFunilPorCorretor: gestorProcedure
+    metricasFunilPorCorretor: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1823,7 +1831,7 @@ export const appRouter = router({
       }),
     
     // Lista detalhada de contratos fechados
-    contratosFechados: gestorProcedure
+    contratosFechados: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1898,7 +1906,7 @@ export const appRouter = router({
       }),
     
     // VGV agrupado por equipe e projeto
-    vgvPorEquipeProjeto: gestorProcedure
+    vgvPorEquipeProjeto: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
@@ -1916,7 +1924,7 @@ export const appRouter = router({
       }),
     
     // Relatório detalhado de leads criados por corretor
-    relatorioLeadsCriados: gestorProcedure
+    relatorioLeadsCriados: gestorOuSuperintendenteProcedure
       .input(z.object({
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),

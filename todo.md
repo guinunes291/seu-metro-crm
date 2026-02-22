@@ -4420,3 +4420,16 @@
 - [x] Atualizar função no db.ts para mesclar anexos novos com existentes
 - [x] Adicionar visualização de anexos existentes no dialog de edição
 - [x] Adicionar campo anexos no retorno de getContratoParaEdicao
+
+## Bug: Dashboard Zerado para Superintendente
+- [ ] Investigar queries do Dashboard que retornam dados zerados para role superintendente
+- [ ] Corrigir procedures para incluir role superintendente nas queries de métricas
+- [ ] Verificar filtros de equipe nas queries de contratos fechados
+- [ ] Testar acesso da Dayane ao Dashboard após correção
+
+## Bug: Dashboard Zerado para Superintendente (RESOLVIDO)
+- [x] Investigar queries do Dashboard que usam gestorProcedure
+- [x] Criar novo procedure gestorOuSuperintendenteProcedure
+- [x] Atualizar todas as 10 procedures do Dashboard para usar o novo procedure
+- [x] Verificar função getCorretoresIdsParaFiltro (já incluía superintendente)
+- [x] Reiniciar servidor para aplicar mudanças
