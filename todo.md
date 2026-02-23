@@ -4696,3 +4696,13 @@
 - [x] Corrigir prioridade de bloqueio: onboarding (cadastro) deve ter precedência sobre follow-up
 - [x] Quando perfil incompleto, mostrar apenas bloqueio de cadastro (não follow-up)
 - [x] Testar que corretor com ambos bloqueios consegue acessar página de configurações (8 testes passando)
+
+## Bug: Dayane vê 0 leads no dashboard
+- [x] Investigar dados da Dayane no banco (user ID, leads atribuídos) - Dayane tem role 'superintendente', 0 leads próprios
+- [x] Verificar se o corretorId dos leads corresponde ao user ID da Dayane - N/A, ela é superintendente
+- [x] Corrigir: role superintendente agora tem visão de admin/gestor
+
+## Feature: Role superintendente deve ter visão de gestor/admin
+- [x] Mapear todos os locais onde roles são verificadas (frontend e backend)
+- [x] Incluir superintendente nas verificações de gestor/admin (dashboard geral, sem bloqueios)
+- [x] Testar que Dayane (superintendente) vê o Dashboard do Gestor com todos os leads (21 testes passando)

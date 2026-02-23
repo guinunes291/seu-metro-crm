@@ -18,7 +18,7 @@ export default function AprovarProjetos() {
   const [selectedSuggestion, setSelectedSuggestion] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
 
   if (!isGestor) {
     return (

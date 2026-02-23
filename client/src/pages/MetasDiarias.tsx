@@ -38,7 +38,7 @@ function getInitials(name: string | null | undefined): string {
 
 export default function MetasDiarias() {
   const { user } = useAuth();
-  const isGestor = user?.role === 'gestor' || user?.role === 'admin';
+  const isGestor = user?.role === 'gestor' || user?.role === 'admin' || user?.role === 'superintendente';
   
   const [modalAberto, setModalAberto] = useState(false);
   const [corretorSelecionado, setCorretorSelecionado] = useState<number | null>(null);

@@ -250,7 +250,7 @@ export default function Kanban() {
                             </div>
                           )}
                           
-                          {(user?.role === 'gestor' || user?.role === 'admin') && lead.corretorNome && (
+                          {(user?.role === 'gestor' || user?.role === 'admin' || user?.role === 'superintendente') && lead.corretorNome && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                               <span className="font-medium">Corretor:</span>
                               <span className="truncate">{lead.corretorNome}</span>

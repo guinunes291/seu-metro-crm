@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 export default function Lixeira() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "superintendente";
   const [page, setPage] = useState(1);
   const limit = 20;
   

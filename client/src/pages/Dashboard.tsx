@@ -129,8 +129,8 @@ function formatDateShort(dateStr: string): string {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
-  const isAdmin = user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
+  const isAdmin = user?.role === "admin" || user?.role === "superintendente";
   
   // Estado de edição de contrato
   const [editContratoId, setEditContratoId] = useState<number | null>(null);

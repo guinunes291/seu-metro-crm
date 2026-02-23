@@ -49,7 +49,7 @@ export default function BoasVindas() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
-  const isGestor = user?.role === 'admin' || user?.role === 'gestor';
+  const isGestor = user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'superintendente';
 
   // Seções para Corretores com instruções detalhadas
   const corretorSections = [

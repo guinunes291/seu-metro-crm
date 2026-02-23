@@ -58,7 +58,7 @@ export default function CalendarioGestor() {
   };
   
   // Verificar se é gestor
-  if (user?.role !== 'gestor' && user?.role !== 'admin') {
+  if (user?.role !== 'gestor' && user?.role !== 'admin' && user?.role !== 'superintendente') {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-96">

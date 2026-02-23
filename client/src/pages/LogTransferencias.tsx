@@ -205,7 +205,7 @@ export default function LogTransferencias() {
             <Button onClick={handleLimparFiltros} variant="ghost" size="sm">
               Limpar Filtros
             </Button>
-            {(user?.role === "admin" || user?.role === "gestor") && (
+            {(user?.role === "admin" || user?.role === "gestor" || user?.role === "superintendente") && (
               <>
                 <Button 
                   onClick={() => executarTesteMutation.mutate()} 

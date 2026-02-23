@@ -51,7 +51,7 @@ export default function ProjetoDetalhes() {
     developer: "",
   });
 
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
 
   const handleEdit = () => {
     if (!project) return;

@@ -157,7 +157,7 @@ export default function Roleta() {
   };
   
   // Verificar permissão
-  if (user?.role !== 'gestor' && user?.role !== 'admin') {
+  if (user?.role !== 'gestor' && user?.role !== 'admin' && user?.role !== 'superintendente') {
     return (
       <DashboardLayout>
         <div className="container py-8">

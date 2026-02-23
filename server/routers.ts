@@ -23,15 +23,25 @@ import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao 
 // HELPERS E MIDDLEWARES
 // ============================================================================
 
+// Helper: verifica se o role tem visão de gestor (gestor, admin, superintendente)
+function isGestorLevel(role: string): boolean {
+  return role === 'gestor' || role === 'admin' || role === 'superintendente';
+}
+
+// Helper: verifica se é admin ou superintendente (acesso total)
+function isAdminLevel(role: string): boolean {
+  return role === 'admin' || role === 'superintendente';
+}
+
 const corretorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'corretor' && ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+  if (ctx.user.role !== 'corretor' && !isGestorLevel(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
   }
   return next({ ctx });
 });
 
 const gestorProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+  if (!isGestorLevel(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas gestores podem acessar' });
   }
   return next({ ctx });
@@ -39,7 +49,7 @@ const gestorProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 // Middleware para gestor ou superintendente (visualização de dados consolidados)
 const gestorOuSuperintendenteProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin' && ctx.user.role !== 'superintendente') {
+  if (!isGestorLevel(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
   }
   return next({ ctx });
@@ -47,7 +57,7 @@ const gestorOuSuperintendenteProcedure = protectedProcedure.use(({ ctx, next }) 
 
 // Middleware para admin (apenas admin, não gestor)
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== 'admin') {
+  if (!isAdminLevel(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas administradores podem acessar' });
   }
   return next({ ctx });
@@ -55,12 +65,12 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 
 // Middleware para gestor restrito (apenas sua equipe)
 const gestorRestritoProcedure = protectedProcedure.use(async ({ ctx, next }) => {
-  if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+  if (!isGestorLevel(ctx.user.role)) {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas gestores podem acessar' });
   }
   
-  // Admin tem acesso total, não precisa filtrar por equipe
-  if (ctx.user.role === 'admin') {
+  // Admin e superintendente têm acesso total, não precisa filtrar por equipe
+  if (isAdminLevel(ctx.user.role)) {
     return next({ ctx: { ...ctx, equipeId: null } });
   }
   
@@ -2206,7 +2216,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         // Apenas gestor pode atualizar foto de outros
-        if (ctx.user.role !== 'gestor' && ctx.user.role !== 'admin' && ctx.user.id !== input.corretorId) {
+        if (!isGestorLevel(ctx.user.role) && ctx.user.id !== input.corretorId) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão para atualizar foto de outro corretor' });
         }
         await db.updateCorretorFoto(input.corretorId, input.fotoUrl);
@@ -3852,7 +3862,7 @@ export const appRouter = router({
     byTelefone: corretorProcedure
       .input(z.object({ telefone: z.string() }))
       .query(async ({ ctx, input }) => {
-        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        const isGestor = isGestorLevel(ctx.user.role);
         return await db.searchLeadByTelefone(input.telefone, isGestor ? undefined : ctx.user.id);
       }),
     
@@ -3860,7 +3870,7 @@ export const appRouter = router({
     byEmail: corretorProcedure
       .input(z.object({ email: z.string() }))
       .query(async ({ ctx, input }) => {
-        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        const isGestor = isGestorLevel(ctx.user.role);
         return await db.searchLeadByEmail(input.email, isGestor ? undefined : ctx.user.id);
       }),
     
@@ -3868,7 +3878,7 @@ export const appRouter = router({
     byCpf: corretorProcedure
       .input(z.object({ cpf: z.string() }))
       .query(async ({ ctx, input }) => {
-        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        const isGestor = isGestorLevel(ctx.user.role);
         return await db.searchLeadByCpf(input.cpf, isGestor ? undefined : ctx.user.id);
       }),
     
@@ -3876,7 +3886,7 @@ export const appRouter = router({
     byIdentifier: corretorProcedure
       .input(z.object({ query: z.string() }))
       .query(async ({ ctx, input }) => {
-        const isGestor = ctx.user.role === 'gestor' || ctx.user.role === 'admin';
+        const isGestor = isGestorLevel(ctx.user.role);
         return await db.searchLeadByIdentifier(input.query, isGestor ? undefined : ctx.user.id);
       }),
   }),
@@ -5299,7 +5309,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         }
         
         // Verificar se o corretor tem acesso à proposta
-        if (proposta.corretorId !== ctx.user.id && ctx.user.role !== 'gestor' && ctx.user.role !== 'admin') {
+        if (proposta.corretorId !== ctx.user.id && !isGestorLevel(ctx.user.role)) {
           throw new TRPCError({ code: 'FORBIDDEN', message: 'Sem permissão para acessar esta proposta' });
         }
         
@@ -5842,7 +5852,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     list: gestorProcedure.query(async ({ ctx }) => {
       const { listarEquipes, getEquipeByGestor } = await import('./equipes');
       
-      if (ctx.user.role === 'admin') {
+      if (isAdminLevel(ctx.user.role)) {
         return await listarEquipes();
       }
       
@@ -5857,8 +5867,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .query(async ({ input, ctx }) => {
         const { getEquipeById, getEquipeByGestor } = await import('./equipes');
         
-        // Admin pode ver qualquer equipe
-        if (ctx.user.role === 'admin') {
+        // Admin/Superintendente pode ver qualquer equipe
+        if (isAdminLevel(ctx.user.role)) {
           return await getEquipeById(input.id);
         }
         
@@ -5919,8 +5929,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .query(async ({ input, ctx }) => {
         const { getCorretoresDaEquipe, getEquipeByGestor } = await import('./equipes');
         
-        // Admin pode ver corretores de qualquer equipe
-        if (ctx.user.role === 'admin') {
+        // Admin/Superintendente pode ver corretores de qualquer equipe
+        if (isAdminLevel(ctx.user.role)) {
           return await getCorretoresDaEquipe(input.equipeId);
         }
         
@@ -6262,10 +6272,10 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        // Gestor sempre vê apenas sua equipe
+        // Gestor sempre vê apenas sua equipe, admin/superintendente vê tudo
         const equipeId = ctx.user.role === 'gestor' 
           ? ctx.user.equipeId 
-          : input.equipeId; // Admin pode filtrar por equipe
+          : input.equipeId; // Admin/Superintendente pode filtrar por equipe
         return await db.getDashboardPerformance(input.mes, input.ano, equipeId || undefined);
       }),
     
@@ -6276,10 +6286,10 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        // Gestor sempre vê apenas sua equipe
+        // Gestor sempre vê apenas sua equipe, admin/superintendente vê tudo
         const equipeId = ctx.user.role === 'gestor' 
           ? ctx.user.equipeId 
-          : input.equipeId; // Admin pode filtrar por equipe
+          : input.equipeId; // Admin/Superintendente pode filtrar por equipe
         return await db.getEvolucaoMensalVGV(input.ano, equipeId || undefined);
       }),
   }),

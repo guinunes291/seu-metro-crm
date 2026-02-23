@@ -29,7 +29,7 @@ export default function Projetos() {
   const { data: mySuggestions = [] } = trpc.projects.mySuggestions.useQuery();
   const { addProject, removeProject, isSelected, canAddMore } = useCompare();
 
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
 
   // Estados dos filtros
   const [searchTerm, setSearchTerm] = useState("");

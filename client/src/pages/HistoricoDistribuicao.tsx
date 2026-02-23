@@ -73,7 +73,7 @@ export default function HistoricoDistribuicao() {
   const { data: corretores } = trpc.corretores.list.useQuery();
   
   // Verificar permissão
-  if (user?.role !== 'gestor' && user?.role !== 'admin') {
+  if (user?.role !== 'gestor' && user?.role !== 'admin' && user?.role !== 'superintendente') {
     return (
       <DashboardLayout>
         <div className="container py-8">

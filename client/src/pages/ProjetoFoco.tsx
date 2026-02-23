@@ -27,7 +27,7 @@ import {
 
 export default function ProjetoFoco() {
   const { user } = useAuth();
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   const utils = trpc.useUtils();
   
   // Estados

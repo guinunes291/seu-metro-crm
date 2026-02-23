@@ -503,7 +503,7 @@ function BarChartWithTrend({ data, type = "vgv" }: { data: any[]; type?: "vgv" |
 // Modal de Configuração de Metas
 function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superintendente';
   const { data: metaGlobal, refetch } = trpc.metasGlobais.get.useQuery({ mes, ano });
   const updateMeta = trpc.metasGlobais.update.useMutation({
     onSuccess: () => { toast.success("Meta atualizada!"); refetch(); },
@@ -586,7 +586,7 @@ export default function PerformanceTV() {
   
   // Buscar lista de equipes (admin vê todas, gestor vê apenas sua equipe)
   const { data: equipes } = trpc.equipes.list.useQuery(undefined, {
-    enabled: user?.role === 'admin' || user?.role === 'gestor',
+    enabled: user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'superintendente',
   });
   
   const dateRange = useMemo(() => getDateRangeForPeriod(periodo, customRange), [periodo, customRange]);
@@ -734,7 +734,7 @@ export default function PerformanceTV() {
           {/* Linha 2: Filtros */}
           <div className="flex items-center gap-2 flex-wrap">
               {/* Filtro de Equipe (apenas admin) */}
-              {user?.role === 'admin' && equipes && equipes.length > 0 && (
+              {(user?.role === 'admin' || user?.role === 'superintendente') && equipes && equipes.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="gap-2 bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white">

@@ -34,8 +34,8 @@ export default function ModalOnboardingObrigatorio() {
 
     const { completo, user } = verificacao;
 
-    // Admin nunca é bloqueado
-    if (user.role === "admin") {
+    // Admin e Superintendente nunca são bloqueados
+    if (user.role === "admin" || user.role === "superintendente") {
       setAberto(false);
       return;
     }

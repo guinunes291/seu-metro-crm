@@ -86,7 +86,7 @@ function getProgressBadge(progress: number) {
 
 export default function Metas() {
   const { user } = useAuth();
-  const isGestor = user?.role === "gestor" || user?.role === "admin";
+  const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   const utils = trpc.useUtils();
   
   // Estado para filtro de mês/ano
