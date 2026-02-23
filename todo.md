@@ -4578,3 +4578,20 @@
 - [x] Criar 8 testes unitários validando verificação de perfil (todos passando)
 - [x] Validar campos obrigatórios (foto, nome, CPF, data nascimento, email, telefone, data credenciamento, status plantão, endereço completo)
 - [x] Validar campos opcionais (CRECI, situação, data descredenciamento, complemento)
+
+## Teste de Onboarding Completo
+- [x] Criar usuário corretor de teste no banco de dados (corretor.teste@example.com)
+- [x] Executar teste de verificação progressiva (4 etapas, 11 → 7 → 6 → 0 campos faltantes)
+- [x] Validar que sistema identifica corretamente campos obrigatórios vs opcionais
+- [x] Validar que perfil completo retorna true após preencher todos os campos
+- [x] Criar documento detalhado com resultados e instruções de teste de interface
+- [ ] Validar modal de bloqueio na interface (teste manual pendente)
+- [ ] Validar desbloqueio após completar perfil (teste manual pendente)
+- [ ] Testar sistema de camadas com follow-up (teste manual pendente)
+
+## Bug: ReferenceError na Página de Configuração de Perfil
+- [x] Investigar erro "Cannot access 'u' before initialization" ao acessar /configurar-perfil
+- [x] Identificar falta de import do useState do React
+- [x] Adicionar import correto: import { useState, useEffect } from "react"
+- [x] Remover imports duplicados
+- [x] Testar acesso à página após correção (servidor rodando sem erros)
