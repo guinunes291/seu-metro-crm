@@ -84,18 +84,24 @@ export default function Configuracoes() {
     }
 
     try {
-      const resultado = await buscarCepQuery.refetch();
-      if (resultado.data) {
-        setFormData(prev => ({
-          ...prev,
-          logradouro: resultado.data.logradouro,
-          bairro: resultado.data.bairro,
-          cidade: resultado.data.cidade,
-          estado: resultado.data.estado,
-          complemento: resultado.data.complemento || prev.complemento,
-        }));
-        alert("CEP encontrado! Endereço preenchido automaticamente.");
+      const cepLimpo = formData.cep.replace(/\D/g, "");
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+      const data = await response.json();
+      
+      if (data.erro) {
+        alert("CEP não encontrado");
+        return;
       }
+      
+      setFormData(prev => ({
+        ...prev,
+        logradouro: data.logradouro || "",
+        bairro: data.bairro || "",
+        cidade: data.localidade || "",
+        estado: data.uf || "",
+        complemento: data.complemento || prev.complemento,
+      }));
+      alert("CEP encontrado! Endereço preenchido automaticamente.");
     } catch (error) {
       alert("CEP não encontrado ou serviço indisponível");
     }

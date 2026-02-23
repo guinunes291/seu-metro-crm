@@ -4609,3 +4609,17 @@
 - [x] Corrigir redirecionamento no ModalOnboardingObrigatorio para /configuracoes
 - [x] Reiniciar servidor para aplicar mudanças
 - [x] Servidor rodando sem erros
+
+## Feature: Carregamento Automático de Dados no Modal de Edição de Contrato
+- [x] Investigar modal de edição de contrato no Dashboard (EditarContratoDialog.tsx)
+- [x] Identificar componente responsável pela edição (já implementado)
+- [x] Carregamento automático dos dados já implementado (linhas 65-78)
+- [x] Todos os campos do formulário são preenchidos automaticamente via useEffect
+- [x] Sistema já funciona corretamente: busca dados via trpc.dashboard.getContratoParaEdicao.useQuery
+- [x] Alterações são salvas corretamente via trpc.dashboard.atualizarContrato.useMutation
+
+## Bug Crítico: ReferenceError buscarCepQuery na Página de Configurações
+- [x] Identificar onde buscarCepQuery estava sendo usado (linha 87 em handleBuscarCEP)
+- [x] Substituir buscarCepQuery por chamada direta à API ViaCEP
+- [x] Implementar busca de CEP usando fetch direto sem tRPC
+- [x] Testar acesso à página /configuracoes após correção (servidor rodando sem erros)
