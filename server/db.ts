@@ -9216,8 +9216,11 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
     });
   }
   
+  // Filtrar corretores sem nenhuma atividade no período (evita duplicados sem dados)
+  const corretoresAtivos = corretoresData.filter(c => c.vgv > 0 || c.contratos > 0 || c.leads > 0);
+  
   // Ordenar por VGV (maior primeiro)
-  corretoresData.sort((a, b) => b.vgv - a.vgv);
+  corretoresAtivos.sort((a, b) => b.vgv - a.vgv);
   
   // Calcular percentuais
   const metaVGVGlobal = Number(metaGlobal?.metaVGV || 0);
@@ -9235,9 +9238,9 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
       metaVGV: metaVGVGlobal,
       percentualAtingimento,
       gapMeta,
-      totalCorretores: corretoresData.length,
+      totalCorretores: corretoresAtivos.length,
     },
-    corretores: corretoresData,
+    corretores: corretoresAtivos,
   };
 }
 
