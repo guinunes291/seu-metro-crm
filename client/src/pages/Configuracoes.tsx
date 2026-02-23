@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -206,6 +207,7 @@ export default function Configuracoes() {
   const { completo, camposFaltantes } = verificacao;
 
   return (
+    <DashboardLayout>
     <div className="container max-w-4xl py-8">
       <Card>
         <CardHeader>
@@ -553,5 +555,6 @@ export default function Configuracoes() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }

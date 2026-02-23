@@ -4656,3 +4656,14 @@
 - [x] Investigar frontend Kanban.tsx - uma única query com limit não funcionava pois priorizava status aguardando
 - [x] Corrigir: queries separadas por status (uma por coluna) garantem todos os leads de cada status
 - [x] Testar com dados reais: Em Atendimento 3.243, Agendado 34, Visita Realizada 19, Análise 5, Contrato 53
+
+## Limpeza: Excluir leads e corretores de teste
+- [x] Identificar corretores de teste: 30 encontrados (Teste Performance, Teste Visitas, Rank, Sheets Test, etc.)
+- [x] Identificar leads de teste: 373 encontrados (Lead C1/C2/Projeto/Perdido/Rank)
+- [x] Confirmar lista com o usuário antes de excluir
+- [x] Excluir dados de teste: 373 leads + 30 corretores removidos
+- [x] Verificar resultado: 0 dados de teste restantes, 20.704 leads operacionais + 30 usuários preservados
+
+## UI: Adicionar DashboardLayout na página de Configurações
+- [x] Envolver conteúdo do Configuracoes.tsx com DashboardLayout
+- [x] Testar que sidebar aparece na página /configuracoes
