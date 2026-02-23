@@ -4595,3 +4595,17 @@
 - [x] Adicionar import correto: import { useState, useEffect } from "react"
 - [x] Remover imports duplicados
 - [x] Testar acesso à página após correção (servidor rodando sem erros)
+
+## Bug Persistente: ReferenceError Continua Após Correção
+- [ ] Erro persiste mesmo após adicionar import do React
+- [ ] Verificar todo o código do ConfigurarPerfil.tsx
+- [ ] Identificar uso de variáveis antes da inicialização
+- [ ] Verificar ordem de declaração de estados e queries
+- [ ] Limpar cache do navegador e rebuild
+
+## Correção: Redirecionamento para /configuracoes
+- [x] Renomear ConfigurarPerfil.tsx para Configuracoes.tsx
+- [x] Atualizar rota no App.tsx de /configurar-perfil para /configuracoes
+- [x] Corrigir redirecionamento no ModalOnboardingObrigatorio para /configuracoes
+- [x] Reiniciar servidor para aplicar mudanças
+- [x] Servidor rodando sem erros

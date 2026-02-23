@@ -50,7 +50,7 @@ export default function ModalOnboardingObrigatorio() {
 
   const handleIrParaConfiguracao = () => {
     setAberto(false);
-    setLocation("/configurar-perfil");
+    setLocation("/configuracoes");
   };
 
   if (!verificacao || !aberto) {

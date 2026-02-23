@@ -48,7 +48,7 @@ import CalendarioGestor from "@/pages/CalendarioGestor";
 import ConfiguracaoWebhooks from "@/pages/ConfiguracaoWebhooks";
 import ControleLimites from "@/pages/ControleLimites";
 import ProjetoFoco from "@/pages/ProjetoFoco";
-import ConfigurarPerfil from "@/pages/ConfigurarPerfil";
+
 import MonitoramentoFollowUps from "@/pages/MonitoramentoFollowUps";
 import ModoBlitz from "@/pages/ModoBlitz";
 import LogTransferencias from "@/pages/LogTransferencias";
@@ -108,7 +108,7 @@ function Router() {
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
       <Route path="/controle-limites" component={ControleLimites} />
       <Route path="/projeto-foco" component={ProjetoFoco} />
-      <Route path="/configurar-perfil" component={ConfigurarPerfil} />
+      <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/sistema/log-transferencias" component={LogTransferencias} />
       <Route path="/log-transferencias" component={LogTransferencias} />
       <Route path="/gestao-equipes" component={GestaoEquipes} />
