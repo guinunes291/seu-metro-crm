@@ -4650,3 +4650,9 @@
 - [x] Identificar que dbModule.db era undefined (db.ts exporta getDb(), não db)
 - [x] Corrigir todas as 6 ocorrências de dbModule.db para await dbModule.getDb()
 - [x] Testar que alertas.meus retorna 200 sem erros
+
+## Bug Persistente: Kanban mostra apenas 105 leads em "Em Atendimento" (deveria mostrar 3.243)
+- [x] Investigar query backend leads.list - limit global retornava leads de todos os status misturados
+- [x] Investigar frontend Kanban.tsx - uma única query com limit não funcionava pois priorizava status aguardando
+- [x] Corrigir: queries separadas por status (uma por coluna) garantem todos os leads de cada status
+- [x] Testar com dados reais: Em Atendimento 3.243, Agendado 34, Visita Realizada 19, Análise 5, Contrato 53

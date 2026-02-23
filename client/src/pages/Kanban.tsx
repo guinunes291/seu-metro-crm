@@ -43,15 +43,34 @@ export default function Kanban() {
     col => col.id !== 'novo' && col.id !== 'aguardando_atendimento'
   );
   
-  // Buscar leads para o Kanban - usar limit alto para trazer todos os leads
-  // A query do backend já filtra por role (admin vê todos, gestor vê equipe, corretor vê seus)
-  const { data, isLoading, refetch } = trpc.leads.list.useQuery({ limit: 99999 });
-  const leads = data?.leads || [];
+  // Buscar leads separadamente por status para garantir que TODOS os leads de cada coluna apareçam
+  // Cada query filtra por status no backend, evitando o problema de limit global
+  const emAtendimento = trpc.leads.list.useQuery({ status: 'em_atendimento', limit: 99999 });
+  const agendado = trpc.leads.list.useQuery({ status: 'agendado', limit: 99999 });
+  const visitaRealizada = trpc.leads.list.useQuery({ status: 'visita_realizada', limit: 99999 });
+  const analiseCredito = trpc.leads.list.useQuery({ status: 'analise_credito', limit: 99999 });
+  const contratoFechado = trpc.leads.list.useQuery({ status: 'contrato_fechado', limit: 99999 });
+  const perdido = trpc.leads.list.useQuery({ status: 'perdido', limit: 99999 });
+  
+  const queriesByStatus: Record<string, typeof emAtendimento> = {
+    em_atendimento: emAtendimento,
+    agendado: agendado,
+    visita_realizada: visitaRealizada,
+    analise_credito: analiseCredito,
+    contrato_fechado: contratoFechado,
+    perdido: perdido,
+  };
+  
+  const isLoading = Object.values(queriesByStatus).some(q => q.isLoading);
+  
+  const refetchAll = () => {
+    Object.values(queriesByStatus).forEach(q => q.refetch());
+  };
   
   // Mutation para atualizar status do lead
   const updateLead = trpc.leads.update.useMutation({
     onSuccess: () => {
-      refetch(); // Recarrega todos os leads após atualização
+      refetchAll(); // Recarrega todos os leads após atualização
     },
   });
 
@@ -71,9 +90,10 @@ export default function Kanban() {
   const [modalAnaliseOpen, setModalAnaliseOpen] = useState(false);
   const [leadAnaliseSelecionado, setLeadAnaliseSelecionado] = useState<Lead | null>(null);
 
-  // Agrupar leads por status
+  // Agrupar leads por status usando as queries separadas
   const leadsByStatus = visibleColumns.reduce((acc, column) => {
-    acc[column.id] = leads.filter((lead: Lead) => lead.status === column.id);
+    const query = queriesByStatus[column.id];
+    acc[column.id] = (query?.data?.leads || []) as Lead[];
     return acc;
   }, {} as Record<string, Lead[]>);
 
@@ -347,7 +367,7 @@ export default function Kanban() {
           leadId={leadSelecionado.id}
           leadNome={leadSelecionado.nome}
           onSuccess={() => {
-            refetch(); // Recarregar leads após registrar visita
+            refetchAll(); // Recarregar leads após registrar visita
           }}
         />
       )}
@@ -360,7 +380,7 @@ export default function Kanban() {
           leadId={leadContratoSelecionado.id}
           leadNome={leadContratoSelecionado.nome}
           onSuccess={() => {
-            refetch(); // Recarregar leads após fechar contrato
+            refetchAll(); // Recarregar leads após fechar contrato
           }}
         />
       )}
@@ -373,7 +393,7 @@ export default function Kanban() {
           leadId={leadAnaliseSelecionado.id}
           leadNome={leadAnaliseSelecionado.nome}
           onSuccess={() => {
-            refetch(); // Recarregar leads após registrar análise
+            refetchAll(); // Recarregar leads após registrar análise
           }}
         />
       )}
