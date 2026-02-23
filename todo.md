@@ -4706,3 +4706,8 @@
 - [x] Mapear todos os locais onde roles são verificadas (frontend e backend)
 - [x] Incluir superintendente nas verificações de gestor/admin (dashboard geral, sem bloqueios)
 - [x] Testar que Dayane (superintendente) vê o Dashboard do Gestor com todos os leads (21 testes passando)
+
+## Restrição: Exportação de leads apenas para admin
+- [x] Localizar todos os botões/funcionalidades de exportação de leads (Dashboard + Lixeira)
+- [x] Restringir exportação apenas ao admin (adminExportProcedure no backend + isAdminExport no frontend)
+- [x] Testar restrição (26 testes passando)

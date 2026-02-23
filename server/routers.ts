@@ -63,6 +63,14 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+// Procedure exclusiva para admin real (sem superintendente) - usada para exportação de dados
+const adminExportProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== 'admin') {
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Apenas o administrador principal pode exportar dados' });
+  }
+  return next({ ctx });
+});
+
 // Middleware para gestor restrito (apenas sua equipe)
 const gestorRestritoProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   if (!isGestorLevel(ctx.user.role)) {
@@ -869,8 +877,8 @@ export const appRouter = router({
         return await db.countLeadsNaLixeira();
       }),
     
-    // Exportar leads em CSV (apenas admin)
-    exportCSV: adminProcedure
+    // Exportar leads em CSV (apenas admin real - superintendente não pode exportar)
+    exportCSV: adminExportProcedure
       .input(z.object({
         status: z.string().optional(),
         corretorId: z.number().optional(),

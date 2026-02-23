@@ -13,6 +13,7 @@ import { toast } from "sonner";
 export default function Lixeira() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "superintendente";
+  const isAdminExport = user?.role === "admin"; // Apenas admin pode exportar
   const [page, setPage] = useState(1);
   const limit = 20;
   
@@ -86,7 +87,7 @@ export default function Lixeira() {
               {countData || 0} leads na lixeira
             </Badge>
             
-            {isAdmin && (
+            {isAdminExport && (
               <Button 
                 onClick={handleExportCSV}
                 variant="outline"

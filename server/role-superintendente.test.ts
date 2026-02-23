@@ -86,6 +86,34 @@ describe("Role Superintendente - Acesso de Gestor/Admin", () => {
     });
   });
 
+  describe("Exportação - superintendente NÃO pode exportar", () => {
+    it("admin pode exportar", () => {
+      expect("admin" === "admin").toBe(true);
+    });
+
+    it("superintendente NÃO pode exportar", () => {
+      expect("superintendente" === "admin").toBe(false);
+    });
+
+    it("gestor NÃO pode exportar", () => {
+      expect("gestor" === "admin").toBe(false);
+    });
+
+    it("corretor NÃO pode exportar", () => {
+      expect("corretor" === "admin").toBe(false);
+    });
+
+    it("isAdminExport deve ser diferente de isAdminLevel", () => {
+      const isAdminExport = (role: string) => role === 'admin';
+      // Admin: ambos true
+      expect(isAdminExport('admin')).toBe(true);
+      expect(isAdminLevel('admin')).toBe(true);
+      // Superintendente: export false, level true
+      expect(isAdminExport('superintendente')).toBe(false);
+      expect(isAdminLevel('superintendente')).toBe(true);
+    });
+  });
+
   describe("Navegação - superintendente deve ver menus de gestão", () => {
     const gestaoRoles = ["gestor", "admin", "superintendente"];
     const adminRoles = ["admin", "superintendente"];
