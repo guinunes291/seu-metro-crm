@@ -246,6 +246,13 @@ function DashboardContent({
   const [location, setLocation] = useLocation();
   // Sistema de bloqueio gamificado
   const { total, concluidos, percentual, desbloqueado, showPlusOne } = useFollowUpProgress();
+  
+  // Verificar se o perfil está completo (para priorizar bloqueio de onboarding sobre follow-up)
+  const { data: verificacaoOnboarding } = trpc.onboarding.verificar.useQuery(undefined, {
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+  });
+  const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin';
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isMobile = useIsMobile();
@@ -685,8 +692,9 @@ function DashboardContent({
         </header>
         <main className="flex-1 overflow-auto relative">
           {children}
-          {/* Overlay de bloqueio se não atingiu 40% e não está em Tarefas do Dia ou Modo Blitz (APENAS CORRETORES) */}
-          {isCorretor && !desbloqueado && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && (
+          {/* Overlay de bloqueio se não atingiu follow-ups E perfil está completo E não está em páginas liberadas (APENAS CORRETORES) */}
+          {/* Quando perfil está incompleto, NÃO mostra overlay de follow-up para permitir acesso à página de configurações */}
+          {isCorretor && !desbloqueado && !perfilIncompleto && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && location !== "/configuracoes" && (
             <LockedTabOverlay
               total={total}
               concluidos={concluidos}

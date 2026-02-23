@@ -4691,3 +4691,8 @@
 
 ## UI: Filtro padrão de período na Performance TV deve ser "Todo Período"
 - [x] Alterar estado inicial do filtro de período de "Hoje" para "Todo Período" na página VGV/Vendas
+
+## Bug: Modal de follow-up bloqueando cadastro de corretor (Graziele)
+- [x] Corrigir prioridade de bloqueio: onboarding (cadastro) deve ter precedência sobre follow-up
+- [x] Quando perfil incompleto, mostrar apenas bloqueio de cadastro (não follow-up)
+- [x] Testar que corretor com ambos bloqueios consegue acessar página de configurações (8 testes passando)
