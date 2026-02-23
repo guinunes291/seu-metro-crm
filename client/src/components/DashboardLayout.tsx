@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import ModalOnboardingObrigatorio from "@/components/ModalOnboardingObrigatorio";
 import { TimezoneFooter } from "@/components/TimezoneFooter";
 import { 
   LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, 
@@ -695,6 +696,9 @@ function DashboardContent({
         </main>
         <TimezoneFooter />
       </SidebarInset>
+      
+      {/* Modal de onboarding obrigatório (1ª camada de bloqueio) */}
+      <ModalOnboardingObrigatorio />
     </>
   );
 }

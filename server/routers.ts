@@ -14,6 +14,7 @@ import * as biSync from "./biSync";
 import * as duplicatasCleanup from "./duplicatasCleanup";
 import * as updateProjetosEmMassa from "./modules/updateProjetosEmMassa";
 import * as limparProjetosOrfaos from "./modules/limparProjetosOrfaos";
+import * as onboarding from "./modules/onboarding";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -6635,6 +6636,54 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     executar: adminProcedure.mutation(async () => {
       return await updateProjetosEmMassa.updateProjetosEmMassa();
     }),
+  }),
+
+  // ============================================================================
+  // ONBOARDING DE CORRETORES
+  // ============================================================================
+  
+  onboarding: router({    // Verificar se perfil está completo
+    verificar: protectedProcedure.query(async ({ ctx }) => {
+      return await onboarding.verificarPerfilCompleto(ctx.user.id);
+    }),
+    
+    // Atualizar dados do perfil
+    atualizar: protectedProcedure
+      .input(z.object({
+        // Dados pessoais
+        name: z.string().optional(),
+        cpf: z.string().optional(),
+        dataNascimento: z.date().optional(),
+        email: z.string().email().optional(),
+        telefone: z.string().optional(),
+        fotoUrl: z.string().optional(),
+        
+        // Dados profissionais
+        creci: z.string().optional(),
+        situacao: z.enum(["ativo", "inativo"]).optional(),
+        dataCredenciamento: z.date().optional(),
+        dataDescredenciamento: z.date().optional(),
+        status: z.enum(["presente", "ausente"]).optional(),
+        
+        // Endereço
+        cep: z.string().optional(),
+        logradouro: z.string().optional(),
+        numero: z.string().optional(),
+        complemento: z.string().optional(),
+        bairro: z.string().optional(),
+        cidade: z.string().optional(),
+        estado: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await onboarding.atualizarPerfil(ctx.user.id, input);
+      }),
+    
+    // Buscar CEP
+    buscarCep: protectedProcedure
+      .input(z.object({ cep: z.string() }))
+      .query(async ({ input }) => {
+        return await onboarding.buscarCEP(input.cep);
+      }),
   }),
 
   // ============================================================================

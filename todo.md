@@ -4562,3 +4562,19 @@
 - [x] Corrigir import FileText faltante no Dashboard.tsx
 - [x] Adicionar teste para validação de anexos (5 testes passando)
 - [x] Testar upload de arquivo em contrato
+
+## Nova Feature: Sistema de Onboarding Obrigatório para Corretores
+- [x] Adicionar campo perfilCompleto ao schema de users (outros campos já existiam)
+- [x] Migrar banco de dados com novo campo (ALTER TABLE executado)
+- [x] Criar procedures para verificar se perfil está completo (onboarding.verificar)
+- [x] Criar procedure para atualizar dados do perfil (onboarding.atualizar)
+- [x] Criar procedure para buscar CEP (onboarding.buscarCep)
+- [x] Criar página de configuração de perfil com 3 abas (Dados Pessoais, Profissional, Endereço)
+- [x] Implementar upload de foto de perfil via /api/upload
+- [x] Criar modal de bloqueio que redireciona para /configurar-perfil (ModalOnboardingObrigatorio)
+- [x] Implementar sistema de camadas (1ª: perfil incompleto bloqueia, 2ª: follow-up pendente)
+- [x] Visualização de corretores já mostra todos os dados cadastrais
+- [x] Garantir que admin não seja bloqueado (verificação no backend e frontend)
+- [x] Criar 8 testes unitários validando verificação de perfil (todos passando)
+- [x] Validar campos obrigatórios (foto, nome, CPF, data nascimento, email, telefone, data credenciamento, status plantão, endereço completo)
+- [x] Validar campos opcionais (CRECI, situação, data descredenciamento, complemento)

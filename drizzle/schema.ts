@@ -63,6 +63,9 @@ export const users = mysqlTable("users", {
   // Gamificação de follow-ups
   ultimoDesbloqueio: timestamp("ultimoDesbloqueio"), // Data/hora do último desbloqueio (60%)
   
+  // Sistema de Onboarding
+  perfilCompleto: boolean("perfilCompleto").default(false).notNull(), // Se o corretor completou o onboarding
+  
   // Sistema de Equipes
   equipeId: int("equipeId"), // ID da equipe (para corretores e gestores)
   

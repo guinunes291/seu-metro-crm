@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `perfilCompleto` boolean DEFAULT false NOT NULL;
