@@ -4629,3 +4629,24 @@
 - [x] Adicionar declaração const atualizarMutation = trpc.onboarding.atualizar.useMutation()
 - [x] Adicionar callbacks onSuccess (refetch + alert) e onError (alert com mensagem)
 - [x] Testar acesso à página /configuracoes após correção (página carrega sem erros)
+
+## Bug Crítico: Kanban de Admin não mostra leads de todos os status
+- [x] Investigar query/procedure do Kanban que filtra leads
+- [x] Corrigir para que admin veja leads de Em Atendimento em diante (sem Novos/Aguardando, conforme solicitado)
+- [x] Testar visualização completa no Kanban como admin
+
+## Bug: Kanban mostra apenas alguns leads Em Atendimento (não todos)
+- [x] Reverter Kanban para mostrar apenas colunas de Em Atendimento em diante (sem Novos e Aguardando)
+- [x] Garantir que TODOS os leads de cada coluna apareçam no Kanban (removido limit)
+- [x] Testar visualização completa
+
+## Bug: Erro de tipo de data ao salvar cadastro de perfil
+- [x] Corrigir conversão de datas no handleSalvar (dataNascimento, dataCredenciamento, dataDescredenciamento)
+- [x] Backend: z.date() → z.coerce.date() para aceitar strings de data
+- [x] Frontend: handleSalvar converte datas vazias removendo do payload
+- [x] Testar salvamento do perfil com datas preenchidas e vazias (status 200)
+
+## Bug: alertas.meus retornava erro 500 (Cannot read properties of undefined reading select)
+- [x] Identificar que dbModule.db era undefined (db.ts exporta getDb(), não db)
+- [x] Corrigir todas as 6 ocorrências de dbModule.db para await dbModule.getDb()
+- [x] Testar que alertas.meus retorna 200 sem erros

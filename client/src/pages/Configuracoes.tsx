@@ -166,14 +166,21 @@ export default function Configuracoes() {
   const handleSalvar = () => {
     const dados: any = { ...formData };
     
-    if (dados.dataNascimento) {
-      dados.dataNascimento = new Date(dados.dataNascimento);
+    // Converter datas: se preenchidas, enviar como Date; se vazias, remover do payload
+    if (dados.dataNascimento && dados.dataNascimento.trim() !== '') {
+      dados.dataNascimento = new Date(dados.dataNascimento + 'T00:00:00');
+    } else {
+      delete dados.dataNascimento;
     }
-    if (dados.dataCredenciamento) {
-      dados.dataCredenciamento = new Date(dados.dataCredenciamento);
+    if (dados.dataCredenciamento && dados.dataCredenciamento.trim() !== '') {
+      dados.dataCredenciamento = new Date(dados.dataCredenciamento + 'T00:00:00');
+    } else {
+      delete dados.dataCredenciamento;
     }
-    if (dados.dataDescredenciamento) {
-      dados.dataDescredenciamento = new Date(dados.dataDescredenciamento);
+    if (dados.dataDescredenciamento && dados.dataDescredenciamento.trim() !== '') {
+      dados.dataDescredenciamento = new Date(dados.dataDescredenciamento + 'T00:00:00');
+    } else {
+      delete dados.dataDescredenciamento;
     }
 
     atualizarMutation.mutate(dados);

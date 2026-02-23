@@ -1,0 +1,42 @@
+{
+  "query": "SELECT status, COUNT(*) as total FROM leads GROUP BY status ORDER BY total DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT status, COUNT(*) as total FROM leads GROUP BY status ORDER BY total DESC;",
+  "rows": [
+    {
+      "status": "novo",
+      "total": "10541"
+    },
+    {
+      "status": "aguardando_atendimento",
+      "total": "7168"
+    },
+    {
+      "status": "em_atendimento",
+      "total": "3243"
+    },
+    {
+      "status": "contrato_fechado",
+      "total": "53"
+    },
+    {
+      "status": "agendado",
+      "total": "34"
+    },
+    {
+      "status": "visita_realizada",
+      "total": "19"
+    },
+    {
+      "status": "perdido",
+      "total": "13"
+    },
+    {
+      "status": "analise_credito",
+      "total": "5"
+    }
+  ],
+  "messages": [],
+  "stdout": "status\ttotal\nnovo\t10541\naguardando_atendimento\t7168\nem_atendimento\t3243\ncontrato_fechado\t53\nagendado\t34\nvisita_realizada\t19\nperdido\t13\nanalise_credito\t5\n",
+  "stderr": "",
+  "execution_time_ms": 98
+}

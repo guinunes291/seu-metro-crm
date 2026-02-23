@@ -38,15 +38,14 @@ type Lead = {
 export default function Kanban() {
   const { user } = useAuth();
   
-  // Filtrar colunas baseado no role do usuário
-  // Admin não vê "Novos" e "Aguardando" para evitar travamento
-  const visibleColumns = user?.role === 'admin' 
-    ? KANBAN_COLUMNS.filter(col => col.id !== 'novo' && col.id !== 'aguardando_atendimento')
-    : KANBAN_COLUMNS;
+  // Kanban mostra apenas de "Em Atendimento" em diante (sem Novos e Aguardando)
+  const visibleColumns = KANBAN_COLUMNS.filter(
+    col => col.id !== 'novo' && col.id !== 'aguardando_atendimento'
+  );
   
-  // Buscar leads - corretor vê apenas seus leads, gestor vê todos
-  // Kanban precisa de TODOS os leads sem paginação
-  const { data, isLoading, refetch } = trpc.leads.list.useQuery({ limit: 9999 });
+  // Buscar leads para o Kanban - usar limit alto para trazer todos os leads
+  // A query do backend já filtra por role (admin vê todos, gestor vê equipe, corretor vê seus)
+  const { data, isLoading, refetch } = trpc.leads.list.useQuery({ limit: 99999 });
   const leads = data?.leads || [];
   
   // Mutation para atualizar status do lead

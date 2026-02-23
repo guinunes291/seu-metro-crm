@@ -951,10 +951,10 @@ export const appRouter = router({
         enviarConvite: z.boolean().default(true),
         // Novos campos
         cpf: z.string().optional(),
-        dataNascimento: z.date().optional(),
+        dataNascimento: z.coerce.date().optional(),
         creci: z.string().optional(),
-        dataCredenciamento: z.date().optional(),
-        dataDescredenciamento: z.date().optional(),
+        dataCredenciamento: z.coerce.date().optional(),
+        dataDescredenciamento: z.coerce.date().optional(),
         situacao: z.enum(["ativo", "inativo"]).default("ativo"),
         // Endereço
         logradouro: z.string().optional(),
@@ -6325,7 +6325,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .mutation(async ({ input, ctx }) => {
         const { leads, transferHistory, contratos } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) throw new Error('Database not available');
         const { eq } = await import('drizzle-orm');
         
         // Buscar lead atual
@@ -6389,7 +6390,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .mutation(async ({ input, ctx }) => {
         const { contratos, transferHistory, leads } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) throw new Error('Database not available');
         const { eq } = await import('drizzle-orm');
         
         // Buscar contrato atual
@@ -6449,7 +6451,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .query(async ({ input }) => {
         const { transferHistory, users, leads } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) throw new Error('Database not available');
         const { eq, and, desc } = await import('drizzle-orm');
         
         const conditions = [];
@@ -6507,7 +6510,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .mutation(async ({ input, ctx }) => {
         const { alertas, leads } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) throw new Error('Database not available');
         const { eq } = await import('drizzle-orm');
         
         // Buscar informações do lead
@@ -6538,7 +6542,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .query(async ({ input, ctx }) => {
         const { alertas, leads } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) return [];
         const { eq, and, desc } = await import('drizzle-orm');
         
         let conditions = [eq(alertas.corretorId, ctx.user.id)];
@@ -6573,7 +6578,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .mutation(async ({ input, ctx }) => {
         const { alertas } = await import('../drizzle/schema');
         const dbModule = await import('./db');
-        const db = dbModule.db;
+        const db = await dbModule.getDb();
+        if (!db) throw new Error('Database not available');
         const { eq, and } = await import('drizzle-orm');
         
         await db
@@ -6653,7 +6659,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         // Dados pessoais
         name: z.string().optional(),
         cpf: z.string().optional(),
-        dataNascimento: z.date().optional(),
+        dataNascimento: z.coerce.date().optional(),
         email: z.string().email().optional(),
         telefone: z.string().optional(),
         fotoUrl: z.string().optional(),
@@ -6661,8 +6667,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         // Dados profissionais
         creci: z.string().optional(),
         situacao: z.enum(["ativo", "inativo"]).optional(),
-        dataCredenciamento: z.date().optional(),
-        dataDescredenciamento: z.date().optional(),
+        dataCredenciamento: z.coerce.date().optional(),
+        dataDescredenciamento: z.coerce.date().optional(),
         status: z.enum(["presente", "ausente"]).optional(),
         
         // Endereço
