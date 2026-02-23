@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus
+  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus, FileText
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";

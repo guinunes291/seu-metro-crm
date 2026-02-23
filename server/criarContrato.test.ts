@@ -198,4 +198,39 @@ describe('Criar Contrato', () => {
     expect(resultado).toBeDefined();
     expect(resultado.contratoId).toBeGreaterThan(0);
   });
+
+  it('deve criar contrato com anexos', async () => {
+    const anexosUrls = [
+      'https://storage.example.com/contratos/doc1.pdf',
+      'https://storage.example.com/contratos/doc2.pdf',
+    ];
+
+    const resultado = await db.criarNovoContrato({
+      corretorId: testCorretorId,
+      clienteNome: 'Cliente Teste Anexos',
+      clienteTelefone: '(11) 94444-3333',
+      clienteEmail: 'cliente.anexos@test.com',
+      projectId: testProjectId,
+      projetoCustom: '',
+      valorVenda: 800000,
+      dataVenda: new Date('2026-02-21'),
+      observacoes: 'Contrato com anexos',
+      anexos: anexosUrls,
+    });
+
+    expect(resultado).toBeDefined();
+    expect(resultado.contratoId).toBeGreaterThan(0);
+
+    // Verificar se os anexos foram salvos corretamente
+    const database = await getDb();
+    if (!database) throw new Error('Database not available');
+
+    const [contrato] = await database.select()
+      .from(contratos)
+      .where(eq(contratos.id, resultado.contratoId));
+
+    expect(contrato).toBeDefined();
+    expect(contrato.anexos).toEqual(anexosUrls);
+    expect(contrato.anexos?.length).toBe(2);
+  });
 });

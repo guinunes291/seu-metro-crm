@@ -10039,11 +10039,10 @@ export async function criarNovoContrato(dados: {
     .values({
       leadId,
       corretorId: dados.corretorId,
-      valorVenda: dados.valorVenda,
+      valorVenda: dados.valorVenda.toString(),
       observacoes: dados.observacoes || '',
       anexos: dados.anexos || [],
       createdAt: dados.dataVenda,
-      updatedAt: new Date(),
     })
     .$returningId();
 

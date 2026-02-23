@@ -4553,3 +4553,12 @@
 - [x] Buscar leads sem projeto no banco de dados (20.541 leads encontrados)
 - [x] Cruzar dados por telefone/email e atualizar projetoCustom
 - [x] Executar atualização: 12.605 leads atualizados, 7.936 não encontrados, 0 erros
+
+## Bug: Erro ao Anexar Arquivo em Contrato
+- [x] Investigar stack trace do erro (D03voY4b.js:886:80518)
+- [x] Identificar código responsável pelo upload de arquivos em contratos (CriarContratoDialog)
+- [x] Identificar causa raiz: campo updatedAt inválido no schema de contratos
+- [x] Corrigir função criarNovoContrato removendo campo updatedAt
+- [x] Corrigir import FileText faltante no Dashboard.tsx
+- [x] Adicionar teste para validação de anexos (5 testes passando)
+- [x] Testar upload de arquivo em contrato
