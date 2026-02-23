@@ -4623,3 +4623,9 @@
 - [x] Substituir buscarCepQuery por chamada direta à API ViaCEP
 - [x] Implementar busca de CEP usando fetch direto sem tRPC
 - [x] Testar acesso à página /configuracoes após correção (servidor rodando sem erros)
+
+## Bug Crítico: ReferenceError atualizarMutation na Página de Configurações
+- [x] Identificar que atualizarMutation era usado mas nunca declarado (linhas 168, 522, 525)
+- [x] Adicionar declaração const atualizarMutation = trpc.onboarding.atualizar.useMutation()
+- [x] Adicionar callbacks onSuccess (refetch + alert) e onError (alert com mensagem)
+- [x] Testar acesso à página /configuracoes após correção (página carrega sem erros)

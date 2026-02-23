@@ -20,6 +20,17 @@ export default function Configuracoes() {
   // Query para verificar perfil
   const { data: verificacao, refetch: refetchVerificacao } = trpc.onboarding.verificar.useQuery();
   
+  // Mutation para atualizar perfil
+  const atualizarMutation = trpc.onboarding.atualizar.useMutation({
+    onSuccess: () => {
+      refetchVerificacao();
+      alert("Perfil atualizado com sucesso!");
+    },
+    onError: (error: any) => {
+      alert("Erro ao salvar: " + (error.message || "Tente novamente"));
+    },
+  });
+  
   // Estado do formulário
   const [formData, setFormData] = useState({
     // Dados pessoais
