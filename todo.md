@@ -4674,3 +4674,13 @@
 - [x] Corrigir updateCorretor() no db.ts para aceitar todos os campos (CPF, datas, endereço, creci)
 - [x] Corrigir z.date() para z.coerce.date() na procedure corretores.update
 - [x] Testar que dados preenchidos pelo corretor aparecem no modal do gestor
+
+## Bug: Dois registros de Guilherme Nunes no ranking VGV
+- [x] Investigar registros duplicados: ID 5055943 (gmail, com foto, gestor) e ID 7722800 (outlook, sem foto, admin)
+- [x] Identificar que 6 leads com contratos estavam atribuídos ao ID 7722800
+- [x] Transferir 7 leads do ID 7722800 para ID 5055943
+- [x] Ranking consolidado: Guilherme Nunes 1º com R$ 2.536.900 (9 contratos, com foto)
+
+## UI: Botões de filtro sobrepostos no header da Performance TV
+- [x] Reorganizar layout: Linha 1 (logo + tabs + fullscreen/refresh), Linha 2 (equipe + período + metas)
+- [x] Testar responsividade do header - filtros em duas linhas sem sobreposição
