@@ -338,6 +338,22 @@ export async function updateCorretor(id: number, data: {
   telefone?: string;
   status?: "presente" | "ausente";
   fotoUrl?: string;
+  // Dados pessoais
+  cpf?: string;
+  dataNascimento?: Date | null;
+  // Dados profissionais
+  creci?: string;
+  dataCredenciamento?: Date | null;
+  dataDescredenciamento?: Date | null;
+  situacao?: "ativo" | "inativo";
+  // Endereço
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

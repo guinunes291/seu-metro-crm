@@ -4667,3 +4667,10 @@
 ## UI: Adicionar DashboardLayout na página de Configurações
 - [x] Envolver conteúdo do Configuracoes.tsx com DashboardLayout
 - [x] Testar que sidebar aparece na página /configuracoes
+
+## Sincronização: Dados do onboarding devem refletir no modal Editar Corretor
+- [x] Investigar como o modal Editar Corretor carrega dados (getAllCorretores já retorna todos os campos)
+- [x] Investigar como o onboarding salva dados (salva direto na tabela users via db.update)
+- [x] Corrigir updateCorretor() no db.ts para aceitar todos os campos (CPF, datas, endereço, creci)
+- [x] Corrigir z.date() para z.coerce.date() na procedure corretores.update
+- [x] Testar que dados preenchidos pelo corretor aparecem no modal do gestor

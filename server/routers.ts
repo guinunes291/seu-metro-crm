@@ -987,10 +987,10 @@ export const appRouter = router({
           status: z.enum(["presente", "ausente"]).optional(),
           // Novos campos
           cpf: z.string().optional(),
-          dataNascimento: z.date().nullable().optional(),
+          dataNascimento: z.coerce.date().nullable().optional(),
           creci: z.string().optional(),
-          dataCredenciamento: z.date().nullable().optional(),
-          dataDescredenciamento: z.date().nullable().optional(),
+          dataCredenciamento: z.coerce.date().nullable().optional(),
+          dataDescredenciamento: z.coerce.date().nullable().optional(),
           situacao: z.enum(["ativo", "inativo"]).optional(),
           // Endereço
           logradouro: z.string().optional(),
