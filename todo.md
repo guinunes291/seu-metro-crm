@@ -4711,3 +4711,7 @@
 - [x] Localizar todos os botões/funcionalidades de exportação de leads (Dashboard + Lixeira)
 - [x] Restringir exportação apenas ao admin (adminExportProcedure no backend + isAdminExport no frontend)
 - [x] Testar restrição (26 testes passando)
+
+## Filtro: Ocultar leads sem corretor no relatório de Leads por Corretor
+- [x] Adicionar toggle/filtro para ocultar "Sem Corretor" do gráfico e tabela
+- [x] Filtro deve estar ativo por padrão (ocultar sem corretor) - 7 testes passando

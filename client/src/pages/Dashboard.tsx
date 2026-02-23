@@ -18,6 +18,8 @@ import FunilVendasVisual from "@/components/FunilVendasVisual";
 import PerformanceSemanal from "@/components/PerformanceSemanal";
 import DistribuirSemCorretorButton from "@/components/DistribuirSemCorretorButton";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
 import {
   Select,
@@ -142,6 +144,7 @@ export default function Dashboard() {
   
   // Estado do filtro
   const [filterPreset, setFilterPreset] = useState("all");
+  const [ocultarSemCorretor, setOcultarSemCorretor] = useState(true);
   const [customDateRange, setCustomDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -1192,9 +1195,27 @@ export default function Dashboard() {
                       </CardTitle>
                       <CardDescription>Distribuição de leads por corretor, origem e projeto</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="ocultar-sem-corretor"
+                          checked={ocultarSemCorretor}
+                          onCheckedChange={(checked) => setOcultarSemCorretor(checked === true)}
+                        />
+                        <Label htmlFor="ocultar-sem-corretor" className="text-sm cursor-pointer whitespace-nowrap">
+                          Ocultar sem corretor
+                        </Label>
+                      </div>
                       <Badge variant="outline" className="text-sm">
-                        Total: {relatorioLeadsCriados?.totalGeral || 0} leads
+                        Total: {(() => {
+                          if (!relatorioLeadsCriados) return 0;
+                          if (ocultarSemCorretor) {
+                            return relatorioLeadsCriados.porCorretor
+                              .filter(c => c.corretorNome !== 'Sem Corretor')
+                              .reduce((sum, c) => sum + c.totalLeads, 0);
+                          }
+                          return relatorioLeadsCriados.totalGeral;
+                        })()} leads
                       </Badge>
                       <DistribuirSemCorretorButton />
                     </div>
@@ -1204,10 +1225,16 @@ export default function Dashboard() {
                   {relatorioLeadsCriados && relatorioLeadsCriados.porCorretor.length > 0 ? (
                     <div className="space-y-6">
                       {/* Gráfico de Barras Horizontal */}
+                      {(() => {
+                        const dadosFiltrados = ocultarSemCorretor
+                          ? relatorioLeadsCriados.porCorretor.filter(c => c.corretorNome !== 'Sem Corretor')
+                          : relatorioLeadsCriados.porCorretor;
+                        const dadosGrafico = dadosFiltrados.slice(0, 10);
+                        return (
                       <div className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
-                            data={relatorioLeadsCriados.porCorretor.slice(0, 10)}
+                            data={dadosGrafico}
                             layout="vertical"
                             margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
                           >
@@ -1227,7 +1254,7 @@ export default function Dashboard() {
                               fill="#3b82f6" 
                               radius={[0, 4, 4, 0]}
                             >
-                              {relatorioLeadsCriados.porCorretor.slice(0, 10).map((_, index) => (
+                              {dadosGrafico.map((_, index) => (
                                 <Cell 
                                   key={`cell-${index}`} 
                                   fill={index === 0 ? '#22c55e' : index === 1 ? '#3b82f6' : index === 2 ? '#f59e0b' : '#6b7280'}
@@ -1237,6 +1264,8 @@ export default function Dashboard() {
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
+                        );
+                      })()}
 
                       {/* Tabela Detalhada */}
                       <div className="border rounded-lg overflow-hidden">
@@ -1250,7 +1279,10 @@ export default function Dashboard() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {relatorioLeadsCriados.porCorretor.map((corretor, index) => (
+                            {(ocultarSemCorretor
+                              ? relatorioLeadsCriados.porCorretor.filter(c => c.corretorNome !== 'Sem Corretor')
+                              : relatorioLeadsCriados.porCorretor
+                            ).map((corretor, index) => (
                               <TableRow key={corretor.corretorId} className={index % 2 === 0 ? 'bg-muted/20' : ''}>
                                 <TableCell>
                                   <div className="flex items-center gap-2">
