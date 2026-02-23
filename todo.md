@@ -4688,3 +4688,6 @@
 ## UI: Remover Guilherme Nunes duplicado (R$ 0) da tabela de faturamento Real x Meta
 - [x] Filtrar corretores sem atividade (vgv=0, contratos=0, leads=0) no getDashboardPerformance
 - [x] Testar que apenas um Guilherme Nunes aparece na tabela (R$ 1.697.100)
+
+## UI: Filtro padrão de período na Performance TV deve ser "Todo Período"
+- [x] Alterar estado inicial do filtro de período de "Hoje" para "Todo Período" na página VGV/Vendas

@@ -573,7 +573,7 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
 
 export default function PerformanceTV() {
   const { user } = useAuth();
-  const [periodo, setPeriodo] = useState<PeriodOption>('today');
+  const [periodo, setPeriodo] = useState<PeriodOption>('all');
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [tempRange, setTempRange] = useState<DateRange>({ from: undefined, to: undefined });
