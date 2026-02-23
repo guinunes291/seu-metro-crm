@@ -15,6 +15,7 @@ export default function Configuracoes() {
   const [, setLocation] = useLocation();
   const [abaAtiva, setAbaAtiva] = useState("pessoais");
   const [uploading, setUploading] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
   
   // Query para verificar perfil
   const { data: verificacao, refetch: refetchVerificacao } = trpc.onboarding.verificar.useQuery();
@@ -83,6 +84,7 @@ export default function Configuracoes() {
       return;
     }
 
+    setBuscandoCep(true);
     try {
       const cepLimpo = formData.cep.replace(/\D/g, "");
       const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
@@ -104,6 +106,8 @@ export default function Configuracoes() {
       alert("CEP encontrado! Endereço preenchido automaticamente.");
     } catch (error) {
       alert("CEP não encontrado ou serviço indisponível");
+    } finally {
+      setBuscandoCep(false);
     }
   };
 
@@ -407,9 +411,9 @@ export default function Configuracoes() {
                       type="button"
                       variant="outline"
                       onClick={handleBuscarCEP}
-                      disabled={buscarCepQuery.isFetching}
+                      disabled={buscandoCep}
                     >
-                      {buscarCepQuery.isFetching ? (
+                      {buscandoCep ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
                         "Buscar"
