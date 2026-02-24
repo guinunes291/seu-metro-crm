@@ -48,6 +48,7 @@ import { Badge } from "./ui/badge";
 import { toast } from "sonner";
 import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
+import { ModalEscolhaFollowUp } from "./ModalEscolhaFollowUp";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -245,7 +246,7 @@ function DashboardContent({
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
   // Sistema de bloqueio gamificado
-  const { total, concluidos, percentual, desbloqueado, showPlusOne } = useFollowUpProgress();
+  const { total, concluidos, percentual, desbloqueado, showPlusOne, escolhaDiariaFeita, aceitouFollowUp, refetch: refetchFollowUp } = useFollowUpProgress();
   
   // Verificar se o perfil está completo (para priorizar bloqueio de onboarding sobre follow-up)
   const { data: verificacaoOnboarding } = trpc.onboarding.verificar.useQuery(undefined, {
@@ -694,7 +695,8 @@ function DashboardContent({
           {children}
           {/* Overlay de bloqueio se não atingiu follow-ups E perfil está completo E não está em páginas liberadas (APENAS CORRETORES) */}
           {/* Quando perfil está incompleto, NÃO mostra overlay de follow-up para permitir acesso à página de configurações */}
-          {isCorretor && !desbloqueado && !perfilIncompleto && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && location !== "/configuracoes" && (
+          {/* Só mostra overlay se o corretor ACEITOU fazer follow-ups (escolhaDiariaFeita && aceitouFollowUp === true) */}
+          {isCorretor && !desbloqueado && !perfilIncompleto && escolhaDiariaFeita && aceitouFollowUp === true && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && location !== "/configuracoes" && (
             <LockedTabOverlay
               total={total}
               concluidos={concluidos}
@@ -704,6 +706,15 @@ function DashboardContent({
         </main>
         <TimezoneFooter />
       </SidebarInset>
+      
+      {/* Modal de escolha diária de follow-up (aparece ACIMA do bloqueio, z-100) */}
+      {/* Só mostra para corretores com follow-ups pendentes que ainda não fizeram a escolha do dia */}
+      {isCorretor && !perfilIncompleto && total > 0 && !escolhaDiariaFeita && !desbloqueado && (
+        <ModalEscolhaFollowUp
+          totalFollowUps={total}
+          onEscolhaFeita={() => refetchFollowUp()}
+        />
+      )}
       
       {/* Modal de onboarding obrigatório (1ª camada de bloqueio) */}
       <ModalOnboardingObrigatorio />

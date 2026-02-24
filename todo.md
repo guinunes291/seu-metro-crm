@@ -4739,3 +4739,11 @@
 - [x] Investigar: agendamentos usavam ctx.user.id, visitas/análises já usavam lead.corretorId, contratos recebem input explícito
 - [x] Corrigir: agendamentos, interações e alterações de status agora usam lead.corretorId || ctx.user.id (10 testes passando)
 - [x] Pontuação futura será atribuída corretamente ao dono do lead
+
+## Feature: Modal diário de escolha de follow-up
+- [x] Criar tabela no banco para armazenar escolha diária do corretor (escolha_diaria_follow_up)
+- [x] Criar procedures no backend: getEscolhaDiaria, registrarEscolhaDiaria
+- [x] Implementar modal no frontend acima do bloqueio de follow-up (ModalEscolhaFollowUp.tsx)
+- [x] Lógica: Sim = bloqueio mantido, Não = desbloqueio imediato + leads voltam para base
+- [x] Modal reseta diariamente (nova escolha a cada dia, baseado em data)
+- [x] Testar cenários: 14 testes passando (backend + UI)

@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `escolha_diaria_follow_up` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `corretorId` int NOT NULL,\n  `data` timestamp NOT NULL,\n  `aceitouFollowUp` boolean NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `escolha_diaria_follow_up_id` PRIMARY KEY(`id`),\n  INDEX `escolha_corretor_data_idx` (`corretorId`, `data`),\n  INDEX `escolha_corretor_idx` (`corretorId`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS `escolha_diaria_follow_up` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `corretorId` int NOT NULL,\n  `data` timestamp NOT NULL,\n  `aceitouFollowUp` boolean NOT NULL,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `escolha_diaria_follow_up_id` PRIMARY KEY(`id`),\n  INDEX `escolha_corretor_data_idx` (`corretorId`, `data`),\n  INDEX `escolha_corretor_idx` (`corretorId`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 210
+}

@@ -4,22 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { celebrate } from "@/lib/celebration";
 
 /**
- * ⚠️ VERSÃO PRÉ-MONTADA PARA O NOVO FLUXO DE FOLLOW-UP (1 DIA)
+ * Hook de progresso de follow-ups com suporte a escolha diária.
  * 
- * Este arquivo contém a versão atualizada do hook useFollowUpProgress
- * compatível com o novo fluxo de follow-up de 1 tentativa por dia.
- * 
- * PARA ATIVAR:
- * 1. Implementar o novo fluxo de follow-up conforme IMPLEMENTACAO_FOLLOWUP_1DIA.md
- * 2. Renomear useFollowUpProgress.ts para useFollowUpProgress.OLD.ts
- * 3. Renomear este arquivo para useFollowUpProgress.ts
- * 4. Reiniciar servidor
- * 
- * MUDANÇAS EM RELAÇÃO À VERSÃO ANTIGA:
- * - Bloqueio exige 100% dos follow-ups (não mais 60%)
- * - Comentários atualizados para refletir novo fluxo
- * - Lógica de celebração mantida
- * - Animação +1 mantida
+ * Fluxo:
+ * 1. Corretor abre o sistema → getProgresso retorna escolhaDiariaFeita e aceitouFollowUp
+ * 2. Se escolhaDiariaFeita === false e total > 0 → mostrar modal de escolha
+ * 3. Se aceitouFollowUp === true → bloqueio normal até completar 100%
+ * 4. Se aceitouFollowUp === false → desbloqueado imediatamente
  */
 
 export function useFollowUpProgress() {
@@ -33,16 +24,14 @@ export function useFollowUpProgress() {
   const { data, isLoading, refetch } = trpc.progressoFollowUps.getProgresso.useQuery(
     undefined,
     {
-      enabled: shouldFetchProgress, // Busca para corretores e gestores
-      refetchInterval: 10000, // Atualiza a cada 10 segundos
+      enabled: shouldFetchProgress,
+      refetchInterval: 10000,
     }
   );
   
   // Detectar desbloqueio e celebrar
-  // Usar null para indicar "primeira carga" e evitar celebração falsa
   const previousDesbloqueado = useRef<boolean | null>(null);
   
-  // Usar sessionStorage para persistir celebração durante toda a sessão
   const getCelebrationKey = () => {
     const hoje = new Date().toISOString().split('T')[0];
     return `celebration_shown_${user?.id}_${hoje}`;
@@ -66,28 +55,26 @@ export function useFollowUpProgress() {
     const desbloqueado = data?.desbloqueado ?? false;
     const concluidos = data?.concluidos ?? 0;
     
-    // Se acabou de desbloquear (passou de false para true) e ainda não celebrou HOJE
-    // Ignora primeira carga (previousDesbloqueado === null)
-    // APENAS corretores veem celebração (gestores não têm bloqueio)
+    // Se acabou de desbloquear e ainda não celebrou HOJE
     if (isCorretor && previousDesbloqueado.current === false && desbloqueado && !hasCelebrated()) {
-      celebrate();
-      markCelebrated();
+      // Não celebrar se desbloqueou por recusar follow-up (aceitouFollowUp === false)
+      if (data?.aceitouFollowUp !== false) {
+        celebrate();
+        markCelebrated();
+      }
     }
     
     // Detectar aumento de concluídos para animação +1
-    // Dispara quando concluidos aumenta (0→1, 1→2, etc)
     if (concluidos > previousConcluidos.current && previousConcluidos.current >= 0) {
-      console.log('[+1 Animation] Triggered:', { previous: previousConcluidos.current, current: concluidos });
       setShowPlusOne(true);
-      setTimeout(() => setShowPlusOne(false), 1500); // Duração da animação
+      setTimeout(() => setShowPlusOne(false), 1500);
     }
     
     previousDesbloqueado.current = desbloqueado;
     previousConcluidos.current = concluidos;
-  }, [data?.desbloqueado, data?.concluidos, isCorretor]);
+  }, [data?.desbloqueado, data?.concluidos, isCorretor, data?.aceitouFollowUp]);
   
-  // Gestores veem indicador mas sempre desbloqueados (sem celebração)
-  // Outros roles (admin, etc) não veem indicador
+  // Gestores e outros roles: sem bloqueio
   if (!shouldFetchProgress) {
     return {
       total: 0,
@@ -96,17 +83,18 @@ export function useFollowUpProgress() {
       desbloqueado: true,
       isLoading: false,
       refetch,
-      showPlusOne: false, // Sempre false para não-corretores
+      showPlusOne: false,
+      escolhaDiariaFeita: true,
+      aceitouFollowUp: null as boolean | null,
     };
   }
   
   const total = data?.total ?? 0;
   const concluidos = data?.concluidos ?? 0;
   const percentual = data?.percentual ?? 0;
-  
-  // ✅ NOVO FLUXO: Desbloqueia quando 100% concluído (total === 0 OU concluidos === total)
-  // Se data.desbloqueado existe, usa ele. Senão, calcula localmente (0/0 = desbloqueado)
   const desbloqueado = data?.desbloqueado ?? (total === 0 ? true : false);
+  const escolhaDiariaFeita = data?.escolhaDiariaFeita ?? true; // default true para não mostrar modal durante loading
+  const aceitouFollowUp = data?.aceitouFollowUp ?? null;
   
   return {
     total,
@@ -115,6 +103,8 @@ export function useFollowUpProgress() {
     desbloqueado,
     isLoading,
     refetch,
-    showPlusOne, // Flag para disparar animação
+    showPlusOne,
+    escolhaDiariaFeita,
+    aceitouFollowUp,
   };
 }

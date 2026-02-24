@@ -2111,3 +2111,32 @@ export const alertas = mysqlTable("alertas", {
 
 export type Alerta = typeof alertas.$inferSelect;
 export type InsertAlerta = typeof alertas.$inferInsert;
+
+// ============================================================================
+// ESCOLHA DIÁRIA DE FOLLOW-UP
+// ============================================================================
+
+/**
+ * Tabela que armazena a escolha diária do corretor sobre follow-ups.
+ * Todos os dias, o corretor decide se quer realizar os follow-ups (com bloqueio)
+ * ou pular (sem bloqueio, mas com risco de transferência em 2 dias).
+ */
+export const escolhaDiariaFollowUp = mysqlTable("escolha_diaria_follow_up", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  
+  // Data da escolha (apenas a data, sem hora)
+  data: timestamp("data").notNull(),
+  
+  // true = Sim (aceita bloqueio e fará follow-ups), false = Não (pula follow-ups, sem bloqueio)
+  aceitouFollowUp: boolean("aceitouFollowUp").notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  corretorDataIdx: index("escolha_corretor_data_idx").on(table.corretorId, table.data),
+  corretorIdx: index("escolha_corretor_idx").on(table.corretorId),
+}));
+
+export type EscolhaDiariaFollowUp = typeof escolhaDiariaFollowUp.$inferSelect;
+export type InsertEscolhaDiariaFollowUp = typeof escolhaDiariaFollowUp.$inferInsert;

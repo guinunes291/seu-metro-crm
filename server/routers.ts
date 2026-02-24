@@ -2662,6 +2662,24 @@ export const appRouter = router({
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
+        // Verificar se o corretor já fez a escolha diária de follow-up
+        const { escolhaDiariaFollowUp } = await import('../drizzle/schema');
+        const { and: andOp, eq: eqOp, gte: gteOp, lt: ltOp } = await import('drizzle-orm');
+        const { getDb } = await import('./db');
+        const database = await getDb();
+        
+        let escolhaHoje = null;
+        if (database) {
+          const escolhas = await database.select()
+            .from(escolhaDiariaFollowUp)
+            .where(andOp(
+              eqOp(escolhaDiariaFollowUp.corretorId, ctx.user.id),
+              gteOp(escolhaDiariaFollowUp.data, hoje),
+              ltOp(escolhaDiariaFollowUp.data, amanha)
+            ))
+            .limit(1);
+          escolhaHoje = escolhas[0] || null;
+        }
         
         // TOTAL: Contar TODOS os follow-ups do dia
         const totalFollowUps = await db.getTotalFollowUpsDoDia(ctx.user.id, hoje, amanha);
@@ -2677,15 +2695,66 @@ export const appRouter = router({
         // Percentual baseado no total de follow-ups do dia
         const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 100;
         
-        // ✅ NOVO FLUXO: Desbloqueado quando 0/0 (sem follow-ups) OU 100% concluído
-        const desbloqueado = total === 0 || percentual >= 100;
+        // Se o corretor escolheu NÃO fazer follow-up hoje, desbloqueia imediatamente
+        // Se ainda não escolheu (escolhaHoje === null), precisa mostrar o modal
+        // Se escolheu SIM, segue a lógica normal de bloqueio
+        const recusouFollowUp = escolhaHoje?.aceitouFollowUp === false;
+        const desbloqueado = recusouFollowUp || total === 0 || percentual >= 100;
         
         return {
-          total,           // Segundo número = total de follow-ups do dia
-          concluidos,      // Primeiro número = concluídos hoje
+          total,
+          concluidos,
           percentual,
           desbloqueado,
+          // Nova flag: indica se o corretor já fez a escolha diária
+          escolhaDiariaFeita: escolhaHoje !== null,
+          // Se fez, qual foi a escolha
+          aceitouFollowUp: escolhaHoje?.aceitouFollowUp ?? null,
         };
+      }),
+    
+    // Registrar escolha diária de follow-up (Sim ou Não)
+    registrarEscolhaDiaria: corretorProcedure
+      .input(z.object({
+        aceitouFollowUp: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { inicioDoDiaHoje } = await import('./timezone');
+        const hoje = inicioDoDiaHoje();
+        const amanha = new Date(hoje);
+        amanha.setDate(amanha.getDate() + 1);
+        
+        const { escolhaDiariaFollowUp } = await import('../drizzle/schema');
+        const { and: andOp, eq: eqOp, gte: gteOp, lt: ltOp } = await import('drizzle-orm');
+        const { getDb } = await import('./db');
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Database not available' });
+        
+        // Verificar se já existe escolha para hoje
+        const existente = await database.select()
+          .from(escolhaDiariaFollowUp)
+          .where(andOp(
+            eqOp(escolhaDiariaFollowUp.corretorId, ctx.user.id),
+            gteOp(escolhaDiariaFollowUp.data, hoje),
+            ltOp(escolhaDiariaFollowUp.data, amanha)
+          ))
+          .limit(1);
+        
+        if (existente.length > 0) {
+          // Atualizar escolha existente
+          await database.update(escolhaDiariaFollowUp)
+            .set({ aceitouFollowUp: input.aceitouFollowUp })
+            .where(eqOp(escolhaDiariaFollowUp.id, existente[0].id));
+        } else {
+          // Inserir nova escolha
+          await database.insert(escolhaDiariaFollowUp).values({
+            corretorId: ctx.user.id,
+            data: hoje,
+            aceitouFollowUp: input.aceitouFollowUp,
+          });
+        }
+        
+        return { success: true, aceitouFollowUp: input.aceitouFollowUp };
       }),
   }),
 
