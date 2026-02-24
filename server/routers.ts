@@ -615,9 +615,11 @@ export const appRouter = router({
         }
         
         // Registrar interação na tabela interacoes
+        // Usar o corretorId do lead (dono) para que a pontuação vá para o corretor correto
+        const corretorParaInteracao = lead.corretorId || ctx.user.id;
         await db.createInteracao({
           leadId: input.leadId,
-          corretorId: ctx.user.id,
+          corretorId: corretorParaInteracao,
           tipo: input.tipo,
           resultado: input.resultado,
           observacoes: input.observacoes || '',
@@ -627,7 +629,7 @@ export const appRouter = router({
         if (input.statusAnterior && input.statusNovo) {
           await db.createLeadHistory({
             leadId: input.leadId,
-            corretorId: ctx.user.id,
+            corretorId: corretorParaInteracao,
             tipo: input.tipo,
             resultado: input.resultado,
             observacoes: input.observacoes,
@@ -3334,9 +3336,11 @@ export const appRouter = router({
           });
         }
         
+        // Usar o corretorId do lead (dono) para que a pontuação vá para o corretor correto
+        const corretorDonoId = lead.corretorId || ctx.user.id;
         const agendamento = await db.createAgendamento({
           leadId: input.leadId,
-          corretorId: ctx.user.id,
+          corretorId: corretorDonoId,
           projectId: input.projectId,
           projetoCustom: input.projetoCustom,
           construtora: input.construtora,
@@ -3351,7 +3355,7 @@ export const appRouter = router({
           await db.updateLead(input.leadId, { status: 'agendado' });
           await db.registrarAlteracaoStatus({
             leadId: input.leadId,
-            corretorId: ctx.user.id,
+            corretorId: corretorDonoId,
             statusAnterior: lead.status,
             statusNovo: 'agendado',
             observacoes: `Status alterado automaticamente ao criar agendamento para ${input.dataAgendamento} às ${input.horaAgendamento}`
@@ -3439,9 +3443,10 @@ export const appRouter = router({
           const lead = await db.getLeadById(agendamento.leadId);
           if (lead && lead.status !== 'visita_realizada') {
             await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            // Usar corretorId do agendamento (dono do lead) para pontuação correta
             await db.registrarAlteracaoStatus({
               leadId: agendamento.leadId,
-              corretorId: ctx.user.id,
+              corretorId: agendamento.corretorId || ctx.user.id,
               statusAnterior: lead.status,
               statusNovo: 'visita_realizada',
               observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
@@ -3481,9 +3486,10 @@ export const appRouter = router({
           const lead = await db.getLeadById(agendamento.leadId);
           if (lead && lead.status !== 'visita_realizada') {
             await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            // Usar corretorId do agendamento (dono do lead) para pontuação correta
             await db.registrarAlteracaoStatus({
               leadId: agendamento.leadId,
-              corretorId: ctx.user.id,
+              corretorId: agendamento.corretorId || ctx.user.id,
               statusAnterior: lead.status,
               statusNovo: 'visita_realizada',
               observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`

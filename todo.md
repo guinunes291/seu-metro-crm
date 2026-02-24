@@ -4734,3 +4734,8 @@
 - [x] Investigar como a Performance TV calcula pontuação - usa SUM(pontuacaoTotal) do banco, código correto
 - [x] Recalcular pontuação: 843 registros atualizados, validação 5/5 OK
 - [x] Consolidar dois Guilherme Nunes: 872 leads, 28 conquistas, 324 transferências migradas + foto copiada
+
+## Correção: Atividades devem ser atribuídas ao corretor dono do lead, não ao gestor/admin
+- [x] Investigar: agendamentos usavam ctx.user.id, visitas/análises já usavam lead.corretorId, contratos recebem input explícito
+- [x] Corrigir: agendamentos, interações e alterações de status agora usam lead.corretorId || ctx.user.id (10 testes passando)
+- [x] Pontuação futura será atribuída corretamente ao dono do lead
