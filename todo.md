@@ -4724,3 +4724,13 @@
 - [x] Investigar tabelas de atividades e pontuação (schema) - atividadesDiarias + configuracaoPontuacao
 - [x] Criar script de recálculo (recalcular-pontuacao.mjs) via SQL direto
 - [x] Executar e validar: 859 registros recalculados, 5/5 validações OK, ranking atualizado
+
+## Consolidação: Manter dados apenas no Guilherme Nunes admin (com foto)
+- [x] Investigar: ID 5055943 (gestor, com foto) e ID 7722800 (admin, sem foto)
+- [x] Migrar: 12 atividades migradas, 16 somadas, 872 leads, 28 conquistas, 324 transferências
+- [x] Foto copiada do antigo para o admin. Recálculo final: Guilherme Nunes 2º lugar com 23.014 pts
+
+## Bug: Performance TV ainda mostra pontuação antiga
+- [x] Investigar como a Performance TV calcula pontuação - usa SUM(pontuacaoTotal) do banco, código correto
+- [x] Recalcular pontuação: 843 registros atualizados, validação 5/5 OK
+- [x] Consolidar dois Guilherme Nunes: 872 leads, 28 conquistas, 324 transferências migradas + foto copiada

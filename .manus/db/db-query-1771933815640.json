@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, name, email, role, fotoUrl FROM users WHERE id IN (5055943, 7722800);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, fotoUrl FROM users WHERE id IN (5055943, 7722800);",
+  "rows": [
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "fotoUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663032188321/gjgL2sFxYNbZjhUM6i4tZH/corretores/5055943/foto-1771500837472.jpg"
+    },
+    {
+      "id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "fotoUrl": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tfotoUrl\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663032188321/gjgL2sFxYNbZjhUM6i4tZH/corretores/5055943/foto-1771500837472.jpg\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}
