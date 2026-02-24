@@ -1,0 +1,32 @@
+{
+  "query": "SELECT \n  e.id,\n  e.corretorId,\n  u.name as corretor_nome,\n  e.data as data_timestamp,\n  DATE(e.data) as data_apenas,\n  e.aceitouFollowUp,\n  e.createdAt,\n  NOW() as agora,\n  DATE(NOW()) as hoje\nFROM escolha_diaria_follow_up e\nLEFT JOIN users u ON e.corretorId = u.id\nORDER BY e.createdAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  e.id,\n  e.corretorId,\n  u.name as corretor_nome,\n  e.data as data_timestamp,\n  DATE(e.data) as data_apenas,\n  e.aceitouFollowUp,\n  e.createdAt,\n  NOW() as agora,\n  DATE(NOW()) as hoje\nFROM escolha_diaria_follow_up e\nLEFT JOIN users u ON e.corretorId = u.id\nORDER BY e.createdAt DESC;",
+  "rows": [
+    {
+      "id": "34",
+      "corretorId": "11288759",
+      "corretor_nome": "Wesley Aquino",
+      "data_timestamp": "2026-02-24 03:00:00",
+      "data_apenas": "2026-02-24",
+      "aceitouFollowUp": "1",
+      "createdAt": "2026-02-24 12:48:14",
+      "agora": "2026-02-24 13:01:00",
+      "hoje": "2026-02-24"
+    },
+    {
+      "id": "1",
+      "corretorId": "9816082",
+      "corretor_nome": "Graziele Gomes",
+      "data_timestamp": "2026-02-24 03:00:00",
+      "data_apenas": "2026-02-24",
+      "aceitouFollowUp": "0",
+      "createdAt": "2026-02-24 12:45:35",
+      "agora": "2026-02-24 13:01:00",
+      "hoje": "2026-02-24"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tcorretor_nome\tdata_timestamp\tdata_apenas\taceitouFollowUp\tcreatedAt\tagora\thoje\n34\t11288759\tWesley Aquino\t2026-02-24 03:00:00\t2026-02-24\t1\t2026-02-24 12:48:14\t2026-02-24 13:01:00\t2026-02-24\n1\t9816082\tGraziele Gomes\t2026-02-24 03:00:00\t2026-02-24\t0\t2026-02-24 12:45:35\t2026-02-24 13:01:00\t2026-02-24\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

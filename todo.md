@@ -4769,3 +4769,21 @@
 - [x] Adicionar rota de navegação no menu de Gestão
 - [x] Criar 3 testes unitários validando consultas e estatísticas
 - [ ] Testar com dados reais
+
+## Bug: Relatório de Escolhas Diárias não carrega dados
+- [ ] Implementar procedure getRelatorioEscolhasDiarias() no db.ts
+- [ ] Verificar se escolha da Grazielle foi registrada no banco (escolha_diaria_follow_up)
+- [ ] Testar relatório com dados reais
+- [ ] Validar que estatísticas são calculadas corretamente
+
+## Bug Crítico: Relatório de Escolhas Diárias Não Funciona
+- [ ] Reescrever solução completa com abordagem mais simples
+- [ ] Criar helper function no db.ts
+- [ ] Testar com dados reais
+
+## Tarefas Urgentes
+- [x] Remover função getRelatorioEscolhasDiarias e procedure relacionada
+- [x] Corrigir ranking de produtividade que não está contabilizando atividades do dia
+- [x] Corrigir filtro de data em getRankingDia() para usar DATE()
+- [x] Corrigir filtro de data em getRankingPorPeriodo() para usar DATE()
+- [x] Atualizar frontend RankingTV para usar campos corretos (ligacoesRealizadas, whatsappEnviados)

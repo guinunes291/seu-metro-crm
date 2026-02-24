@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -40,11 +40,16 @@ export default function RelatorioEscolhasDiarias() {
   }, [periodo]);
 
   // Buscar dados do relatório
-  const { data, isLoading } = trpc.progressoFollowUps.getRelatorioEscolhasDiarias.useQuery({
+  const { data, isLoading, error } = trpc.progressoFollowUps.getRelatorioEscolhasDiarias.useQuery({
     dataInicio,
     dataFim,
     corretorId: corretorSelecionado,
   });
+  
+  // Debug: log dos dados retornados
+  useEffect(() => {
+    console.log('[Frontend] Dados do relatório:', { data, isLoading, error, dataInicio, dataFim });
+  }, [data, isLoading, error, dataInicio, dataFim]);
 
   // Buscar lista de corretores para o filtro
   const { data: corretoresData } = trpc.users.listCorretores.useQuery();

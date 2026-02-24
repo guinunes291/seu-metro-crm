@@ -2765,49 +2765,35 @@ export const appRouter = router({
         corretorId: z.number().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
-        const { escolhaDiariaFollowUp, users } = await import('../drizzle/schema');
-        const { inicioDoDiaHoje } = await import('./timezone');
-        const { eq, and, gte, lte, sql } = await import('drizzle-orm');
-        
-        // Definir período padrão (últimos 30 dias)
-        const hoje = inicioDoDiaHoje();
+        // Período padrão: últimos 30 dias
+        const hoje = new Date();
         const dataFim = input?.dataFim || hoje;
         const dataInicio = input?.dataInicio || new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
-        
-        // Buscar escolhas do período
-        const conditions = [
-          gte(escolhaDiariaFollowUp.data, dataInicio),
-          lte(escolhaDiariaFollowUp.data, dataFim),
-        ];
-        
-        if (input?.corretorId) {
-          conditions.push(eq(escolhaDiariaFollowUp.corretorId, input.corretorId));
-        }
-        
-        const escolhas = await getDb()
-          .select({
-            corretorId: escolhaDiariaFollowUp.corretorId,
-            data: escolhaDiariaFollowUp.data,
-            aceitouFollowUp: escolhaDiariaFollowUp.aceitouFollowUp,
-            nome: users.nome,
-            foto: users.foto,
-          })
-          .from(escolhaDiariaFollowUp)
-          .leftJoin(users, eq(escolhaDiariaFollowUp.corretorId, users.id))
-          .where(and(...conditions))
-          .orderBy(sql`${escolhaDiariaFollowUp.data} DESC`);
-        
+
+        console.log('[Relatório] Buscando escolhas entre', dataInicio.toISOString(), 'e', dataFim.toISOString());
+
+        // Buscar escolhas usando helper
+        const escolhas = await db.getEscolhasDiarias({
+          dataInicio,
+          dataFim,
+          corretorId: input?.corretorId,
+        });
+
+        console.log('[Relatório] Encontradas', escolhas.length, 'escolhas');
+
         // Calcular estatísticas
         const totalEscolhas = escolhas.length;
-        const totalAceitou = escolhas.filter(e => e.aceitouFollowUp).length;
-        const totalRecusou = escolhas.filter(e => !e.aceitouFollowUp).length;
+        const totalAceitou = escolhas.filter(e => e.aceitouFollowUp === 1 || e.aceitouFollowUp === true).length;
+        const totalRecusou = escolhas.filter(e => e.aceitouFollowUp === 0 || e.aceitouFollowUp === false).length;
         const taxaAdesao = totalEscolhas > 0 ? (totalAceitou / totalEscolhas) * 100 : 0;
-        
+
         // Agrupar por corretor
-        const porCorretor = escolhas.reduce((acc, escolha) => {
+        const porCorretor: Record<number, any> = {};
+        
+        escolhas.forEach(escolha => {
           const key = escolha.corretorId;
-          if (!acc[key]) {
-            acc[key] = {
+          if (!porCorretor[key]) {
+            porCorretor[key] = {
               corretorId: escolha.corretorId,
               nome: escolha.nome || 'Sem nome',
               foto: escolha.foto,
@@ -2817,16 +2803,18 @@ export const appRouter = router({
               taxaAdesao: 0,
             };
           }
-          acc[key].totalEscolhas++;
-          if (escolha.aceitouFollowUp) {
-            acc[key].totalAceitou++;
+          
+          porCorretor[key].totalEscolhas++;
+          
+          if (escolha.aceitouFollowUp === 1 || escolha.aceitouFollowUp === true) {
+            porCorretor[key].totalAceitou++;
           } else {
-            acc[key].totalRecusou++;
+            porCorretor[key].totalRecusou++;
           }
-          acc[key].taxaAdesao = (acc[key].totalAceitou / acc[key].totalEscolhas) * 100;
-          return acc;
-        }, {} as Record<number, any>);
-        
+          
+          porCorretor[key].taxaAdesao = (porCorretor[key].totalAceitou / porCorretor[key].totalEscolhas) * 100;
+        });
+
         return {
           escolhas,
           estatisticas: {

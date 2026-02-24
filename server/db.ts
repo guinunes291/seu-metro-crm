@@ -4150,13 +4150,12 @@ export async function getRankingDia(data?: Date) {
   
   // Para cada corretor, buscar suas atividades do dia
   const ranking = await Promise.all(todosCorretores.map(async (corretor) => {
-    // Buscar atividades do corretor no dia
+    // Buscar atividades do corretor no dia (usando DATE para ignorar horário)
     const atividadesCorretor = await db.select()
       .from(atividadesDiarias)
       .where(and(
         eq(atividadesDiarias.corretorId, corretor.corretorId),
-        gte(atividadesDiarias.data, inicioDia),
-        lte(atividadesDiarias.data, fimDia)
+        sql`DATE(${atividadesDiarias.data}) = DATE(${inicioDia})`
       ));
     
     // Somar todas as atividades do corretor no dia
@@ -4220,18 +4219,21 @@ export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date) {
   const db = await getDb();
   if (!db) return [];
   
-  // Se não tiver datas, retornar tudo
+  // Se não tiver datas, usar hoje como padrão
   const conditions = [];
   
-  const { inicioDoDia: _idd11, fimDoDia: _fdd11 } = await import('./timezone');
   if (dataInicio) {
-    const inicio = _idd11(dataInicio);
-    conditions.push(gte(atividadesDiarias.data, inicio));
+    conditions.push(sql`DATE(${atividadesDiarias.data}) >= DATE(${dataInicio})`);
   }
   
   if (dataFim) {
-    const fim = _fdd11(dataFim);
-    conditions.push(lte(atividadesDiarias.data, fim));
+    conditions.push(sql`DATE(${atividadesDiarias.data}) <= DATE(${dataFim})`);
+  }
+  
+  // Se não tiver filtro, usar hoje
+  if (conditions.length === 0) {
+    const hoje = new Date();
+    conditions.push(sql`DATE(${atividadesDiarias.data}) = DATE(${hoje})`);
   }
   
   const ranking = await db.select({
@@ -10073,3 +10075,4 @@ export async function criarNovoContrato(dados: {
 
   return { contratoId: novoContrato.id, leadId };
 }
+

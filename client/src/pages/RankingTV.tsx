@@ -396,25 +396,34 @@ function PontuacaoLegenda() {
 // Componente de estatísticas do dia
 function EstatisticasDia({ ranking }: { ranking: any[] }) {
   const totais = ranking?.reduce((acc, curr) => ({
-    clientes: acc.clientes + (curr.clientesCadastrados || 0),
-    alteracoes: acc.alteracoes + (curr.alteracoesStatus || 0),
+    ligacoes: acc.ligacoes + (curr.ligacoesRealizadas || 0),
+    whatsapp: acc.whatsapp + (curr.whatsappEnviados || 0),
     agendamentos: acc.agendamentos + (curr.agendamentosConfirmados || 0),
     visitas: acc.visitas + (curr.visitasRealizadas || 0),
     documentacoes: acc.documentacoes + (curr.documentacoesRecolhidas || 0),
     contratos: acc.contratos + (curr.contratosFechados || 0),
     pontos: acc.pontos + (curr.pontuacaoTotal || 0),
     vgv: acc.vgv + (curr.vgvDia || 0),
-  }), { clientes: 0, alteracoes: 0, agendamentos: 0, visitas: 0, documentacoes: 0, contratos: 0, pontos: 0, vgv: 0 });
+  }), { ligacoes: 0, whatsapp: 0, agendamentos: 0, visitas: 0, documentacoes: 0, contratos: 0, pontos: 0, vgv: 0 });
   
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-4 text-white shadow-lg">
         <div className="flex items-center gap-2 mb-2">
           <Users className="w-5 h-5" />
-          <span className="text-sm font-medium">Clientes Cadastrados</span>
+          <span className="text-sm font-medium">Ligações</span>
         </div>
-        <p className="text-3xl font-black">{totais?.clientes || 0}</p>
-        <p className="text-xs opacity-80">+{(totais?.clientes || 0) * PONTUACAO.CLIENTE_CADASTRADO} pontos</p>
+        <p className="text-3xl font-black">{totais?.ligacoes || 0}</p>
+        <p className="text-xs opacity-80">Contatos realizados</p>
+      </div>
+      
+      <div className="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl p-4 text-white shadow-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-sm font-medium">WhatsApp</span>
+        </div>
+        <p className="text-3xl font-black">{totais?.whatsapp || 0}</p>
+        <p className="text-xs opacity-80">Mensagens enviadas</p>
       </div>
       
       <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white shadow-lg">
