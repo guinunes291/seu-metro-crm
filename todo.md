@@ -4787,3 +4787,7 @@
 - [x] Corrigir filtro de data em getRankingDia() para usar DATE()
 - [x] Corrigir filtro de data em getRankingPorPeriodo() para usar DATE()
 - [x] Atualizar frontend RankingTV para usar campos corretos (ligacoesRealizadas, whatsappEnviados)
+
+## Bug: Barra inferior sobrepondo menu lateral
+- [x] Corrigir CSS da barra inferior (rodapé com data/hora) para não sobrepor o sidebar
+- [x] Adicionar md:left-64 para respeitar o espaço do menu lateral em telas médias+
