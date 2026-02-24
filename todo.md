@@ -4762,3 +4762,10 @@
 ## Documentação: Manual de treinamento para corretores sobre follow-up
 - [x] Estruturar conteúdo: escolha diária, bloqueio, regras de transferência, dicas práticas
 - [x] Escrever manual completo em Markdown (9 seções, 8 FAQs, tabelas e exemplos práticos)
+
+## Feature: Relatório de escolhas diárias de follow-up para gestores
+- [x] Criar procedure no backend: getRelatorioEscolhasDiarias (filtro por período, corretor)
+- [x] Criar página RelatorioEscolhasDiarias.tsx com gráficos e tabela
+- [x] Adicionar rota de navegação no menu de Gestão
+- [x] Criar 3 testes unitários validando consultas e estatísticas
+- [ ] Testar com dados reais

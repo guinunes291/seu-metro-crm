@@ -108,6 +108,7 @@ const menuGroups = [
       { icon: Users, label: "Minha Equipe", path: "/minha-equipe", roles: ["gestor"] },
       { icon: ArrowRightLeft, label: "Gestão de Atribuições", path: "/gestao-atribuicoes", roles: ["gestor", "admin", "superintendente"] },
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin", "superintendente"] },
+      { icon: BarChart3, label: "Relatório de Escolhas Diárias", path: "/relatorio-escolhas-diarias", roles: ["gestor", "admin", "superintendente"] },
       { icon: Lock, label: "Controle de Bloqueio", path: "/controle-bloqueio", roles: ["admin", "superintendente"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users, label: "Gestão de Equipes", path: "/gestao-equipes", roles: ["admin", "superintendente"] },

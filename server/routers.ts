@@ -2756,6 +2756,88 @@ export const appRouter = router({
         
         return { success: true, aceitouFollowUp: input.aceitouFollowUp };
       }),
+    
+    // Relatório de escolhas diárias (para gestores)
+    getRelatorioEscolhasDiarias: gestorProcedure
+      .input(z.object({
+        dataInicio: z.date().optional(),
+        dataFim: z.date().optional(),
+        corretorId: z.number().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { escolhaDiariaFollowUp, users } = await import('../drizzle/schema');
+        const { inicioDoDiaHoje } = await import('./timezone');
+        const { eq, and, gte, lte, sql } = await import('drizzle-orm');
+        
+        // Definir período padrão (últimos 30 dias)
+        const hoje = inicioDoDiaHoje();
+        const dataFim = input?.dataFim || hoje;
+        const dataInicio = input?.dataInicio || new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        // Buscar escolhas do período
+        const conditions = [
+          gte(escolhaDiariaFollowUp.data, dataInicio),
+          lte(escolhaDiariaFollowUp.data, dataFim),
+        ];
+        
+        if (input?.corretorId) {
+          conditions.push(eq(escolhaDiariaFollowUp.corretorId, input.corretorId));
+        }
+        
+        const escolhas = await getDb()
+          .select({
+            corretorId: escolhaDiariaFollowUp.corretorId,
+            data: escolhaDiariaFollowUp.data,
+            aceitouFollowUp: escolhaDiariaFollowUp.aceitouFollowUp,
+            nome: users.nome,
+            foto: users.foto,
+          })
+          .from(escolhaDiariaFollowUp)
+          .leftJoin(users, eq(escolhaDiariaFollowUp.corretorId, users.id))
+          .where(and(...conditions))
+          .orderBy(sql`${escolhaDiariaFollowUp.data} DESC`);
+        
+        // Calcular estatísticas
+        const totalEscolhas = escolhas.length;
+        const totalAceitou = escolhas.filter(e => e.aceitouFollowUp).length;
+        const totalRecusou = escolhas.filter(e => !e.aceitouFollowUp).length;
+        const taxaAdesao = totalEscolhas > 0 ? (totalAceitou / totalEscolhas) * 100 : 0;
+        
+        // Agrupar por corretor
+        const porCorretor = escolhas.reduce((acc, escolha) => {
+          const key = escolha.corretorId;
+          if (!acc[key]) {
+            acc[key] = {
+              corretorId: escolha.corretorId,
+              nome: escolha.nome || 'Sem nome',
+              foto: escolha.foto,
+              totalEscolhas: 0,
+              totalAceitou: 0,
+              totalRecusou: 0,
+              taxaAdesao: 0,
+            };
+          }
+          acc[key].totalEscolhas++;
+          if (escolha.aceitouFollowUp) {
+            acc[key].totalAceitou++;
+          } else {
+            acc[key].totalRecusou++;
+          }
+          acc[key].taxaAdesao = (acc[key].totalAceitou / acc[key].totalEscolhas) * 100;
+          return acc;
+        }, {} as Record<number, any>);
+        
+        return {
+          escolhas,
+          estatisticas: {
+            totalEscolhas,
+            totalAceitou,
+            totalRecusou,
+            taxaAdesao: Math.round(taxaAdesao * 10) / 10,
+          },
+          porCorretor: Object.values(porCorretor),
+        };
+      }),
   }),
 
   // ============================================================================

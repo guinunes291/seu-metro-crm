@@ -57,6 +57,7 @@ import MinhaEquipe from "@/pages/MinhaEquipe";
 import LimpezaDuplicatas from "@/pages/LimpezaDuplicatas";
 import AtualizarProjetosEmMassa from "@/pages/AtualizarProjetosEmMassa";
 import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
+import RelatorioEscolhasDiarias from "@/pages/RelatorioEscolhasDiarias";
 
 import { AlertasNotification } from "./components/AlertasNotification";
 
@@ -89,6 +90,7 @@ function Router() {
       <Route path="/boas-vindas" component={BoasVindas} />
       <Route path="/tarefas-do-dia" component={TarefasDoDia} />
       <Route path="/monitoramento-followups" component={MonitoramentoFollowUps} />
+      <Route path="/relatorio-escolhas-diarias" component={RelatorioEscolhasDiarias} />
 
       <Route path="/modo-blitz" component={ModoBlitz} />
       <Route path="/ranking-tv" component={RankingTV} />
