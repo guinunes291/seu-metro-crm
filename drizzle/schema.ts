@@ -880,20 +880,22 @@ export type InsertFollowUp = typeof followUps.$inferInsert;
  * Registro de atividades diárias dos corretores para o ranking de produtividade
  * Cada registro representa as atividades de um corretor em um dia específico
  */
-// Sistema de pontuação por ação:
-// - Novo cliente cadastrado = 5 pontos
-// - Registro/alteração de status = 2 pontos
-// - Agendamento criado = 15 pontos
-// - Visita realizada = 25 pontos
-// - Documentação/Análise de Crédito = 35 pontos
-// - Venda = 80 pontos
+// Sistema de pontuação por ação (atualizado 24/02/2026):
+// - Ligação realizada = 2 pontos
+// - WhatsApp enviado = 1 ponto
+// - Agendamento confirmado = 100 pontos
+// - Visita realizada = 250 pontos
+// - Análise de Crédito = 400 pontos
+// - Contrato fechado (venda) = 1000 pontos
 export const PONTUACAO = {
-  CLIENTE_CADASTRADO: 5,
-  ALTERACAO_STATUS: 2,
-  AGENDAMENTO: 15,
-  VISITA: 25,
-  DOCUMENTACAO: 35,
-  VENDA: 80,
+  LIGACAO: 2,
+  WHATSAPP: 1,
+  CLIENTE_CADASTRADO: 0,
+  ALTERACAO_STATUS: 0,
+  AGENDAMENTO: 100,
+  VISITA: 250,
+  DOCUMENTACAO: 400,
+  VENDA: 1000,
 } as const;
 
 export const atividadesDiarias = mysqlTable("atividades_diarias", {

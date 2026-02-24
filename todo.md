@@ -4719,3 +4719,8 @@
 ## Alteração: Pontuação por ação no sistema de gamificação
 - [x] Investigar estrutura atual de pontuação (db.ts x2 + routers.ts x2)
 - [x] Alterar valores: Ligação 5→2, WhatsApp 1→1, Agendamento 25→100, Visita 40→250, Análise 60→400, Venda 150→1000 (10 testes passando)
+
+## Script: Recalcular ranking histórico com nova pontuação
+- [x] Investigar tabelas de atividades e pontuação (schema) - atividadesDiarias + configuracaoPontuacao
+- [x] Criar script de recálculo (recalcular-pontuacao.mjs) via SQL direto
+- [x] Executar e validar: 859 registros recalculados, 5/5 validações OK, ranking atualizado
