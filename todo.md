@@ -4715,3 +4715,7 @@
 ## Filtro: Ocultar leads sem corretor no relatório de Leads por Corretor
 - [x] Adicionar toggle/filtro para ocultar "Sem Corretor" do gráfico e tabela
 - [x] Filtro deve estar ativo por padrão (ocultar sem corretor) - 7 testes passando
+
+## Alteração: Pontuação por ação no sistema de gamificação
+- [x] Investigar estrutura atual de pontuação (db.ts x2 + routers.ts x2)
+- [x] Alterar valores: Ligação 5→2, WhatsApp 1→1, Agendamento 25→100, Visita 40→250, Análise 60→400, Venda 150→1000 (10 testes passando)

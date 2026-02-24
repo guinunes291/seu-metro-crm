@@ -3661,13 +3661,13 @@ export const appRouter = router({
           })
           .where(eq(leads.id, input.leadId));
         
-        // Registrar pontos para o corretor (fechamento de contrato = 50 pontos)
+        // Registrar pontos para o corretor (fechamento de contrato = 1000 pontos)
         try {
           const { registrarAtividade } = await import("./gamificacao");
           await registrarAtividade({
             corretorId: lead.corretorId || ctx.user.id,
             tipo: "contrato_fechado",
-            pontos: 50,
+            pontos: 1000,
             descricao: `Contrato fechado - ${lead.nome} - R$ ${input.valorVenda.toLocaleString('pt-BR')}`,
           });
         } catch (error) {
@@ -3809,13 +3809,13 @@ export const appRouter = router({
           })
           .where(eq(leads.id, input.leadId));
         
-        // Registrar pontos para o corretor (análise de crédito = 15 pontos)
+        // Registrar pontos para o corretor (análise de crédito = 400 pontos)
         try {
           const { registrarAtividade } = await import("./gamificacao");
           await registrarAtividade({
             corretorId: lead.corretorId || ctx.user.id,
             tipo: "analise_credito",
-            pontos: 15,
+            pontos: 400,
             descricao: `Análise de crédito enviada - ${lead.nome}`,
           });
         } catch (error) {

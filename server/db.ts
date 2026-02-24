@@ -4390,25 +4390,25 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   
   const meta = metasCorretor[0];
   
-  // Sistema de pontuação (definido pelo gestor - atualizado 22/12/2025):
-  // - Ligação realizada = 5 pontos
+  // Sistema de pontuação (definido pelo gestor - atualizado 24/02/2026):
+  // - Ligação realizada = 2 pontos
   // - WhatsApp enviado = 1 ponto
-  // - Agendamento confirmado = 25 pontos
-  // - Visita realizada = 40 pontos
-  // - Análise de Crédito enviada = 60 pontos
-  // - Contrato fechado (venda) = 150 pontos
+  // - Agendamento confirmado = 100 pontos
+  // - Visita realizada = 250 pontos
+  // - Análise de Crédito enviada = 400 pontos
+  // - Contrato fechado (venda) = 1000 pontos
   
   const PONTOS = {
-    LIGACAO: 5,
+    LIGACAO: 2,
     LIGACAO_ATENDIDA: 0, // Não usado mais
     WHATSAPP: 1,
     WHATSAPP_RESPONDIDO: 0, // Não usado mais
     CLIENTE_CADASTRADO: 0, // Não usado mais
     ALTERACAO_STATUS: 0, // Não usado mais
-    AGENDAMENTO: 25,
-    VISITA: 40,
-    DOCUMENTACAO: 60,
-    VENDA: 150,
+    AGENDAMENTO: 100,
+    VISITA: 250,
+    DOCUMENTACAO: 400,
+    VENDA: 1000,
   };
   
   let pontuacao = 0;
@@ -4524,14 +4524,14 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
   
   if (!atividade) return;
   
-  // Sistema de pontuação (atualizado 22/12/2025)
+  // Sistema de pontuação (atualizado 24/02/2026)
   const PONTOS = {
-    LIGACAO: 5,           // 5 pontos por ligação
+    LIGACAO: 2,           // 2 pontos por ligação
     WHATSAPP: 1,          // 1 ponto por WhatsApp
-    AGENDAMENTO: 25,      // 25 pontos por agendamento
-    VISITA: 40,           // 40 pontos por visita
-    DOCUMENTACAO: 60,     // 60 pontos por análise de crédito
-    VENDA: 150,           // 150 pontos por venda
+    AGENDAMENTO: 100,     // 100 pontos por agendamento
+    VISITA: 250,          // 250 pontos por visita
+    DOCUMENTACAO: 400,    // 400 pontos por análise de crédito
+    VENDA: 1000,          // 1000 pontos por venda
   };
   
   let pontuacao = 0;
