@@ -4752,3 +4752,13 @@
 - [x] Corrigir escolha diária de follow-up para usar fuso SP (já usava inicioDoDiaHoje)
 - [x] Verificar e corrigir 18+ funções que usavam new Date() com setHours(0,0,0,0) para usar timezone SP
 - [x] Garantir que sincronizações, atividades diárias e rankings usem fuso SP (9 testes passando)
+
+## Verificação: Sistema de escolha diária de follow-up
+- [x] Verificar procedures do backend (getProgresso, getEscolhaDiaria, registrarEscolhaDiaria) - 14 testes passando
+- [x] Verificar frontend (ModalEscolhaFollowUp, useFollowUpProgress, DashboardLayout) - implementação correta
+- [x] Testar fluxo completo: modal aparece → corretor escolhe Sim/Não → sistema reage corretamente
+- [x] Nenhum erro encontrado - sistema funcionando perfeitamente
+
+## Documentação: Manual de treinamento para corretores sobre follow-up
+- [x] Estruturar conteúdo: escolha diária, bloqueio, regras de transferência, dicas práticas
+- [x] Escrever manual completo em Markdown (9 seções, 8 FAQs, tabelas e exemplos práticos)
