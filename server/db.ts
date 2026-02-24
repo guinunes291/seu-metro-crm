@@ -4406,16 +4406,16 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   // - Contrato fechado (venda) = 1000 pontos
   
   const PONTOS = {
-    LIGACAO: 2,
+    LIGACAO: 5, // Corrigido: era 2, agora 5
     LIGACAO_ATENDIDA: 0, // Não usado mais
     WHATSAPP: 1,
     WHATSAPP_RESPONDIDO: 0, // Não usado mais
     CLIENTE_CADASTRADO: 0, // Não usado mais
     ALTERACAO_STATUS: 0, // Não usado mais
-    AGENDAMENTO: 100,
-    VISITA: 250,
-    DOCUMENTACAO: 400,
-    VENDA: 1000,
+    AGENDAMENTO: 25, // Corrigido: era 100, agora 25
+    VISITA: 40, // Corrigido: era 250, agora 40
+    DOCUMENTACAO: 60, // Corrigido: era 400, agora 60 (análise de crédito)
+    VENDA: 150, // Corrigido: era 1000, agora 150
   };
   
   let pontuacao = 0;
@@ -4533,12 +4533,12 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
   
   // Sistema de pontuação (atualizado 24/02/2026)
   const PONTOS = {
-    LIGACAO: 2,           // 2 pontos por ligação
+    LIGACAO: 5,           // 5 pontos por ligação (corrigido)
     WHATSAPP: 1,          // 1 ponto por WhatsApp
-    AGENDAMENTO: 100,     // 100 pontos por agendamento
-    VISITA: 250,          // 250 pontos por visita
-    DOCUMENTACAO: 400,    // 400 pontos por análise de crédito
-    VENDA: 1000,          // 1000 pontos por venda
+    AGENDAMENTO: 25,      // 25 pontos por agendamento (corrigido)
+    VISITA: 40,           // 40 pontos por visita (corrigido)
+    DOCUMENTACAO: 60,     // 60 pontos por análise de crédito (corrigido)
+    VENDA: 150,           // 150 pontos por venda (corrigido)
   };
   
   let pontuacao = 0;

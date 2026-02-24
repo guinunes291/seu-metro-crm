@@ -4797,3 +4797,9 @@
 - [x] Identificar qual procedure calcula o VGV para o dashboard do corretor (getCorretorDashboardMetrics)
 - [x] Encontrar a diferença: estava somando valorMinimo do projeto para cada lead em vez de valorVenda dos contratos
 - [x] Corrigir cálculo para usar SUM(contratos.valorVenda) em vez de SUM(projects.valorMinimo)
+
+## Bug Crítico: Pontuação incorreta no ranking de produtividade
+- [x] Investigar por que Andrew tem 436 pontos com apenas 36 WhatsApp (deveria ter 36 pontos)
+- [x] Identificar de onde vêm os 400 pontos extras: valores de pontuação estavam incorretos
+- [x] Corrigir valores: Ligação 2→5, Agendamento 100→25, Visita 250→40, Doc 400→60, Venda 1000→150
+- [x] Recalcular pontuação de todos os corretores para hoje com novos valores
