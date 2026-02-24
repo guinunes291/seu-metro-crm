@@ -1288,12 +1288,13 @@ export async function atualizarContadorFollowUp(leadId: number) {
   // Ordenar dias (mais recente primeiro)
   const diasOrdenados = Array.from(diasComContato).sort().reverse();
   
-  // Contar dias consecutivos a partir de hoje
-  const hoje = new Date();
-  const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+  // Contar dias consecutivos a partir de hoje (fuso SP)
+  const { hojeStrSP, agora: agoraSP } = await import('./timezone');
+  const hojeSP = agoraSP();
+  const hojeStr = hojeStrSP();
   
   let diasConsecutivos = 0;
-  let dataVerificar = new Date(hoje);
+  let dataVerificar = new Date(hojeSP);
   
   for (let i = 0; i < 5; i++) {
     const diaStr = `${dataVerificar.getFullYear()}-${String(dataVerificar.getMonth() + 1).padStart(2, '0')}-${String(dataVerificar.getDate()).padStart(2, '0')}`;
@@ -2119,10 +2120,10 @@ export async function getEvolucaoFunil(dias: number = 30, corretoresIds?: number
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
+  const { inicioDoDiaHoje: _inicioDoDiaHoje } = await import('./timezone');
+  const hoje = _inicioDoDiaHoje();
   const dataInicio = new Date(hoje);
   dataInicio.setDate(dataInicio.getDate() - dias);
-  dataInicio.setHours(0, 0, 0, 0);
   
   // Buscar totais acumulados por status (filtrados por equipe se necessário)
   const conditions: any[] = [gte(leads.createdAt, dataInicio)];
@@ -2454,8 +2455,9 @@ export async function getPerformanceCorretor(corretorId: number, mes?: number, a
   const db = await getDb();
   if (!db) return null;
   
-  // Se não especificado, usa o mês/ano atual
-  const dataAtual = new Date();
+  // Se não especificado, usa o mês/ano atual (fuso SP)
+  const { agora: _agoraSP4 } = await import('./timezone');
+  const dataAtual = _agoraSP4();
   const mesAtual = mes || dataAtual.getMonth() + 1;
   const anoAtual = ano || dataAtual.getFullYear();
   
@@ -3305,7 +3307,8 @@ export async function getDistribuicoesPorPeriodo(dias: number = 30) {
   const db = await getDb();
   if (!db) return [];
   
-  const dataInicio = new Date();
+  const { inicioDoDiaHoje: _idhj } = await import('./timezone');
+  const dataInicio = _idhj();
   dataInicio.setDate(dataInicio.getDate() - dias);
   
   // Usar raw SQL para evitar problemas com ONLY_FULL_GROUP_BY
@@ -3416,12 +3419,12 @@ export async function getCorretorMetricasHistoricas(corretorId: number, dias: nu
   if (!db) return [];
   
   const resultado: MetricasDiarias[] = [];
-  const hoje = new Date();
+  const { inicioDoDiaHoje: _idhj2 } = await import('./timezone');
+  const hoje = _idhj2();
   
   for (let i = dias - 1; i >= 0; i--) {
     const data = new Date(hoje);
     data.setDate(data.getDate() - i);
-    data.setHours(0, 0, 0, 0);
     
     const dataFim = new Date(data);
     dataFim.setHours(23, 59, 59, 999);
@@ -3480,10 +3483,10 @@ export async function getCorretorEvolucaoFunil(corretorId: number, dias: number 
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
+  const { inicioDoDiaHoje: _idhj3 } = await import('./timezone');
+  const hoje = _idhj3();
   const dataInicio = new Date(hoje);
   dataInicio.setDate(dataInicio.getDate() - dias);
-  dataInicio.setHours(0, 0, 0, 0);
   
   // Buscar totais acumulados por status do corretor
   const totais = await db.select({
@@ -3552,8 +3555,8 @@ export async function getTarefasDoDia(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj4 } = await import('./timezone');
+  const hoje = _idhj4();
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
   
@@ -3660,7 +3663,8 @@ export async function getFollowUpsPendentes(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const agora = new Date();
+  const { agora: _agoraSP } = await import('./timezone');
+  const agora = _agoraSP();
   
   return await db.select({
     id: followUps.id,
@@ -3987,13 +3991,10 @@ export async function getLeadsAgendadosHoje(corretorId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  const agora = new Date();
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  
-  // Fim do dia de hoje (23:59:59)
-  const fimDeHoje = new Date(hoje);
-  fimDeHoje.setHours(23, 59, 59, 999);
+  const { agora: _agoraSP2, inicioDoDiaHoje: _idhj5, fimDoDiaHoje: _fdhj5 } = await import('./timezone');
+  const agora = _agoraSP2();
+  const hoje = _idhj5();
+  const fimDeHoje = _fdhj5();
   
   // 24h a partir de agora (para mostrar agendamentos das próximas 24h)
   const em24h = new Date(agora);
@@ -4081,8 +4082,8 @@ export async function incrementarAtividade(
   const db = await getDb();
   if (!db) return;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj6 } = await import('./timezone');
+  const hoje = _idhj6();
   
   // Garantir que existe o registro
   await getOrCreateAtividadeDiaria(corretorId, hoje);
@@ -4104,8 +4105,8 @@ export async function adicionarVgvDia(corretorId: number, valor: number) {
   const db = await getDb();
   if (!db) return;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj7 } = await import('./timezone');
+  const hoje = _idhj7();
   
   await getOrCreateAtividadeDiaria(corretorId, hoje);
   
@@ -4126,12 +4127,17 @@ export async function getRankingDia(data?: Date) {
   const db = await getDb();
   if (!db) return [];
   
-  // Usar início e fim do dia para evitar problemas de fuso horário
-  const dataRef = data || new Date();
-  const inicioDia = new Date(dataRef);
-  inicioDia.setHours(0, 0, 0, 0);
-  const fimDia = new Date(dataRef);
-  fimDia.setHours(23, 59, 59, 999);
+  // Usar início e fim do dia com timezone SP
+  const { inicioDoDiaHoje: _idhj8, fimDoDiaHoje: _fdhj8, inicioDoDia: _idd8, fimDoDia: _fdd8 } = await import('./timezone');
+  let inicioDia: Date;
+  let fimDia: Date;
+  if (data) {
+    inicioDia = _idd8(data);
+    fimDia = _fdd8(data);
+  } else {
+    inicioDia = _idhj8();
+    fimDia = _fdhj8();
+  }
   
   // Buscar TODOS os corretores ativos e fazer LEFT JOIN com atividades do dia
   const todosCorretores = await db.select({
@@ -4217,15 +4223,14 @@ export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date) {
   // Se não tiver datas, retornar tudo
   const conditions = [];
   
+  const { inicioDoDia: _idd11, fimDoDia: _fdd11 } = await import('./timezone');
   if (dataInicio) {
-    const inicio = new Date(dataInicio);
-    inicio.setHours(0, 0, 0, 0);
+    const inicio = _idd11(dataInicio);
     conditions.push(gte(atividadesDiarias.data, inicio));
   }
   
   if (dataFim) {
-    const fim = new Date(dataFim);
-    fim.setHours(23, 59, 59, 999);
+    const fim = _fdd11(dataFim);
     conditions.push(lte(atividadesDiarias.data, fim));
   }
   
@@ -4257,8 +4262,8 @@ export async function getRankingSemanal() {
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj9 } = await import('./timezone');
+  const hoje = _idhj9();
   
   // Início da semana (segunda-feira)
   const inicioSemana = new Date(hoje);
@@ -4318,7 +4323,8 @@ export async function getRankingMensal() {
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
+  const { inicioDoDiaHoje: _idhj10 } = await import('./timezone');
+  const hoje = _idhj10();
   const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
   
   // Buscar TODOS os corretores ativos
@@ -4375,8 +4381,8 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   const db = await getDb();
   if (!db) return;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj17 } = await import('./timezone');
+  const hoje = _idhj17();
   
   // Buscar atividade do dia
   const atividade = await getOrCreateAtividadeDiaria(corretorId, hoje);
@@ -4940,8 +4946,8 @@ export async function verificarProdutividadeEGerarAlertas(): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj12 } = await import('./timezone');
+  const hoje = _idhj12();
   
   // Buscar todos os corretores ativos
   const corretores = await db.select()
@@ -5020,8 +5026,8 @@ export async function getProgressoMetasDiarias(corretorId?: number): Promise<any
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj13 } = await import('./timezone');
+  const hoje = _idhj13();
   
   // Buscar corretores
   let corretoresQuery = db.select().from(users).where(eq(users.role, 'corretor'));
@@ -5290,12 +5296,15 @@ export async function verificarConquistasRanking(): Promise<number> {
   if (!db) return 0;
   
   let conquistasConcedidas = 0;
-  const agora = new Date();
+  const { agora: _agoraSP3, inicioDoDiaHoje: _idhj15 } = await import('./timezone');
+  const agora = _agoraSP3();
   
-  // Calcular início e fim da semana atual
+  // Calcular início da semana (segunda-feira)
   const inicioSemana = new Date(agora);
   inicioSemana.setDate(agora.getDate() - agora.getDay());
-  inicioSemana.setHours(0, 0, 0, 0);
+  const hojeSP = _idhj15();
+  inicioSemana.setTime(hojeSP.getTime());
+  inicioSemana.setDate(agora.getDate() - agora.getDay());
   
   const fimSemana = new Date(inicioSemana);
   fimSemana.setDate(inicioSemana.getDate() + 6);
@@ -5861,8 +5870,8 @@ export async function getAgendamentosDoDia(corretorId?: number): Promise<Agendam
   const db = await getDb();
   if (!db) return [];
   
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+  const { inicioDoDiaHoje: _idhj14 } = await import('./timezone');
+  const hoje = _idhj14();
   const amanha = new Date(hoje);
   amanha.setDate(amanha.getDate() + 1);
   
@@ -6849,10 +6858,9 @@ export async function getSlotsDisponiveis(corretorId: number, data: Date): Promi
   }
   
   // Remover slots já ocupados por agendamentos
-  const inicioData = new Date(data);
-  inicioData.setHours(0, 0, 0, 0);
-  const fimData = new Date(data);
-  fimData.setHours(23, 59, 59, 999);
+  const { inicioDoDia: _iddSlot, fimDoDia: _fddSlot } = await import('./timezone');
+  const inicioData = _iddSlot(data);
+  const fimData = _fddSlot(data);
   
   const agendamentosExistentes = await db.select({ horaAgendamento: agendamentos.horaAgendamento })
     .from(agendamentos)
@@ -7661,9 +7669,8 @@ export async function criarOuAtualizarFollowUp(leadId: number, corretorId: numbe
   
   if (existente[0]) {
     // Já existe, apenas atualizar próxima tentativa para amanhã
-    const proximaTentativa = new Date();
-    proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-    proximaTentativa.setHours(9, 0, 0, 0);
+    const { proximoDiaAs9h } = await import('./timezone');
+    const proximaTentativa = proximoDiaAs9h();
     
     await db.update(followUps)
       .set({ proximaTentativa })
@@ -7673,9 +7680,8 @@ export async function criarOuAtualizarFollowUp(leadId: number, corretorId: numbe
   }
   
   // Criar novo follow-up para amanhã às 9h
-  const proximaTentativa = new Date();
-  proximaTentativa.setDate(proximaTentativa.getDate() + 1);
-  proximaTentativa.setHours(9, 0, 0, 0);
+  const { proximoDiaAs9h: _pda9h } = await import('./timezone');
+  const proximaTentativa = _pda9h();
   
   const result = await db.insert(followUps).values({
     leadId,

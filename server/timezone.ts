@@ -149,6 +149,25 @@ export function formatarDataHoraBR(data: Date): string {
  * Retorna a data/hora do próximo dia às 09:00 no fuso de São Paulo
  * Usado para agendar follow-ups automáticos
  */
+/**
+ * Retorna a data de hoje em São Paulo no formato YYYY-MM-DD
+ * Útil para comparações de data (escolha diária, etc.)
+ */
+export function hojeStrSP(): string {
+  const sp = agora();
+  const ano = sp.getFullYear();
+  const mes = String(sp.getMonth() + 1).padStart(2, '0');
+  const dia = String(sp.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+/**
+ * Alias para agora() - retorna data/hora atual em SP
+ */
+export function agoraSP(): Date {
+  return agora();
+}
+
 export function proximoDiaAs9h(): Date {
   // Pegar data/hora atual em SP
   const agoraSP = agora();

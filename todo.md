@@ -4747,3 +4747,8 @@
 - [x] Lógica: Sim = bloqueio mantido, Não = desbloqueio imediato + leads voltam para base
 - [x] Modal reseta diariamente (nova escolha a cada dia, baseado em data)
 - [x] Testar cenários: 14 testes passando (backend + UI)
+
+## Correção: Fuso horário São Paulo (America/Sao_Paulo) em todo o sistema
+- [x] Corrigir escolha diária de follow-up para usar fuso SP (já usava inicioDoDiaHoje)
+- [x] Verificar e corrigir 18+ funções que usavam new Date() com setHours(0,0,0,0) para usar timezone SP
+- [x] Garantir que sincronizações, atividades diárias e rankings usem fuso SP (9 testes passando)
