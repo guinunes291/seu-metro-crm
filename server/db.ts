@@ -3387,13 +3387,12 @@ export async function getCorretorDashboardMetrics(corretorId: number, filtros?: 
       .where(and(...conditions, eq(leads.status, 'novo'))),
   ]);
   
-  // VGV do corretor
+  // VGV do corretor (soma dos valores reais dos contratos)
   const vgvResult = await db.select({ 
-    total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)` 
+    total: sql<number>`COALESCE(SUM(CAST(${contratos.valorVenda} AS DECIMAL(15,2))), 0)` 
   })
-    .from(leads)
-    .leftJoin(projects, eq(leads.projectId, projects.id))
-    .where(and(...conditions, eq(leads.status, 'contrato_fechado')));
+    .from(contratos)
+    .where(eq(contratos.corretorId, corretorId));
   
   const total = Number(totalResult[0]?.count || 0);
   const contratosFechados = Number(statusCounts[5][0]?.count || 0);

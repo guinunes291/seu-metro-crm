@@ -4791,3 +4791,9 @@
 ## Bug: Barra inferior sobrepondo menu lateral
 - [x] Corrigir CSS da barra inferior (rodapé com data/hora) para não sobrepor o sidebar
 - [x] Adicionar md:left-64 para respeitar o espaço do menu lateral em telas médias+
+
+## Bug Crítico: VGV divergente no dashboard do corretor
+- [x] Investigar por que o VGV do Andrew mostra R$ 113.770.000 no dashboard mas R$ 1.811.431,45 no ranking
+- [x] Identificar qual procedure calcula o VGV para o dashboard do corretor (getCorretorDashboardMetrics)
+- [x] Encontrar a diferença: estava somando valorMinimo do projeto para cada lead em vez de valorVenda dos contratos
+- [x] Corrigir cálculo para usar SUM(contratos.valorVenda) em vez de SUM(projects.valorMinimo)
