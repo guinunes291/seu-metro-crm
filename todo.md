@@ -4803,3 +4803,15 @@
 - [x] Identificar de onde vêm os 400 pontos extras: valores de pontuação estavam incorretos
 - [x] Corrigir valores: Ligação 2→5, Agendamento 100→25, Visita 250→40, Doc 400→60, Venda 1000→150
 - [x] Recalcular pontuação de todos os corretores para hoje com novos valores
+
+## Tarefa: Associar projetos aos leads importados
+- [ ] Verificar projetos disponíveis no sistema
+- [ ] Identificar leads sem projeto no banco de dados
+- [ ] Criar mapeamento entre nomes de empreendimentos no CSV e IDs de projetos
+- [ ] Executar script para atualizar leads com projetos corretos
+- [ ] Validar que todos os leads foram associados corretamente
+
+## Tarefa: Preencher nome do projeto nos leads baseado no CSV
+- [ ] Verificar se existe campo de texto para nome do projeto na tabela leads
+- [ ] Ajustar script para escrever nome do empreendimento diretamente (sem vincular a projeto existente)
+- [ ] Executar script e validar que todos os leads do CSV foram atualizados

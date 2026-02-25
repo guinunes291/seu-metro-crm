@@ -119,9 +119,9 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value); // Valores em reais
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value); // Valores em reais com centavos
 }
 
 function formatDateShort(dateStr: string): string {

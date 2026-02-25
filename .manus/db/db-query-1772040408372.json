@@ -1,0 +1,210 @@
+{
+  "query": "SELECT id, nome FROM projects WHERE status = 'ativo' ORDER BY nome LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome FROM projects WHERE status = 'ativo' ORDER BY nome LIMIT 50;",
+  "rows": [
+    {
+      "id": "1170011",
+      "nome": "-"
+    },
+    {
+      "id": "1170244",
+      "nome": "0"
+    },
+    {
+      "id": "1170241",
+      "nome": "011 Broo"
+    },
+    {
+      "id": "1170032",
+      "nome": "011 Brooklin"
+    },
+    {
+      "id": "1170204",
+      "nome": "011 Brooklin Residence"
+    },
+    {
+      "id": "1170154",
+      "nome": "011 Brooklin Residence Riva"
+    },
+    {
+      "id": "1170259",
+      "nome": "011 Brooklin: (Mkt) (Riva) Faça uma simulação"
+    },
+    {
+      "id": "1170203",
+      "nome": "011 Brooklin: Modal Imóvel"
+    },
+    {
+      "id": "1170061",
+      "nome": "1,20237E+17"
+    },
+    {
+      "id": "1170258",
+      "nome": "2025-11-02T22:48:18.000Z"
+    },
+    {
+      "id": "480243",
+      "nome": "360° PARK VIEW"
+    },
+    {
+      "id": "480377",
+      "nome": "360° PARK VIEW"
+    },
+    {
+      "id": "990049",
+      "nome": "360° PARK VIEW"
+    },
+    {
+      "id": "1170019",
+      "nome": "Abytá - [Santo Amaro]"
+    },
+    {
+      "id": "1170127",
+      "nome": "Abyta Santo Am"
+    },
+    {
+      "id": "1170126",
+      "nome": "Abyta Santo Amar"
+    },
+    {
+      "id": "1170029",
+      "nome": "Abytá Santo Amaro"
+    },
+    {
+      "id": "1170003",
+      "nome": "Abyta Santo Amaro [SI]"
+    },
+    {
+      "id": "990693",
+      "nome": "AERO By Pininfarina"
+    },
+    {
+      "id": "990180",
+      "nome": "AGAMI - PARK RESIDENCES"
+    },
+    {
+      "id": "990164",
+      "nome": "AIR BROOKLIN"
+    },
+    {
+      "id": "990627",
+      "nome": "AIRE"
+    },
+    {
+      "id": "990121",
+      "nome": "AIRPORT OFFICES"
+    },
+    {
+      "id": "990598",
+      "nome": "Alameda Barros"
+    },
+    {
+      "id": "1170201",
+      "nome": "Alentejo Residencial"
+    },
+    {
+      "id": "990230",
+      "nome": "ALIVE BELÉM"
+    },
+    {
+      "id": "990373",
+      "nome": "Alive Home Resort"
+    },
+    {
+      "id": "990339",
+      "nome": "All CAMPO BELO"
+    },
+    {
+      "id": "990187",
+      "nome": "ALT STUDIOS"
+    },
+    {
+      "id": "990527",
+      "nome": "Alto Cantareira"
+    },
+    {
+      "id": "480290",
+      "nome": "ALTO CHÁCARA SANTO ANTONIO"
+    },
+    {
+      "id": "480428",
+      "nome": "ALTO CHÁCARA SANTO ANTONIO"
+    },
+    {
+      "id": "990058",
+      "nome": "ALTO CHÁCARA SANTO ANTÔNIO"
+    },
+    {
+      "id": "990479",
+      "nome": "ALTO DO IPIRANGA"
+    },
+    {
+      "id": "1170214",
+      "nome": "Alto Liviero"
+    },
+    {
+      "id": "990835",
+      "nome": "Alto Morumbi"
+    },
+    {
+      "id": "480242",
+      "nome": "ALTO SÃO DOMINGOS - MUTINGA"
+    },
+    {
+      "id": "480375",
+      "nome": "ALTO SÃO DOMINGOS - MUTINGA"
+    },
+    {
+      "id": "990048",
+      "nome": "ALTO SÃO DOMINGOS MUTINGA"
+    },
+    {
+      "id": "990831",
+      "nome": "Alvorada"
+    },
+    {
+      "id": "990134",
+      "nome": "Ampère Brooklin"
+    },
+    {
+      "id": "990587",
+      "nome": "AMPÈRE BROOKLIN"
+    },
+    {
+      "id": "990747",
+      "nome": "Ampère Studios"
+    },
+    {
+      "id": "480260",
+      "nome": "ANTRIO SANTA MARINA"
+    },
+    {
+      "id": "480400",
+      "nome": "ANTRIO SANTA MARINA"
+    },
+    {
+      "id": "1170226",
+      "nome": "Apartamento - Abytá Santo Amaro"
+    },
+    {
+      "id": "1170157",
+      "nome": "Apartamento - Condomínios Nascente Parque Sapopemba"
+    },
+    {
+      "id": "1170240",
+      "nome": "apartamento 2 quartos"
+    },
+    {
+      "id": "1170250",
+      "nome": "apartamento a venda na planta"
+    },
+    {
+      "id": "1170254",
+      "nome": "apartamento a venda são paulo"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\n1170011\t-\n1170244\t0\n1170241\t011 Broo\n1170032\t011 Brooklin\n1170204\t011 Brooklin Residence\n1170154\t011 Brooklin Residence Riva\n1170259\t011 Brooklin: (Mkt) (Riva) Faça uma simulação\n1170203\t011 Brooklin: Modal Imóvel\n1170061\t1,20237E+17\n1170258\t2025-11-02T22:48:18.000Z\n480243\t360° PARK VIEW\n480377\t360° PARK VIEW\n990049\t360° PARK VIEW\n1170019\tAbytá - [Santo Amaro]\n1170127\tAbyta Santo Am\n1170126\tAbyta Santo Amar\n1170029\tAbytá Santo Amaro\n1170003\tAbyta Santo Amaro [SI]\n990693\tAERO By Pininfarina\n990180\tAGAMI - PARK RESIDENCES\n990164\tAIR BROOKLIN\n990627\tAIRE\n990121\tAIRPORT OFFICES\n990598\tAlameda Barros\n1170201\tAlentejo Residencial\n990230\tALIVE BELÉM\n990373\tAlive Home Resort\n990339\tAll CAMPO BELO\n990187\tALT STUDIOS\n990527\tAlto Cantareira\n480290\tALTO CHÁCARA SANTO ANTONIO\n480428\tALTO CHÁCARA SANTO ANTONIO\n990058\tALTO CHÁCARA SANTO ANTÔNIO\n990479\tALTO DO IPIRANGA\n1170214\tAlto Liviero\n990835\tAlto Morumbi\n480242\tALTO SÃO DOMINGOS - MUTINGA\n480375\tALTO SÃO DOMINGOS - MUTINGA\n990048\tALTO SÃO DOMINGOS MUTINGA\n990831\tAlvorada\n990134\tAmpère Brooklin\n990587\tAMPÈRE BROOKLIN\n990747\tAmpère Studios\n480260\tANTRIO SANTA MARINA\n480400\tANTRIO SANTA MARINA\n1170226\tApartamento - Abytá Santo Amaro\n1170157\tApartamento - Condomínios Nascente Parque Sapopemba\n1170240\tapartamento 2 quartos\n1170250\tapartamento a venda na planta\n1170254\tapartamento a venda são paulo\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

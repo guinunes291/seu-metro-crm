@@ -3388,11 +3388,22 @@ export async function getCorretorDashboardMetrics(corretorId: number, filtros?: 
   ]);
   
   // VGV do corretor (soma dos valores reais dos contratos)
+  // Aplicar os mesmos filtros de data usados nos leads
+  const contratoConditions: any[] = [eq(contratos.corretorId, corretorId)];
+  
+  if (filtros?.dataInicio) {
+    contratoConditions.push(gte(contratos.createdAt, filtros.dataInicio));
+  }
+  
+  if (filtros?.dataFim) {
+    contratoConditions.push(lte(contratos.createdAt, filtros.dataFim));
+  }
+  
   const vgvResult = await db.select({ 
     total: sql<number>`COALESCE(SUM(CAST(${contratos.valorVenda} AS DECIMAL(15,2))), 0)` 
   })
     .from(contratos)
-    .where(eq(contratos.corretorId, corretorId));
+    .where(and(...contratoConditions));
   
   const total = Number(totalResult[0]?.count || 0);
   const contratosFechados = Number(statusCounts[5][0]?.count || 0);
