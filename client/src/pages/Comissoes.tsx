@@ -23,6 +23,10 @@ function ComissoesContent() {
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
   const [dialogImportOpen, setDialogImportOpen] = useState(false);
   
+  // Estado de edição inline do percentual da imobiliária
+  const [editandoPercentualId, setEditandoPercentualId] = useState<number | null>(null);
+  const [novoPercentual, setNovoPercentual] = useState<string>('');
+
   // Estados do formulário de importação
   const [contratoId, setContratoId] = useState<number | null>(null);
   const [usuarioId, setUsuarioId] = useState<number | null>(null);
@@ -46,6 +50,19 @@ function ComissoesContent() {
     },
   });
   
+  // Mutation para atualizar percentual da imobiliária
+  const atualizarPercentualMutation = trpc.dashboard.atualizarContrato.useMutation({
+    onSuccess: () => {
+      utils.comissoes.listarImobiliaria.invalidate();
+      setEditandoPercentualId(null);
+      setNovoPercentual('');
+      toast.success('Percentual atualizado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar: ${error.message}`);
+    },
+  });
+
   const importarComissaoMutation = trpc.comissoes.importarManual.useMutation({
     onSuccess: () => {
       toast.success('Comissão importada com sucesso!');
@@ -380,9 +397,64 @@ function ComissoesContent() {
                       <TableCell className="max-w-[200px] truncate">{item.projetoNome}</TableCell>
                       <TableCell className="text-right">{formatCurrency(item.valorVenda)}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant="outline" className="text-emerald-700 border-emerald-300">
-                          {item.percentualImobiliaria.toFixed(2)}%
-                        </Badge>
+                        {editandoPercentualId === item.contratoId ? (
+                          <div className="flex items-center gap-1 justify-end">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={novoPercentual}
+                              onChange={(e) => setNovoPercentual(e.target.value)}
+                              className="w-20 h-7 text-sm text-right"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  atualizarPercentualMutation.mutate({
+                                    contratoId: item.contratoId,
+                                    percentualComissao: parseFloat(novoPercentual),
+                                  });
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditandoPercentualId(null);
+                                }
+                              }}
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-emerald-600"
+                              onClick={() => atualizarPercentualMutation.mutate({
+                                contratoId: item.contratoId,
+                                percentualComissao: parseFloat(novoPercentual),
+                              })}
+                            >
+                              ✓
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-red-500"
+                              onClick={() => setEditandoPercentualId(null)}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ) : (
+                          <div
+                            className="flex items-center gap-1 justify-end cursor-pointer group"
+                            onClick={() => {
+                              setEditandoPercentualId(item.contratoId);
+                              setNovoPercentual(item.percentualImobiliaria.toFixed(2));
+                            }}
+                          >
+                            <Badge variant="outline" className="text-emerald-700 border-emerald-300 group-hover:bg-emerald-50">
+                              {item.percentualImobiliaria.toFixed(2)}%
+                            </Badge>
+                            <span className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">✏️</span>
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-bold text-emerald-700">
                         {formatCurrency(item.valorComissao)}

@@ -1897,6 +1897,7 @@ export const appRouter = router({
         dataVenda: z.string().optional(),
         equipeCorretorId: z.number().nullable().optional(),
         anexos: z.array(z.string()).optional(),
+        percentualComissao: z.number().min(0).max(100).optional(),
       }))
       .mutation(async ({ input }) => {
         const { contratoId, ...dados } = input;

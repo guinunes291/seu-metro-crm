@@ -4839,3 +4839,7 @@
 ## Melhoria: Seção de Comissão da Imobiliária
 - [x] Adicionar card de total da comissão da imobiliária (percentualComissao do contrato) nos cards de resumo
 - [x] Adicionar seção/tabela mostrando comissão da imobiliária por contrato (VGV × percentual imobiliária)
+
+## Melhoria: Edição inline do % da imobiliária
+- [x] Criar procedure backend para atualizar percentualComissao no contrato
+- [x] Adicionar edição inline na tabela de comissões da imobiliária
