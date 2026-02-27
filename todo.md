@@ -4832,3 +4832,6 @@
 ## Bug: Dropdowns no Modal de Importação de Comissões
 - [x] Corrigir dropdown de Contrato não carregando opções
 - [x] Corrigir dropdown de Beneficiário não carregando opções
+
+## Melhoria: Pré-preenchimento automático do VGV
+- [x] Preencher VGV automaticamente ao selecionar contrato no modal de importação de comissão

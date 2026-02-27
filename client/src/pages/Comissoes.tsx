@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,6 +61,17 @@ function ComissoesContent() {
   // Queries para selects
   const { data: contratos } = trpc.comissoes.listarContratos.useQuery();
   const { data: usuarios } = trpc.comissoes.listarUsuarios.useQuery();
+
+  // Preencher VGV automaticamente ao selecionar contrato
+  useEffect(() => {
+    if (contratoId && contratos) {
+      const contrato = contratos.find(c => c.id === contratoId);
+      if (contrato?.valorVenda) {
+        const vgv = Number(contrato.valorVenda);
+        setValorBase(vgv.toFixed(2).replace('.', ','));
+      }
+    }
+  }, [contratoId, contratos]);
   
   const limparFormulario = () => {
     setContratoId(null);
@@ -154,14 +165,13 @@ function ComissoesContent() {
                 <DialogTitle>Importar Comissão Manual</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleImportar} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="contrato">Contrato *</Label>
-                    <Select value={contratoId?.toString() || ''} onValueChange={(v) => setContratoId(Number(v))}>
-                      <SelectTrigger id="contrato">
-                        <SelectValue placeholder="Selecione o contrato" />
-                      </SelectTrigger>
-                      <SelectContent>
+                <div className="space-y-2">
+                  <Label htmlFor="contrato">Contrato *</Label>
+                  <Select value={contratoId?.toString() || ''} onValueChange={(v) => setContratoId(Number(v))}>
+                    <SelectTrigger id="contrato">
+                      <SelectValue placeholder="Selecione o contrato" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[9999]">
                         {contratos?.map((c) => (
                           <SelectItem key={c.id} value={c.id.toString()}>
                             {c.clienteNome} - {c.projetoNome || c.projetoCustom}
@@ -169,23 +179,22 @@ function ComissoesContent() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="usuario">Beneficiário *</Label>
-                    <Select value={usuarioId?.toString() || ''} onValueChange={(v) => setUsuarioId(Number(v))}>
-                      <SelectTrigger id="usuario">
-                        <SelectValue placeholder="Selecione o usuário" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {usuarios?.map((u) => (
-                          <SelectItem key={u.id} value={u.id.toString()}>
-                            {u.name} ({u.role})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="usuario">Beneficiário *</Label>
+                  <Select value={usuarioId?.toString() || ''} onValueChange={(v) => setUsuarioId(Number(v))}>
+                    <SelectTrigger id="usuario">
+                      <SelectValue placeholder="Selecione o usuário" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[9999]">
+                      {usuarios?.map((u) => (
+                        <SelectItem key={u.id} value={u.id.toString()}>
+                          {u.name} ({u.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
