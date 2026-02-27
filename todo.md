@@ -4824,3 +4824,7 @@
 - [x] Criar tabela de templates de percentuais por projeto/incorporadora
 - [x] Implementar lógica de pré-preenchimento automático no formulário de contrato
 - [x] Criar interface de gerenciamento de templates (admin)
+
+## Correções de Comissões
+- [x] Adicionar DashboardLayout na página de Comissões
+- [x] Criar funcionalidade de importação manual de comissões para vendas antigas

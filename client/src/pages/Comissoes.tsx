@@ -1,21 +1,36 @@
 import { useState } from 'react';
+import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Filter } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Filter, Upload } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export default function Comissoes() {
+function ComissoesContent() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
   const [filtroTipo, setFiltroTipo] = useState<string>('todos');
+  const [dialogImportOpen, setDialogImportOpen] = useState(false);
+  
+  // Estados do formulário de importação
+  const [contratoId, setContratoId] = useState<number | null>(null);
+  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const [tipo, setTipo] = useState<string>('corretor');
+  const [valorBase, setValorBase] = useState('');
+  const [percentual, setPercentual] = useState('');
+  const [percentualDesconto, setPercentualDesconto] = useState('0');
+  const [status, setStatus] = useState('pendente_assinatura');
   
   // Query de comissões
   const { data: comissoes, isLoading } = trpc.comissoes.listar.useQuery({
@@ -23,13 +38,67 @@ export default function Comissoes() {
     tipo: filtroTipo === 'todos' ? undefined : filtroTipo,
   });
   
-  // Mutation para marcar como paga
+  // Mutations
   const utils = trpc.useUtils();
   const marcarComoPagaMutation = trpc.comissoes.marcarComoPaga.useMutation({
     onSuccess: () => {
       utils.comissoes.listar.invalidate();
     },
   });
+  
+  const importarComissaoMutation = trpc.comissoes.importarManual.useMutation({
+    onSuccess: () => {
+      toast.success('Comissão importada com sucesso!');
+      utils.comissoes.listar.invalidate();
+      limparFormulario();
+      setDialogImportOpen(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao importar comissão: ${error.message}`);
+    },
+  });
+  
+  // Queries para selects
+  const { data: contratos } = trpc.comissoes.listarContratos.useQuery();
+  const { data: usuarios } = trpc.comissoes.listarUsuarios.useQuery();
+  
+  const limparFormulario = () => {
+    setContratoId(null);
+    setUsuarioId(null);
+    setTipo('corretor');
+    setValorBase('');
+    setPercentual('');
+    setPercentualDesconto('0');
+    setStatus('pendente_assinatura');
+  };
+  
+  const handleImportar = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!contratoId || !usuarioId || !valorBase || !percentual) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+    
+    const valorBaseNum = parseFloat(valorBase.replace(/[^\d,]/g, '').replace(',', '.'));
+    const percentualNum = parseFloat(percentual.replace(',', '.'));
+    const percentualDescontoNum = parseFloat(percentualDesconto.replace(',', '.'));
+    
+    const valorComissao = (valorBaseNum * percentualNum) / 100;
+    const valorLiquido = valorComissao - (valorComissao * percentualDescontoNum / 100);
+    
+    importarComissaoMutation.mutate({
+      contratoId,
+      usuarioId,
+      tipo: tipo as 'corretor' | 'gerente' | 'superintendente',
+      valorBase: valorBaseNum,
+      percentual: percentualNum,
+      valorComissao,
+      percentualDesconto: percentualDescontoNum,
+      valorLiquido,
+      status: status as 'pendente_assinatura' | 'a_pagar' | 'paga',
+    });
+  };
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -66,10 +135,146 @@ export default function Comissoes() {
   const totalPago = comissoes?.filter(c => c.status === 'paga').reduce((sum, c) => sum + Number(c.valorLiquido), 0) || 0;
   
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Comissões</h1>
-        <p className="text-muted-foreground">Gerencie e acompanhe suas comissões de vendas</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Comissões</h1>
+          <p className="text-muted-foreground">Gerencie e acompanhe suas comissões de vendas</p>
+        </div>
+        {isAdmin && (
+          <Dialog open={dialogImportOpen} onOpenChange={setDialogImportOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Upload className="w-4 h-4 mr-2" />
+                Importar Comissão
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Importar Comissão Manual</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleImportar} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contrato">Contrato *</Label>
+                    <Select value={contratoId?.toString() || ''} onValueChange={(v) => setContratoId(Number(v))}>
+                      <SelectTrigger id="contrato">
+                        <SelectValue placeholder="Selecione o contrato" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {contratos?.map((c) => (
+                          <SelectItem key={c.id} value={c.id.toString()}>
+                            {c.clienteNome} - {c.projetoNome || c.projetoCustom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="usuario">Beneficiário *</Label>
+                    <Select value={usuarioId?.toString() || ''} onValueChange={(v) => setUsuarioId(Number(v))}>
+                      <SelectTrigger id="usuario">
+                        <SelectValue placeholder="Selecione o usuário" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {usuarios?.map((u) => (
+                          <SelectItem key={u.id} value={u.id.toString()}>
+                            {u.name} ({u.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tipo">Tipo *</Label>
+                    <Select value={tipo} onValueChange={setTipo}>
+                      <SelectTrigger id="tipo">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="corretor">Corretor</SelectItem>
+                        <SelectItem value="gerente">Gerente</SelectItem>
+                        <SelectItem value="superintendente">Superintendente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status *</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger id="status">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pendente_assinatura">Pendente Assinatura</SelectItem>
+                        <SelectItem value="a_pagar">A Pagar</SelectItem>
+                        <SelectItem value="paga">Paga</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="valorBase">Valor Base (VGV) *</Label>
+                    <Input
+                      id="valorBase"
+                      value={valorBase}
+                      onChange={(e) => setValorBase(e.target.value)}
+                      placeholder="R$ 500.000,00"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="percentual">Percentual *</Label>
+                    <div className="relative">
+                      <Input
+                        id="percentual"
+                        value={percentual}
+                        onChange={(e) => setPercentual(e.target.value.replace(/[^\d,]/g, ''))}
+                        placeholder="1,85"
+                        className="pr-8"
+                        required
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="percentualDesconto">Desconto NF (%)</Label>
+                  <div className="relative">
+                    <Input
+                      id="percentualDesconto"
+                      value={percentualDesconto}
+                      onChange={(e) => setPercentualDesconto(e.target.value.replace(/[^\d,]/g, ''))}
+                      placeholder="0 ou 6"
+                      className="pr-8"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Aplicar 6% quando o cliente tiver entrada menor que 6%
+                  </p>
+                </div>
+                
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setDialogImportOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={importarComissaoMutation.isPending}>
+                    Importar
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
       
       {/* Cards de Resumo */}
@@ -208,5 +413,14 @@ export default function Comissoes() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+
+export default function Comissoes() {
+  return (
+    <DashboardLayout>
+      <ComissoesContent />
+    </DashboardLayout>
   );
 }

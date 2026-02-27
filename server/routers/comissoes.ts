@@ -35,4 +35,31 @@ export const comissoesRouter = router({
     .mutation(async ({ input }) => {
       return await db.aplicarDescontoComissao(input.id, input.percentualDesconto);
     }),
+  
+  // Listar contratos para select de importação
+  listarContratos: protectedProcedure.query(async () => {
+    return await db.listarContratosParaComissao();
+  }),
+
+  // Listar usuários para select de importação
+  listarUsuarios: protectedProcedure.query(async () => {
+    return await db.listarUsuariosParaComissao();
+  }),
+
+  // Importar comissão manual
+  importarManual: adminProcedure
+    .input(z.object({
+      contratoId: z.number(),
+      usuarioId: z.number(),
+      tipo: z.enum(['corretor', 'gerente', 'superintendente']),
+      valorBase: z.number(),
+      percentual: z.number(),
+      valorComissao: z.number(),
+      percentualDesconto: z.number(),
+      valorLiquido: z.number(),
+      status: z.enum(['pendente_assinatura', 'a_pagar', 'paga']),
+    }))
+    .mutation(async ({ input }) => {
+      return await db.importarComissaoManual(input);
+    }),
 });
