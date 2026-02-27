@@ -46,6 +46,11 @@ export const comissoesRouter = router({
     return await db.listarUsuariosParaComissao();
   }),
 
+  // Listar comissões da imobiliária por contrato (admin only)
+  listarImobiliaria: adminProcedure.query(async () => {
+    return await db.getComissoesImobiliaria();
+  }),
+
   // Importar comissão manual
   importarManual: adminProcedure
     .input(z.object({

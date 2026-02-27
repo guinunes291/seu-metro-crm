@@ -185,3 +185,37 @@ export async function importarComissaoManual(dados: {
 
   return comissao;
 }
+
+/**
+ * Listar comissões da imobiliária por contrato
+ * Usa o campo percentualComissao salvo em cada contrato
+ */
+export async function getComissoesImobiliaria() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const resultado = await db.select({
+    contratoId: contratos.id,
+    clienteNome: leads.nome,
+    projetoNome: sql<string>`COALESCE(${projects.nome}, ${leads.projetoCustom})`,
+    valorVenda: contratos.valorVenda,
+    percentualImobiliaria: contratos.percentualComissao,
+    dataVenda: contratos.createdAt,
+  })
+    .from(contratos)
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .orderBy(sql`${contratos.createdAt} DESC`);
+
+  return resultado.map(r => {
+    const vgv = Number(r.valorVenda) || 0;
+    const perc = Number(r.percentualImobiliaria) || 0;
+    const valorComissao = (vgv * perc) / 100;
+    return {
+      ...r,
+      valorVenda: vgv,
+      percentualImobiliaria: perc,
+      valorComissao,
+    };
+  });
+}

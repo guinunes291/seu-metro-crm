@@ -4835,3 +4835,7 @@
 
 ## Melhoria: Pré-preenchimento automático do VGV
 - [x] Preencher VGV automaticamente ao selecionar contrato no modal de importação de comissão
+
+## Melhoria: Seção de Comissão da Imobiliária
+- [x] Adicionar card de total da comissão da imobiliária (percentualComissao do contrato) nos cards de resumo
+- [x] Adicionar seção/tabela mostrando comissão da imobiliária por contrato (VGV × percentual imobiliária)
