@@ -120,6 +120,8 @@ const menuGroups = [
       { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["admin", "superintendente"] },
       { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["admin", "superintendente"] },
       { icon: Clock, label: "Histórico Presença", path: "/historico-presenca", roles: ["gestor", "admin", "superintendente"] },
+      { icon: TrendingUp, label: "Comissões", path: "/comissoes", roles: ["corretor", "gestor", "admin", "superintendente"] },
+      { icon: Settings, label: "Templates de Comissão", path: "/templates-comissao", roles: ["admin", "superintendente"] },
     ],
   },
   {

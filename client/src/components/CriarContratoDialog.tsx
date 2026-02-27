@@ -38,6 +38,23 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
 
   // Queries
   const { data: opcoes, isLoading: loadingOpcoes } = trpc.dashboard.opcoesContrato.useQuery();
+  
+  // Buscar template de comissão quando projeto for selecionado
+  const { data: templateComissao } = trpc.dashboard.buscarTemplateComissao.useQuery(
+    { projectId: projectId! },
+    { enabled: !!projectId && !usarProjetoCustom }
+  );
+  
+  // Pré-preencher percentuais quando template for carregado
+  useEffect(() => {
+    if (templateComissao) {
+      setPercentualComissao(templateComissao.percentualImobiliaria.toString());
+      setPercentualCorretor(templateComissao.percentualCorretor.toString());
+      setPercentualGerente(templateComissao.percentualGerente.toString());
+      setPercentualSuperintendente(templateComissao.percentualSuperintendente.toString());
+      toast.success(`Template "${templateComissao.nome}" aplicado!`);
+    }
+  }, [templateComissao]);
 
   // Mutation
   const criarMutation = trpc.dashboard.criarContrato.useMutation({

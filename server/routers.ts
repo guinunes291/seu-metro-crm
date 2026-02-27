@@ -16,6 +16,7 @@ import * as updateProjetosEmMassa from "./modules/updateProjetosEmMassa";
 import * as limparProjetosOrfaos from "./modules/limparProjetosOrfaos";
 import * as onboarding from "./modules/onboarding";
 import { comissoesRouter } from "./routers/comissoes";
+import { templatesRouter } from "./routers/templates";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -104,6 +105,7 @@ const gestorRestritoProcedure = protectedProcedure.use(async ({ ctx, next }) => 
 export const appRouter = router({
   system: systemRouter,
   comissoes: comissoesRouter,
+  templates: templatesRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -1933,6 +1935,15 @@ export const appRouter = router({
     opcoesContrato: gestorProcedure
       .query(async () => {
         return await db.getOpcoesContrato();
+      }),
+    
+    // Buscar template de comissão por projeto
+    buscarTemplateComissao: protectedProcedure
+      .input(z.object({
+        projectId: z.number(),
+      }))
+      .query(async ({ input }) => {
+        return await db.buscarTemplateComissaoPorProjeto(input.projectId);
       }),
     
     // VGV agrupado por equipe e projeto

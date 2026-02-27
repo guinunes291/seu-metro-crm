@@ -4818,3 +4818,9 @@
 
 ## Melhoria: Percentuais de Comissão Editáveis
 - [x] Tornar todos os percentuais de comissão editáveis no formulário de contrato (corretor, gerente, superintendente)
+
+## Melhorias de Comissões - Menu e Templates
+- [x] Adicionar item "Comissões" no menu lateral do DashboardLayout
+- [x] Criar tabela de templates de percentuais por projeto/incorporadora
+- [x] Implementar lógica de pré-preenchimento automático no formulário de contrato
+- [x] Criar interface de gerenciamento de templates (admin)

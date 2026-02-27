@@ -1914,6 +1914,43 @@ export type Comissao = typeof comissoes.$inferSelect;
 export type InsertComissao = typeof comissoes.$inferInsert;
 
 // ============================================================================
+// TABELA DE TEMPLATES DE PERCENTUAIS DE COMISSÃO
+// ============================================================================
+
+/**
+ * Tabela para armazenar templates de percentuais de comissão por projeto/incorporadora.
+ * Permite pré-configurar percentuais que serão aplicados automaticamente ao criar contratos.
+ */
+export const templatesComissao = mysqlTable("templates_comissao", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Referência ao projeto (opcional - pode ser um template genérico)
+  projectId: int("projectId").references(() => projects.id, { onDelete: "cascade" }),
+  
+  // Nome do template (ex: "Incorporadora XYZ", "Padrão Alto Padrão")
+  nome: varchar("nome", { length: 255 }).notNull(),
+  
+  // Percentuais
+  percentualImobiliaria: decimal("percentualImobiliaria", { precision: 5, scale: 2 }).notNull().default("3.50"),
+  percentualCorretor: decimal("percentualCorretor", { precision: 5, scale: 2 }).notNull().default("1.85"),
+  percentualGerente: decimal("percentualGerente", { precision: 5, scale: 2 }).notNull().default("0.50"),
+  percentualSuperintendente: decimal("percentualSuperintendente", { precision: 5, scale: 2 }).notNull().default("0.30"),
+  
+  // Flag para indicar se é o template padrão
+  isPadrao: boolean("isPadrao").default(false),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  projectIdx: index("templates_comissao_project_idx").on(table.projectId),
+  nomeIdx: index("templates_comissao_nome_idx").on(table.nome),
+}));
+
+export type TemplateComissao = typeof templatesComissao.$inferSelect;
+export type InsertTemplateComissao = typeof templatesComissao.$inferInsert;
+
+// ============================================================================
 // TABELA DE HISTÓRICO DE TRANSFERÊNCIAS (Reatribuição de Leads/Contratos)
 // ============================================================================
 

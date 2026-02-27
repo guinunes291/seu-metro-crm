@@ -39,6 +39,7 @@ import {
   analises_credito, InsertAnaliseCredito, AnaliseCredito,
   contratos, InsertContrato, Contrato,
   comissoes, InsertComissao, Comissao,
+  templatesComissao, InsertTemplateComissao, TemplateComissao,
   metasGlobais,
   equipes
 } from "../drizzle/schema";
@@ -10182,3 +10183,180 @@ export async function criarNovoContrato(dados: {
 // ============================================================================
 
 export { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao } from './db-comissoes';
+
+/**
+ * Buscar template de comissão por projeto
+ */
+export async function buscarTemplateComissaoPorProjeto(projectId: number): Promise<TemplateComissao | null> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Buscar template específico do projeto
+  const templates = await db.select()
+    .from(templatesComissao)
+    .where(eq(templatesComissao.projectId, projectId))
+    .limit(1);
+
+  if (templates.length > 0) {
+    return templates[0];
+  }
+
+  // Se não encontrar, buscar template padrão
+  const templatesPadrao = await db.select()
+    .from(templatesComissao)
+    .where(eq(templatesComissao.isPadrao, true))
+    .limit(1);
+
+  return templatesPadrao.length > 0 ? templatesPadrao[0] : null;
+}
+
+/**
+ * Listar todos os templates de comissão
+ */
+export async function listarTemplatesComissao() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  const templates = await db.select({
+    id: templatesComissao.id,
+    nome: templatesComissao.nome,
+    projectId: templatesComissao.projectId,
+    projetoNome: projects.nome,
+    percentualImobiliaria: templatesComissao.percentualImobiliaria,
+    percentualCorretor: templatesComissao.percentualCorretor,
+    percentualGerente: templatesComissao.percentualGerente,
+    percentualSuperintendente: templatesComissao.percentualSuperintendente,
+    isPadrao: templatesComissao.isPadrao,
+    createdAt: templatesComissao.createdAt,
+  })
+    .from(templatesComissao)
+    .leftJoin(projects, eq(templatesComissao.projectId, projects.id))
+    .orderBy(desc(templatesComissao.isPadrao), templatesComissao.nome);
+
+  return templates;
+}
+
+/**
+ * Listar projetos para select de template
+ */
+export async function listarProjetosParaTemplate() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  return await db.select({
+    id: projects.id,
+    nome: projects.nome,
+  })
+    .from(projects)
+    .orderBy(projects.nome);
+}
+
+/**
+ * Criar template de comissão
+ */
+export async function criarTemplateComissao(dados: {
+  nome: string;
+  projectId: number | null;
+  percentualImobiliaria: number;
+  percentualCorretor: number;
+  percentualGerente: number;
+  percentualSuperintendente: number;
+  isPadrao: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Se marcar como padrão, desmarcar outros
+  if (dados.isPadrao) {
+    await db.update(templatesComissao)
+      .set({ isPadrao: false })
+      .where(eq(templatesComissao.isPadrao, true));
+  }
+
+  const [template] = await db.insert(templatesComissao)
+    .values({
+      nome: dados.nome,
+      projectId: dados.projectId,
+      percentualImobiliaria: dados.percentualImobiliaria.toString(),
+      percentualCorretor: dados.percentualCorretor.toString(),
+      percentualGerente: dados.percentualGerente.toString(),
+      percentualSuperintendente: dados.percentualSuperintendente.toString(),
+      isPadrao: dados.isPadrao,
+    })
+    .$returningId();
+
+  return template;
+}
+
+/**
+ * Atualizar template de comissão
+ */
+export async function atualizarTemplateComissao(id: number, dados: {
+  nome: string;
+  projectId: number | null;
+  percentualImobiliaria: number;
+  percentualCorretor: number;
+  percentualGerente: number;
+  percentualSuperintendente: number;
+  isPadrao: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Se marcar como padrão, desmarcar outros
+  if (dados.isPadrao) {
+    await db.update(templatesComissao)
+      .set({ isPadrao: false })
+      .where(and(
+        eq(templatesComissao.isPadrao, true),
+        ne(templatesComissao.id, id)
+      ));
+  }
+
+  await db.update(templatesComissao)
+    .set({
+      nome: dados.nome,
+      projectId: dados.projectId,
+      percentualImobiliaria: dados.percentualImobiliaria.toString(),
+      percentualCorretor: dados.percentualCorretor.toString(),
+      percentualGerente: dados.percentualGerente.toString(),
+      percentualSuperintendente: dados.percentualSuperintendente.toString(),
+      isPadrao: dados.isPadrao,
+    })
+    .where(eq(templatesComissao.id, id));
+
+  return { success: true };
+}
+
+/**
+ * Excluir template de comissão
+ */
+export async function excluirTemplateComissao(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  await db.delete(templatesComissao)
+    .where(eq(templatesComissao.id, id));
+
+  return { success: true };
+}
+
+/**
+ * Marcar template como padrão
+ */
+export async function marcarTemplatePadrao(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Desmarcar todos
+  await db.update(templatesComissao)
+    .set({ isPadrao: false })
+    .where(eq(templatesComissao.isPadrao, true));
+
+  // Marcar o selecionado
+  await db.update(templatesComissao)
+    .set({ isPadrao: true })
+    .where(eq(templatesComissao.id, id));
+
+  return { success: true };
+}
