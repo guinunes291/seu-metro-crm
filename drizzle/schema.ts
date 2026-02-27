@@ -1841,6 +1841,11 @@ export const contratos = mysqlTable("contratos", {
   // Percentual de comissão da imobiliária (3-4%)
   percentualComissao: decimal("percentualComissao", { precision: 5, scale: 2 }).default("3.50"),
   
+  // Percentuais individuais de comissão
+  percentualCorretor: decimal("percentualCorretor", { precision: 5, scale: 2 }).default("1.85"),
+  percentualGerente: decimal("percentualGerente", { precision: 5, scale: 2 }).default("0.50"),
+  percentualSuperintendente: decimal("percentualSuperintendente", { precision: 5, scale: 2 }).default("0.30"),
+  
   // Anexos (URLs dos arquivos no S3)
   anexos: json("anexos").$type<string[]>().default([]),
   

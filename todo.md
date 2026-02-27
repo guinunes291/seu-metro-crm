@@ -4815,3 +4815,6 @@
 - [ ] Verificar se existe campo de texto para nome do projeto na tabela leads
 - [ ] Ajustar script para escrever nome do empreendimento diretamente (sem vincular a projeto existente)
 - [ ] Executar script e validar que todos os leads do CSV foram atualizados
+
+## Melhoria: Percentuais de Comissão Editáveis
+- [x] Tornar todos os percentuais de comissão editáveis no formulário de contrato (corretor, gerente, superintendente)

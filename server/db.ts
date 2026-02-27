@@ -10016,6 +10016,9 @@ export async function criarNovoContrato(dados: {
   projetoCustom: string;
   valorVenda: number;
   percentualComissao: number;
+  percentualCorretor?: number;
+  percentualGerente?: number;
+  percentualSuperintendente?: number;
   dataVenda: Date;
   observacoes?: string;
   anexos?: string[];
@@ -10080,6 +10083,9 @@ export async function criarNovoContrato(dados: {
       corretorId: dados.corretorId,
       valorVenda: dados.valorVenda.toString(),
       percentualComissao: dados.percentualComissao.toString(),
+      percentualCorretor: (dados.percentualCorretor || 1.85).toString(),
+      percentualGerente: (dados.percentualGerente || 0.5).toString(),
+      percentualSuperintendente: (dados.percentualSuperintendente || 0.3).toString(),
       observacoes: dados.observacoes || '',
       anexos: dados.anexos || [],
       createdAt: dados.dataVenda,
@@ -10109,10 +10115,10 @@ export async function criarNovoContrato(dados: {
   const valorBase = dados.valorVenda;
   const comissaoImobiliaria = valorBase * (dados.percentualComissao / 100);
 
-  // Percentuais padrão
-  const percentualCorretor = 1.85; // Média entre 1.7-2%
-  const percentualGerente = 0.5;
-  const percentualSuperintendente = 0.3;
+  // Percentuais configuráveis (com valores padrão)
+  const percentualCorretor = dados.percentualCorretor || 1.85;
+  const percentualGerente = dados.percentualGerente || 0.5;
+  const percentualSuperintendente = dados.percentualSuperintendente || 0.3;
 
   const comissoesParaCriar: InsertComissao[] = [];
 

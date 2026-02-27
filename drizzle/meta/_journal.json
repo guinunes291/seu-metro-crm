@@ -50,6 +50,13 @@
       "when": 1772197576721,
       "tag": "0006_parallel_xorn",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1772198661995,
+      "tag": "0007_tricky_zarda",
+      "breakpoints": true
     }
   ]
 }

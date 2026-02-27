@@ -27,6 +27,9 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
   const [projetoCustom, setProjetoCustom] = useState('');
   const [valorVenda, setValorVenda] = useState('');
   const [percentualComissao, setPercentualComissao] = useState('3.50');
+  const [percentualCorretor, setPercentualCorretor] = useState('1.85');
+  const [percentualGerente, setPercentualGerente] = useState('0.50');
+  const [percentualSuperintendente, setPercentualSuperintendente] = useState('0.30');
   const [dataVenda, setDataVenda] = useState(new Date().toISOString().split('T')[0]);
   const [observacoes, setObservacoes] = useState('');
   const [usarProjetoCustom, setUsarProjetoCustom] = useState(false);
@@ -68,6 +71,9 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
     setProjetoCustom('');
     setValorVenda('');
     setPercentualComissao('3.50');
+    setPercentualCorretor('1.85');
+    setPercentualGerente('0.50');
+    setPercentualSuperintendente('0.30');
     setDataVenda(new Date().toISOString().split('T')[0]);
     setObservacoes('');
     setUsarProjetoCustom(false);
@@ -141,6 +147,24 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       return;
     }
 
+    const percentualCorretorNumerico = parseFloat(percentualCorretor.replace(',', '.'));
+    if (isNaN(percentualCorretorNumerico) || percentualCorretorNumerico < 0 || percentualCorretorNumerico > 100) {
+      toast.error('Digite um percentual de corretor válido (0-100)');
+      return;
+    }
+
+    const percentualGerenteNumerico = parseFloat(percentualGerente.replace(',', '.'));
+    if (isNaN(percentualGerenteNumerico) || percentualGerenteNumerico < 0 || percentualGerenteNumerico > 100) {
+      toast.error('Digite um percentual de gerente válido (0-100)');
+      return;
+    }
+
+    const percentualSuperintendenteNumerico = parseFloat(percentualSuperintendente.replace(',', '.'));
+    if (isNaN(percentualSuperintendenteNumerico) || percentualSuperintendenteNumerico < 0 || percentualSuperintendenteNumerico > 100) {
+      toast.error('Digite um percentual de superintendente válido (0-100)');
+      return;
+    }
+
     criarMutation.mutate({
       corretorId,
       clienteNome,
@@ -150,6 +174,9 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       projetoCustom: usarProjetoCustom ? projetoCustom : '',
       valorVenda: valorNumerico,
       percentualComissao: percentualNumerico,
+      percentualCorretor: percentualCorretorNumerico,
+      percentualGerente: percentualGerenteNumerico,
+      percentualSuperintendente: percentualSuperintendenteNumerico,
       dataVenda,
       observacoes,
       anexos: anexosUrls,
@@ -285,8 +312,8 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
             )}
           </div>
 
-          {/* Valor, Percentual e Data */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Valor e Data */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="valorVenda">Valor (VGV) *</Label>
               <div className="relative">
@@ -303,21 +330,6 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="percentualComissao">% Comissão Imobiliária *</Label>
-              <div className="relative">
-                <Input
-                  id="percentualComissao"
-                  value={percentualComissao}
-                  onChange={(e) => setPercentualComissao(e.target.value.replace(/[^\d,]/g, ''))}
-                  placeholder="3,50"
-                  className="pr-8"
-                  required
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-              </div>
-              <p className="text-xs text-muted-foreground">Normalmente 3-4%</p>
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="dataVenda">Data da Venda *</Label>
               <Input
                 id="dataVenda"
@@ -327,6 +339,70 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
                 required
               />
             </div>
+          </div>
+
+          {/* Percentuais de Comissão */}
+          <div className="space-y-2">
+            <Label className="text-base font-semibold">Percentuais de Comissão</Label>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="percentualComissao">Imobiliária *</Label>
+                <div className="relative">
+                  <Input
+                    id="percentualComissao"
+                    value={percentualComissao}
+                    onChange={(e) => setPercentualComissao(e.target.value.replace(/[^\d,]/g, ''))}
+                    placeholder="3,50"
+                    className="pr-8"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="percentualCorretor">Corretor *</Label>
+                <div className="relative">
+                  <Input
+                    id="percentualCorretor"
+                    value={percentualCorretor}
+                    onChange={(e) => setPercentualCorretor(e.target.value.replace(/[^\d,]/g, ''))}
+                    placeholder="1,85"
+                    className="pr-8"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="percentualGerente">Gerente *</Label>
+                <div className="relative">
+                  <Input
+                    id="percentualGerente"
+                    value={percentualGerente}
+                    onChange={(e) => setPercentualGerente(e.target.value.replace(/[^\d,]/g, ''))}
+                    placeholder="0,50"
+                    className="pr-8"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="percentualSuperintendente">Superintendente *</Label>
+                <div className="relative">
+                  <Input
+                    id="percentualSuperintendente"
+                    value={percentualSuperintendente}
+                    onChange={(e) => setPercentualSuperintendente(e.target.value.replace(/[^\d,]/g, ''))}
+                    placeholder="0,30"
+                    className="pr-8"
+                    required
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Imobiliária: 3-4% | Corretor: 1,6-2% | Gerente: 0,5% | Superintendente: 0,3%</p>
           </div>
 
           {/* Observações */}
