@@ -4828,3 +4828,7 @@
 ## Correções de Comissões
 - [x] Adicionar DashboardLayout na página de Comissões
 - [x] Criar funcionalidade de importação manual de comissões para vendas antigas
+
+## Bug: Dropdowns no Modal de Importação de Comissões
+- [x] Corrigir dropdown de Contrato não carregando opções
+- [x] Corrigir dropdown de Beneficiário não carregando opções
