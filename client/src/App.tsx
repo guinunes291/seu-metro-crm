@@ -20,6 +20,7 @@ import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
 import ImportarCSV from "@/pages/ImportarCSV";
 import ControleDistribuicao from "@/pages/ControleDistribuicao";
+import Comissoes from "@/pages/Comissoes";
 import Notificacoes from "@/pages/Notificacoes";
 import LeadsPorCorretor from "@/pages/LeadsPorCorretor";
 import Kanban from "@/pages/Kanban";
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/minha-performance" component={MinhaPerformance} />
       <Route path="/importar-csv" component={ImportarCSV} />
       <Route path="/controle-distribuicao" component={ControleDistribuicao} />
+      <Route path="/comissoes" component={Comissoes} />
       <Route path="/notificacoes" component={Notificacoes} />
       <Route path="/leads-por-corretor" component={LeadsPorCorretor} />
       <Route path="/kanban" component={Kanban} />

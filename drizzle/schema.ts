@@ -1838,6 +1838,9 @@ export const contratos = mysqlTable("contratos", {
   // Valor da venda (VGV)
   valorVenda: decimal("valorVenda", { precision: 15, scale: 2 }),
   
+  // Percentual de comissão da imobiliária (3-4%)
+  percentualComissao: decimal("percentualComissao", { precision: 5, scale: 2 }).default("3.50"),
+  
   // Anexos (URLs dos arquivos no S3)
   anexos: json("anexos").$type<string[]>().default([]),
   
@@ -1852,6 +1855,58 @@ export const contratos = mysqlTable("contratos", {
 
 export type Contrato = typeof contratos.$inferSelect;
 export type InsertContrato = typeof contratos.$inferInsert;
+
+// ============================================================================
+// TABELA DE COMISSÕES
+// ============================================================================
+
+/**
+ * Tabela para registrar comissões de vendas.
+ * Cada contrato gera múltiplas comissões (corretor, gerente, superintendente).
+ */
+export const comissoes = mysqlTable("comissoes", {
+  id: int("id").primaryKey().autoincrement(),
+  
+  // Referência ao contrato
+  contratoId: int("contratoId").notNull().references(() => contratos.id, { onDelete: "cascade" }),
+  
+  // Beneficiário da comissão
+  usuarioId: int("usuarioId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tipo: mysqlEnum("tipo", ["corretor", "gerente", "superintendente"]).notNull(),
+  
+  // Valores
+  valorBase: decimal("valorBase", { precision: 15, scale: 2 }).notNull(), // VGV do contrato
+  percentual: decimal("percentual", { precision: 5, scale: 2 }).notNull(), // % da comissão
+  valorComissao: decimal("valorComissao", { precision: 15, scale: 2 }).notNull(), // Valor calculado
+  
+  // Descontos
+  percentualDesconto: decimal("percentualDesconto", { precision: 5, scale: 2 }).default("0"), // Desconto NF (0% ou 6%)
+  valorLiquido: decimal("valorLiquido", { precision: 15, scale: 2 }).notNull(), // Valor após descontos
+  
+  // Status e pagamento
+  status: mysqlEnum("status", [
+    "pendente_assinatura", // Aguardando assinatura do financiamento
+    "a_pagar",             // Pronta para pagamento
+    "paga"                 // Já foi paga
+  ]).default("pendente_assinatura").notNull(),
+  dataPagamento: timestamp("dataPagamento"),
+  
+  // Anexos e observações
+  comprovantePagamento: text("comprovantePagamento"), // URL do comprovante no S3
+  observacoes: text("observacoes"),
+  
+  // Metadata
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  contratoIdx: index("comissoes_contrato_idx").on(table.contratoId),
+  usuarioIdx: index("comissoes_usuario_idx").on(table.usuarioId),
+  statusIdx: index("comissoes_status_idx").on(table.status),
+  tipoIdx: index("comissoes_tipo_idx").on(table.tipo),
+}));
+
+export type Comissao = typeof comissoes.$inferSelect;
+export type InsertComissao = typeof comissoes.$inferInsert;
 
 // ============================================================================
 // TABELA DE HISTÓRICO DE TRANSFERÊNCIAS (Reatribuição de Leads/Contratos)

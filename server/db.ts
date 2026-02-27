@@ -38,6 +38,7 @@ import {
   documentacoes, InsertDocumentacao, Documentacao,
   analises_credito, InsertAnaliseCredito, AnaliseCredito,
   contratos, InsertContrato, Contrato,
+  comissoes, InsertComissao, Comissao,
   metasGlobais,
   equipes
 } from "../drizzle/schema";
@@ -10014,6 +10015,7 @@ export async function criarNovoContrato(dados: {
   projectId: number | null;
   projetoCustom: string;
   valorVenda: number;
+  percentualComissao: number;
   dataVenda: Date;
   observacoes?: string;
   anexos?: string[];
@@ -10077,12 +10079,100 @@ export async function criarNovoContrato(dados: {
       leadId,
       corretorId: dados.corretorId,
       valorVenda: dados.valorVenda.toString(),
+      percentualComissao: dados.percentualComissao.toString(),
       observacoes: dados.observacoes || '',
       anexos: dados.anexos || [],
       createdAt: dados.dataVenda,
     })
     .$returningId();
 
+  // 3. Buscar hierarquia do corretor (gerente e superintendente)
+  const corretor = await db.select({
+    id: users.id,
+    equipeId: users.equipeId,
+  }).from(users).where(eq(users.id, dados.corretorId)).limit(1);
+
+  let gerenteId: number | null = null;
+  let superintendenteId: number | null = null;
+
+  if (corretor[0]?.equipeId) {
+    const equipe = await db.select({
+      gerenteId: equipes.gerenteId,
+      superintendenteId: equipes.superintendenteId,
+    }).from(equipes).where(eq(equipes.id, corretor[0].equipeId)).limit(1);
+
+    gerenteId = equipe[0]?.gerenteId || null;
+    superintendenteId = equipe[0]?.superintendenteId || null;
+  }
+
+  // 4. Calcular comissões
+  const valorBase = dados.valorVenda;
+  const comissaoImobiliaria = valorBase * (dados.percentualComissao / 100);
+
+  // Percentuais padrão
+  const percentualCorretor = 1.85; // Média entre 1.7-2%
+  const percentualGerente = 0.5;
+  const percentualSuperintendente = 0.3;
+
+  const comissoesParaCriar: InsertComissao[] = [];
+
+  // Comissão do corretor
+  const valorComissaoCorretor = valorBase * (percentualCorretor / 100);
+  comissoesParaCriar.push({
+    contratoId: novoContrato.id,
+    usuarioId: dados.corretorId,
+    tipo: 'corretor',
+    valorBase: valorBase.toString(),
+    percentual: percentualCorretor.toString(),
+    valorComissao: valorComissaoCorretor.toString(),
+    percentualDesconto: '0',
+    valorLiquido: valorComissaoCorretor.toString(),
+    status: 'pendente_assinatura',
+  });
+
+  // Comissão do gerente (se houver)
+  if (gerenteId) {
+    const valorComissaoGerente = valorBase * (percentualGerente / 100);
+    comissoesParaCriar.push({
+      contratoId: novoContrato.id,
+      usuarioId: gerenteId,
+      tipo: 'gerente',
+      valorBase: valorBase.toString(),
+      percentual: percentualGerente.toString(),
+      valorComissao: valorComissaoGerente.toString(),
+      percentualDesconto: '0',
+      valorLiquido: valorComissaoGerente.toString(),
+      status: 'pendente_assinatura',
+    });
+  }
+
+  // Comissão do superintendente (se houver)
+  if (superintendenteId) {
+    const valorComissaoSuperintendente = valorBase * (percentualSuperintendente / 100);
+    comissoesParaCriar.push({
+      contratoId: novoContrato.id,
+      usuarioId: superintendenteId,
+      tipo: 'superintendente',
+      valorBase: valorBase.toString(),
+      percentual: percentualSuperintendente.toString(),
+      valorComissao: valorComissaoSuperintendente.toString(),
+      percentualDesconto: '0',
+      valorLiquido: valorComissaoSuperintendente.toString(),
+      status: 'pendente_assinatura',
+    });
+  }
+
+  // 5. Inserir comissões no banco
+  if (comissoesParaCriar.length > 0) {
+    await db.insert(comissoes).values(comissoesParaCriar);
+  }
+
   return { contratoId: novoContrato.id, leadId };
 }
 
+
+// ============================================================================
+// FUNÇÕES DE COMISSÕES
+// ============================================================================
+
+export { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao } from './db-comissoes';

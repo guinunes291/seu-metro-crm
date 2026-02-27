@@ -26,6 +26,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
   const [projectId, setProjectId] = useState<number | null>(null);
   const [projetoCustom, setProjetoCustom] = useState('');
   const [valorVenda, setValorVenda] = useState('');
+  const [percentualComissao, setPercentualComissao] = useState('3.50');
   const [dataVenda, setDataVenda] = useState(new Date().toISOString().split('T')[0]);
   const [observacoes, setObservacoes] = useState('');
   const [usarProjetoCustom, setUsarProjetoCustom] = useState(false);
@@ -66,6 +67,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
     setProjectId(null);
     setProjetoCustom('');
     setValorVenda('');
+    setPercentualComissao('3.50');
     setDataVenda(new Date().toISOString().split('T')[0]);
     setObservacoes('');
     setUsarProjetoCustom(false);
@@ -133,6 +135,12 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       }
     }
 
+    const percentualNumerico = parseFloat(percentualComissao.replace(',', '.'));
+    if (isNaN(percentualNumerico) || percentualNumerico <= 0 || percentualNumerico > 100) {
+      toast.error('Digite um percentual válido (0-100)');
+      return;
+    }
+
     criarMutation.mutate({
       corretorId,
       clienteNome,
@@ -141,6 +149,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       projectId: usarProjetoCustom ? null : projectId,
       projetoCustom: usarProjetoCustom ? projetoCustom : '',
       valorVenda: valorNumerico,
+      percentualComissao: percentualNumerico,
       dataVenda,
       observacoes,
       anexos: anexosUrls,
@@ -276,8 +285,8 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
             )}
           </div>
 
-          {/* Valor e Data */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Valor, Percentual e Data */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="valorVenda">Valor (VGV) *</Label>
               <div className="relative">
@@ -292,6 +301,21 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
                   required
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="percentualComissao">% Comissão Imobiliária *</Label>
+              <div className="relative">
+                <Input
+                  id="percentualComissao"
+                  value={percentualComissao}
+                  onChange={(e) => setPercentualComissao(e.target.value.replace(/[^\d,]/g, ''))}
+                  placeholder="3,50"
+                  className="pr-8"
+                  required
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Normalmente 3-4%</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dataVenda">Data da Venda *</Label>

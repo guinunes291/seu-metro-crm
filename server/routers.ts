@@ -15,6 +15,7 @@ import * as duplicatasCleanup from "./duplicatasCleanup";
 import * as updateProjetosEmMassa from "./modules/updateProjetosEmMassa";
 import * as limparProjetosOrfaos from "./modules/limparProjetosOrfaos";
 import * as onboarding from "./modules/onboarding";
+import { comissoesRouter } from "./routers/comissoes";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -102,6 +103,7 @@ const gestorRestritoProcedure = protectedProcedure.use(async ({ ctx, next }) => 
 
 export const appRouter = router({
   system: systemRouter,
+  comissoes: comissoesRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -1912,6 +1914,7 @@ export const appRouter = router({
         projectId: z.number().nullable(),
         projetoCustom: z.string(),
         valorVenda: z.number().positive('Valor deve ser positivo'),
+        percentualComissao: z.number().min(0).max(100).default(3.5),
         dataVenda: z.string(),
         observacoes: z.string().optional(),
         anexos: z.array(z.string()).optional(),

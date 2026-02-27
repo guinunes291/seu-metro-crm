@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS comissoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  contratoId INT NOT NULL,
+  usuarioId INT NOT NULL,
+  tipo ENUM('corretor', 'gerente', 'superintendente') NOT NULL,
+  valorBase DECIMAL(15,2) NOT NULL,
+  percentual DECIMAL(5,2) NOT NULL,
+  valorComissao DECIMAL(15,2) NOT NULL,
+  percentualDesconto DECIMAL(5,2) DEFAULT 0,
+  valorLiquido DECIMAL(15,2) NOT NULL,
+  status ENUM('pendente_assinatura', 'a_pagar', 'paga') DEFAULT 'pendente_assinatura' NOT NULL,
+  dataPagamento TIMESTAMP NULL,
+  comprovantePagamento TEXT,
+  observacoes TEXT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL,
+  FOREIGN KEY (contratoId) REFERENCES contratos(id) ON DELETE CASCADE,
+  FOREIGN KEY (usuarioId) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX comissoes_contrato_idx (contratoId),
+  INDEX comissoes_usuario_idx (usuarioId),
+  INDEX comissoes_status_idx (status),
+  INDEX comissoes_tipo_idx (tipo)
+);
