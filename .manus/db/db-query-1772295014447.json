@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT \n  (SELECT COUNT(*) FROM contratos WHERE corretorId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as contratos_teste,\n  (SELECT COUNT(*) FROM comissoes WHERE usuarioId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as comissoes_teste,\n  (SELECT COUNT(*) FROM agendamentos WHERE corretorId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as agendamentos_teste;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  (SELECT COUNT(*) FROM contratos WHERE corretorId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as contratos_teste,\n  (SELECT COUNT(*) FROM comissoes WHERE usuarioId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as comissoes_teste,\n  (SELECT COUNT(*) FROM agendamentos WHERE corretorId IN (SELECT id FROM users WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com')) as agendamentos_teste;\n",
+  "rows": [
+    {
+      "contratos_teste": "0",
+      "comissoes_teste": "0",
+      "agendamentos_teste": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "contratos_teste\tcomissoes_teste\tagendamentos_teste\n0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 594
+}

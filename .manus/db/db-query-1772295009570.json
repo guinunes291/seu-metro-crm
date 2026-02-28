@@ -1,0 +1,13 @@
+{
+  "query": "\nSELECT COUNT(*) as total_leads_teste \nFROM leads \nWHERE corretorId IN (\n  SELECT id FROM users \n  WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com'\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT COUNT(*) as total_leads_teste \nFROM leads \nWHERE corretorId IN (\n  SELECT id FROM users \n  WHERE email LIKE '%@test.com' OR email LIKE '%@teste.com' OR email LIKE '%@exemplo.com'\n);\n",
+  "rows": [
+    {
+      "total_leads_teste": "375"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_leads_teste\n375\n",
+  "stderr": "",
+  "execution_time_ms": 354
+}
