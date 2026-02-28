@@ -9853,6 +9853,7 @@ export async function atualizarContrato(contratoId: number, dados: {
   dataVenda?: Date;
   equipeCorretorId?: number | null;
   anexos?: string[];
+  percentualComissao?: number;
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
@@ -9875,6 +9876,7 @@ export async function atualizarContrato(contratoId: number, dados: {
   if (dados.valorVenda !== undefined) contratoUpdate.valorVenda = String(dados.valorVenda);
   if (dados.dataVenda !== undefined) contratoUpdate.createdAt = dados.dataVenda;
   if (dados.anexos !== undefined) contratoUpdate.anexos = JSON.stringify(dados.anexos);
+  if (dados.percentualComissao !== undefined) contratoUpdate.percentualComissao = String(dados.percentualComissao);
 
   if (Object.keys(contratoUpdate).length > 0) {
     await db.update(contratos)

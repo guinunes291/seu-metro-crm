@@ -4843,3 +4843,6 @@
 ## Melhoria: Edição inline do % da imobiliária
 - [x] Criar procedure backend para atualizar percentualComissao no contrato
 - [x] Adicionar edição inline na tabela de comissões da imobiliária
+
+## Bug: Edição do % da imobiliária não persiste
+- [x] Corrigir procedure atualizarContrato para salvar percentualComissao no banco de dados
