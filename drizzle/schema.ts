@@ -1849,6 +1849,10 @@ export const contratos = mysqlTable("contratos", {
   // Anexos (URLs dos arquivos no S3)
   anexos: json("anexos").$type<string[]>().default([]),
   
+  // Status de recebimento da comissão da imobiliária
+  statusRecebimentoImobiliaria: varchar("statusRecebimentoImobiliaria", { length: 20 }).default("pendente"), // pendente | recebido | em_disputa
+  dataRecebimentoImobiliaria: timestamp("dataRecebimentoImobiliaria"),
+  
   // Metadata
   observacoes: text("observacoes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

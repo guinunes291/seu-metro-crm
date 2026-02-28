@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getDb } from './db';
-import { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao } from './db-comissoes';
+import { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao, getComissoesImobiliaria, atualizarStatusRecebimentoImobiliaria, gerarComissoesEmLote } from './db-comissoes';
 
 describe('Sistema de Comissões', () => {
   it('deve listar comissões', async () => {
@@ -94,4 +94,57 @@ describe('Sistema de Comissões', () => {
       }
     }
   });
+
+  it('deve listar comissões da imobiliária com campos corretos', async () => {
+    const comissoesImob = await getComissoesImobiliaria();
+    
+    expect(Array.isArray(comissoesImob)).toBe(true);
+    
+    if (comissoesImob.length > 0) {
+      const item = comissoesImob[0];
+      expect(item).toHaveProperty('contratoId');
+      expect(item).toHaveProperty('clienteNome');
+      expect(item).toHaveProperty('valorVenda');
+      expect(item).toHaveProperty('percentualImobiliaria');
+      expect(item).toHaveProperty('valorComissao');
+      expect(item).toHaveProperty('statusRecebimento');
+      expect(['pendente', 'recebido', 'em_disputa']).toContain(item.statusRecebimento);
+      // Verificar que o cálculo da comissão está correto
+      const valorEsperado = (item.valorVenda * item.percentualImobiliaria) / 100;
+      expect(item.valorComissao).toBeCloseTo(valorEsperado, 2);
+    }
+  });
+
+  it('deve atualizar status de recebimento da imobiliária', async () => {
+    const comissoesImob = await getComissoesImobiliaria();
+    
+    if (comissoesImob.length > 0) {
+      const item = comissoesImob[0];
+      
+      // Atualizar para 'recebido'
+      const resultado = await atualizarStatusRecebimentoImobiliaria(item.contratoId, 'recebido');
+      expect(resultado.success).toBe(true);
+      
+      // Verificar que foi salvo
+      const comissoesAtualizadas = await getComissoesImobiliaria();
+      const itemAtualizado = comissoesAtualizadas.find(c => c.contratoId === item.contratoId);
+      expect(itemAtualizado?.statusRecebimento).toBe('recebido');
+      
+      // Reverter para 'pendente'
+      await atualizarStatusRecebimentoImobiliaria(item.contratoId, 'pendente');
+    }
+  });
+
+  it('deve retornar resultado correto ao gerar comissões em lote', async () => {
+    const resultado = await gerarComissoesEmLote();
+    
+    expect(resultado).toHaveProperty('gerados');
+    expect(typeof resultado.gerados).toBe('number');
+    expect(resultado.gerados).toBeGreaterThanOrEqual(0);
+    
+    // Se não gerou nada, deve ter mensagem informativa
+    if (resultado.gerados === 0) {
+      expect(resultado).toHaveProperty('mensagem');
+    }
+  }, 30000);
 });

@@ -10184,7 +10184,7 @@ export async function criarNovoContrato(dados: {
 // FUNÇÕES DE COMISSÕES
 // ============================================================================
 
-export { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao, listarContratosParaComissao, listarUsuariosParaComissao, importarComissaoManual, getComissoesImobiliaria } from './db-comissoes';
+export { getComissoes, marcarComissaoComoPaga, aplicarDescontoComissao, listarContratosParaComissao, listarUsuariosParaComissao, importarComissaoManual, getComissoesImobiliaria, atualizarStatusRecebimentoImobiliaria, gerarComissoesEmLote } from './db-comissoes';
 
 /**
  * Buscar template de comissão por projeto

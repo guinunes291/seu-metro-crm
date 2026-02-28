@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Filter, Upload, Building2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Upload, Building2, AlertCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -60,6 +60,29 @@ function ComissoesContent() {
     },
     onError: (error) => {
       toast.error(`Erro ao atualizar: ${error.message}`);
+    },
+  });
+
+  // Mutation para atualizar status de recebimento da imobiliária
+  const atualizarStatusImobMutation = trpc.comissoes.atualizarStatusImobiliaria.useMutation({
+    onSuccess: () => {
+      utils.comissoes.listarImobiliaria.invalidate();
+      toast.success('Status atualizado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao atualizar status: ' + error.message);
+    },
+  });
+
+  // Mutation para gerar comissões em lote
+  const gerarEmLoteMutation = trpc.comissoes.gerarEmLote.useMutation({
+    onSuccess: (data) => {
+      utils.comissoes.listar.invalidate();
+      utils.comissoes.listarImobiliaria.invalidate();
+      toast.success(data.mensagem || data.gerados + ' comissões geradas com sucesso!');
+    },
+    onError: (error) => {
+      toast.error('Erro ao gerar comissões: ' + error.message);
     },
   });
 
@@ -162,14 +185,26 @@ function ComissoesContent() {
     };
     return <Badge variant="outline">{labels[tipo] || tipo}</Badge>;
   };
+
+  const getStatusImobBadge = (status: string) => {
+    const config: Record<string, { className: string; label: string }> = {
+      pendente: { className: 'text-orange-700 border-orange-300 bg-orange-50', label: 'Pendente' },
+      recebido: { className: 'text-emerald-700 border-emerald-300 bg-emerald-50', label: 'Recebido' },
+      em_disputa: { className: 'text-red-700 border-red-300 bg-red-50', label: 'Em Disputa' },
+    };
+    const c = config[status] || config.pendente;
+    return <Badge variant="outline" className={c.className}>{c.label}</Badge>;
+  };
   
-  // Calcular totais
+  // Calcular totais das comissões individuais
   const totalAPagar = comissoes?.filter(c => c.status === 'a_pagar').reduce((sum, c) => sum + Number(c.valorLiquido), 0) || 0;
   const totalPendente = comissoes?.filter(c => c.status === 'pendente_assinatura').reduce((sum, c) => sum + Number(c.valorLiquido), 0) || 0;
   const totalPago = comissoes?.filter(c => c.status === 'paga').reduce((sum, c) => sum + Number(c.valorLiquido), 0) || 0;
 
-  // Calcular total da imobiliária
+  // Calcular totais da imobiliária
   const totalImobiliaria = comissoesImobiliaria?.reduce((sum, c) => sum + c.valorComissao, 0) || 0;
+  const totalImobRecebido = comissoesImobiliaria?.filter(c => c.statusRecebimento === 'recebido').reduce((sum, c) => sum + c.valorComissao, 0) || 0;
+  const totalImobPendente = comissoesImobiliaria?.filter(c => c.statusRecebimento !== 'recebido').reduce((sum, c) => sum + c.valorComissao, 0) || 0;
   
   return (
     <div className="space-y-6">
@@ -179,25 +214,34 @@ function ComissoesContent() {
           <p className="text-muted-foreground">Gerencie e acompanhe suas comissões de vendas</p>
         </div>
         {isAdmin && (
-          <Dialog open={dialogImportOpen} onOpenChange={setDialogImportOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Upload className="w-4 h-4 mr-2" />
-                Importar Comissão
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Importar Comissão Manual</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleImportar} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="contrato">Contrato *</Label>
-                  <Select value={contratoId?.toString() || ''} onValueChange={(v) => setContratoId(Number(v))}>
-                    <SelectTrigger id="contrato">
-                      <SelectValue placeholder="Selecione o contrato" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => gerarEmLoteMutation.mutate()}
+              disabled={gerarEmLoteMutation.isPending}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              {gerarEmLoteMutation.isPending ? 'Gerando...' : 'Gerar Comissões em Lote'}
+            </Button>
+            <Dialog open={dialogImportOpen} onOpenChange={setDialogImportOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Importar Comissão
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Importar Comissão Manual</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleImportar} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="contrato">Contrato *</Label>
+                    <Select value={contratoId?.toString() || ''} onValueChange={(v) => setContratoId(Number(v))}>
+                      <SelectTrigger id="contrato">
+                        <SelectValue placeholder="Selecione o contrato" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[9999]">
                         {contratos?.map((c) => (
                           <SelectItem key={c.id} value={c.id.toString()}>
                             {c.clienteNome} - {c.projetoNome || c.projetoCustom}
@@ -205,131 +249,151 @@ function ComissoesContent() {
                         ))}
                       </SelectContent>
                     </Select>
-                </div>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="usuario">Beneficiário *</Label>
-                  <Select value={usuarioId?.toString() || ''} onValueChange={(v) => setUsuarioId(Number(v))}>
-                    <SelectTrigger id="usuario">
-                      <SelectValue placeholder="Selecione o usuário" />
-                    </SelectTrigger>
-                    <SelectContent className="z-[9999]">
-                      {usuarios?.map((u) => (
-                        <SelectItem key={u.id} value={u.id.toString()}>
-                          {u.name} ({u.role})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="tipo">Tipo *</Label>
-                    <Select value={tipo} onValueChange={setTipo}>
-                      <SelectTrigger id="tipo">
-                        <SelectValue />
+                    <Label htmlFor="usuario">Beneficiário *</Label>
+                    <Select value={usuarioId?.toString() || ''} onValueChange={(v) => setUsuarioId(Number(v))}>
+                      <SelectTrigger id="usuario">
+                        <SelectValue placeholder="Selecione o usuário" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="corretor">Corretor</SelectItem>
-                        <SelectItem value="gerente">Gerente</SelectItem>
-                        <SelectItem value="superintendente">Superintendente</SelectItem>
+                      <SelectContent className="z-[9999]">
+                        {usuarios?.map((u) => (
+                          <SelectItem key={u.id} value={u.id.toString()}>
+                            {u.name} ({u.role})
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tipo">Tipo</Label>
+                      <Select value={tipo} onValueChange={setTipo}>
+                        <SelectTrigger id="tipo">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="corretor">Corretor</SelectItem>
+                          <SelectItem value="gerente">Gerente</SelectItem>
+                          <SelectItem value="superintendente">Superintendente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={status} onValueChange={setStatus}>
+                        <SelectTrigger id="status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pendente_assinatura">Pendente Assinatura</SelectItem>
+                          <SelectItem value="a_pagar">A Pagar</SelectItem>
+                          <SelectItem value="paga">Paga</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="valorBase">Valor Base (VGV) *</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
+                        <Input
+                          id="valorBase"
+                          value={valorBase}
+                          onChange={(e) => setValorBase(e.target.value.replace(/[^\d,]/g, ''))}
+                          placeholder="0,00"
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="percentual">Percentual (%) *</Label>
+                      <div className="relative">
+                        <Input
+                          id="percentual"
+                          value={percentual}
+                          onChange={(e) => setPercentual(e.target.value.replace(/[^\d,]/g, ''))}
+                          placeholder="1,85"
+                          className="pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="status">Status *</Label>
-                    <Select value={status} onValueChange={setStatus}>
-                      <SelectTrigger id="status">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pendente_assinatura">Pendente Assinatura</SelectItem>
-                        <SelectItem value="a_pagar">A Pagar</SelectItem>
-                        <SelectItem value="paga">Paga</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="valorBase">Valor Base (VGV) *</Label>
-                    <Input
-                      id="valorBase"
-                      value={valorBase}
-                      onChange={(e) => setValorBase(e.target.value)}
-                      placeholder="R$ 500.000,00"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="percentual">Percentual *</Label>
+                    <Label htmlFor="percentualDesconto">Desconto NF (%)</Label>
                     <div className="relative">
                       <Input
-                        id="percentual"
-                        value={percentual}
-                        onChange={(e) => setPercentual(e.target.value.replace(/[^\d,]/g, ''))}
-                        placeholder="1,85"
+                        id="percentualDesconto"
+                        value={percentualDesconto}
+                        onChange={(e) => setPercentualDesconto(e.target.value.replace(/[^\d,]/g, ''))}
+                        placeholder="0 ou 6"
                         className="pr-8"
-                        required
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      Aplicar 6% quando o cliente tiver entrada menor que 6%
+                    </p>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="percentualDesconto">Desconto NF (%)</Label>
-                  <div className="relative">
-                    <Input
-                      id="percentualDesconto"
-                      value={percentualDesconto}
-                      onChange={(e) => setPercentualDesconto(e.target.value.replace(/[^\d,]/g, ''))}
-                      placeholder="0 ou 6"
-                      className="pr-8"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">%</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Aplicar 6% quando o cliente tiver entrada menor que 6%
-                  </p>
-                </div>
-                
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setDialogImportOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={importarComissaoMutation.isPending}>
-                    Importar
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setDialogImportOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={importarComissaoMutation.isPending}>
+                      Importar
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         )}
       </div>
-      
-      {/* Card Imobiliária - Admin only */}
+
+      {/* Cards da Imobiliária - Admin only */}
       {isAdmin && (
-        <Card className="border-2 border-emerald-200 bg-emerald-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle className="text-base font-semibold text-emerald-800">Comissão da Imobiliária</CardTitle>
-              <CardDescription className="text-emerald-600">Total a receber das incorporadoras (3-4% do VGV)</CardDescription>
-            </div>
-            <Building2 className="h-6 w-6 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-700">{formatCurrency(totalImobiliaria)}</div>
-            <p className="text-sm text-emerald-600 mt-1">{comissoesImobiliaria?.length || 0} contratos</p>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-2 border-emerald-200 bg-emerald-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-emerald-800">Total Imobiliária</CardTitle>
+              <Building2 className="h-4 w-4 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-700">{formatCurrency(totalImobiliaria)}</div>
+              <p className="text-xs text-emerald-600 mt-1">{comissoesImobiliaria?.length || 0} contratos (3-4% VGV)</p>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-orange-200 bg-orange-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-orange-800">A Receber</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-700">{formatCurrency(totalImobPendente)}</div>
+              <p className="text-xs text-orange-600 mt-1">Pendente / Em disputa</p>
+            </CardContent>
+          </Card>
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-blue-800">Já Recebido</CardTitle>
+              <CheckCircle className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-700">{formatCurrency(totalImobRecebido)}</div>
+              <p className="text-xs text-blue-600 mt-1">Confirmado pela incorporadora</p>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {/* Cards de Resumo */}
+      {/* Cards de Resumo das Comissões Individuais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -373,7 +437,7 @@ function ComissoesContent() {
               <Building2 className="h-5 w-5 text-emerald-600" />
               <div>
                 <CardTitle>Comissões da Imobiliária por Contrato</CardTitle>
-                <CardDescription>Detalhamento do percentual recebido pela imobiliária em cada venda</CardDescription>
+                <CardDescription>Detalhamento do percentual recebido pela imobiliária em cada venda — clique no status para alterar</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -386,7 +450,8 @@ function ComissoesContent() {
                     <TableHead>Projeto</TableHead>
                     <TableHead className="text-right">VGV</TableHead>
                     <TableHead className="text-right">% Imobiliária</TableHead>
-                    <TableHead className="text-right">Comissão Imobiliária</TableHead>
+                    <TableHead className="text-right">Comissão</TableHead>
+                    <TableHead>Status Recebimento</TableHead>
                     <TableHead>Data da Venda</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -458,6 +523,43 @@ function ComissoesContent() {
                       </TableCell>
                       <TableCell className="text-right font-bold text-emerald-700">
                         {formatCurrency(item.valorComissao)}
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={item.statusRecebimento || 'pendente'}
+                          onValueChange={(novoStatus) => {
+                            atualizarStatusImobMutation.mutate({
+                              contratoId: item.contratoId,
+                              status: novoStatus as 'pendente' | 'recebido' | 'em_disputa',
+                            });
+                          }}
+                        >
+                          <SelectTrigger className="w-[140px] h-8 text-xs">
+                            <SelectValue>
+                              {getStatusImobBadge(item.statusRecebimento || 'pendente')}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pendente">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-3 w-3 text-orange-500" />
+                                Pendente
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="recebido">
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-3 w-3 text-emerald-500" />
+                                Recebido
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="em_disputa">
+                              <div className="flex items-center gap-2">
+                                <AlertCircle className="h-3 w-3 text-red-500" />
+                                Em Disputa
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell>{format(new Date(item.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     </TableRow>

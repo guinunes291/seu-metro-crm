@@ -4846,3 +4846,10 @@
 
 ## Bug: Edição do % da imobiliária não persiste
 - [x] Corrigir procedure atualizarContrato para salvar percentualComissao no banco de dados
+
+## Melhorias de Comissões - Fase 2
+- [ ] Adicionar campo statusRecebimentoImobiliaria e dataRecebimentoImobiliaria na tabela contratos
+- [ ] Atualizar tabela de comissões da imobiliária com coluna de status editável (Pendente/Recebido/Em Disputa)
+- [ ] Adicionar cards de resumo: Total Pendente vs Total Recebido pela imobiliária
+- [ ] Criar procedure de geração automática de comissões em lote para contratos sem comissões
+- [ ] Criar botão "Gerar Comissões em Lote" na página de Comissões

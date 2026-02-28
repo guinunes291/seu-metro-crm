@@ -67,4 +67,25 @@ export const comissoesRouter = router({
     .mutation(async ({ input }) => {
       return await db.importarComissaoManual(input);
     }),
+
+  // Atualizar status de recebimento da imobiliária (admin only)
+  atualizarStatusImobiliaria: adminProcedure
+    .input(z.object({
+      contratoId: z.number(),
+      status: z.enum(['pendente', 'recebido', 'em_disputa']),
+      dataRecebimento: z.date().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      return await db.atualizarStatusRecebimentoImobiliaria(
+        input.contratoId,
+        input.status,
+        input.dataRecebimento,
+      );
+    }),
+
+  // Gerar comissões em lote para contratos sem comissões (admin only)
+  gerarEmLote: adminProcedure
+    .mutation(async () => {
+      return await db.gerarComissoesEmLote();
+    }),
 });
