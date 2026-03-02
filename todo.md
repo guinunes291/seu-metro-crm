@@ -4867,3 +4867,6 @@
 - [x] Implementar dialog de confirmação de distrato com campo de motivo
 - [x] Implementar tabela de distratos registrados com opção de desfazer
 - [x] Adicionar 4 testes automatizados para o módulo de distratos
+
+## Melhorias de Dashboard
+- [x] Adicionar card de distratos no Dashboard principal do gestor (contador + VGV distratado)

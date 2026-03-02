@@ -213,6 +213,12 @@ export default function Dashboard() {
     dateFilter,
     { enabled: isGestor }
   );
+
+  // Query de métricas de distratos (filtrada pelo mesmo período do dashboard)
+  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(
+    dateFilter,
+    { enabled: isGestor }
+  );
   
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR
@@ -791,6 +797,47 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Card de Distratos - visível quando houver distratos no período */}
+            {isAdmin && (metricasDistratos?.totalDistratos ?? 0) > 0 && (
+              <div className="mb-6">
+                <Card className="border-2 border-red-200 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950 dark:to-rose-950 dark:border-red-800">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-red-800 dark:text-red-300 flex items-center gap-2">
+                        <XCircle className="h-4 w-4" />
+                        Distratos no Período
+                      </CardTitle>
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                        Contratos cancelados — excluídos do VGV e das metas
+                      </p>
+                    </div>
+                    <Link href="/comissoes">
+                      <Button variant="ghost" size="sm" className="text-red-700 hover:text-red-800 hover:bg-red-100 text-xs h-7">
+                        Ver detalhes
+                      </Button>
+                    </Link>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <div className="text-3xl font-bold text-red-700 dark:text-red-300">
+                          {metricasDistratos?.totalDistratos || 0}
+                        </div>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">contratos distratados</p>
+                      </div>
+                      <div className="h-10 w-px bg-red-200 dark:bg-red-700" />
+                      <div>
+                        <div className="text-3xl font-bold text-red-700 dark:text-red-300 line-through decoration-red-400">
+                          {formatCurrency(metricasDistratos?.vgvDistratado || 0)}
+                        </div>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">VGV cancelado</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
             {/* Tabela de Contratos Fechados */}
             <div className="mb-8">
