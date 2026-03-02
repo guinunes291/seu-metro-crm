@@ -4878,3 +4878,4 @@
 - [x] Remover projetos de teste (TEST_AUTO, TEST_NORM, Projeto Teste Performance) do banco
 - [x] Corrigir largura do dropdown do FilterProjectCombobox (nomes truncados)
 - [x] Listar e remover projetos com nomes inválidos (datas, números, caracteres únicos)
+- [x] Corrigir importação de leads: salvar nome do projeto como texto no lead sem criar projetos novos no sistema

@@ -120,7 +120,7 @@ export default function ImportarCSV() {
               <FileText className="h-4 w-4" />
               <AlertDescription>
                 <strong>Formato esperado:</strong> O arquivo deve conter pelo menos as colunas de <strong>Nome</strong> e <strong>Telefone</strong>.
-                Outras colunas opcionais: Email, Origem, Observações.
+                Outras colunas opcionais: Email, Origem, Observações, <strong>Projeto</strong> (salvo como texto no card do lead).
               </AlertDescription>
             </Alert>
           </CardContent>
@@ -239,6 +239,27 @@ export default function ImportarCSV() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">Projeto / Empreendimento</label>
+                  <Select
+                    value={mapping.projeto?.toString() ?? "none"}
+                    onValueChange={(v) => updateMapping('projeto', v === 'none' ? null : parseInt(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma</SelectItem>
+                      {preview.headers.map((header: string, idx: number) => (
+                        <SelectItem key={idx} value={idx.toString()}>
+                          {header}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Salvo como texto no card do lead — não cria projetos no sistema</p>
                 </div>
               </div>
             </div>
