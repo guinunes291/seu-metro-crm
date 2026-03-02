@@ -4870,3 +4870,6 @@
 
 ## Melhorias de Dashboard
 - [x] Adicionar card de distratos no Dashboard principal do gestor (contador + VGV distratado)
+
+## Bugs
+- [x] Corrigir: contratos distratados ainda aparecem nos cards "Total Imobiliária" e "A Receber" em Comissões

@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, ne, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import { comissoes, contratos, leads, users, projects, equipes } from '../drizzle/schema';
 
@@ -207,6 +207,7 @@ export async function getComissoesImobiliaria() {
     .from(contratos)
     .innerJoin(leads, eq(contratos.leadId, leads.id))
     .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(eq(contratos.distrato, false)) // Excluir contratos distratados
     .orderBy(sql`${contratos.createdAt} DESC`);
 
   return resultado.map(r => {
