@@ -4873,3 +4873,4 @@
 
 ## Bugs
 - [x] Corrigir: contratos distratados ainda aparecem nos cards "Total Imobiliária" e "A Receber" em Comissões
+- [x] Verificar e corrigir: comissões individuais de corretores devem excluir contratos distratados
