@@ -87,7 +87,7 @@ export function FilterProjectCombobox({
           </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="min-w-[var(--radix-popover-trigger-width)] w-[420px] max-w-[90vw] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Digite para buscar projeto..."
@@ -95,7 +95,7 @@ export function FilterProjectCombobox({
             onValueChange={setSearchValue}
             autoFocus
           />
-          <CommandList className="max-h-64">
+          <CommandList className="max-h-80">
             <CommandGroup>
               <CommandItem
                 value="all"
@@ -128,7 +128,7 @@ export function FilterProjectCombobox({
                       )}
                     />
                     <Building2 className="mr-2 h-4 w-4 text-muted-foreground shrink-0" />
-                    <span className="truncate">{project.nome}</span>
+                    <span className="whitespace-normal break-words leading-snug">{project.nome}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

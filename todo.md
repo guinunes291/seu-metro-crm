@@ -4876,4 +4876,4 @@
 - [x] Verificar e corrigir: comissões individuais de corretores devem excluir contratos distratados
 - [x] Substituir Select de projetos no filtro de leads por Combobox com busca por digitação
 - [x] Remover projetos de teste (TEST_AUTO, TEST_NORM, Projeto Teste Performance) do banco
-- [ ] Corrigir largura do dropdown do FilterProjectCombobox (nomes truncados)
+- [x] Corrigir largura do dropdown do FilterProjectCombobox (nomes truncados)
