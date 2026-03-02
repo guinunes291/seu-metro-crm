@@ -39,6 +39,7 @@ import { SMQCopilotButton } from "@/components/SMQCopilotChat";
 import { useCopilot } from "@/contexts/CopilotContext";
 import { Bot } from "lucide-react";
 import { ProjectCombobox } from "@/components/ProjectCombobox";
+import { FilterProjectCombobox } from "@/components/FilterProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
@@ -596,19 +597,11 @@ export default function Leads() {
 
             <div className="space-y-2">
               <Label htmlFor="project">Projeto</Label>
-              <Select value={projectFilter} onValueChange={setProjectFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os projetos" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os projetos</SelectItem>
-                  {projects?.map((project) => (
-                    <SelectItem key={project.id} value={project.id.toString()}>
-                      {project.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <FilterProjectCombobox
+                projects={projects || []}
+                value={projectFilter}
+                onChange={setProjectFilter}
+              />
             </div>
 
             <div className="space-y-2">

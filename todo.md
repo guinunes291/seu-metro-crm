@@ -4874,3 +4874,4 @@
 ## Bugs
 - [x] Corrigir: contratos distratados ainda aparecem nos cards "Total Imobiliária" e "A Receber" em Comissões
 - [x] Verificar e corrigir: comissões individuais de corretores devem excluir contratos distratados
+- [x] Substituir Select de projetos no filtro de leads por Combobox com busca por digitação
