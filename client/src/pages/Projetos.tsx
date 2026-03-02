@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map as MapIcon, List } from "lucide-react";
+import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map as MapIcon, List, Pencil, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lazy, Suspense } from "react";
 const ProjetosMapView = lazy(() => import("./ProjetosMapView"));
@@ -25,7 +25,13 @@ export default function Projetos() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
   const createProjectMutation = trpc.projects.create.useMutation();
+  const updateProjectMutation = trpc.projects.update.useMutation();
+  const deleteProjectMutation = trpc.projects.delete.useMutation();
   const suggestProjectMutation = trpc.projects.suggest.useMutation();
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<any>({});
   const { data: mySuggestions = [] } = trpc.projects.mySuggestions.useQuery();
   const { addProject, removeProject, isSelected, canAddMore } = useCompare();
 
@@ -178,6 +184,78 @@ export default function Projetos() {
       });
     } catch (error) {
       toast.error("Erro ao enviar sugestão");
+    }
+  };
+
+  const openEditDialog = (project: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingProject(project);
+    setEditFormData({
+      nome: project.nome || "",
+      construtora: project.construtora || "",
+      developer: project.developer || "",
+      endereco: project.endereco || "",
+      bairro: project.bairro || "",
+      cidade: project.cidade || "São Paulo",
+      estado: project.estado || "SP",
+      descricao: project.descricao || "",
+      tipo: project.tipo || "mcmv",
+      status: project.status || "ativo",
+      valorMinimo: project.valorMinimo ? String(project.valorMinimo / 100) : "",
+      valorMaximo: project.valorMaximo ? String(project.valorMaximo / 100) : "",
+      metragemMinima: project.metragemMinima ? String(project.metragemMinima) : "",
+      metragemMaxima: project.metragemMaxima ? String(project.metragemMaxima) : "",
+      dormitorios: project.dormitorios || "",
+      vagas: project.vagas || 0,
+      zona: project.zona || "",
+      enquadramento: project.enquadramento || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject) return;
+    try {
+      await updateProjectMutation.mutateAsync({
+        id: editingProject.id,
+        data: {
+          nome: editFormData.nome,
+          construtora: editFormData.construtora || undefined,
+          developer: editFormData.developer || undefined,
+          endereco: editFormData.endereco || undefined,
+          bairro: editFormData.bairro || undefined,
+          descricao: editFormData.descricao || undefined,
+          tipo: editFormData.tipo || undefined,
+          status: editFormData.status || undefined,
+          valorMinimo: editFormData.valorMinimo ? parseInt(editFormData.valorMinimo) * 100 : undefined,
+          valorMaximo: editFormData.valorMaximo ? parseInt(editFormData.valorMaximo) * 100 : undefined,
+          metragemMinima: editFormData.metragemMinima ? parseInt(editFormData.metragemMinima) : undefined,
+          metragemMaxima: editFormData.metragemMaxima ? parseInt(editFormData.metragemMaxima) : undefined,
+          dormitorios: editFormData.dormitorios || undefined,
+          vagas: editFormData.vagas || undefined,
+          zona: editFormData.zona || undefined,
+          enquadramento: editFormData.enquadramento || undefined,
+        },
+      });
+      toast.success("Projeto atualizado com sucesso!");
+      setEditDialogOpen(false);
+      setEditingProject(null);
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao atualizar projeto");
+    }
+  };
+
+  const handleDeleteProject = async (project: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Tem certeza que deseja excluir o projeto "${project.nome}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await deleteProjectMutation.mutateAsync({ id: project.id });
+      toast.success("Projeto excluído com sucesso!");
+      refetch();
+    } catch (error) {
+      toast.error("Erro ao excluir projeto");
     }
   };
 
@@ -723,7 +801,29 @@ export default function Projetos() {
                 className="group hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden"
                 onClick={() => setLocation(`/projetos/${project.id}`)}
               >
-                <div className="absolute top-2 right-2 z-10">
+                <div className="absolute top-2 right-2 z-10 flex gap-1">
+                  {isGestor && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => openEditDialog(project, e)}
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+                        title="Editar projeto"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => handleDeleteProject(project, e)}
+                        className="h-8 w-8 p-0 bg-white/90 hover:bg-red-50 hover:text-red-600"
+                        title="Excluir projeto"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
                   <Button
                     size="sm"
                     variant={isSelected(project.id) ? "default" : "secondary"}
@@ -840,6 +940,176 @@ export default function Projetos() {
       </div>
       
       <CompareBar />
+
+      {/* Dialog de Edição de Projeto */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Projeto</DialogTitle>
+            <DialogDescription>
+              Atualize as informações do empreendimento
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-nome">Nome do Projeto *</Label>
+                <Input
+                  id="edit-nome"
+                  required
+                  value={editFormData.nome || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, nome: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-construtora">Construtora</Label>
+                  <Input
+                    id="edit-construtora"
+                    value={editFormData.construtora || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, construtora: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-developer">Incorporadora</Label>
+                  <Input
+                    id="edit-developer"
+                    value={editFormData.developer || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, developer: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-endereco">Endereço</Label>
+                <Input
+                  id="edit-endereco"
+                  value={editFormData.endereco || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-bairro">Bairro</Label>
+                  <Input
+                    id="edit-bairro"
+                    value={editFormData.bairro || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, bairro: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-zona">Zona</Label>
+                  <select
+                    id="edit-zona"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={editFormData.zona || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, zona: e.target.value || undefined })}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="norte">Zona Norte</option>
+                    <option value="sul">Zona Sul</option>
+                    <option value="leste">Zona Leste</option>
+                    <option value="oeste">Zona Oeste</option>
+                    <option value="centro">Centro</option>
+                  </select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-enquadramento">Enquadramento</Label>
+                  <select
+                    id="edit-enquadramento"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={editFormData.enquadramento || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, enquadramento: e.target.value || undefined })}
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="HIS1">HIS1</option>
+                    <option value="HIS2">HIS2</option>
+                    <option value="HMP">HMP</option>
+                    <option value="R2V">R2V</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-descricao">Descrição</Label>
+                <textarea
+                  id="edit-descricao"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  value={editFormData.descricao || ""}
+                  onChange={(e) => setEditFormData({ ...editFormData, descricao: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-valorMinimo">Valor Mínimo (R$)</Label>
+                  <Input
+                    id="edit-valorMinimo"
+                    type="number"
+                    value={editFormData.valorMinimo || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, valorMinimo: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-valorMaximo">Valor Máximo (R$)</Label>
+                  <Input
+                    id="edit-valorMaximo"
+                    type="number"
+                    value={editFormData.valorMaximo || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, valorMaximo: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-dormitorios">Dorm.</Label>
+                  <Input
+                    id="edit-dormitorios"
+                    placeholder="Ex: 1, 2, 3"
+                    value={editFormData.dormitorios || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, dormitorios: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-vagas">Vagas</Label>
+                  <Input
+                    id="edit-vagas"
+                    type="number"
+                    value={editFormData.vagas || 0}
+                    onChange={(e) => setEditFormData({ ...editFormData, vagas: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-status">Status</Label>
+                  <select
+                    id="edit-status"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    value={editFormData.status || "ativo"}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                  >
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                    <option value="esgotado">Esgotado</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={updateProjectMutation.isPending}>
+                {updateProjectMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

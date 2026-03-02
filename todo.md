@@ -4879,3 +4879,4 @@
 - [x] Corrigir largura do dropdown do FilterProjectCombobox (nomes truncados)
 - [x] Listar e remover projetos com nomes inválidos (datas, números, caracteres únicos)
 - [x] Corrigir importação de leads: salvar nome do projeto como texto no lead sem criar projetos novos no sistema
+- [x] Criar interface de cadastro manual de projetos (formulário de criação, listagem e edição)
