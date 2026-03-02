@@ -4877,3 +4877,4 @@
 - [x] Substituir Select de projetos no filtro de leads por Combobox com busca por digitação
 - [x] Remover projetos de teste (TEST_AUTO, TEST_NORM, Projeto Teste Performance) do banco
 - [x] Corrigir largura do dropdown do FilterProjectCombobox (nomes truncados)
+- [x] Listar e remover projetos com nomes inválidos (datas, números, caracteres únicos)
