@@ -1965,6 +1965,60 @@ export const appRouter = router({
         return await db.getVGVPorEquipeProjeto(filtros);
       }),
     
+    // Registrar distrato em um contrato (admin only)
+    registrarDistrato: adminProcedure
+      .input(z.object({
+        contratoId: z.number(),
+        motivoDistrato: z.string().min(1, 'Motivo é obrigatório'),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.registrarDistrato(input.contratoId, {
+          motivoDistrato: input.motivoDistrato,
+          distratadoPorId: ctx.user.id,
+        });
+      }),
+    
+    // Desfazer distrato (admin only)
+    desfazerDistrato: adminProcedure
+      .input(z.object({ contratoId: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.desfazerDistrato(input.contratoId);
+      }),
+    
+    // Listar distratos
+    listarDistratos: gestorOuSuperintendenteProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await db.getDistratos(filtros);
+      }),
+    
+    // Métricas de distratos para dashboard
+    metricasDistratos: gestorOuSuperintendenteProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await db.getMetricasDistratos(filtros);
+      }),
+    
     // Relatório detalhado de leads criados por corretor
     relatorioLeadsCriados: gestorOuSuperintendenteProcedure
       .input(z.object({

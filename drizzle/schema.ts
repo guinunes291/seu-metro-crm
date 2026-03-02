@@ -1853,6 +1853,12 @@ export const contratos = mysqlTable("contratos", {
   statusRecebimentoImobiliaria: varchar("statusRecebimentoImobiliaria", { length: 20 }).default("pendente"), // pendente | recebido | em_disputa
   dataRecebimentoImobiliaria: timestamp("dataRecebimentoImobiliaria"),
   
+  // Distrato
+  distrato: boolean("distrato").default(false).notNull(), // true = contrato foi distratado (desistência)
+  dataDistrato: timestamp("dataDistrato"), // Data em que o distrato foi registrado
+  motivoDistrato: text("motivoDistrato"), // Motivo da desistência
+  distratadoPorId: int("distratadoPorId"), // ID do usuário que registrou o distrato
+  
   // Metadata
   observacoes: text("observacoes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

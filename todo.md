@@ -4853,3 +4853,17 @@
 - [ ] Adicionar cards de resumo: Total Pendente vs Total Recebido pela imobiliária
 - [ ] Criar procedure de geração automática de comissões em lote para contratos sem comissões
 - [ ] Criar botão "Gerar Comissões em Lote" na página de Comissões
+
+## Módulo de Distratos
+- [x] Adicionar campos de distrato na tabela contratos (distrato, dataDistrato, motivoDistrato, distratadoPorId)
+- [x] Migrar banco de dados com os novos campos
+- [x] Implementar função registrarDistrato no backend (cancela comissões, reverte lead)
+- [x] Implementar função desfazerDistrato no backend
+- [x] Implementar getDistratos e getMetricasDistratos no backend
+- [x] Adicionar procedures no router: registrarDistrato, desfazerDistrato, listarDistratos, metricasDistratos
+- [x] Filtrar distratos em todas as queries de VGV (dashboard, ranking, metas, performance)
+- [x] Adicionar card de Distratos na seção da imobiliária em Comissões
+- [x] Adicionar botão "Distrato" em cada linha da tabela de comissões da imobiliária
+- [x] Implementar dialog de confirmação de distrato com campo de motivo
+- [x] Implementar tabela de distratos registrados com opção de desfazer
+- [x] Adicionar 4 testes automatizados para o módulo de distratos

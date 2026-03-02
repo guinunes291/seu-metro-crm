@@ -71,6 +71,13 @@
       "when": 1772245587389,
       "tag": "0009_brainy_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1772449717480,
+      "tag": "0010_burly_power_pack",
+      "breakpoints": true
     }
   ]
 }

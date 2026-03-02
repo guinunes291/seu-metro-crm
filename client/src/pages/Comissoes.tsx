@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Upload, Building2, AlertCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Upload, Building2, AlertCircle, XCircle, Undo2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { format } from 'date-fns';
@@ -26,6 +27,12 @@ function ComissoesContent() {
   // Estado de edição inline do percentual da imobiliária
   const [editandoPercentualId, setEditandoPercentualId] = useState<number | null>(null);
   const [novoPercentual, setNovoPercentual] = useState<string>('');
+
+  // Estados para distrato
+  const [dialogDistrato, setDialogDistrato] = useState(false);
+  const [contratoDistrato, setContratoDistrato] = useState<{ id: number; cliente: string } | null>(null);
+  const [motivoDistrato, setMotivoDistrato] = useState('');
+  const [abaAtiva, setAbaAtiva] = useState<'comissoes' | 'distratos'>('comissoes');
 
   // Estados do formulário de importação
   const [contratoId, setContratoId] = useState<number | null>(null);
@@ -73,6 +80,45 @@ function ComissoesContent() {
       toast.error('Erro ao atualizar status: ' + error.message);
     },
   });
+
+  // Mutations para distrato
+  const registrarDistrato = trpc.dashboard.registrarDistrato.useMutation({
+    onSuccess: () => {
+      utils.comissoes.listarImobiliaria.invalidate();
+      utils.dashboard.listarDistratos.invalidate();
+      utils.dashboard.metricasDistratos.invalidate();
+      setDialogDistrato(false);
+      setMotivoDistrato('');
+      setContratoDistrato(null);
+      toast.success('Distrato registrado com sucesso! O contrato foi removido das métricas.');
+    },
+    onError: (error) => {
+      toast.error('Erro ao registrar distrato: ' + error.message);
+    },
+  });
+
+  const desfazerDistrato = trpc.dashboard.desfazerDistrato.useMutation({
+    onSuccess: () => {
+      utils.comissoes.listarImobiliaria.invalidate();
+      utils.dashboard.listarDistratos.invalidate();
+      utils.dashboard.metricasDistratos.invalidate();
+      toast.success('Distrato desfeito. Contrato restaurado nas métricas.');
+    },
+    onError: (error) => {
+      toast.error('Erro ao desfazer distrato: ' + error.message);
+    },
+  });
+
+  // Query de distratos
+  const { data: distratos } = trpc.dashboard.listarDistratos.useQuery(
+    undefined,
+    { enabled: isAdmin }
+  );
+
+  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(
+    undefined,
+    { enabled: isAdmin }
+  );
 
   // Mutation para gerar comissões em lote
   const gerarEmLoteMutation = trpc.comissoes.gerarEmLote.useMutation({
@@ -359,7 +405,7 @@ function ComissoesContent() {
 
       {/* Cards da Imobiliária - Admin only */}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card className="border-2 border-emerald-200 bg-emerald-50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-semibold text-emerald-800">Total Imobiliária</CardTitle>
@@ -388,6 +434,19 @@ function ComissoesContent() {
             <CardContent>
               <div className="text-2xl font-bold text-blue-700">{formatCurrency(totalImobRecebido)}</div>
               <p className="text-xs text-blue-600 mt-1">Confirmado pela incorporadora</p>
+            </CardContent>
+          </Card>
+          <Card
+            className="border-2 border-red-200 bg-red-50 cursor-pointer hover:bg-red-100 transition-colors"
+            onClick={() => setAbaAtiva(abaAtiva === 'distratos' ? 'comissoes' : 'distratos')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-semibold text-red-800">Distratos</CardTitle>
+              <XCircle className="h-4 w-4 text-red-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-700">{metricasDistratos?.totalDistratos || 0}</div>
+              <p className="text-xs text-red-600 mt-1">{formatCurrency(metricasDistratos?.vgvDistratado || 0)} em VGV</p>
             </CardContent>
           </Card>
         </div>
@@ -453,6 +512,7 @@ function ComissoesContent() {
                     <TableHead className="text-right">Comissão</TableHead>
                     <TableHead>Status Recebimento</TableHead>
                     <TableHead>Data da Venda</TableHead>
+                    <TableHead className="text-center">Distrato</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -562,6 +622,20 @@ function ComissoesContent() {
                         </Select>
                       </TableCell>
                       <TableCell>{format(new Date(item.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-red-600 hover:text-red-700 hover:bg-red-50 text-xs"
+                          onClick={() => {
+                            setContratoDistrato({ id: item.contratoId, cliente: item.clienteNome });
+                            setDialogDistrato(true);
+                          }}
+                        >
+                          <XCircle className="h-3.5 w-3.5 mr-1" />
+                          Distrato
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -570,6 +644,131 @@ function ComissoesContent() {
           </CardContent>
         </Card>
       )}
+
+      {/* Tabela de Distratos - Admin only */}
+      {isAdmin && abaAtiva === 'distratos' && (
+        <Card className="border-2 border-red-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-red-600" />
+                <div>
+                  <CardTitle className="text-red-800">Distratos Registrados</CardTitle>
+                  <CardDescription>Contratos cancelados por desistência do cliente — excluídos de VGV, metas e comissões</CardDescription>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setAbaAtiva('comissoes')}>
+                Fechar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!distratos || distratos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <XCircle className="h-12 w-12 mx-auto mb-3 text-red-200" />
+                <p>Nenhum distrato registrado</p>
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Corretor</TableHead>
+                      <TableHead>Projeto</TableHead>
+                      <TableHead className="text-right">VGV</TableHead>
+                      <TableHead>Data da Venda</TableHead>
+                      <TableHead>Data Distrato</TableHead>
+                      <TableHead>Motivo</TableHead>
+                      <TableHead className="text-center">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {distratos.map((d) => (
+                      <TableRow key={d.id} className="bg-red-50/50">
+                        <TableCell className="font-medium">{d.cliente}</TableCell>
+                        <TableCell>{d.corretor}</TableCell>
+                        <TableCell className="max-w-[160px] truncate">{d.projeto}</TableCell>
+                        <TableCell className="text-right text-red-700 font-semibold line-through">{formatCurrency(d.vgv)}</TableCell>
+                        <TableCell>{format(new Date(d.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                        <TableCell>
+                          {d.dataDistrato ? format(new Date(d.dataDistrato), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">{d.motivoDistrato || '-'}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => desfazerDistrato.mutate({ contratoId: d.id })}
+                            disabled={desfazerDistrato.isPending}
+                          >
+                            <Undo2 className="h-3 w-3 mr-1" />
+                            Desfazer
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dialog de Confirmação de Distrato */}
+      <Dialog open={dialogDistrato} onOpenChange={setDialogDistrato}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-700">
+              <XCircle className="h-5 w-5" />
+              Registrar Distrato
+            </DialogTitle>
+            <DialogDescription>
+              Registrar distrato para o contrato de <strong>{contratoDistrato?.cliente}</strong>.
+              Este contrato será removido das métricas de VGV, metas e comissões.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="motivo">Motivo do Distrato *</Label>
+              <Textarea
+                id="motivo"
+                value={motivoDistrato}
+                onChange={(e) => setMotivoDistrato(e.target.value)}
+                placeholder="Descreva o motivo da desistência do cliente..."
+                rows={3}
+              />
+            </div>
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+              <strong>Atenção:</strong> Esta ação irá:
+              <ul className="mt-1 ml-4 list-disc space-y-0.5">
+                <li>Remover o contrato do VGV e das metas</li>
+                <li>Cancelar as comissões pendentes</li>
+                <li>Reverter o lead para "Em Atendimento"</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogDistrato(false)}>Cancelar</Button>
+            <Button
+              variant="destructive"
+              disabled={!motivoDistrato.trim() || registrarDistrato.isPending}
+              onClick={() => {
+                if (contratoDistrato) {
+                  registrarDistrato.mutate({
+                    contratoId: contratoDistrato.id,
+                    motivoDistrato: motivoDistrato.trim(),
+                  });
+                }
+              }}
+            >
+              {registrarDistrato.isPending ? 'Registrando...' : 'Confirmar Distrato'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Filtros e Tabela */}
       <Card>

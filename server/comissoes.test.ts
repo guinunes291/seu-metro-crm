@@ -148,3 +148,101 @@ describe('Sistema de Comissões', () => {
     }
   }, 30000);
 });
+
+describe('Sistema de Distratos', () => {
+  it('deve retornar lista de distratos (pode estar vazia)', async () => {
+    const { getDistratos } = await import('./db');
+    const distratos = await getDistratos();
+    
+    expect(Array.isArray(distratos)).toBe(true);
+    
+    if (distratos.length > 0) {
+      const d = distratos[0];
+      expect(d).toHaveProperty('id');
+      expect(d).toHaveProperty('cliente');
+      expect(d).toHaveProperty('corretor');
+      expect(d).toHaveProperty('projeto');
+      expect(d).toHaveProperty('vgv');
+      expect(d).toHaveProperty('dataVenda');
+      expect(d).toHaveProperty('dataDistrato');
+      expect(d).toHaveProperty('motivoDistrato');
+    }
+  });
+
+  it('deve retornar métricas de distratos com estrutura correta', async () => {
+    const { getMetricasDistratos } = await import('./db');
+    const metricas = await getMetricasDistratos();
+    
+    expect(metricas).toHaveProperty('totalDistratos');
+    expect(metricas).toHaveProperty('vgvDistratado');
+    expect(typeof metricas.totalDistratos).toBe('number');
+    expect(typeof metricas.vgvDistratado).toBe('number');
+    expect(metricas.totalDistratos).toBeGreaterThanOrEqual(0);
+    expect(metricas.vgvDistratado).toBeGreaterThanOrEqual(0);
+  });
+
+  it('deve registrar e desfazer distrato em um contrato', async () => {
+    const { registrarDistrato, desfazerDistrato, getDistratos } = await import('./db');
+    const { getComissoesImobiliaria } = await import('./db-comissoes');
+    
+    // Buscar um contrato ativo (não distratado)
+    const comissoesImob = await getComissoesImobiliaria();
+    
+    if (comissoesImob.length === 0) {
+      // Sem contratos para testar — pular
+      console.log('Nenhum contrato disponível para teste de distrato');
+      return;
+    }
+    
+    const contratoId = comissoesImob[0].contratoId;
+    const adminId = 1; // ID fictício para teste
+    
+    // Registrar distrato
+    const resultado = await registrarDistrato(contratoId, {
+      motivoDistrato: 'Teste automatizado - cliente desistiu',
+      distratadoPorId: adminId,
+    });
+    
+    expect(resultado.success).toBe(true);
+    expect(resultado.contratoId).toBe(contratoId);
+    
+    // Verificar que aparece na lista de distratos
+    const distratosApos = await getDistratos();
+    const distrato = distratosApos.find(d => d.id === contratoId);
+    expect(distrato).toBeDefined();
+    expect(distrato?.motivoDistrato).toBe('Teste automatizado - cliente desistiu');
+    
+    // Desfazer distrato
+    const resultadoDesfazer = await desfazerDistrato(contratoId);
+    expect(resultadoDesfazer.success).toBe(true);
+    
+    // Verificar que foi removido da lista de distratos
+    const distratosDepois = await getDistratos();
+    const distratoCancelado = distratosDepois.find(d => d.id === contratoId);
+    expect(distratoCancelado).toBeUndefined();
+  }, 30000);
+
+  it('deve rejeitar distrato duplicado', async () => {
+    const { registrarDistrato, desfazerDistrato } = await import('./db');
+    const { getComissoesImobiliaria } = await import('./db-comissoes');
+    
+    const comissoesImob = await getComissoesImobiliaria();
+    if (comissoesImob.length === 0) return;
+    
+    const contratoId = comissoesImob[0].contratoId;
+    
+    // Registrar distrato
+    await registrarDistrato(contratoId, {
+      motivoDistrato: 'Teste duplicado',
+      distratadoPorId: 1,
+    });
+    
+    // Tentar registrar novamente — deve lançar erro
+    await expect(
+      registrarDistrato(contratoId, { motivoDistrato: 'Duplicado', distratadoPorId: 1 })
+    ).rejects.toThrow('já foi distratado');
+    
+    // Limpar
+    await desfazerDistrato(contratoId);
+  }, 30000);
+});

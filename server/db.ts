@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -1785,14 +1785,14 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
       .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
   ]);
   
-  // VGV - soma dos valores dos contratos fechados
-  // Calcular baseado no valorVenda da tabela contratos
+  // VGV - soma dos valores dos contratos fechados (excluindo distratos)
   const vgvResult = await db.select({ 
     total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)` 
   })
     .from(contratos)
     .leftJoin(leads, eq(contratos.leadId, leads.id))
     .where(and(
+      eq(contratos.distrato, false), // Excluir distratos do VGV
       ...(filtros?.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
       ...(filtros?.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : []),
       ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
@@ -1997,6 +1997,9 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
     contratosConditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
   }
   
+  // Sempre excluir distratos do ranking de vendas
+  contratosConditions.push(eq(contratos.distrato, false));
+
   const vendasQuery = db.select({
     corretorId: contratos.corretorId,
     count: sql<number>`count(*)`,
@@ -2005,9 +2008,7 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
     .from(contratos)
     .groupBy(contratos.corretorId);
   
-  const vendasData = contratosConditions.length > 0
-    ? await vendasQuery.where(and(...contratosConditions))
-    : await vendasQuery;
+  const vendasData = await vendasQuery.where(and(...contratosConditions));
   
   const vendasMap = new Map(vendasData.map(vd => [
     vd.corretorId, 
@@ -2406,11 +2407,12 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
   if (!db) return [];
   
   try {
-    // Definir filtro de data para contratos
-    let contratosWhere = undefined;
+    // Definir filtro de data para contratos (sempre excluindo distratos)
+    let contratosWhere = eq(contratos.distrato, false) as any;
     if (dataInicio && dataFim) {
       // Filtro por range de datas (prioridade)
       contratosWhere = and(
+        eq(contratos.distrato, false),
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
       );
@@ -2418,6 +2420,7 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
       const inicio = new Date(ano, mes - 1, 1);
       const fim = new Date(ano, mes, 0, 23, 59, 59, 999);
       contratosWhere = and(
+        eq(contratos.distrato, false),
         gte(contratos.createdAt, inicio),
         lte(contratos.createdAt, fim)
       );
@@ -3389,9 +3392,11 @@ export async function getCorretorDashboardMetrics(corretorId: number, filtros?: 
       .where(and(...conditions, eq(leads.status, 'novo'))),
   ]);
   
-  // VGV do corretor (soma dos valores reais dos contratos)
-  // Aplicar os mesmos filtros de data usados nos leads
-  const contratoConditions: any[] = [eq(contratos.corretorId, corretorId)];
+  // VGV do corretor (soma dos valores reais dos contratos, excluindo distratos)
+  const contratoConditions: any[] = [
+    eq(contratos.corretorId, corretorId),
+    eq(contratos.distrato, false), // Excluir distratos
+  ];
   
   if (filtros?.dataInicio) {
     contratoConditions.push(gte(contratos.createdAt, filtros.dataInicio));
@@ -8934,7 +8939,7 @@ export async function sincronizarContratosDoDia() {
   const hoje = new Date(inicioHoje);
   hoje.setHours(0, 0, 0, 0);
   
-  // Buscar da tabela contratos
+  // Buscar da tabela contratos (excluindo distratos)
   const contratosHoje = await db
     .select({
       corretorId: contratos.corretorId,
@@ -8944,6 +8949,7 @@ export async function sincronizarContratosDoDia() {
     .from(contratos)
     .where(
       and(
+        eq(contratos.distrato, false), // Excluir distratos
         gte(contratos.createdAt, inicioHoje),
         lte(contratos.createdAt, fimHoje)
       )
@@ -9172,7 +9178,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
   for (const corretor of corretoresResult) {
     if (corretor.situacao === 'inativo') continue;
     
-    // VGV do corretor (contratos fechados)
+    // VGV do corretor (contratos fechados, excluindo distratos)
     const vgvResult = await db.select({
       total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
       count: sql<number>`COUNT(*)`
@@ -9180,6 +9186,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
       .from(contratos)
       .where(and(
         eq(contratos.corretorId, corretor.id),
+        eq(contratos.distrato, false), // Excluir distratos
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
       ));
@@ -9288,7 +9295,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
     
     const metaVGV = Number(metaGlobal[0]?.metaVGV || 0);
     
-    // VGV realizado
+    // VGV realizado (excluindo distratos)
     let vgvQuery = db.select({
       total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
     }).from(contratos);
@@ -9302,6 +9309,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
       
       if (membroIds.length > 0) {
         vgvQuery = vgvQuery.where(and(
+          eq(contratos.distrato, false), // Excluir distratos
           inArray(contratos.corretorId, membroIds),
           gte(contratos.createdAt, dataInicio),
           lte(contratos.createdAt, dataFim)
@@ -9319,6 +9327,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
       }
     } else {
       vgvQuery = vgvQuery.where(and(
+        eq(contratos.distrato, false), // Excluir distratos
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
       ));
@@ -9688,7 +9697,9 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions: any[] = [];
+  const conditions: any[] = [
+    eq(contratos.distrato, false), // Excluir distratos
+  ];
   
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.createdAt, filtros.dataInicio));
@@ -10106,12 +10117,11 @@ export async function criarNovoContrato(dados: {
 
   if (corretor[0]?.equipeId) {
     const equipe = await db.select({
-      gerenteId: equipes.gerenteId,
-      superintendenteId: equipes.superintendenteId,
+      gestorId: equipes.gestorId,
     }).from(equipes).where(eq(equipes.id, corretor[0].equipeId)).limit(1);
 
-    gerenteId = equipe[0]?.gerenteId || null;
-    superintendenteId = equipe[0]?.superintendenteId || null;
+    gerenteId = equipe[0]?.gestorId || null;
+    superintendenteId = null; // Superintendente não está na tabela equipes
   }
 
   // 4. Calcular comissões
@@ -10361,4 +10371,201 @@ export async function marcarTemplatePadrao(id: number) {
     .where(eq(templatesComissao.id, id));
 
   return { success: true };
+}
+
+// ============================================================================
+// MÓDULO DE DISTRATOS
+// ============================================================================
+
+/**
+ * Registrar distrato em um contrato
+ * - Marca o contrato como distratado
+ * - Cancela as comissões associadas
+ * - Reverte o status do lead para 'em_atendimento'
+ */
+export async function registrarDistrato(contratoId: number, dados: {
+  motivoDistrato: string;
+  distratadoPorId: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  // Buscar contrato
+  const [contrato] = await db.select({
+    id: contratos.id,
+    leadId: contratos.leadId,
+    distrato: contratos.distrato,
+  })
+    .from(contratos)
+    .where(eq(contratos.id, contratoId))
+    .limit(1);
+
+  if (!contrato) throw new Error('Contrato não encontrado');
+  if (contrato.distrato) throw new Error('Este contrato já foi distratado');
+
+  // Marcar contrato como distratado
+  await db.update(contratos)
+    .set({
+      distrato: true,
+      dataDistrato: new Date(),
+      motivoDistrato: dados.motivoDistrato,
+      distratadoPorId: dados.distratadoPorId,
+    })
+    .where(eq(contratos.id, contratoId));
+
+  // Cancelar comissões associadas (marcar como canceladas via status)
+  // Usamos 'pendente_assinatura' como estado "inativo" — as comissões ficam no banco mas não são pagas
+  // Adicionamos observação para identificar o distrato
+  await db.update(comissoes)
+    .set({
+      status: 'pendente_assinatura',
+      observacoes: sql`CONCAT(COALESCE(${comissoes.observacoes}, ''), ' [DISTRATO registrado em ', NOW(), ']')`,
+    })
+    .where(and(
+      eq(comissoes.contratoId, contratoId),
+      ne(comissoes.status, 'paga') // Não reverter comissões já pagas
+    ));
+
+  // Reverter status do lead para 'em_atendimento'
+  await db.update(leads)
+    .set({ status: 'em_atendimento' })
+    .where(eq(leads.id, contrato.leadId));
+
+  return { success: true, contratoId };
+}
+
+/**
+ * Desfazer distrato de um contrato (admin only)
+ */
+export async function desfazerDistrato(contratoId: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  const [contrato] = await db.select({
+    id: contratos.id,
+    leadId: contratos.leadId,
+    distrato: contratos.distrato,
+  })
+    .from(contratos)
+    .where(eq(contratos.id, contratoId))
+    .limit(1);
+
+  if (!contrato) throw new Error('Contrato não encontrado');
+  if (!contrato.distrato) throw new Error('Este contrato não está distratado');
+
+  // Remover distrato
+  await db.update(contratos)
+    .set({
+      distrato: false,
+      dataDistrato: null,
+      motivoDistrato: null,
+      distratadoPorId: null,
+    })
+    .where(eq(contratos.id, contratoId));
+
+  // Reverter status do lead para 'contrato_fechado'
+  await db.update(leads)
+    .set({ status: 'contrato_fechado' })
+    .where(eq(leads.id, contrato.leadId));
+
+  return { success: true, contratoId };
+}
+
+/**
+ * Listar distratos com detalhes completos
+ */
+export async function getDistratos(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: any[] = [eq(contratos.distrato, true)];
+
+  if (filtros?.dataInicio) {
+    conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(contratos.dataDistrato, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
+  }
+
+  const result = await db.select({
+    id: contratos.id,
+    corretorId: contratos.corretorId,
+    corretorNome: users.name,
+    corretorFoto: users.fotoUrl,
+    clienteNome: leads.nome,
+    clienteTelefone: leads.telefone,
+    clienteEmail: leads.email,
+    projectId: leads.projectId,
+    projetoCustom: leads.projetoCustom,
+    valorVenda: contratos.valorVenda,
+    dataVenda: contratos.createdAt,
+    dataDistrato: contratos.dataDistrato,
+    motivoDistrato: contratos.motivoDistrato,
+    observacoes: contratos.observacoes,
+  })
+    .from(contratos)
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .where(and(...conditions))
+    .orderBy(desc(contratos.dataDistrato));
+
+  // Buscar nomes dos projetos
+  const projectIds = [...new Set(result.filter(r => r.projectId).map(r => r.projectId!))];
+  let projectsMap = new Map<number, string>();
+
+  if (projectIds.length > 0) {
+    const projectsData = await db.select({ id: projects.id, nome: projects.nome })
+      .from(projects)
+      .where(inArray(projects.id, projectIds));
+    projectsMap = new Map(projectsData.map(p => [p.id, p.nome]));
+  }
+
+  return result.map(r => ({
+    id: r.id,
+    corretor: r.corretorNome || 'Sem nome',
+    corretorFoto: r.corretorFoto,
+    cliente: r.clienteNome || 'Sem nome',
+    clienteTelefone: r.clienteTelefone || '',
+    clienteEmail: r.clienteEmail || '',
+    projeto: r.projectId ? (projectsMap.get(r.projectId) || 'Projeto removido') : (r.projetoCustom || 'Não informado'),
+    vgv: Number(r.valorVenda || 0),
+    dataVenda: r.dataVenda,
+    dataDistrato: r.dataDistrato,
+    motivoDistrato: r.motivoDistrato || '',
+  }));
+}
+
+/**
+ * Métricas de distratos para o dashboard
+ */
+export async function getMetricasDistratos(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return { totalDistratos: 0, vgvDistratado: 0 };
+
+  const conditions: any[] = [eq(contratos.distrato, true)];
+
+  if (filtros?.dataInicio) {
+    conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(contratos.dataDistrato, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(contratos.corretorId, filtros.corretoresIds));
+  }
+
+  const [result] = await db.select({
+    totalDistratos: sql<number>`COUNT(*)`,
+    vgvDistratado: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
+  })
+    .from(contratos)
+    .where(and(...conditions));
+
+  return {
+    totalDistratos: Number(result?.totalDistratos || 0),
+    vgvDistratado: Number(result?.vgvDistratado || 0),
+  };
 }
