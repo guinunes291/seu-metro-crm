@@ -4935,3 +4935,6 @@
 
 ## Bug: Erro ao transferir lead (toISOString)
 - [x] Corrigir erro "value.toISOString is not a function" na transferência manual de leads
+
+## Bug: Mensagem WhatsApp com nome no lugar do empreendimento
+- [x] Corrigir gerarLinkWhatsApp - nome do cliente aparecendo no lugar do empreendimento

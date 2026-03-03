@@ -1,0 +1,80 @@
+{
+  "query": "SELECT id, nome, projetoCustom, projectId, origem FROM leads WHERE projetoCustom IS NOT NULL AND projetoCustom != '' ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, projetoCustom, projectId, origem FROM leads WHERE projetoCustom IS NOT NULL AND projetoCustom != '' ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "4230008",
+      "nome": "VITORIA SOUZA SILVA",
+      "projetoCustom": "Station Bresser - Vinx",
+      "projectId": "NULL",
+      "origem": "captacao_corretor"
+    },
+    {
+      "id": "4171025",
+      "nome": "MARIANA",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171024",
+      "nome": "5511947525565",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171023",
+      "nome": "SODRO",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171022",
+      "nome": "5511976212868",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171021",
+      "nome": "DEUS",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171020",
+      "nome": "BW",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171019",
+      "nome": "VANESSA",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171018",
+      "nome": "VALENTINA",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    },
+    {
+      "id": "4171017",
+      "nome": "LEANDRO",
+      "projetoCustom": "011 Brooklin",
+      "projectId": "NULL",
+      "origem": "google_sheets"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tprojetoCustom\tprojectId\torigem\n4230008\tVITORIA SOUZA SILVA\tStation Bresser - Vinx\tNULL\tcaptacao_corretor\n4171025\tMARIANA\t011 Brooklin\tNULL\tgoogle_sheets\n4171024\t5511947525565\t011 Brooklin\tNULL\tgoogle_sheets\n4171023\tSODRO\t011 Brooklin\tNULL\tgoogle_sheets\n4171022\t5511976212868\t011 Brooklin\tNULL\tgoogle_sheets\n4171021\tDEUS\t011 Brooklin\tNULL\tgoogle_sheets\n4171020\tBW\t011 Brooklin\tNULL\tgoogle_sheets\n4171019\tVANESSA\t011 Brooklin\tNULL\tgoogle_sheets\n4171018\tVALENTINA\t011 Brooklin\tNULL\tgoogle_sheets\n4171017\tLEANDRO\t011 Brooklin\tNULL\tgoogle_sheets\n",
+  "stderr": "",
+  "execution_time_ms": 422
+}
