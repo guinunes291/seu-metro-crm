@@ -4932,3 +4932,6 @@
 - [x] Desativar timerAtivo no backend ao mudar status do lead para qualquer status diferente de aguardando_atendimento
 - [x] Corrigir timerLeadsJob para ignorar leads que não estão em aguardando_atendimento
 - [x] Desativar timer visualmente no frontend se status != aguardando_atendimento
+
+## Bug: Erro ao transferir lead (toISOString)
+- [x] Corrigir erro "value.toISOString is not a function" na transferência manual de leads

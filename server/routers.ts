@@ -686,7 +686,7 @@ export const appRouter = router({
         }
         
         const corretorAnteriorId = lead.corretorId;
-        const agora = Date.now();
+        const agora = new Date();
         
         // Atualizar lead com novo corretor, status e ativar timer de 15 min
         await db.updateLead(input.leadId, {
@@ -789,7 +789,7 @@ export const appRouter = router({
               corretorId: input.novoCorretorId,
               status: 'aguardando_atendimento',
               timerAtivo: true,
-              timestampRecebimento: agora,
+              timestampRecebimento: new Date(),
               corretorAnteriorId: corretorAnteriorId ?? undefined,
             });
             
@@ -846,7 +846,7 @@ export const appRouter = router({
         await db.updateLead(input.leadId, {
           corretorId: input.corretorId,
           status: novoStatus,
-          ...(deveAtivarTimer ? { timerAtivo: true, timestampRecebimento: Date.now() } : {}),
+          ...(deveAtivarTimer ? { timerAtivo: true, timestampRecebimento: new Date() } : {}),
         });
         
         // Criar follow-up automático para amanhã
