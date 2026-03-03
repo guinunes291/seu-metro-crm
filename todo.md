@@ -4880,3 +4880,4 @@
 - [x] Listar e remover projetos com nomes inválidos (datas, números, caracteres únicos)
 - [x] Corrigir importação de leads: salvar nome do projeto como texto no lead sem criar projetos novos no sistema
 - [x] Criar interface de cadastro manual de projetos (formulário de criação, listagem e edição)
+- [x] Adicionar campos "Cliente agendou?", "Cliente visitou?", "Cliente fez análise de crédito?" no formulário de novo contrato com criação automática dos registros

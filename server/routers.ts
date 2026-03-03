@@ -1924,6 +1924,9 @@ export const appRouter = router({
         dataVenda: z.string(),
         observacoes: z.string().optional(),
         anexos: z.array(z.string()).optional(),
+        clienteAgendou: z.boolean().optional(),
+        clienteVisitou: z.boolean().optional(),
+        clienteFezAnalise: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
         return await db.criarNovoContrato({

@@ -10036,6 +10036,10 @@ export async function criarNovoContrato(dados: {
   dataVenda: Date;
   observacoes?: string;
   anexos?: string[];
+  // Registros retroativos
+  clienteAgendou?: boolean;
+  clienteVisitou?: boolean;
+  clienteFezAnalise?: boolean;
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
@@ -10184,6 +10188,72 @@ export async function criarNovoContrato(dados: {
   // 5. Inserir comissões no banco
   if (comissoesParaCriar.length > 0) {
     await db.insert(comissoes).values(comissoesParaCriar);
+  }
+
+  // 6. Registrar agendamento retroativo (se marcado)
+  if (dados.clienteAgendou) {
+    try {
+      await db.insert(agendamentos).values({
+        leadId,
+        corretorId: dados.corretorId,
+        projectId: dados.projectId,
+        projetoCustom: dados.projetoCustom || undefined,
+        dataAgendamento: dados.dataVenda,
+        horaAgendamento: '09:00',
+        observacoes: 'Agendamento registrado retroativamente via criação de contrato',
+        status: 'realizado',
+      });
+    } catch (e) {
+      console.error('[criarNovoContrato] Erro ao criar agendamento retroativo:', e);
+    }
+  }
+
+  // 7. Registrar visita realizada retroativa (se marcado)
+  if (dados.clienteVisitou) {
+    try {
+      // Atualizar atividade diária do corretor na data do contrato
+      const dataContrato = new Date(dados.dataVenda);
+      dataContrato.setHours(0, 0, 0, 0);
+      await garantirAtividadeDiariaExiste(dados.corretorId, dataContrato);
+      await db.update(atividadesDiarias)
+        .set({ visitasRealizadas: sql`${atividadesDiarias.visitasRealizadas} + 1` })
+        .where(
+          and(
+            eq(atividadesDiarias.corretorId, dados.corretorId),
+            eq(atividadesDiarias.data, dataContrato)
+          )
+        );
+    } catch (e) {
+      console.error('[criarNovoContrato] Erro ao registrar visita retroativa:', e);
+    }
+  }
+
+  // 8. Registrar análise de crédito retroativa (se marcado)
+  if (dados.clienteFezAnalise) {
+    try {
+      const dataContrato = new Date(dados.dataVenda);
+      dataContrato.setHours(0, 0, 0, 0);
+      await garantirAtividadeDiariaExiste(dados.corretorId, dataContrato);
+      await db.update(atividadesDiarias)
+        .set({ analisesCredito: sql`${atividadesDiarias.analisesCredito} + 1` })
+        .where(
+          and(
+            eq(atividadesDiarias.corretorId, dados.corretorId),
+            eq(atividadesDiarias.data, dataContrato)
+          )
+        );
+      // Também registrar na tabela leadStatusTransitions para rastreabilidade
+      await db.insert(leadStatusTransitions).values({
+        leadId,
+        corretorId: dados.corretorId,
+        statusAnterior: 'visita_realizada',
+        statusNovo: 'analise_credito',
+        observacao: 'Registrado retroativamente via criação de contrato',
+        createdAt: dados.dataVenda,
+      }).catch(() => {}); // Ignorar erro se a tabela não existir
+    } catch (e) {
+      console.error('[criarNovoContrato] Erro ao registrar análise retroativa:', e);
+    }
   }
 
   return { contratoId: novoContrato.id, leadId };
