@@ -1108,7 +1108,7 @@ export default function Leads() {
                           </div>
                         </TableCell>
                         <TableCell>{lead.telefone}</TableCell>
-                        <TableCell>{project?.nome || "-"}</TableCell>
+                        <TableCell>{project?.nome || lead.projetoCustom || "-"}</TableCell>
                         {isGestor && <TableCell>{lead.corretorNome || "-"}</TableCell>}
                         <TableCell>
                           <Badge variant={getStatusVariant(lead.status)}>
