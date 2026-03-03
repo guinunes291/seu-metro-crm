@@ -477,6 +477,7 @@ export default function LeadsPorCorretor() {
                           <TimerLead
                             timestampRecebimento={lead.timestampRecebimento}
                             timerAtivo={lead.timerAtivo ?? false}
+                            origem={lead.origem}
                             showProgress={true}
                           />
                         </TableCell>

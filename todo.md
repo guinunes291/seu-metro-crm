@@ -4920,3 +4920,6 @@
 
 ## Timer na Transferência Manual pelo Gestor
 - [x] Ativar timerAtivo e timestampRecebimento ao transferir lead manualmente via Leads por Corretor
+
+## Timer somente para leads Facebook ADS
+- [x] Restringir exibição do TimerLead apenas para leads com origem Facebook ADS (webhook)

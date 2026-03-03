@@ -4,6 +4,8 @@ import { Clock, AlertTriangle, Zap } from "lucide-react";
 interface TimerLeadProps {
   timestampRecebimento: Date | string | null;
   timerAtivo: boolean;
+  /** Origem do lead — timer só é exibido para leads de webhook (Facebook ADS) */
+  origem?: string | null;
   /** Mostrar barra de progresso (padrão: false) */
   showProgress?: boolean;
   /** Tamanho do componente: 'sm' | 'md' (padrão: 'sm') */
@@ -17,9 +19,17 @@ const TIMER_TOTAL_MS = 15 * 60 * 1000;
  * Componente que exibe um cronômetro regressivo para leads com prazo de 15 minutos.
  * Mostra tempo restante, barra de progresso e alerta visual quando está próximo de expirar.
  */
+/** Verifica se a origem é de um lead Facebook ADS (webhook) */
+function isLeadFacebookADS(origem?: string | null): boolean {
+  if (!origem) return false;
+  const o = origem.toLowerCase();
+  return o.includes('webhook') || o.includes('facebook') || o.includes('fb') || o.includes('ads');
+}
+
 export function TimerLead({
   timestampRecebimento,
   timerAtivo,
+  origem,
   showProgress = false,
   size = "sm",
 }: TimerLeadProps) {
@@ -56,7 +66,8 @@ export function TimerLead({
     return () => clearInterval(interval);
   }, [timestampRecebimento, timerAtivo]);
 
-  if (!timerAtivo || !timestampRecebimento) {
+  // Exibir somente para leads Facebook ADS (webhook)
+  if (!timerAtivo || !timestampRecebimento || !isLeadFacebookADS(origem)) {
     return null;
   }
 

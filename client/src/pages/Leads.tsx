@@ -801,6 +801,7 @@ export default function Leads() {
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
+                              origem={lead.origem}
                               showProgress={true}
                             />
                           </div>
@@ -1119,6 +1120,7 @@ export default function Leads() {
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
+                              origem={lead.origem}
                               showProgress={true}
                             />
                           </div>

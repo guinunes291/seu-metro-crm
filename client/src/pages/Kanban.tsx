@@ -274,6 +274,7 @@ export default function Kanban() {
                               <TimerLead 
                                 timestampRecebimento={lead.timestampRecebimento} 
                                 timerAtivo={lead.timerAtivo ?? false}
+                                origem={lead.origem}
                                 showProgress={true}
                               />
                             </div>
