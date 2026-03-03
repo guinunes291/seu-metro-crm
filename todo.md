@@ -4927,3 +4927,8 @@
 ## Notificação do navegador nos últimos 3 minutos do timer
 - [x] Implementar Web Notifications API no TimerLead para alertar o corretor nos últimos 3 minutos
 - [x] Solicitar permissão de notificação ao corretor ao entrar no sistema
+
+## Bug: Timer aparece em leads com status diferente de Aguardando Atendimento
+- [x] Desativar timerAtivo no backend ao mudar status do lead para qualquer status diferente de aguardando_atendimento
+- [x] Corrigir timerLeadsJob para ignorar leads que não estão em aguardando_atendimento
+- [x] Desativar timer visualmente no frontend se status != aguardando_atendimento

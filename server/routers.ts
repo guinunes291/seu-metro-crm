@@ -513,6 +513,12 @@ export const appRouter = router({
           await db.criarFollowUpParaLead(input.id, lead.corretorId || ctx.user.id);
         }
         
+        // Se o status mudou para qualquer coisa diferente de "aguardando_atendimento",
+        // desativar o timer automaticamente (o lead foi atendido)
+        if (input.data.status && input.data.status !== 'aguardando_atendimento' && lead.timerAtivo) {
+          input.data = { ...input.data, timerAtivo: false };
+        }
+        
         // Se o status mudou para qualquer outro que não seja "em_atendimento", cancelar follow-ups pendentes
         if (input.data.status && input.data.status !== 'em_atendimento' && lead.status === 'em_atendimento') {
           await db.cancelarFollowUpsPendentes(input.id);
@@ -3677,7 +3683,7 @@ export const appRouter = router({
         if (input.status === 'realizado') {
           const lead = await db.getLeadById(agendamento.leadId);
           if (lead && lead.status !== 'visita_realizada') {
-            await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            await db.updateLead(agendamento.leadId, { status: 'visita_realizada', timerAtivo: false });
             // Usar corretorId do agendamento (dono do lead) para pontuação correta
             await db.registrarAlteracaoStatus({
               leadId: agendamento.leadId,
@@ -3720,7 +3726,7 @@ export const appRouter = router({
         if (input.status === 'realizado') {
           const lead = await db.getLeadById(agendamento.leadId);
           if (lead && lead.status !== 'visita_realizada') {
-            await db.updateLead(agendamento.leadId, { status: 'visita_realizada' });
+            await db.updateLead(agendamento.leadId, { status: 'visita_realizada', timerAtivo: false });
             // Usar corretorId do agendamento (dono do lead) para pontuação correta
             await db.registrarAlteracaoStatus({
               leadId: agendamento.leadId,
@@ -3893,12 +3899,13 @@ export const appRouter = router({
           createdAt: new Date(input.dataAssinatura),
         }).$returningId();
         
-        // Atualizar status do lead para "contrato_fechado"
+        // Atualizar status do lead para "contrato_fechado" e desativar timer
         await database
           .update(leads)
           .set({ 
             status: "contrato_fechado",
             ultimaInteracao: new Date(),
+            timerAtivo: false,
           })
           .where(eq(leads.id, input.leadId));
         
@@ -4041,12 +4048,13 @@ export const appRouter = router({
           observacoes: input.observacoes,
         }).$returningId();
         
-        // Atualizar status do lead para "analise_credito"
+        // Atualizar status do lead para "analise_credito" e desativar timer
         await database
           .update(leads)
           .set({ 
             status: "analise_credito",
             ultimaInteracao: new Date(),
+            timerAtivo: false,
           })
           .where(eq(leads.id, input.leadId));
         
