@@ -4894,3 +4894,9 @@
 - [x] Popular tipoFilaOrigem na distribuição via roleta (foco e geral)
 - [x] Corrigir timerLeadsJob: redistribuir leads foco apenas entre corretores da fila foco, leads geral apenas entre corretores da fila geral
 - [x] Atualizar testes unitários para cobrir separação de filas
+
+## Email Automático ao Corretor - Novo Lead
+- [x] Analisar template de email de conquistas existente
+- [x] Criar template HTML de email para notificação de novo lead ao corretor
+- [x] Integrar envio de email na distribuição via roleta (fila geral e fila foco)
+- [x] Integrar envio de email na redistribuição por timer (15 min)

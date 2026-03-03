@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { leads, distributionLog, filaDistribuicao, users, configuracaoProjetoFoco } from "../drizzle/schema";
 import { and, eq, lt, sql, ne, inArray } from "drizzle-orm";
+import { getUserById, getProjectById } from "./db";
 
 /**
  * ID do admin Guilherme Nunes - fallback quando nenhum corretor está disponível
@@ -229,6 +230,30 @@ export async function verificarTimerLeads() {
           console.log(
             `[Timer Job] Lead ${lead.id} redistribuído para corretor ${proximoCorretorId} (fila ${tipoFila})`
           );
+
+          // Enviar email ao corretor notificando sobre o lead redistribuído
+          try {
+            const corretor = await getUserById(proximoCorretorId);
+            const projeto = lead.projectId ? await getProjectById(lead.projectId) : null;
+            if (corretor && corretor.email) {
+              const { enviarNotificacaoLeadRedistribuido } = await import('./emailService');
+              await enviarNotificacaoLeadRedistribuido({
+                corretorNome: corretor.name,
+                corretorEmail: corretor.email,
+                leadNome: lead.nome,
+                leadTelefone: lead.telefone,
+                leadEmail: lead.email || undefined,
+                leadOrigem: lead.origem || 'Facebook ADS',
+                leadProjeto: projeto?.nome,
+                leadFaixaRenda: lead.faixaRenda || undefined,
+                tipoFila: tipoFila as 'geral' | 'foco',
+                minutosEspera: TIMER_MINUTOS,
+              });
+              console.log(`[Timer Job] Email de redistribuição enviado para: ${corretor.email}`);
+            }
+          } catch (emailError) {
+            console.error(`[Timer Job] Erro ao enviar email de redistribuição:`, emailError);
+          }
         } else {
           // Nenhum corretor disponível na fila correta → fallback para admin Guilherme Nunes
           console.log(
@@ -256,6 +281,30 @@ export async function verificarTimerLeads() {
           console.log(
             `[Timer Job] Lead ${lead.id} transferido para admin Guilherme Nunes (fila ${tipoFila} sem corretores)`
           );
+
+          // Enviar email ao admin notificando sobre o lead sem corretor
+          try {
+            const admin = await getUserById(ADMIN_GUILHERME_ID);
+            const projeto = lead.projectId ? await getProjectById(lead.projectId) : null;
+            if (admin && admin.email) {
+              const { enviarNotificacaoLeadRedistribuido } = await import('./emailService');
+              await enviarNotificacaoLeadRedistribuido({
+                corretorNome: admin.name,
+                corretorEmail: admin.email,
+                leadNome: lead.nome,
+                leadTelefone: lead.telefone,
+                leadEmail: lead.email || undefined,
+                leadOrigem: lead.origem || 'Facebook ADS',
+                leadProjeto: projeto?.nome,
+                leadFaixaRenda: lead.faixaRenda || undefined,
+                tipoFila: tipoFila as 'geral' | 'foco',
+                minutosEspera: TIMER_MINUTOS,
+              });
+              console.log(`[Timer Job] Email de fallback enviado para admin: ${admin.email}`);
+            }
+          } catch (emailError) {
+            console.error(`[Timer Job] Erro ao enviar email de fallback para admin:`, emailError);
+          }
         }
       } catch (error) {
         console.error(`[Timer Job] Erro ao processar lead ${lead.id}:`, error);
