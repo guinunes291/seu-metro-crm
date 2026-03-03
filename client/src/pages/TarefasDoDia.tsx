@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -410,7 +411,7 @@ export default function TarefasDoDia() {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => window.open(`https://wa.me/55${followUp.leadTelefone?.replace(/\D/g, '')}`, '_blank')}
+                            onClick={() => window.open(gerarLinkWhatsApp(followUp.leadTelefone || '', followUp.leadNome), '_blank')}
                             title="WhatsApp"
                           >
                             <MessageCircle className="h-4 w-4" />
@@ -515,7 +516,7 @@ export default function TarefasDoDia() {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => window.open(`https://wa.me/55${lead.telefone?.replace(/\D/g, '')}`, '_blank')}
+                          onClick={() => window.open(gerarLinkWhatsApp(lead.telefone || '', lead.nome), '_blank')}
                         >
                           <MessageCircle className="h-4 w-4" />
                         </Button>

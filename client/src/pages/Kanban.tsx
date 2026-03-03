@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,9 +234,7 @@ export default function Kanban() {
                                 className="h-5 w-5 p-0 ml-1 bg-green-50 hover:bg-green-100 text-green-700"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  const phone = lead.telefone.replace(/\D/g, '');
-                                  const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-                                  window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                  window.open(gerarLinkWhatsApp(lead.telefone, lead.nome), '_blank');
                                 }}
                               >
                                 <MessageCircle className="h-3 w-3" />

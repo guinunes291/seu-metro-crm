@@ -23,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { ptBR } from "date-fns/locale";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -814,9 +815,8 @@ export default function Leads() {
                             <Phone className="h-4 w-4 text-muted-foreground" />
                             <button
                               onClick={() => {
-                                const phone = lead.telefone.replace(/\D/g, '');
-                                const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-                                window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                const projeto = project?.nome || lead.projetoCustom;
+                                window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, projeto), '_blank');
                               }}
                               className="hover:underline text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
                             >
@@ -976,9 +976,8 @@ export default function Leads() {
                                 size="sm"
                                 className="bg-green-500 hover:bg-green-600 border-green-500 text-white"
                                 onClick={() => {
-                                  const phone = lead.telefone.replace(/\D/g, '');
-                                  const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-                                  window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                  const projeto = projects?.find(p => p.id === lead.projectId)?.nome || lead.projetoCustom;
+                                  window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, projeto), '_blank');
                                 }}
                               >
                                 <MessageCircle className="h-4 w-4 mr-1" />
@@ -1277,9 +1276,8 @@ export default function Leads() {
                           size="sm"
                           className="ml-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
                           onClick={() => {
-                            const phone = selectedLead.telefone.replace(/\D/g, '');
-                            const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-                            window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                            const projeto = projects?.find(p => p.id === selectedLead.projectId)?.nome || selectedLead.projetoCustom;
+                            window.open(gerarLinkWhatsApp(selectedLead.telefone, selectedLead.nome, projeto), '_blank');
                           }}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />

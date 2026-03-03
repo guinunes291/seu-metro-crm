@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -431,9 +432,7 @@ export default function LeadsPorCorretor() {
                                   size="sm"
                                   className="h-5 w-5 p-0 ml-1 bg-green-50 hover:bg-green-100 text-green-700"
                                   onClick={() => {
-                                    const phone = lead.telefone?.replace(/\D/g, '') || '';
-                                    const formattedPhone = phone.startsWith('55') ? phone : `55${phone}`;
-                                    window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                                    window.open(gerarLinkWhatsApp(lead.telefone || '', lead.nome), '_blank');
                                   }}
                                 >
                                   <MessageCircle className="h-3 w-3" />

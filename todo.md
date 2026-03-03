@@ -4903,3 +4903,8 @@
 
 ## Ajuste de Email - Gestor não recebe emails
 - [x] Remover envio de email para admin Guilherme Nunes no fallback do timer de redistribuição
+
+## Mensagem automática WhatsApp personalizada
+- [x] Criar helper gerarLinkWhatsApp(telefone, nome, projeto?) com mensagem personalizada
+- [x] Atualizar todos os botões/links de WhatsApp e telefone clicáveis no frontend
+- [x] Atualizar template de email com a nova mensagem personalizada

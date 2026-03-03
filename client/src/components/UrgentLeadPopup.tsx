@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Phone, MessageCircle, Mail, X, Flame } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 
 interface UrgentLeadPopupProps {
   lead: {
@@ -69,12 +70,8 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
       data: { status: "em_atendimento" },
     });
     
-    // 2. Abrir WhatsApp
-    const telefone = lead.telefone.replace(/\D/g, "");
-    const mensagem = encodeURIComponent(
-      `Olá ${lead.nome}! Vi que você demonstrou interesse ${lead.projectNome ? `no ${lead.projectNome}` : "em nossos imóveis"}. Como posso te ajudar?`
-    );
-    window.open(`https://wa.me/55${telefone}?text=${mensagem}`, "_blank");
+    // 2. Abrir WhatsApp com mensagem personalizada
+    window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, lead.projectNome), "_blank");
   };
   
   return (

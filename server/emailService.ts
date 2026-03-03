@@ -226,7 +226,12 @@ export async function enviarNotificacaoLeadWebhook(dados: {
       introText:
         'Um novo lead chegou e foi distribuído automaticamente para você pela roleta do CRM. Acesse o sistema ou clique no botão abaixo para iniciar o atendimento.',
       infoRows,
-      ctaHref: `https://wa.me/${telefoneNumerico}?text=Ol%C3%A1%20${encodeURIComponent(dados.leadNome)}%2C%20tudo%20bem%3F%20Vi%20que%20voc%C3%AA%20tem%20interesse%20em%20nossos%20im%C3%B3veis.%20Posso%20te%20ajudar%3F`,
+      ctaHref: (() => {
+        const msg = dados.leadProjeto
+          ? `Olá, ${dados.leadNome}! Tudo bem? 😊 Vi que você demonstrou interesse no empreendimento ${dados.leadProjeto}. Sou corretor(a) da Seu Metro Quadrado e estou aqui para te ajudar. Posso te passar mais informações?`
+          : `Olá, ${dados.leadNome}! Tudo bem? 😊 Vi que você demonstrou interesse em nossos empreendimentos. Sou corretor(a) da Seu Metro Quadrado e estou aqui para te ajudar. Posso te passar mais informações?`;
+        return `https://wa.me/${telefoneNumerico}?text=${encodeURIComponent(msg)}`;
+      })(),
       ctaText: '💬 Contatar via WhatsApp',
       ctaColor: '#16a34a',
       footerNote: 'Acesse o sistema para registrar suas interações e acompanhar o lead.',
@@ -302,7 +307,12 @@ export async function enviarNotificacaoLeadRedistribuido(dados: {
       introText:
         'Este lead foi redistribuído automaticamente pelo sistema após o tempo limite de espera. O cliente está aguardando contato — cada minuto conta!',
       infoRows,
-      ctaHref: `https://wa.me/${telefoneNumerico}?text=Ol%C3%A1%20${encodeURIComponent(dados.leadNome)}%2C%20tudo%20bem%3F%20Vi%20que%20voc%C3%AA%20tem%20interesse%20em%20nossos%20im%C3%B3veis.%20Posso%20te%20ajudar%3F`,
+      ctaHref: (() => {
+        const msg = dados.leadProjeto
+          ? `Olá, ${dados.leadNome}! Tudo bem? 😊 Vi que você demonstrou interesse no empreendimento ${dados.leadProjeto}. Sou corretor(a) da Seu Metro Quadrado e estou aqui para te ajudar. Posso te passar mais informações?`
+          : `Olá, ${dados.leadNome}! Tudo bem? 😊 Vi que você demonstrou interesse em nossos empreendimentos. Sou corretor(a) da Seu Metro Quadrado e estou aqui para te ajudar. Posso te passar mais informações?`;
+        return `https://wa.me/${telefoneNumerico}?text=${encodeURIComponent(msg)}`;
+      })(),
       ctaText: '🚀 Atender Agora via WhatsApp',
       ctaColor: '#dc2626',
       footerNote: 'Acesse o sistema para registrar suas interações e acompanhar o lead.',
