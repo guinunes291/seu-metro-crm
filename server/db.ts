@@ -2793,11 +2793,13 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     return null;
   }
   
-  // Atribuir lead ao corretor
+  // Atribuir lead ao corretor e ativar timer de 15 minutos
   await db.update(leads)
     .set({ 
       corretorId,
       status: 'aguardando_atendimento',
+      timerAtivo: true,
+      timestampRecebimento: new Date(),
     })
     .where(eq(leads.id, leadId));
   
@@ -10637,5 +10639,88 @@ export async function getMetricasDistratos(filtros?: DashboardFilters) {
   return {
     totalDistratos: Number(result?.totalDistratos || 0),
     vgvDistratado: Number(result?.vgvDistratado || 0),
+  };
+}
+
+/**
+ * Métricas diárias do corretor para o widget flutuante:
+ * - Leads Facebook (origemWebhook=true) recebidos hoje
+ * - Leads perdidos hoje por timeout de 15 minutos (redistribuídos automaticamente)
+ */
+export async function getMetricasDiariasCorretor(corretorId: number): Promise<{
+  recebidosHoje: number;
+  perdidosPorTimeout: number;
+}> {
+  const db = await getDb();
+  if (!db) return { recebidosHoje: 0, perdidosPorTimeout: 0 };
+
+  // Início do dia atual (meia-noite no horário local do servidor)
+  const agora = new Date();
+  const inicioDia = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0, 0);
+
+  // 1. Leads Facebook (origemWebhook=true) recebidos hoje pelo corretor
+  // Conta leads que foram distribuídos para este corretor hoje via webhook
+  const [recebidos] = await db
+    .select({ count: sql<number>`COUNT(DISTINCT ${distributionLog.leadId})` })
+    .from(distributionLog)
+    .innerJoin(leads, eq(distributionLog.leadId, leads.id))
+    .where(
+      and(
+        eq(distributionLog.corretorId, corretorId),
+        eq(leads.origemWebhook, true),
+        gte(distributionLog.createdAt, inicioDia)
+      )
+    );
+
+  // 2. Leads perdidos por timeout: leads origemWebhook que saíram deste corretor
+  //    por redistribuição automática (timeout de 15 minutos) hoje.
+  //    Usamos o campo corretorAnteriorId do lead para rastrear quem perdeu.
+  //    Quando o timer expira, o timerLeadsJob atualiza corretorId mas não corretorAnteriorId.
+  //    Portanto, usamos o log de distribuição: buscamos logs de timeout onde
+  //    o log imediatamente anterior era para este corretor.
+  const logsTimeout = await db
+    .select({
+      leadId: distributionLog.leadId,
+      createdAt: distributionLog.createdAt,
+    })
+    .from(distributionLog)
+    .innerJoin(leads, eq(distributionLog.leadId, leads.id))
+    .where(
+      and(
+        sql`(${distributionLog.motivo} LIKE '%timeout%' OR ${distributionLog.motivo} LIKE '%Fallback para admin%')`,
+        eq(leads.origemWebhook, true),
+        gte(distributionLog.createdAt, inicioDia)
+      )
+    );
+
+  // Para cada lead redistribuído por timeout hoje, verificar se o log anterior era para este corretor
+  let perdidosPorTimeout = 0;
+  const leadIdsUnicos = [...new Set(logsTimeout.map(l => l.leadId).filter(Boolean))] as number[];
+
+  for (const leadId of leadIdsUnicos) {
+    // Buscar os dois últimos logs deste lead (o de timeout e o anterior)
+    const logsDoLead = await db
+      .select({ corretorId: distributionLog.corretorId, motivo: distributionLog.motivo })
+      .from(distributionLog)
+      .where(eq(distributionLog.leadId, leadId))
+      .orderBy(desc(distributionLog.createdAt))
+      .limit(3);
+
+    // O log mais recente é o de timeout/fallback
+    // O log anterior mostra quem tinha o lead antes
+    for (let i = 0; i < logsDoLead.length - 1; i++) {
+      const logAtual = logsDoLead[i];
+      const logAnterior = logsDoLead[i + 1];
+      const isTimeout = logAtual.motivo?.includes('timeout') || logAtual.motivo?.includes('Fallback para admin');
+      if (isTimeout && logAnterior.corretorId === corretorId) {
+        perdidosPorTimeout++;
+        break;
+      }
+    }
+  }
+
+  return {
+    recebidosHoje: Number(recebidos?.count || 0),
+    perdidosPorTimeout,
   };
 }

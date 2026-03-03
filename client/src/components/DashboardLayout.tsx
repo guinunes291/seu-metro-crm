@@ -48,7 +48,8 @@ import { Badge } from "./ui/badge";
 import { toast } from "sonner";
 import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
-import { ModalEscolhaFollowUp } from "./ModalEscolhaFollowUp";
+import { ModalEscolhaFollowUp } from "@/components/ModalEscolhaFollowUp";
+import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -715,6 +716,9 @@ function DashboardContent({
         />
       )}
       
+      {/* Widget flutuante de contador de leads Facebook (apenas para corretores) */}
+      <ContadorLeadsFacebook isCorretor={isCorretor} />
+
       {/* Modal de onboarding obrigatório (1ª camada de bloqueio) */}
       <ModalOnboardingObrigatorio />
     </>

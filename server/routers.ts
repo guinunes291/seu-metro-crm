@@ -395,6 +395,15 @@ export const appRouter = router({
         return await db.getNewWebhookLeadsSince(corretorId, new Date(input.since));
       }),
 
+    // Métricas diárias do corretor: leads Facebook recebidos e perdidos por timeout
+    metricasDiarias: corretorProcedure
+      .query(async ({ ctx }) => {
+        // Apenas corretores veem suas próprias métricas
+        const corretorId = ctx.user.role === 'corretor' ? ctx.user.id : null;
+        if (!corretorId) return { recebidosHoje: 0, perdidosPorTimeout: 0 };
+        return await db.getMetricasDiariasCorretor(corretorId);
+      }),
+
     
     create: gestorProcedure
       .input(z.object({

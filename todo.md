@@ -4882,3 +4882,9 @@
 - [x] Criar interface de cadastro manual de projetos (formulário de criação, listagem e edição)
 - [x] Adicionar campos "Cliente agendou?", "Cliente visitou?", "Cliente fez análise de crédito?" no formulário de novo contrato com criação automática dos registros
 - [x] Exibir projetoCustom na coluna Projeto da tabela de leads quando não há projectId vinculado
+- [x] Criar menu flutuante estilo contador no painel do corretor: leads Google ADS recebidos no dia e perdidos por transferência automática após 15min
+
+## Correção: Timer de Transferência Automática e Menu Flutuante
+- [x] Corrigir timer de transferência automática: alterar de 5 para 15 minutos
+- [x] Corrigir redistribuição automática: respeitar fila de origem e fallback para admin Guilherme Nunes
+- [x] Criar menu flutuante de contador no painel do corretor: leads Facebook ADS recebidos/perdidos no dia
