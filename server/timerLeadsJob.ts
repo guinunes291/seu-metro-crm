@@ -1,6 +1,6 @@
 import { getDb } from "./db";
-import { leads, distributionLog, filaDistribuicao, users } from "../drizzle/schema";
-import { and, eq, lt, sql, ne } from "drizzle-orm";
+import { leads, distributionLog, filaDistribuicao, users, configuracaoProjetoFoco } from "../drizzle/schema";
+import { and, eq, lt, sql, ne, inArray } from "drizzle-orm";
 
 /**
  * ID do admin Guilherme Nunes - fallback quando nenhum corretor está disponível
@@ -13,29 +13,90 @@ const ADMIN_GUILHERME_ID = 7722800;
 const TIMER_MINUTOS = 15;
 
 /**
- * Busca o próximo corretor apto na mesma fila de origem do lead.
- * - Se o lead é da fila foco (origemWebhook=true e projeto foco), busca na fila foco
- * - Caso contrário, busca na fila geral (filaDistribuicao)
- * - Exclui o corretor atual para não redistribuir para o mesmo
- * - Retorna null se nenhum corretor estiver disponível
+ * Busca o próximo corretor apto na FILA FOCO.
+ * Usa round-robin baseado na configuração do projeto foco.
+ * Exclui o corretor atual.
  */
-async function getProximoCorretorMesmaFila(
-  corretorAtualId: number | null,
-  leadId: number
+async function getProximoCorretorFilaFocoParaTimer(
+  corretorAtualId: number | null
 ): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
 
-  // Buscar corretores na fila geral que estejam presentes e ativos
+  // Buscar configuração do projeto foco
+  const configs = await db
+    .select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+
+  if (configs.length === 0) return null;
+
+  const config = configs[0];
+  if (!config.ativo || !config.corretoresIds) return null;
+
+  const corretoresIds = config.corretoresIds as number[];
+  if (corretoresIds.length === 0) return null;
+
+  // Candidatos: corretores da fila foco que estão presentes, excluindo o atual
+  const candidatos = await db
+    .select({ id: users.id, status: users.status })
+    .from(users)
+    .where(
+      and(
+        inArray(users.id, corretoresIds),
+        eq(users.status, "presente"),
+        corretorAtualId ? ne(users.id, corretorAtualId) : sql`1=1`
+      )
+    );
+
+  if (candidatos.length === 0) return null;
+
+  // Round-robin: usar posição atual da configuração
+  const posicaoAtual = config.posicaoAtual || 0;
+  let tentativas = 0;
+  let proximaPosicao = posicaoAtual % corretoresIds.length;
+
+  while (tentativas < corretoresIds.length) {
+    const corretorId = corretoresIds[proximaPosicao];
+
+    // Verificar se o corretor está presente e não é o atual
+    const corretorPresente = candidatos.find(c => c.id === corretorId);
+
+    if (corretorPresente) {
+      // Avançar posição para o próximo
+      const novaPosicao = (proximaPosicao + 1) % corretoresIds.length;
+      await db
+        .update(configuracaoProjetoFoco)
+        .set({ posicaoAtual: novaPosicao })
+        .where(eq(configuracaoProjetoFoco.id, config.id));
+
+      return corretorId;
+    }
+
+    proximaPosicao = (proximaPosicao + 1) % corretoresIds.length;
+    tentativas++;
+  }
+
+  return null;
+}
+
+/**
+ * Busca o próximo corretor apto na FILA GERAL.
+ * Respeita limite diário de webhook e exclui o corretor atual.
+ */
+async function getProximoCorretorFilaGeralParaTimer(
+  corretorAtualId: number | null
+): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+
   const candidatos = await db
     .select({
       corretorId: filaDistribuicao.corretorId,
       posicao: filaDistribuicao.posicao,
-      ativo: filaDistribuicao.ativo,
       leadsRecebidosHoje: filaDistribuicao.leadsRecebidosHoje,
       corretorStatus: users.status,
       limiteDiarioWebhook: users.limiteDiarioWebhook,
-      corretorNome: users.name,
     })
     .from(filaDistribuicao)
     .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
@@ -44,14 +105,12 @@ async function getProximoCorretorMesmaFila(
         eq(filaDistribuicao.ativo, true),
         eq(users.status, "presente"),
         eq(users.role, "corretor"),
-        // Excluir o corretor atual para não redistribuir para o mesmo
         corretorAtualId ? ne(filaDistribuicao.corretorId, corretorAtualId) : sql`1=1`
       )
     )
     .orderBy(filaDistribuicao.posicao);
 
   for (const candidato of candidatos) {
-    // Verificar limite diário de webhook
     const limite = candidato.limiteDiarioWebhook ?? 50;
     const recebidosHoje = candidato.leadsRecebidosHoje ?? 0;
 
@@ -65,8 +124,12 @@ async function getProximoCorretorMesmaFila(
 
 /**
  * Job que verifica leads com timer ativo que ultrapassaram 15 minutos sem serem trabalhados.
- * Redistribui para o próximo corretor apto da mesma fila.
- * Se nenhum corretor estiver disponível, transfere para o admin Guilherme Nunes.
+ *
+ * Regras de redistribuição:
+ * - Leads da fila FOCO (tipoFilaOrigem='foco') → redistribuídos apenas entre corretores da fila foco
+ * - Leads da fila GERAL (tipoFilaOrigem='geral') → redistribuídos apenas entre corretores da fila geral
+ * - Se nenhum corretor disponível na fila correta → fallback para admin Guilherme Nunes
+ *
  * Executa a cada 1 minuto.
  */
 export async function verificarTimerLeads() {
@@ -99,8 +162,10 @@ export async function verificarTimerLeads() {
 
     for (const lead of leadsExpirados) {
       try {
+        const tipoFila = lead.tipoFilaOrigem || "geral";
+
         console.log(
-          `[Timer Job] Lead ${lead.id} (${lead.nome}) expirou após ${TIMER_MINUTOS} min - tentando redistribuir...`
+          `[Timer Job] Lead ${lead.id} (${lead.nome}) expirou após ${TIMER_MINUTOS} min - fila: ${tipoFila} - tentando redistribuir...`
         );
 
         // Desativar timer do lead atual e incrementar tentativas
@@ -112,14 +177,25 @@ export async function verificarTimerLeads() {
           })
           .where(eq(leads.id, lead.id));
 
-        // Buscar próximo corretor apto na mesma fila (excluindo o atual)
-        const proximoCorretorId = await getProximoCorretorMesmaFila(
-          lead.corretorId,
-          lead.id
-        );
+        // Buscar próximo corretor na fila CORRETA (foco ou geral)
+        let proximoCorretorId: number | null = null;
+
+        if (tipoFila === "foco") {
+          // Lead da fila foco → redistribuir apenas entre corretores da fila foco
+          proximoCorretorId = await getProximoCorretorFilaFocoParaTimer(lead.corretorId);
+          console.log(
+            `[Timer Job] Lead ${lead.id} (fila foco): próximo corretor foco = ${proximoCorretorId ?? "nenhum"}`
+          );
+        } else {
+          // Lead da fila geral → redistribuir apenas entre corretores da fila geral
+          proximoCorretorId = await getProximoCorretorFilaGeralParaTimer(lead.corretorId);
+          console.log(
+            `[Timer Job] Lead ${lead.id} (fila geral): próximo corretor geral = ${proximoCorretorId ?? "nenhum"}`
+          );
+        }
 
         if (proximoCorretorId) {
-          // Redistribuir para o próximo corretor apto
+          // Redistribuir para o próximo corretor apto da mesma fila
           await db
             .update(leads)
             .set({
@@ -127,6 +203,7 @@ export async function verificarTimerLeads() {
               timestampRecebimento: new Date(),
               timerAtivo: true,
               status: "aguardando_atendimento",
+              // Manter tipoFilaOrigem inalterado — o lead continua na mesma fila
             })
             .where(eq(leads.id, lead.id));
 
@@ -135,25 +212,27 @@ export async function verificarTimerLeads() {
             leadId: lead.id,
             corretorId: proximoCorretorId,
             tipo: "automatica",
-            motivo: `Redistribuição automática por timeout de ${TIMER_MINUTOS} minutos`,
+            motivo: `Redistribuição automática por timeout de ${TIMER_MINUTOS} minutos (fila ${tipoFila})`,
           });
 
-          // Atualizar contador na fila
-          await db
-            .update(filaDistribuicao)
-            .set({
-              leadsRecebidosHoje: sql`${filaDistribuicao.leadsRecebidosHoje} + 1`,
-              ultimaDistribuicao: new Date(),
-            })
-            .where(eq(filaDistribuicao.corretorId, proximoCorretorId));
+          // Atualizar contador na fila geral (fila foco não usa filaDistribuicao)
+          if (tipoFila === "geral") {
+            await db
+              .update(filaDistribuicao)
+              .set({
+                leadsRecebidosHoje: sql`${filaDistribuicao.leadsRecebidosHoje} + 1`,
+                ultimaDistribuicao: new Date(),
+              })
+              .where(eq(filaDistribuicao.corretorId, proximoCorretorId));
+          }
 
           console.log(
-            `[Timer Job] Lead ${lead.id} redistribuído para corretor ${proximoCorretorId}`
+            `[Timer Job] Lead ${lead.id} redistribuído para corretor ${proximoCorretorId} (fila ${tipoFila})`
           );
         } else {
-          // Nenhum corretor disponível → transferir para admin Guilherme Nunes
+          // Nenhum corretor disponível na fila correta → fallback para admin Guilherme Nunes
           console.log(
-            `[Timer Job] Lead ${lead.id}: nenhum corretor disponível, transferindo para admin Guilherme Nunes (ID: ${ADMIN_GUILHERME_ID})`
+            `[Timer Job] Lead ${lead.id}: nenhum corretor disponível na fila ${tipoFila}, transferindo para admin Guilherme Nunes (ID: ${ADMIN_GUILHERME_ID})`
           );
 
           await db
@@ -171,11 +250,11 @@ export async function verificarTimerLeads() {
             leadId: lead.id,
             corretorId: ADMIN_GUILHERME_ID,
             tipo: "automatica",
-            motivo: `Fallback para admin: nenhum corretor disponível após timeout de ${TIMER_MINUTOS} minutos`,
+            motivo: `Fallback para admin: nenhum corretor disponível na fila ${tipoFila} após timeout de ${TIMER_MINUTOS} minutos`,
           });
 
           console.log(
-            `[Timer Job] Lead ${lead.id} transferido para admin Guilherme Nunes`
+            `[Timer Job] Lead ${lead.id} transferido para admin Guilherme Nunes (fila ${tipoFila} sem corretores)`
           );
         }
       } catch (error) {

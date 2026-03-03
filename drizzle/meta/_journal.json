@@ -78,6 +78,13 @@
       "when": 1772449717480,
       "tag": "0010_burly_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1772537834035,
+      "tag": "0011_chilly_moonstone",
+      "breakpoints": true
     }
   ]
 }

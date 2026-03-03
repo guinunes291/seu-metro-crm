@@ -1,0 +1,1 @@
+ALTER TABLE `leads` ADD `tipoFilaOrigem` enum('geral','foco') DEFAULT 'geral';

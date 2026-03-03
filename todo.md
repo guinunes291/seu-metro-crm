@@ -4888,3 +4888,9 @@
 - [x] Corrigir timer de transferência automática: alterar de 5 para 15 minutos
 - [x] Corrigir redistribuição automática: respeitar fila de origem e fallback para admin Guilherme Nunes
 - [x] Criar menu flutuante de contador no painel do corretor: leads Facebook ADS recebidos/perdidos no dia
+
+## Redistribuição por Fila de Origem (Foco vs Geral)
+- [x] Adicionar campo tipoFilaOrigem na tabela leads (enum: 'geral', 'foco')
+- [x] Popular tipoFilaOrigem na distribuição via roleta (foco e geral)
+- [x] Corrigir timerLeadsJob: redistribuir leads foco apenas entre corretores da fila foco, leads geral apenas entre corretores da fila geral
+- [x] Atualizar testes unitários para cobrir separação de filas

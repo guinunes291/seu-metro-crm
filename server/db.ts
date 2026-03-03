@@ -2775,16 +2775,19 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   const isProjetoFoco = config && config.ativo && config.projetoId === leadInfo.projectId;
   
   let corretorId: number | null = null;
+  let tipoFilaUsada: 'geral' | 'foco' = 'geral';
   
   if (isProjetoFoco) {
     // Lead do projeto foco - usar fila foco (SEM LIMITE)
     corretorId = await getProximoCorretorFilaFoco();
+    if (corretorId) tipoFilaUsada = 'foco';
     console.log(`[Roleta] Lead do projeto foco - tentando fila foco: ${corretorId ? 'sucesso' : 'sem corretor'}`);
   }
   
   if (!corretorId) {
     // Lead de outro projeto OU fila foco sem corretores - usar fila geral (COM LIMITE)
     corretorId = await getProximoCorretorFila();
+    if (corretorId) tipoFilaUsada = 'geral';
     console.log(`[Roleta] Usando fila geral: ${corretorId ? 'sucesso' : 'sem corretor'}`);
   }
   
@@ -2793,13 +2796,14 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     return null;
   }
   
-  // Atribuir lead ao corretor e ativar timer de 15 minutos
+  // Atribuir lead ao corretor, ativar timer de 15 minutos e registrar fila de origem
   await db.update(leads)
     .set({ 
       corretorId,
       status: 'aguardando_atendimento',
       timerAtivo: true,
       timestampRecebimento: new Date(),
+      tipoFilaOrigem: tipoFilaUsada,
     })
     .where(eq(leads.id, leadId));
   
@@ -3106,11 +3110,14 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
   const corretorId = await getProximoCorretorFilaFoco();
   
   if (corretorId) {
-    // Atribuir lead ao corretor
+    // Atribuir lead ao corretor, ativar timer e registrar fila foco como origem
     await db.update(leads)
       .set({ 
         corretorId,
         status: 'aguardando_atendimento',
+        timerAtivo: true,
+        timestampRecebimento: new Date(),
+        tipoFilaOrigem: 'foco',
       })
       .where(eq(leads.id, leadCriado.id));
     

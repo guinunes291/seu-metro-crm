@@ -319,6 +319,9 @@ export const leads = mysqlTable("leads", {
   // Identificação de leads via webhook (para notificação urgente)
   origemWebhook: boolean("origemWebhook").default(false).notNull(), // true se veio via webhook
   
+  // Fila de origem do lead (para redistribuição correta no timer)
+  tipoFilaOrigem: mysqlEnum("tipoFilaOrigem", ["geral", "foco"]).default("geral"), // Fila pela qual o lead foi distribuído
+  
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
