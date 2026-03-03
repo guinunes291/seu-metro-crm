@@ -4908,3 +4908,6 @@
 - [x] Criar helper gerarLinkWhatsApp(telefone, nome, projeto?) com mensagem personalizada
 - [x] Atualizar todos os botões/links de WhatsApp e telefone clicáveis no frontend
 - [x] Atualizar template de email com a nova mensagem personalizada
+
+## Bug: Loop infinito ao clicar em "Cliente Agendou" no modal de Novo Contrato
+- [x] Corrigir loop infinito de renderização no modal de Novo Contrato ao clicar em "Cliente Agendou"

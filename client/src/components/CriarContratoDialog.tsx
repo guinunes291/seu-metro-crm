@@ -449,57 +449,54 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
             <Label className="text-base font-semibold">Jornada do Cliente</Label>
             <p className="text-xs text-muted-foreground">Marque as etapas que o cliente já passou. Os registros serão criados automaticamente com a data do contrato.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div
+              <label
+                htmlFor="clienteAgendou"
                 className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
                   clienteAgendou ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30' : 'border-border hover:border-blue-300'
                 }`}
-                onClick={() => setClienteAgendou(!clienteAgendou)}
               >
                 <Checkbox
                   checked={clienteAgendou}
-                  onCheckedChange={(v) => setClienteAgendou(!!v)}
+                  onCheckedChange={(v) => setClienteAgendou(v === true)}
                   id="clienteAgendou"
-                  onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-500" />
-                  <Label htmlFor="clienteAgendou" className="cursor-pointer font-medium text-sm">Cliente agendou?</Label>
+                  <span className="font-medium text-sm">Cliente agendou?</span>
                 </div>
-              </div>
-              <div
+              </label>
+              <label
+                htmlFor="clienteVisitou"
                 className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
                   clienteVisitou ? 'border-green-500 bg-green-50 dark:bg-green-950/30' : 'border-border hover:border-green-300'
                 }`}
-                onClick={() => setClienteVisitou(!clienteVisitou)}
               >
                 <Checkbox
                   checked={clienteVisitou}
-                  onCheckedChange={(v) => setClienteVisitou(!!v)}
+                  onCheckedChange={(v) => setClienteVisitou(v === true)}
                   id="clienteVisitou"
-                  onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-green-500" />
-                  <Label htmlFor="clienteVisitou" className="cursor-pointer font-medium text-sm">Cliente visitou?</Label>
+                  <span className="font-medium text-sm">Cliente visitou?</span>
                 </div>
-              </div>
-              <div
+              </label>
+              <label
+                htmlFor="clienteFezAnalise"
                 className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
                   clienteFezAnalise ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : 'border-border hover:border-purple-300'
                 }`}
-                onClick={() => setClienteFezAnalise(!clienteFezAnalise)}
               >
                 <Checkbox
                   checked={clienteFezAnalise}
-                  onCheckedChange={(v) => setClienteFezAnalise(!!v)}
+                  onCheckedChange={(v) => setClienteFezAnalise(v === true)}
                   id="clienteFezAnalise"
-                  onClick={(e) => e.stopPropagation()}
                 />
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-purple-500" />
-                  <Label htmlFor="clienteFezAnalise" className="cursor-pointer font-medium text-sm">Cliente fez análise de crédito?</Label>
+                  <span className="font-medium text-sm">Cliente fez análise de crédito?</span>
                 </div>
-              </div>
+              </label>
             </div>
           </div>
 
