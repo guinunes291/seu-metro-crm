@@ -4900,3 +4900,6 @@
 - [x] Criar template HTML de email para notificação de novo lead ao corretor
 - [x] Integrar envio de email na distribuição via roleta (fila geral e fila foco)
 - [x] Integrar envio de email na redistribuição por timer (15 min)
+
+## Ajuste de Email - Gestor não recebe emails
+- [x] Remover envio de email para admin Guilherme Nunes no fallback do timer de redistribuição
