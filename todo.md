@@ -4911,3 +4911,9 @@
 
 ## Bug: Loop infinito ao clicar em "Cliente Agendou" no modal de Novo Contrato
 - [x] Corrigir loop infinito de renderização no modal de Novo Contrato ao clicar em "Cliente Agendou"
+
+## Cronômetro regressivo nos cards de lead
+- [x] Verificar se o timer de 15 min está funcionando nos logs do servidor
+- [x] Criar componente LeadTimerBadge com cronômetro regressivo baseado em timestampRecebimento
+- [x] Integrar cronômetro nos cards de lead do corretor (Meus Leads, Kanban)
+- [x] Integrar cronômetro na visão do gestor (Leads por Corretor, painel de leads)

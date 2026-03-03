@@ -24,6 +24,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
+import { TimerLead } from "@/components/TimerLead";
 
 type LeadStatus = 'novo' | 'aguardando_atendimento' | 'em_atendimento' | 'analise_credito' | 'contrato_fechado' | 'perdido';
 
@@ -391,9 +392,10 @@ export default function LeadsPorCorretor() {
                       <TableHead>Corretor</TableHead>
                       <TableHead>Contato</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Projeto</TableHead>
-                      <TableHead>Data Criação</TableHead>
-                      <TableHead>Ações</TableHead>
+                       <TableHead>Projeto</TableHead>
+                       <TableHead>⏱ Timer</TableHead>
+                       <TableHead>Data Criação</TableHead>
+                       <TableHead>Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -471,6 +473,13 @@ export default function LeadsPorCorretor() {
                           </Badge>
                         </TableCell>
                         <TableCell>{lead.projectNome || "-"}</TableCell>
+                        <TableCell>
+                          <TimerLead
+                            timestampRecebimento={lead.timestampRecebimento}
+                            timerAtivo={lead.timerAtivo ?? false}
+                            showProgress={true}
+                          />
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Calendar className="h-3 w-3" />

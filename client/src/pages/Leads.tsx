@@ -798,12 +798,11 @@ export default function Leads() {
                           </Badge>
                           <div className="flex flex-col gap-1">
                             <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
-                            {lead.origem?.includes('webhook') && (
-                              <TimerLead 
-                                timestampRecebimento={lead.timestampRecebimento} 
-                                timerAtivo={lead.timerAtivo ?? false} 
-                              />
-                            )}
+                            <TimerLead 
+                              timestampRecebimento={lead.timestampRecebimento} 
+                              timerAtivo={lead.timerAtivo ?? false}
+                              showProgress={true}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1115,7 +1114,14 @@ export default function Leads() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon={false} />
+                          <div className="flex flex-col gap-1">
+                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon={false} />
+                            <TimerLead 
+                              timestampRecebimento={lead.timestampRecebimento} 
+                              timerAtivo={lead.timerAtivo ?? false}
+                              showProgress={true}
+                            />
+                          </div>
                         </TableCell>
                         <TableCell>
                           {lead.ultimoContato 

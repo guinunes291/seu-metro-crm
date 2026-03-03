@@ -269,14 +269,13 @@ export default function Kanban() {
                                 {lead.origem}
                               </Badge>
                             )}
-                            <div className="flex flex-col gap-1 items-end">
+                            <div className="flex flex-col gap-1 items-end w-full">
                               <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon />
-                              {lead.origem?.includes('webhook') && (
-                                <TimerLead 
-                                  timestampRecebimento={lead.timestampRecebimento} 
-                                  timerAtivo={lead.timerAtivo ?? false} 
-                                />
-                              )}
+                              <TimerLead 
+                                timestampRecebimento={lead.timestampRecebimento} 
+                                timerAtivo={lead.timerAtivo ?? false}
+                                showProgress={true}
+                              />
                             </div>
                           </div>
                           
