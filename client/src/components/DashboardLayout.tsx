@@ -50,6 +50,7 @@ import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
 import { ModalEscolhaFollowUp } from "@/components/ModalEscolhaFollowUp";
 import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
+import { useSolicitarPermissaoNotificacao } from "@/hooks/useNotificacaoLead";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -177,6 +178,9 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+
+  // Solicitar permissão de notificação do navegador ao entrar no sistema
+  useSolicitarPermissaoNotificacao();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());

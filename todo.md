@@ -4923,3 +4923,7 @@
 
 ## Timer somente para leads Facebook ADS
 - [x] Restringir exibição do TimerLead apenas para leads com origem Facebook ADS (webhook)
+
+## Notificação do navegador nos últimos 3 minutos do timer
+- [x] Implementar Web Notifications API no TimerLead para alertar o corretor nos últimos 3 minutos
+- [x] Solicitar permissão de notificação ao corretor ao entrar no sistema

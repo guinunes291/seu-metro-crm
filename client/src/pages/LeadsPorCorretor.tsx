@@ -478,6 +478,8 @@ export default function LeadsPorCorretor() {
                             timestampRecebimento={lead.timestampRecebimento}
                             timerAtivo={lead.timerAtivo ?? false}
                             origem={lead.origem}
+                            nomeCliente={lead.nome}
+                            leadId={lead.id}
                             showProgress={true}
                           />
                         </TableCell>

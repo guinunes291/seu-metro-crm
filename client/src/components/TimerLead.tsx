@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock, AlertTriangle, Zap } from "lucide-react";
+import { enviarNotificacaoLead } from "@/hooks/useNotificacaoLead";
 
 interface TimerLeadProps {
   timestampRecebimento: Date | string | null;
   timerAtivo: boolean;
   /** Origem do lead — timer só é exibido para leads de webhook (Facebook ADS) */
   origem?: string | null;
+  /** Nome do cliente para exibir na notificação do navegador */
+  nomeCliente?: string;
+  /** ID do lead para evitar notificações duplicadas */
+  leadId?: number;
   /** Mostrar barra de progresso (padrão: false) */
   showProgress?: boolean;
   /** Tamanho do componente: 'sm' | 'md' (padrão: 'sm') */
@@ -14,32 +19,40 @@ interface TimerLeadProps {
 
 /** Tempo total do timer em milissegundos (15 minutos) */
 const TIMER_TOTAL_MS = 15 * 60 * 1000;
+/** Limite de urgência para notificação (3 minutos) */
+const LIMITE_URGENCIA_MS = 3 * 60 * 1000;
 
-/**
- * Componente que exibe um cronômetro regressivo para leads com prazo de 15 minutos.
- * Mostra tempo restante, barra de progresso e alerta visual quando está próximo de expirar.
- */
 /** Verifica se a origem é de um lead Facebook ADS (webhook) */
 function isLeadFacebookADS(origem?: string | null): boolean {
   if (!origem) return false;
   const o = origem.toLowerCase();
-  return o.includes('webhook') || o.includes('facebook') || o.includes('fb') || o.includes('ads');
+  return o.includes("webhook") || o.includes("facebook") || o.includes("fb") || o.includes("ads");
 }
 
+/**
+ * Componente que exibe um cronômetro regressivo para leads Facebook ADS com prazo de 15 minutos.
+ * Dispara notificação nativa do navegador quando entrar nos últimos 3 minutos.
+ */
 export function TimerLead({
   timestampRecebimento,
   timerAtivo,
   origem,
+  nomeCliente,
+  leadId,
   showProgress = false,
   size = "sm",
 }: TimerLeadProps) {
   const [tempoRestante, setTempoRestante] = useState<number>(TIMER_TOTAL_MS);
   const [expirado, setExpirado] = useState(false);
+  const notificacaoEnviada = useRef(false);
+
+  // Resetar flag de notificação quando o lead/timer mudar
+  useEffect(() => {
+    notificacaoEnviada.current = false;
+  }, [leadId, timerAtivo, timestampRecebimento]);
 
   useEffect(() => {
-    if (!timerAtivo || !timestampRecebimento) {
-      return;
-    }
+    if (!timerAtivo || !timestampRecebimento) return;
 
     const calcularTempoRestante = () => {
       const agora = new Date().getTime();
@@ -55,6 +68,20 @@ export function TimerLead({
 
       setTempoRestante(restante);
       setExpirado(false);
+
+      // Disparar notificação do navegador ao entrar nos últimos 3 minutos (apenas uma vez)
+      if (
+        restante <= LIMITE_URGENCIA_MS &&
+        !notificacaoEnviada.current &&
+        isLeadFacebookADS(origem)
+      ) {
+        notificacaoEnviada.current = true;
+        enviarNotificacaoLead({
+          nomeCliente: nomeCliente || "Cliente",
+          tempoRestanteMs: restante,
+          leadId: leadId ?? 0,
+        });
+      }
     };
 
     // Calcular imediatamente
@@ -62,9 +89,8 @@ export function TimerLead({
 
     // Atualizar a cada segundo
     const interval = setInterval(calcularTempoRestante, 1000);
-
     return () => clearInterval(interval);
-  }, [timestampRecebimento, timerAtivo]);
+  }, [timestampRecebimento, timerAtivo, origem, nomeCliente, leadId]);
 
   // Exibir somente para leads Facebook ADS (webhook)
   if (!timerAtivo || !timestampRecebimento || !isLeadFacebookADS(origem)) {
@@ -76,8 +102,8 @@ export function TimerLead({
   const percentualRestante = Math.max(0, (tempoRestante / TIMER_TOTAL_MS) * 100);
 
   // Urgência baseada no tempo restante
-  const isUrgente = tempoRestante < 3 * 60 * 1000; // < 3 min
-  const isAtencao = tempoRestante < 7 * 60 * 1000; // < 7 min
+  const isUrgente = tempoRestante < LIMITE_URGENCIA_MS; // < 3 min
+  const isAtencao = tempoRestante < 7 * 60 * 1000;      // < 7 min
 
   // Cores baseadas no tempo restante
   const getCorTimer = () => {

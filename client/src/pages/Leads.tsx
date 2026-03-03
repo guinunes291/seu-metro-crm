@@ -802,6 +802,8 @@ export default function Leads() {
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
                               origem={lead.origem}
+                              nomeCliente={lead.nome}
+                              leadId={lead.id}
                               showProgress={true}
                             />
                           </div>
@@ -1121,6 +1123,8 @@ export default function Leads() {
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
                               origem={lead.origem}
+                              nomeCliente={lead.nome}
+                              leadId={lead.id}
                               showProgress={true}
                             />
                           </div>
