@@ -680,11 +680,15 @@ export const appRouter = router({
         }
         
         const corretorAnteriorId = lead.corretorId;
+        const agora = Date.now();
         
-        // Atualizar lead com novo corretor e status para aguardando_atendimento
+        // Atualizar lead com novo corretor, status e ativar timer de 15 min
         await db.updateLead(input.leadId, {
           corretorId: input.novoCorretorId,
           status: 'aguardando_atendimento',
+          timerAtivo: true,
+          timestampRecebimento: agora,
+          corretorAnteriorId: corretorAnteriorId ?? undefined,
         });
         
         // Criar follow-up automático para amanhã
@@ -772,11 +776,15 @@ export const appRouter = router({
             }
             
             const corretorAnteriorId = lead.corretorId;
+            const agora = Date.now();
             
-            // Atualizar lead com novo corretor e status para aguardando_atendimento
+            // Atualizar lead com novo corretor, status e ativar timer de 15 min
             await db.updateLead(leadId, {
               corretorId: input.novoCorretorId,
               status: 'aguardando_atendimento',
+              timerAtivo: true,
+              timestampRecebimento: agora,
+              corretorAnteriorId: corretorAnteriorId ?? undefined,
             });
             
             // Registrar no histórico
@@ -825,10 +833,14 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
         }
         
-        // Atualizar lead com novo corretor
+        const novoStatus = lead.status === 'novo' ? 'aguardando_atendimento' : lead.status;
+        const deveAtivarTimer = novoStatus === 'aguardando_atendimento';
+        
+        // Atualizar lead com novo corretor e ativar timer se status for aguardando_atendimento
         await db.updateLead(input.leadId, {
           corretorId: input.corretorId,
-          status: lead.status === 'novo' ? 'aguardando_atendimento' : lead.status,
+          status: novoStatus,
+          ...(deveAtivarTimer ? { timerAtivo: true, timestampRecebimento: Date.now() } : {}),
         });
         
         // Criar follow-up automático para amanhã

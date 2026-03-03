@@ -4917,3 +4917,6 @@
 - [x] Criar componente LeadTimerBadge com cronômetro regressivo baseado em timestampRecebimento
 - [x] Integrar cronômetro nos cards de lead do corretor (Meus Leads, Kanban)
 - [x] Integrar cronômetro na visão do gestor (Leads por Corretor, painel de leads)
+
+## Timer na Transferência Manual pelo Gestor
+- [x] Ativar timerAtivo e timestampRecebimento ao transferir lead manualmente via Leads por Corretor
