@@ -1,5 +1,14 @@
 # Seu Metro Quadrado - CRM Imobiliário - TODO
 
+## Bug Fix: Timer não exibindo na tela Leads por Corretor
+- [x] Adicionar timerAtivo, timestampRecebimento e origemWebhook no SELECT de getLeadsPorCorretorComFiltros
+
+## Feature: Alerta sonoro no TimerLead (últimos 3 minutos)
+- [x] Implementar beep via Web AudioContext no componente TimerLead
+- [x] Tocar som ao entrar nos últimos 3 minutos (uma vez)
+- [x] Tocar beep de urgência a cada 30s enquanto estiver nos últimos 3 minutos
+- [x] Respeitar política de autoplay do navegador (ativar som apenas após interação do usuário)
+
 ## Fase 1: Estrutura e Autenticação
 - [x] Configurar schema do banco de dados com todas as tabelas
 - [x] Implementar autenticação com Manus OAuth
