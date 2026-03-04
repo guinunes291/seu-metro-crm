@@ -3915,7 +3915,7 @@ export const appRouter = router({
           const corretorIdVenda = lead.corretorId || ctx.user.id;
           await adicionarVgvDia(corretorIdVenda, input.valorVenda);
           await calcularPontuacaoDiaria(corretorIdVenda);
-          console.log(`[Contrato] Pontuação registrada para corretor ${corretorIdVenda}: +150 pts (venda R$ ${input.valorVenda.toLocaleString('pt-BR')})`);
+          console.log(`[Contrato] Pontuação registrada para corretor ${corretorIdVenda}: +1000 pts (venda R$ ${input.valorVenda.toLocaleString('pt-BR')})`);
         } catch (error) {
           console.error("Erro ao registrar pontos de venda:", error);
         }

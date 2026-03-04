@@ -4412,11 +4412,23 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   const db = await getDb();
   if (!db) return;
   
-  const { inicioDoDiaHoje: _idhj17 } = await import('./timezone');
-  const hoje = _idhj17();
+  const { inicioDoDiaHoje: _idhj17, fimDoDiaHoje: _fdh17 } = await import('./timezone');
+  const inicioDia = _idhj17();
+  const fimDia = _fdh17();
   
-  // Buscar atividade do dia
-  const atividade = await getOrCreateAtividadeDiaria(corretorId, hoje);
+  // Buscar atividade do dia usando range para evitar problemas de timezone
+  // O registro pode ter sido criado com data ligeiramente diferente (UTC vs UTC-3)
+  const atividadeExistente = await db.select()
+    .from(atividadesDiarias)
+    .where(and(
+      eq(atividadesDiarias.corretorId, corretorId),
+      gte(atividadesDiarias.data, new Date(inicioDia.getTime() - 4 * 60 * 60 * 1000)), // -4h margem
+      lte(atividadesDiarias.data, fimDia)
+    ))
+    .orderBy(desc(atividadesDiarias.data))
+    .limit(1);
+  
+  const atividade = atividadeExistente[0] || await getOrCreateAtividadeDiaria(corretorId, inicioDia);
   if (!atividade) return;
   
   // Buscar metas do corretor
@@ -4445,7 +4457,7 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
     AGENDAMENTO: 25, // Corrigido: era 100, agora 25
     VISITA: 40, // Corrigido: era 250, agora 40
     DOCUMENTACAO: 60, // Corrigido: era 400, agora 60 (análise de crédito)
-    VENDA: 150, // Corrigido: era 1000, agora 150
+    VENDA: 1000, // Pontuação por venda realizada (contrato fechado)
   };
   
   let pontuacao = 0;
@@ -4568,7 +4580,7 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
     AGENDAMENTO: 25,      // 25 pontos por agendamento (corrigido)
     VISITA: 40,           // 40 pontos por visita (corrigido)
     DOCUMENTACAO: 60,     // 60 pontos por análise de crédito (corrigido)
-    VENDA: 150,           // 150 pontos por venda (corrigido)
+    VENDA: 1000,          // 1000 pontos por venda realizada
   };
   
   let pontuacao = 0;
