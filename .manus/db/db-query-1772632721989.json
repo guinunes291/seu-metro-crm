@@ -1,0 +1,22 @@
+{
+  "query": "SELECT 'leads_teste' as tipo, COUNT(*) as total FROM leads \nWHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR nome LIKE '%Batch%' \n   OR nome LIKE '%Rank C%' OR nome LIKE '%Lead C1%' OR nome LIKE '%Lead C2%'\n   OR nome LIKE '%Kanban Test%' OR nome LIKE '%Lead Projeto%'\n   OR nome LIKE '%Lead Convertido%' OR nome LIKE '%Lead Atendimento%'\nUNION ALL\nSELECT 'users_teste' as tipo, COUNT(*) FROM users \nWHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Corretor Rank%'\n   OR name LIKE '%Corretor 1%' OR name LIKE '%Corretor 2%' OR name LIKE '%Corretor 0%'\nUNION ALL\nSELECT 'projects_teste' as tipo, COUNT(*) FROM projects \nWHERE nome LIKE '%Teste%' OR nome LIKE '%Test%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT 'leads_teste' as tipo, COUNT(*) as total FROM leads \nWHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR nome LIKE '%Batch%' \n   OR nome LIKE '%Rank C%' OR nome LIKE '%Lead C1%' OR nome LIKE '%Lead C2%'\n   OR nome LIKE '%Kanban Test%' OR nome LIKE '%Lead Projeto%'\n   OR nome LIKE '%Lead Convertido%' OR nome LIKE '%Lead Atendimento%'\nUNION ALL\nSELECT 'users_teste' as tipo, COUNT(*) FROM users \nWHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Corretor Rank%'\n   OR name LIKE '%Corretor 1%' OR name LIKE '%Corretor 2%' OR name LIKE '%Corretor 0%'\nUNION ALL\nSELECT 'projects_teste' as tipo, COUNT(*) FROM projects \nWHERE nome LIKE '%Teste%' OR nome LIKE '%Test%';",
+  "rows": [
+    {
+      "tipo": "users_teste",
+      "total": "0"
+    },
+    {
+      "tipo": "projects_teste",
+      "total": "0"
+    },
+    {
+      "tipo": "leads_teste",
+      "total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tipo\ttotal\nusers_teste\t0\nprojects_teste\t0\nleads_teste\t0\n",
+  "stderr": "",
+  "execution_time_ms": 432
+}

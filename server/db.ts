@@ -9898,7 +9898,7 @@ export async function atualizarContrato(contratoId: number, dados: {
   if (dados.corretorId !== undefined) contratoUpdate.corretorId = dados.corretorId;
   if (dados.valorVenda !== undefined) contratoUpdate.valorVenda = String(dados.valorVenda);
   if (dados.dataVenda !== undefined) contratoUpdate.createdAt = dados.dataVenda;
-  if (dados.anexos !== undefined) contratoUpdate.anexos = JSON.stringify(dados.anexos);
+  if (dados.anexos !== undefined) contratoUpdate.anexos = dados.anexos;
   if (dados.percentualComissao !== undefined) contratoUpdate.percentualComissao = String(dados.percentualComissao);
 
   if (Object.keys(contratoUpdate).length > 0) {
@@ -9987,7 +9987,7 @@ export async function getContratoParaEdicao(contratoId: number) {
     valorVenda: Number(result.valorVenda || 0),
     dataVenda: result.dataVenda,
     observacoes: result.observacoes || '',
-    anexos: result.anexos ? JSON.parse(result.anexos) : [],
+    anexos: Array.isArray(result.anexos) ? result.anexos : (result.anexos ? JSON.parse(result.anexos as string) : []),
   };
 }
 

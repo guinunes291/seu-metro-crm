@@ -201,7 +201,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       percentualCorretor: percentualCorretorNumerico,
       percentualGerente: percentualGerenteNumerico,
       percentualSuperintendente: percentualSuperintendenteNumerico,
-      dataVenda,
+      dataVenda: dataVenda + 'T12:00:00',
       observacoes,
       anexos: anexosUrls,
       clienteAgendou,

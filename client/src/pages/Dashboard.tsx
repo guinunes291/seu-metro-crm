@@ -921,7 +921,7 @@ export default function Dashboard() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <span className="text-sm text-muted-foreground">
-                                    {format(new Date(contrato.dataVenda), "dd/MM/yyyy", { locale: ptBR })}
+                                    {format(new Date(contrato.dataVenda + (typeof contrato.dataVenda === 'string' && !contrato.dataVenda.includes('T') ? 'T12:00:00' : '')), "dd/MM/yyyy", { locale: ptBR })}
                                   </span>
                                 </TableCell>
                                 <TableCell className="text-center">

@@ -4947,3 +4947,11 @@
 
 ## Bug: Mensagem WhatsApp com nome no lugar do empreendimento
 - [x] Corrigir gerarLinkWhatsApp - nome do cliente aparecendo no lugar do empreendimento
+
+## Bug: Contratos - Data e Anexos
+- [ ] Corrigir data da venda aparecendo um dia antes (problema de timezone UTC vs UTC-3)
+- [ ] Corrigir duplicação de anexos a cada edição do contrato (118 arquivos)
+
+## Bug Fix: Contratos - Data e Anexos
+- [x] Bug: data da venda aparecendo um dia antes (timezone UTC vs UTC-3) - corrigido adicionando T12:00:00 na criação e exibição
+- [x] Bug: anexos duplicando a cada edição do contrato (double JSON.parse) - corrigido removendo JSON.stringify/parse manual

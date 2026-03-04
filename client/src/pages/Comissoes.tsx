@@ -16,6 +16,13 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+/** Formata data de venda com segurança de timezone (evita aparecer um dia antes) */
+function formatDataVenda(dataVenda: string | Date): string {
+  const str = typeof dataVenda === 'string' ? dataVenda : dataVenda.toISOString();
+  const safeStr = str.includes('T') ? str : str + 'T12:00:00';
+  return format(new Date(safeStr), 'dd/MM/yyyy', { locale: ptBR });
+}
+
 function ComissoesContent() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
@@ -621,7 +628,7 @@ function ComissoesContent() {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell>{format(new Date(item.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell>{formatDataVenda(item.dataVenda)}</TableCell>
                       <TableCell className="text-center">
                         <Button
                           size="sm"
@@ -690,7 +697,7 @@ function ComissoesContent() {
                         <TableCell>{d.corretor}</TableCell>
                         <TableCell className="max-w-[160px] truncate">{d.projeto}</TableCell>
                         <TableCell className="text-right text-red-700 font-semibold line-through">{formatCurrency(d.vgv)}</TableCell>
-                        <TableCell>{format(new Date(d.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                        <TableCell>{formatDataVenda(d.dataVenda)}</TableCell>
                         <TableCell>
                           {d.dataDistrato ? format(new Date(d.dataDistrato), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                         </TableCell>
@@ -846,7 +853,7 @@ function ComissoesContent() {
                         {formatCurrency(Number(comissao.valorLiquido))}
                       </TableCell>
                       <TableCell>{getStatusBadge(comissao.status)}</TableCell>
-                      <TableCell>{format(new Date(comissao.dataVenda), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                      <TableCell>{formatDataVenda(comissao.dataVenda)}</TableCell>
                       {isAdmin && (
                         <TableCell className="text-center">
                           {comissao.status === 'a_pagar' && (
