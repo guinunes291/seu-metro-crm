@@ -1,0 +1,45 @@
+{
+  "query": "SELECT timerAtivo, timestampRecebimento, id, nome, origem FROM leads WHERE origemWebhook = 1 AND status = 'aguardando_atendimento' ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT timerAtivo, timestampRecebimento, id, nome, origem FROM leads WHERE origemWebhook = 1 AND status = 'aguardando_atendimento' ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "timerAtivo": "1",
+      "timestampRecebimento": "2026-03-04 12:37:30",
+      "id": "4290001",
+      "nome": "Roseana Lacava",
+      "origem": "facebook"
+    },
+    {
+      "timerAtivo": "0",
+      "timestampRecebimento": "2026-03-03 00:00:27",
+      "id": "4086673",
+      "nome": "4mnd.y",
+      "origem": "facebook"
+    },
+    {
+      "timerAtivo": "0",
+      "timestampRecebimento": "2026-03-03 00:00:27",
+      "id": "4086671",
+      "nome": "Matheus",
+      "origem": "facebook"
+    },
+    {
+      "timerAtivo": "0",
+      "timestampRecebimento": "2026-03-03 00:00:27",
+      "id": "4086669",
+      "nome": "Marcus Vinicius Fernandes",
+      "origem": "facebook"
+    },
+    {
+      "timerAtivo": "0",
+      "timestampRecebimento": "2026-03-02 15:19:46",
+      "id": "4086668",
+      "nome": "Samantha",
+      "origem": "facebook"
+    }
+  ],
+  "messages": [],
+  "stdout": "timerAtivo\ttimestampRecebimento\tid\tnome\torigem\n1\t2026-03-04 12:37:30\t4290001\tRoseana Lacava\tfacebook\n0\t2026-03-03 00:00:27\t4086673\t4mnd.y\tfacebook\n0\t2026-03-03 00:00:27\t4086671\tMatheus\tfacebook\n0\t2026-03-03 00:00:27\t4086669\tMarcus Vinicius Fernandes\tfacebook\n0\t2026-03-02 15:19:46\t4086668\tSamantha\tfacebook\n",
+  "stderr": "",
+  "execution_time_ms": 374
+}
