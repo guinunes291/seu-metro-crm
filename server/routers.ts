@@ -3909,17 +3909,15 @@ export const appRouter = router({
           })
           .where(eq(leads.id, input.leadId));
         
-        // Registrar pontos para o corretor (fechamento de contrato = 1000 pontos)
+        // Registrar pontos para o corretor (fechamento de contrato = 150 pontos)
         try {
-          const { registrarAtividade } = await import("./gamificacao");
-          await registrarAtividade({
-            corretorId: lead.corretorId || ctx.user.id,
-            tipo: "contrato_fechado",
-            pontos: 1000,
-            descricao: `Contrato fechado - ${lead.nome} - R$ ${input.valorVenda.toLocaleString('pt-BR')}`,
-          });
+          const { adicionarVgvDia, calcularPontuacaoDiaria } = await import("./db");
+          const corretorIdVenda = lead.corretorId || ctx.user.id;
+          await adicionarVgvDia(corretorIdVenda, input.valorVenda);
+          await calcularPontuacaoDiaria(corretorIdVenda);
+          console.log(`[Contrato] Pontuação registrada para corretor ${corretorIdVenda}: +150 pts (venda R$ ${input.valorVenda.toLocaleString('pt-BR')})`);
         } catch (error) {
-          console.error("Erro ao registrar pontos:", error);
+          console.error("Erro ao registrar pontos de venda:", error);
         }
         
         return { success: true, contratoId: contrato.id };
@@ -4058,17 +4056,15 @@ export const appRouter = router({
           })
           .where(eq(leads.id, input.leadId));
         
-        // Registrar pontos para o corretor (análise de crédito = 400 pontos)
+        // Registrar pontos para o corretor (análise de crédito = 60 pontos)
         try {
-          const { registrarAtividade } = await import("./gamificacao");
-          await registrarAtividade({
-            corretorId: lead.corretorId || ctx.user.id,
-            tipo: "analise_credito",
-            pontos: 400,
-            descricao: `Análise de crédito enviada - ${lead.nome}`,
-          });
+          const { incrementarAtividade, calcularPontuacaoDiaria } = await import("./db");
+          const corretorIdAnalise = lead.corretorId || ctx.user.id;
+          await incrementarAtividade(corretorIdAnalise, 'analiseCreditoEnviadas');
+          await calcularPontuacaoDiaria(corretorIdAnalise);
+          console.log(`[Análise Crédito] Pontuação registrada para corretor ${corretorIdAnalise}: +60 pts`);
         } catch (error) {
-          console.error("Erro ao registrar pontos:", error);
+          console.error("Erro ao registrar pontos de análise de crédito:", error);
         }
         
         return { success: true, analiseId: analise.id };

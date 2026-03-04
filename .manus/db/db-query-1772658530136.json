@@ -1,0 +1,13 @@
+{
+  "query": "SHOW TABLES LIKE '%atividade%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SHOW TABLES LIKE '%atividade%';",
+  "rows": [
+    {
+      "Tables_in_gjgL2sFxYNbZjhUM6i4tZH (%atividade%)": "atividades_diarias"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_gjgL2sFxYNbZjhUM6i4tZH (%atividade%)\natividades_diarias\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}

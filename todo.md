@@ -4955,3 +4955,13 @@
 ## Bug Fix: Contratos - Data e Anexos
 - [x] Bug: data da venda aparecendo um dia antes (timezone UTC vs UTC-3) - corrigido adicionando T12:00:00 na criação e exibição
 - [x] Bug: anexos duplicando a cada edição do contrato (double JSON.parse) - corrigido removendo JSON.stringify/parse manual
+
+## Feature: Exclusão individual de anexos no modal de edição de contrato
+- [ ] Adicionar botão X em cada anexo existente no EditarContratoDialog
+- [ ] Implementar lógica de remoção do anexo da lista local antes de salvar
+- [ ] Confirmar que ao salvar, apenas os anexos não removidos são persistidos
+
+## Bug Fix: Pontuação de venda não aparece no ranking de produtividade
+- [ ] Verificar cálculo de pontuação na Performance TV (contrato fechado = 150 pts)
+- [ ] Incluir contratos fechados no dia no cálculo de pontuação do ranking
+- [ ] Exibir coluna "Vnd" (vendas) na tabela de atividades do dia
