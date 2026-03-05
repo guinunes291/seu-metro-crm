@@ -5013,3 +5013,8 @@
 - [x] Persistir último backup executado em arquivo /tmp para evitar duplicatas após reinicialização
 - [x] Executar backup imediato ao iniciar o servidor (não esperar às 3h)
 - [x] Testar que o backup funciona corretamente (1492 registros salvos no S3)
+
+## Limpeza: Corretores de Teste
+- [x] Listar todos os usuários com nomes de teste no banco
+- [x] Apagar corretores de teste (31 usuários removidos, 31 reais preservados)
+- [x] Preservar apenas usuários reais da operação
