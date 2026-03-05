@@ -5024,3 +5024,8 @@
 - [x] Criar job de exportação horária para Google Sheets (16 tabelas)
 - [x] Criar abas separadas por tabela na planilha + aba de resumo
 - [x] Testar exportação: 81 registros exportados com sucesso
+
+## Importação: Leads Consolidado_Final.xlsx
+- [x] Analisar estrutura do arquivo (18.414 linhas, colunas: Nome, Telefone, Email, Projeto)
+- [x] Mapear projetos existentes no banco (1.182 projetos)
+- [x] Importar leads: 15.913 inseridos, 9.675 com projectId, 2.068 com projetoCustom, 4.170 sem projeto, 2.493 ignorados (sem telefone/nome válido)
