@@ -4965,3 +4965,8 @@
 - [ ] Verificar cálculo de pontuação na Performance TV (contrato fechado = 150 pts)
 - [ ] Incluir contratos fechados no dia no cálculo de pontuação do ranking
 - [ ] Exibir coluna "Vnd" (vendas) na tabela de atividades do dia
+
+## Feature: Coluna Vendas na tabela de Atividades do Dia (Performance TV)
+- [x] Adicionar campo vendasFechadas no mapeamento do rankingProdutividade (usando totalContratos do backend)
+- [x] Adicionar coluna "Vnd" (Vendas) no cabeçalho da tabela de Atividades do Dia
+- [x] Exibir troféu 🏆 e número de vendas para corretores com vendas, traço para os sem vendas

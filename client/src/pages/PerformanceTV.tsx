@@ -654,6 +654,7 @@ export default function PerformanceTV() {
       agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
       visitasRealizadas: Number(item.totalVisitas) || 0,
       documentacoesRecolhidas: Number(item.totalDocumentacoes) || 0,
+      vendasFechadas: Number(item.totalContratos) || 0,
       posicao: index + 1,
     })) || []
   , [rankingPeriodo]);
@@ -948,7 +949,9 @@ export default function PerformanceTV() {
                         <th className="text-left py-2 px-2">#</th><th className="text-left py-2 px-2">Corretor</th>
                         <th className="text-center py-2 px-2">Tel</th><th className="text-center py-2 px-2">Wpp</th>
                         <th className="text-center py-2 px-2">Agd</th><th className="text-center py-2 px-2">Vis</th>
-                        <th className="text-center py-2 px-2">Doc</th><th className="text-right py-2 px-2">Pts</th>
+                        <th className="text-center py-2 px-2">Doc</th>
+                        <th className="text-center py-2 px-2 text-emerald-400">Vnd</th>
+                        <th className="text-right py-2 px-2">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -961,6 +964,15 @@ export default function PerformanceTV() {
                           <td className="py-2 px-2 text-center text-purple-300">{item.agendamentosConfirmados}</td>
                           <td className="py-2 px-2 text-center text-amber-300">{item.visitasRealizadas}</td>
                           <td className="py-2 px-2 text-center text-cyan-300">{item.documentacoesRecolhidas}</td>
+                          <td className="py-2 px-2 text-center">
+                            {item.vendasFechadas > 0 ? (
+                              <span className="inline-flex items-center gap-1 font-bold text-emerald-400">
+                                <span className="text-xs">🏆</span>{item.vendasFechadas}
+                              </span>
+                            ) : (
+                              <span className="text-gray-600">—</span>
+                            )}
+                          </td>
                           <td className={`py-2 px-2 text-right font-bold ${index === 0 ? 'text-yellow-300' : index === 1 ? 'text-gray-200' : index === 2 ? 'text-amber-300' : 'text-white'}`}>{item.pontuacaoTotal}</td>
                         </tr>
                       ))}
