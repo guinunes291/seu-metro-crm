@@ -4995,3 +4995,21 @@
 - [x] PerformanceTV: redirect para /minha-performance se role=corretor
 - [x] MinhaPerformance: refatorada como página exclusiva do corretor (metas + progresso pessoal)
 - [x] Testes de controle de acesso: 11 testes passando
+
+## Feature: Sistema de Limpeza de Dados de Teste
+- [ ] Mapear tabelas com dados de teste
+- [ ] Apagar dados de teste do banco via SQL
+- [ ] Implementar procedure admin para limpeza seletiva
+- [ ] Criar página de Manutenção no painel admin com botões de limpeza por categoria
+- [ ] Adicionar confirmação dupla antes de qualquer limpeza destrutiva
+
+## Bug Fix: Metas Globais atualizando todos os meses
+- [ ] Identificar a procedure/função que salva metas globais sem filtro de mês/ano
+- [ ] Corrigir para que o save/update afete apenas o mês selecionado
+- [ ] Testar que meses anteriores não são alterados ao salvar meta do mês atual
+
+## Bug Fix: Job de Backup Automático
+- [x] Reescrever backupJob.ts: substituir setTimeout por setInterval de 1 minuto com verificação de horário
+- [x] Persistir último backup executado em arquivo /tmp para evitar duplicatas após reinicialização
+- [x] Executar backup imediato ao iniciar o servidor (não esperar às 3h)
+- [x] Testar que o backup funciona corretamente (1492 registros salvos no S3)

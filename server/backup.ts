@@ -1,21 +1,48 @@
 import { getDb } from "./db";
-import { users, leads, agendamentos, visitas, analises_credito, contratos, documentacoes, projects, atividadesDiarias, conquistas } from "../drizzle/schema";
+import {
+  users,
+  leads,
+  agendamentos,
+  visitas,
+  analises_credito,
+  contratos,
+  documentacoes,
+  projects,
+  atividadesDiarias,
+  conquistas,
+  metas,
+  metasGlobais,
+  equipes,
+  interacoes,
+  propostas,
+  followUps,
+  tarefas,
+  comissoes,
+} from "../drizzle/schema";
 import { storagePut } from "./storage";
 
 /**
- * Tabelas críticas que serão incluídas no backup
+ * Tabelas críticas incluídas no backup (ordem respeita dependências de FK)
  */
 const CRITICAL_TABLES = [
   { name: "users", table: users },
+  { name: "equipes", table: equipes },
+  { name: "projects", table: projects },
   { name: "leads", table: leads },
   { name: "agendamentos", table: agendamentos },
   { name: "visitas", table: visitas },
   { name: "analises_credito", table: analises_credito },
   { name: "contratos", table: contratos },
   { name: "documentacoes", table: documentacoes },
-  { name: "projects", table: projects },
+  { name: "interacoes", table: interacoes },
+  { name: "propostas", table: propostas },
+  { name: "follow_ups", table: followUps },
+  { name: "tarefas", table: tarefas },
+  { name: "comissoes", table: comissoes },
   { name: "atividades_diarias", table: atividadesDiarias },
   { name: "conquistas", table: conquistas },
+  { name: "metas", table: metas },
+  { name: "metas_globais", table: metasGlobais },
 ];
 
 export interface BackupResult {
@@ -37,18 +64,23 @@ export interface BackupResult {
 export async function performBackup(): Promise<BackupResult> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const filename = `backup-${timestamp}.json`;
-  
+
   try {
     console.log(`[Backup] Iniciando backup: ${filename}`);
-    
-    const db = getDb();
+
+    // IMPORTANTE: usar await getDb() — getDb() é assíncrono
+    const db = await getDb();
+    if (!db) {
+      throw new Error("Banco de dados não disponível");
+    }
+
     const backupData: Record<string, any[]> = {};
     const tableSummary: { name: string; rowCount: number }[] = [];
-    
+
     // Exportar cada tabela
     for (const { name, table } of CRITICAL_TABLES) {
       try {
-        const rows = await db.select().from(table);
+        const rows = await db.select().from(table as any);
         backupData[name] = rows;
         tableSummary.push({ name, rowCount: rows.length });
         console.log(`[Backup] ${name}: ${rows.length} registros`);
@@ -58,25 +90,24 @@ export async function performBackup(): Promise<BackupResult> {
         tableSummary.push({ name, rowCount: 0 });
       }
     }
-    
+
     // Adicionar metadados
     const backup = {
-      version: "1.0",
+      version: "2.0",
       timestamp: new Date().toISOString(),
       tables: backupData,
       summary: tableSummary,
     };
-    
-    // Converter para JSON
+
+    // Converter para JSON e fazer upload para S3
     const jsonContent = JSON.stringify(backup, null, 2);
     const buffer = Buffer.from(jsonContent, "utf-8");
-    
-    // Upload para S3
+
     const s3Key = `backups/${filename}`;
     const { url } = await storagePut(s3Key, buffer, "application/json");
-    
-    console.log(`[Backup] Backup concluído com sucesso: ${url}`);
-    
+
+    console.log(`[Backup] ✅ Backup concluído com sucesso: ${url}`);
+
     return {
       success: true,
       timestamp: new Date().toISOString(),
@@ -94,13 +125,4 @@ export async function performBackup(): Promise<BackupResult> {
       error: error instanceof Error ? error.message : "Erro desconhecido",
     };
   }
-}
-
-/**
- * Limpa backups antigos (mantém últimos 30 dias)
- * Nota: Esta função requer implementação de listagem de arquivos no S3
- */
-export async function cleanOldBackups(): Promise<void> {
-  // TODO: Implementar quando houver necessidade de limpeza automática
-  console.log("[Backup] Limpeza de backups antigos não implementada ainda");
 }
