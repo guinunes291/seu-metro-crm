@@ -10,6 +10,8 @@ import {
 import { useState, useEffect, useRef, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 
 // Sistema de pontuação
 const PONTUACAO = {
@@ -458,10 +460,19 @@ function EstatisticasDia({ ranking }: { ranking: any[] }) {
 
 // Componente principal
 export default function RankingTV() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activeTab, setActiveTab] = useState("dia");
   const [previousLeader, setPreviousLeader] = useState<string | null>(null);
   const [previousSales, setPreviousSales] = useState<number>(0);
+  
+  // Redirecionar corretor para sua própria página de performance
+  useEffect(() => {
+    if (user?.role === 'corretor') {
+      setLocation('/minha-performance');
+    }
+  }, [user?.role]);
   
   const { playCelebration, playSale, soundEnabled, setSoundEnabled } = useSoundEffects();
   

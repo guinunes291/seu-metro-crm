@@ -2255,6 +2255,49 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getProgressoMetasTodosCorretores(input.mes, input.ano);
       }),
+    
+    // Corretor consulta sua própria meta do mês
+    minhaMeta: corretorProcedure
+      .input(z.object({
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        return await db.getMetaByCorretorMesAno(ctx.user.id, input.mes, input.ano);
+      }),
+    
+    // Corretor define/atualiza sua própria meta do mês
+    definirMinhaMeta: corretorProcedure
+      .input(z.object({
+        mes: z.number().min(1).max(12),
+        ano: z.number().min(2020).max(2100),
+        metaLeads: z.number().min(0).optional(),
+        metaAgendamentos: z.number().min(0).optional(),
+        metaVisitas: z.number().min(0).optional(),
+        metaContratos: z.number().min(0).optional(),
+        metaVGV: z.number().min(0).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { mes, ano, ...metaData } = input;
+        const existente = await db.getMetaByCorretorMesAno(ctx.user.id, mes, ano);
+        if (existente) {
+          await db.updateMeta(existente.id, metaData);
+          return { success: true, action: 'updated' };
+        } else {
+          await db.createMeta({ corretorId: ctx.user.id, mes, ano, ...metaData });
+          return { success: true, action: 'created' };
+        }
+      }),
+    
+    // Corretor consulta seu progresso no mês atual
+    meuProgresso: corretorProcedure
+      .input(z.object({
+        mes: z.number(),
+        ano: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        return await db.getProgressoMeta(ctx.user.id, input.mes, input.ano);
+      }),
   }),
 
 
@@ -2977,16 +3020,19 @@ export const appRouter = router({
   // RANKING TV DASHBOARD E PERFORMANCE
   // ============================================================================
   ranking: router({
-    // Ranking completo de corretores com fotos (para Minha Performance)
-    getCompleto: protectedProcedure
+    // Ranking completo de corretores com fotos (para Performance TV / Ranking TV)
+    // Admin vê tudo, gestor vê apenas seu time, corretor não tem acesso
+    getCompleto: gestorProcedure
       .input(z.object({
         mes: z.number().nullable().optional(),
         ano: z.number().nullable().optional(),
         dataInicio: z.date().nullable().optional(),
         dataFim: z.date().nullable().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getRankingCorretores(input?.mes, input?.ano, input?.dataInicio, input?.dataFim);
+      .query(async ({ ctx, input }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getRankingCorretores(input?.mes, input?.ano, input?.dataInicio, input?.dataFim, corretoresIds);
       }),
     
     // Performance individual do corretor
@@ -3018,23 +3064,26 @@ export const appRouter = router({
       }),
     
     // Ranking por período (com filtro de datas)
-    porPeriodo: protectedProcedure
+    // Admin vê tudo, gestor vê apenas seu time, corretor não tem acesso
+    porPeriodo: gestorProcedure
       .input(z.object({
         dataInicio: z.date().optional(),
         dataFim: z.date().optional(),
       }).optional())
-      .query(async ({ input }) => {
-        return await db.getRankingPorPeriodo(input?.dataInicio, input?.dataFim);
+      .query(async ({ ctx, input }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getRankingPorPeriodo(input?.dataInicio, input?.dataFim, corretoresIds);
       }),
     
-    // Ranking semanal
-    semanal: protectedProcedure
+    // Ranking semanal (gestor vê apenas seu time)
+    semanal: gestorProcedure
       .query(async () => {
         return await db.getRankingSemanal();
       }),
     
-    // Ranking mensal
-    mensal: protectedProcedure
+    // Ranking mensal (gestor vê apenas seu time)
+    mensal: gestorProcedure
       .query(async () => {
         return await db.getRankingMensal();
       }),

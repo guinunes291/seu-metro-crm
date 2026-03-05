@@ -2405,9 +2405,12 @@ export async function getProgressoMetasTodosCorretores(mes: number, ano: number)
 // RANKING DE CORRETORES
 // ============================================================================
 
-export async function getRankingCorretores(mes?: number | null, ano?: number | null, dataInicio?: Date | null, dataFim?: Date | null) {
+export async function getRankingCorretores(mes?: number | null, ano?: number | null, dataInicio?: Date | null, dataFim?: Date | null, corretoresIds?: number[] | null) {
   const db = await getDb();
   if (!db) return [];
+  
+  // Se corretoresIds for array vazio, não há ninguém para mostrar
+  if (corretoresIds !== null && corretoresIds !== undefined && corretoresIds.length === 0) return [];
   
   try {
     // Definir filtro de data para contratos (sempre excluindo distratos)
@@ -2427,6 +2430,11 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
         gte(contratos.createdAt, inicio),
         lte(contratos.createdAt, fim)
       );
+    }
+    
+    // Aplicar filtro de equipe (gestor vê apenas seu time)
+    if (corretoresIds && corretoresIds.length > 0) {
+      contratosWhere = and(contratosWhere, inArray(leads.corretorId, corretoresIds));
     }
     
     // Buscar contratos agrupados por corretor usando Drizzle ORM
@@ -4244,12 +4252,15 @@ export async function getRankingDia(data?: Date) {
 }
 
 // Obter ranking por período (com filtro de datas)
-export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date) {
+export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date, corretoresIds?: number[] | null) {
   const db = await getDb();
   if (!db) return [];
   
+  // Se corretoresIds for array vazio, não há ninguém para mostrar
+  if (corretoresIds !== null && corretoresIds !== undefined && corretoresIds.length === 0) return [];
+  
   // Se não tiver datas, usar hoje como padrão
-  const conditions = [];
+  const conditions: any[] = [];
   
   if (dataInicio) {
     conditions.push(sql`DATE(${atividadesDiarias.data}) >= DATE(${dataInicio})`);
@@ -4263,6 +4274,11 @@ export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date) {
   if (conditions.length === 0) {
     const hoje = new Date();
     conditions.push(sql`DATE(${atividadesDiarias.data}) = DATE(${hoje})`);
+  }
+  
+  // Filtro de equipe (gestor vê apenas seu time)
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(atividadesDiarias.corretorId, corretoresIds));
   }
   
   const ranking = await db.select({

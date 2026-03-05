@@ -8,6 +8,7 @@ import {
   Settings, Save, ArrowUp, ArrowDown, Minus
 } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -573,7 +574,15 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
 
 export default function PerformanceTV() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [periodo, setPeriodo] = useState<PeriodOption>('all');
+  
+  // Redirecionar corretor para sua própria página de performance
+  useEffect(() => {
+    if (user?.role === 'corretor') {
+      setLocation('/minha-performance');
+    }
+  }, [user?.role]);
   const [customRange, setCustomRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [tempRange, setTempRange] = useState<DateRange>({ from: undefined, to: undefined });

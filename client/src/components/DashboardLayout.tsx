@@ -95,8 +95,11 @@ const menuGroups = [
     icon: TrendingUp,
     items: [
       { icon: Trophy, label: "Conquistas", path: "/meu-perfil" },
-      { icon: Trophy, label: "Corrida dos Campeões", path: "/ranking-tv" },
-      { icon: Tv, label: "Performance TV", path: "/performance-tv" },
+      // Corretor acessa apenas sua própria performance
+      { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance", roles: ["corretor"] },
+      // Gestor e Admin acessam ranking do time / geral
+      { icon: Trophy, label: "Corrida dos Campeões", path: "/ranking-tv", roles: ["gestor", "admin", "superintendente"] },
+      { icon: Tv, label: "Performance TV", path: "/performance-tv", roles: ["gestor", "admin", "superintendente"] },
       { icon: Target, label: "Metas Mensais", path: "/metas", roles: ["admin", "superintendente"] },
       { icon: Target, label: "Metas Diárias", path: "/metas-diarias", roles: ["admin", "superintendente"] },
     ],

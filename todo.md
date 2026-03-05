@@ -4970,3 +4970,28 @@
 - [x] Adicionar campo vendasFechadas no mapeamento do rankingProdutividade (usando totalContratos do backend)
 - [x] Adicionar coluna "Vnd" (Vendas) no cabeçalho da tabela de Atividades do Dia
 - [x] Exibir troféu 🏆 e número de vendas para corretores com vendas, traço para os sem vendas
+
+## Feature: Controle de Acesso por Role em Ranking e Performance
+- [ ] Mapear todas as páginas/rotas com ranking ou performance
+- [ ] Backend: filtrar procedures de ranking por equipe do gestor (gestor só vê seu time)
+- [ ] Backend: corretor não acessa procedures de ranking geral
+- [ ] Sidebar: ocultar Performance TV, Ranking e Gamificação para corretor
+- [ ] Sidebar: manter acesso do gestor apenas ao seu time
+- [ ] Rota /performance-tv: redirecionar corretor para /minha-performance
+- [ ] Rota /ranking: redirecionar corretor para /minha-performance
+- [ ] Criar/refatorar página MinhaPerformance para corretor (metas pessoais + progresso)
+- [ ] Corretor pode definir meta mensal para cada etapa do funil
+- [ ] Corretor vê apenas seus próprios números (sem comparação com equipe)
+- [ ] Testar acesso com roles: admin, gestor, corretor
+
+## Feature: Controle de Acesso por Role (Ranking e Performance)
+- [x] Backend: ranking.getCompleto filtrado por equipe do gestor (admin vê tudo, corretor bloqueado)
+- [x] Backend: ranking.porPeriodo filtrado por equipe do gestor (corretor bloqueado)
+- [x] Backend: ranking.semanal e mensal bloqueados para corretor
+- [x] Backend: procedures metas.minhaMeta, metas.definirMinhaMeta, metas.meuProgresso para corretor
+- [x] Sidebar: "Corrida dos Campeões" e "Performance TV" ocultos para corretor
+- [x] Sidebar: "Minha Performance" visível apenas para corretor
+- [x] RankingTV: redirect para /minha-performance se role=corretor
+- [x] PerformanceTV: redirect para /minha-performance se role=corretor
+- [x] MinhaPerformance: refatorada como página exclusiva do corretor (metas + progresso pessoal)
+- [x] Testes de controle de acesso: 11 testes passando
