@@ -5018,3 +5018,9 @@
 - [x] Listar todos os usuários com nomes de teste no banco
 - [x] Apagar corretores de teste (31 usuários removidos, 31 reais preservados)
 - [x] Preservar apenas usuários reais da operação
+
+## Feature: Backup Automático para Google Sheets
+- [x] Verificar acesso à planilha e credenciais Google (nova chave gerada)
+- [x] Criar job de exportação horária para Google Sheets (16 tabelas)
+- [x] Criar abas separadas por tabela na planilha + aba de resumo
+- [x] Testar exportação: 81 registros exportados com sucesso

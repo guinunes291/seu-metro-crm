@@ -7019,5 +7019,14 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       return await limparProjetosOrfaos.limparProjetosOrfaos();
     }),
   }),
+
+  // Backup manual para Google Sheets (apenas admin)
+  backup: router({
+    executarSheetsBackup: adminProcedure.mutation(async () => {
+      const { performSheetsBackup } = await import('./sheetsBackup');
+      const result = await performSheetsBackup();
+      return result;
+    }),
+  }),
 });
 export type AppRouter = typeof appRouter;

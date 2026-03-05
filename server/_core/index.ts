@@ -125,12 +125,20 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de sincronização de métricas:", err);
     });
     
-    // Inicializar job de backup automático
+    // Inicializar job de backup automático (S3 - diário às 3h)
     import("../backupJob").then(({ startBackupJob }) => {
       startBackupJob();
-      console.log("[Job] Backup automático inicializado (diário às 3h)");
+      console.log("[Job] Backup automático S3 inicializado (diário às 3h)");
     }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de backup:", err);
+      console.error("[Job] Erro ao inicializar job de backup S3:", err);
+    });
+    
+    // Inicializar job de backup para Google Sheets (horário)
+    import("../sheetsBackupJob").then(({ startSheetsBackupJob }) => {
+      startSheetsBackupJob();
+      console.log("[Job] Backup Google Sheets inicializado (a cada 1 hora)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de backup Google Sheets:", err);
     });
     
     // Inicializar job de sincronização BI (Google Sheets para Power BI/Looker Studio)
