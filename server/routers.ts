@@ -6856,6 +6856,27 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         
         const mensagem = input.mensagem || `Atenda urgentemente o lead ${lead[0].nome} que está aguardando atendimento!`;
         
+        // Proteção anti-duplicata: não criar alerta se já existe um não lido para este lead/corretor nos últimos 2 minutos
+        const { and, gt } = await import('drizzle-orm');
+        const doisMinutosAtras = new Date(Date.now() - 2 * 60 * 1000);
+        const alertaRecente = await db
+          .select({ id: alertas.id })
+          .from(alertas)
+          .where(
+            and(
+              eq(alertas.leadId, input.leadId),
+              eq(alertas.corretorId, input.corretorId),
+              eq(alertas.lido, false),
+              gt(alertas.createdAt, doisMinutosAtras)
+            )
+          )
+          .limit(1);
+        
+        if (alertaRecente.length > 0) {
+          // Alerta recente já existe — não criar duplicata
+          return { success: true, duplicata: true };
+        }
+        
         // Criar alerta
         await db.insert(alertas).values({
           leadId: input.leadId,
@@ -6865,7 +6886,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           lido: false,
         });
         
-        return { success: true };
+        return { success: true, duplicata: false };
       }),
     
     // Listar alertas do corretor logado

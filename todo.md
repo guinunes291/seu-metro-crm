@@ -5050,3 +5050,20 @@
 - [x] Adicionar UNIQUE KEY uk_mes_ano (mes, ano) na tabela metas_globais
 - [x] Corrigir getMetaGlobal para tratar ER_DUP_ENTRY graciosamente (INSERT com try/catch)
 - [x] Testar que meses anteriores não são alterados ao salvar meta do mês atual
+
+## Limpeza: Dados de Teste (06/03/2026)
+- [x] Identificar 29 usuários de teste (Corretor Teste Performance x6, Corretor Rank 0/1/2, Corretor Teste Visitas x6, Corretor Sheets Test, Corretor Batch Test, Corretor Teste Duplicação, Sem nome, João Silva Atualizado, João Silva Teste x8, Corretor 2)
+- [x] Remover 193 leads de teste associados a esses corretores
+- [x] Remover dados dependentes: 3 follow-ups, 120 logs de distribuição, 15 entradas na fila, 17 conquistas
+- [x] Remover 29 usuários de teste do banco
+- [x] Verificar que 0 usuários com email @test.com ou @teste.com restaram
+- [x] Dados reais preservados: 34 usuários reais, 25.302 leads, 30 contratos intactos
+
+## Bug Fix: Alertas disparando desnecessariamente ao navegar entre páginas (06/03/2026)
+- [x] Identificar causa: AlertasNotification usava contagem (previousCountRef) em vez de IDs, disparando ao remontar
+- [x] Corrigir AlertasNotification para rastrear alertas por ID (notifiedIdsRef) e registrar IDs existentes na primeira carga sem notificar
+- [x] Desabilitar refetchOnWindowFocus no AlertasNotification para evitar disparos ao trocar de aba/página
+- [x] Reduzir intervalo de polling de 5s para 10s no AlertasNotification
+- [x] Corrigir useWebhookLeadNotification: remover urgentLead das dependências do useEffect para evitar re-notificações ao fechar popup
+- [x] Adicionar proteção anti-duplicata no backend: bloquear criação de alerta se já existe um não lido para o mesmo lead/corretor nos últimos 2 minutos
+- [x] Escrever 13 testes unitários cobrindo toda a lógica de rastreamento e anti-duplicata

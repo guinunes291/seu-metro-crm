@@ -94,16 +94,18 @@ export function useWebhookLeadNotification() {
     }
   }, [shouldNotify]);
 
-  // Processar novos leads
+  // Processar novos leads — urgentLead removido das dependências para evitar re-disparos
   useEffect(() => {
     // Não processar se não deve notificar (gestor/admin)
     if (!shouldNotify) return;
     if (!newLeads || newLeads.length === 0) return;
 
+    let hasNewLeads = false;
     newLeads.forEach((lead) => {
       // Evitar notificar o mesmo lead múltiplas vezes
       if (notifiedLeadsRef.current.has(lead.id)) return;
       notifiedLeadsRef.current.add(lead.id);
+      hasNewLeads = true;
 
       // 1. Toast visual
       toast.error(`🔥 NOVO LEAD FACEBOOK ADS: ${lead.nome}`, {
@@ -119,14 +121,12 @@ export function useWebhookLeadNotification() {
 
       // 2. Som de alerta
       if (audioRef.current) {
-        console.log('[Webhook Notification] Tentando tocar som de alerta...');
         audioRef.current.play()
           .then(() => {
             console.log('[Webhook Notification] Som tocado com sucesso!');
           })
           .catch((e) => {
             console.error('[Webhook Notification] Erro ao tocar som:', e);
-            console.log('[Webhook Notification] Dica: Interaja com a página (clique ou pressione uma tecla) para habilitar o som.');
           });
       }
 
@@ -137,8 +137,8 @@ export function useWebhookLeadNotification() {
             body: `${lead.nome} - ${lead.telefone}${lead.projectNome ? ` | Projeto: ${lead.projectNome}` : ''}`,
             icon: '/favicon.ico',
             tag: `lead-${lead.id}`,
-            requireInteraction: true, // Não desaparece automaticamente
-            silent: false, // Permite som da notificação do sistema
+            requireInteraction: true,
+            silent: false,
           });
 
           notification.onclick = () => {
@@ -151,17 +151,18 @@ export function useWebhookLeadNotification() {
         }
       }
       
-      // 4. Popup urgente (mostra apenas o primeiro lead se houver múltiplos)
-      if (!urgentLead) {
-        setUrgentLead(lead);
-      }
+      // 4. Popup urgente (mostra apenas o primeiro lead novo)
+      setUrgentLead((prev: any) => prev ?? lead);
     });
 
-    // Atualizar timestamp da última verificação e salvar no localStorage
-    const now = new Date();
-    lastCheckRef.current = now;
-    localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
-  }, [newLeads, urgentLead]);
+    if (hasNewLeads) {
+      // Atualizar timestamp da última verificação e salvar no localStorage
+      const now = new Date();
+      lastCheckRef.current = now;
+      localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newLeads, shouldNotify]);
 
   return {
     newLeadsCount: newLeads?.length || 0,

@@ -11,14 +11,17 @@ export function AlertasNotification() {
   const [, setLocation] = useLocation();
   const [alertasVisiveis, setAlertasVisiveis] = useState<any[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const previousCountRef = useRef(0);
+  // Rastrear IDs já notificados para evitar re-disparos ao refetch/remount
+  const notifiedIdsRef = useRef<Set<number>>(new Set());
+  // Flag para indicar que a primeira carga já foi feita (não notificar alertas pré-existentes)
+  const initialLoadDoneRef = useRef(false);
   
-  // Query de alertas não lidos
+  // Query de alertas não lidos — sem refetchOnWindowFocus para não disparar ao trocar de aba/página
   const { data: alertas, refetch } = trpc.alertas.meus.useQuery(
     { apenasNaoLidos: true },
     {
-      refetchInterval: 5000, // Atualiza a cada 5 segundos
-      refetchOnWindowFocus: true,
+      refetchInterval: 10000, // Atualiza a cada 10 segundos (reduzido de 5s)
+      refetchOnWindowFocus: false, // IMPORTANTE: desabilitar para evitar disparos ao navegar
     }
   );
   
@@ -28,14 +31,22 @@ export function AlertasNotification() {
     },
   });
   
-  // Detectar novos alertas e tocar som
+  // Detectar novos alertas e tocar som — rastreando por ID, não por contagem
   useEffect(() => {
     if (!alertas) return;
     
-    const currentCount = alertas.length;
+    if (!initialLoadDoneRef.current) {
+      // Primeira carga: registrar todos os IDs existentes como "já vistos"
+      // sem disparar notificações (são alertas pré-existentes)
+      alertas.forEach(a => notifiedIdsRef.current.add(a.id));
+      initialLoadDoneRef.current = true;
+      return;
+    }
     
-    // Se há novos alertas (count aumentou)
-    if (currentCount > previousCountRef.current) {
+    // Nas cargas subsequentes, notificar apenas alertas com IDs novos
+    const novosAlertas = alertas.filter(a => !notifiedIdsRef.current.has(a.id));
+    
+    if (novosAlertas.length > 0) {
       // Tocar som de notificação
       if (audioRef.current) {
         audioRef.current.play().catch(err => {
@@ -43,9 +54,9 @@ export function AlertasNotification() {
         });
       }
       
-      // Mostrar toast
-      const novosAlertas = alertas.slice(0, currentCount - previousCountRef.current);
+      // Mostrar toast para cada novo alerta
       novosAlertas.forEach(alerta => {
+        notifiedIdsRef.current.add(alerta.id);
         toast.error(`🔔 Novo alerta: ${alerta.mensagem}`, {
           duration: 10000,
           action: {
@@ -58,11 +69,18 @@ export function AlertasNotification() {
         });
       });
       
-      // Adicionar aos alertas visíveis
+      // Adicionar aos alertas visíveis (apenas os novos)
       setAlertasVisiveis(prev => [...novosAlertas, ...prev]);
     }
     
-    previousCountRef.current = currentCount;
+    // Sincronizar IDs conhecidos com os alertas atuais
+    // (remover IDs de alertas que foram marcados como lidos no backend)
+    const currentIds = new Set(alertas.map(a => a.id));
+    notifiedIdsRef.current.forEach(id => {
+      if (!currentIds.has(id)) {
+        notifiedIdsRef.current.delete(id);
+      }
+    });
   }, [alertas]);
   
   // Remover alerta da lista visível
@@ -82,7 +100,7 @@ export function AlertasNotification() {
       {/* Som de notificação */}
       <audio
         ref={audioRef}
-        src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGWi78OScTgwOUKzn77RgGwU7k9v0yXkpBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBQ=="
+        src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGWi78OScTgwOUKzn77RgGwU7k9v0yXkpBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBQ=="
       />
       
       {/* Alertas flutuantes */}
