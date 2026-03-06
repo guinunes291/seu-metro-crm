@@ -1928,10 +1928,15 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { contratoId, ...dados } = input;
-        return await db.atualizarContrato(contratoId, {
+        const resultado = await db.atualizarContrato(contratoId, {
           ...dados,
           dataVenda: dados.dataVenda ? new Date(dados.dataVenda) : undefined,
         });
+        // Sincronizar com planilha DRE em background
+        import('../dreSyncJob').then(({ runDreSync }) => {
+          runDreSync('edição de contrato').catch(() => {});
+        }).catch(() => {});
+        return resultado;
       }),
     
     // Criar novo contrato (admin only)
@@ -1956,10 +1961,17 @@ export const appRouter = router({
         clienteFezAnalise: z.boolean().optional(),
       }))
       .mutation(async ({ input }) => {
-        return await db.criarNovoContrato({
+        const resultado = await db.criarNovoContrato({
           ...input,
           dataVenda: new Date(input.dataVenda),
         });
+        // Sincronizar com planilha DRE em background (sem bloquear a resposta)
+        import('../dreSyncJob').then(({ runDreSync }) => {
+          runDreSync('novo contrato').catch(err => 
+            console.error('[DRE Sync] Erro ao sincronizar após criar contrato:', err)
+          );
+        }).catch(() => {});
+        return resultado;
       }),
     
     // Opções para selects de edição de contrato
@@ -2002,17 +2014,27 @@ export const appRouter = router({
         motivoDistrato: z.string().min(1, 'Motivo é obrigatório'),
       }))
       .mutation(async ({ input, ctx }) => {
-        return await db.registrarDistrato(input.contratoId, {
+        const resultado = await db.registrarDistrato(input.contratoId, {
           motivoDistrato: input.motivoDistrato,
           distratadoPorId: ctx.user.id,
         });
+        // Sincronizar com planilha DRE em background
+        import('../dreSyncJob').then(({ runDreSync }) => {
+          runDreSync('distrato registrado').catch(() => {});
+        }).catch(() => {});
+        return resultado;
       }),
     
     // Desfazer distrato (admin only)
     desfazerDistrato: adminProcedure
       .input(z.object({ contratoId: z.number() }))
       .mutation(async ({ input }) => {
-        return await db.desfazerDistrato(input.contratoId);
+        const resultado = await db.desfazerDistrato(input.contratoId);
+        // Sincronizar com planilha DRE em background
+        import('../dreSyncJob').then(({ runDreSync }) => {
+          runDreSync('distrato desfeito').catch(() => {});
+        }).catch(() => {});
+        return resultado;
       }),
     
     // Listar distratos
@@ -7025,6 +7047,12 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
     executarSheetsBackup: adminProcedure.mutation(async () => {
       const { performSheetsBackup } = await import('./sheetsBackup');
       const result = await performSheetsBackup();
+      return result;
+    }),
+    // Sincronização manual da planilha DRE (apenas admin)
+    sincronizarDRE: adminProcedure.mutation(async () => {
+      const { sincronizarDRE } = await import('./dreSync');
+      const result = await sincronizarDRE();
       return result;
     }),
   }),

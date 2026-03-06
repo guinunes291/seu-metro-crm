@@ -141,6 +141,14 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de backup Google Sheets:", err);
     });
     
+    // Inicializar job de sincronização DRE (contratos → planilha DRE do Google Sheets)
+    import("../dreSyncJob").then(({ startDreSyncJob }) => {
+      startDreSyncJob();
+      console.log("[Job] Sincronização DRE inicializada (a cada 1 hora)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de sincronização DRE:", err);
+    });
+    
     // Inicializar job de sincronização BI (Google Sheets para Power BI/Looker Studio)
     import("../biSyncJob").then(({ startBISyncJob }) => {
       startBISyncJob();

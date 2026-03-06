@@ -3,10 +3,11 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { Loader2, CheckCircle2, XCircle, ExternalLink, RefreshCw, Database, TrendingUp, Users } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ExternalLink, RefreshCw, Database, TrendingUp, Users, FileBarChart2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function SincronizacaoBI() {
+  const [syncingDRE, setSyncingDRE] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncingContratos, setSyncingContratos] = useState(false);
   const [syncingMetricas, setSyncingMetricas] = useState(false);
@@ -106,7 +107,24 @@ export default function SincronizacaoBI() {
     setSyncingPerformance(true);
     syncPerformanceMutation.mutate();
   };
-
+  const syncDREMutation = trpc.backup.sincronizarDRE.useMutation({
+    onSuccess: (data) => {
+      if (data?.success) {
+        toast.success(`Planilha DRE sincronizada! ${data.totalContratos ?? 0} contratos ativos exportados.`);
+      } else {
+        toast.error(`Erro ao sincronizar DRE: ${data?.error ?? 'Erro desconhecido'}`);
+      }
+      setSyncingDRE(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro ao sincronizar DRE: ${error.message}`);
+      setSyncingDRE(false);
+    },
+  });
+  const handleSyncDRE = () => {
+    setSyncingDRE(true);
+    syncDREMutation.mutate();
+  };
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -285,7 +303,41 @@ export default function SincronizacaoBI() {
             </CardContent>
           </Card>
         </div>
-
+        {/* Sincronização Planilha DRE */}
+        <Card className="border-green-200 dark:border-green-800">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileBarChart2 className="h-5 w-5 text-green-600" />
+              Planilha DRE
+            </CardTitle>
+            <CardDescription>
+              Sincroniza todos os contratos com a planilha DRE do Google Sheets (aba Lançamentos)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleSyncDRE} disabled={syncingDRE} className="bg-green-600 hover:bg-green-700 text-white">
+              {syncingDRE ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sincronizando DRE...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Sincronizar Planilha DRE Agora
+                </>
+              )}
+            </Button>
+            <p className="text-sm text-muted-foreground mt-3">
+              Exporta todos os contratos ativos e distratados para a aba <strong>Lançamentos</strong> da planilha DRE, incluindo VGV, comissões brutas/líquidas, impostos e rateio por corretor/gerente/superintendente. A sincronização automática ocorre a cada 1 hora e também é disparada automaticamente ao criar, editar ou distratar um contrato.
+            </p>
+            <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="text-xs text-green-700 dark:text-green-400 font-medium">
+                ✅ Sincronização automática ativa — a cada 1 hora e ao criar/editar contratos
+              </p>
+            </div>
+          </CardContent>
+        </Card>
         {/* Dashboards Looker Studio */}
         <Card>
           <CardHeader>

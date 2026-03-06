@@ -9125,15 +9125,24 @@ export async function getMetaGlobal(mes: number, ano: number) {
   if (existing.length > 0) return existing[0];
   
   // Criar meta padrão se não existir
-  await db.insert(metasGlobais).values({
-    mes,
-    ano,
-    metaVGV: '50000000', // R$ 500.000 padrão
-    metaContratos: 10,
-    metaLeads: 200,
-    metaAgendamentos: 50,
-    metaVisitas: 30,
-  });
+  // Usar INSERT IGNORE para evitar duplicatas em caso de chamadas concorrentes
+  // (a UNIQUE constraint em (mes, ano) garante que não haja duplicatas)
+  try {
+    await db.insert(metasGlobais).values({
+      mes,
+      ano,
+      metaVGV: '50000000', // R$ 500.000 padrão
+      metaContratos: 10,
+      metaLeads: 200,
+      metaAgendamentos: 50,
+      metaVisitas: 30,
+    });
+  } catch (err: any) {
+    // Ignorar erro de duplicate key (UNIQUE constraint violation)
+    if (!err.message?.includes('Duplicate entry') && !err.code?.includes('ER_DUP')) {
+      throw err;
+    }
+  }
   
   const created = await db.select()
     .from(metasGlobais)

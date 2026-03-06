@@ -5029,3 +5029,24 @@
 - [x] Analisar estrutura do arquivo (18.414 linhas, colunas: Nome, Telefone, Email, Projeto)
 - [x] Mapear projetos existentes no banco (1.182 projetos)
 - [x] Importar leads: 15.913 inseridos, 9.675 com projectId, 2.068 com projetoCustom, 4.170 sem projeto, 2.493 ignorados (sem telefone/nome válido)
+
+## Feature: Sincronização Automática com Planilha DRE (06/03/2026)
+- [x] Analisar estrutura da planilha DRE (30 colunas: Data, Corretor, Gerente, Projeto, VGV, Comissões, etc.)
+- [x] Criar módulo dreSync.ts com lógica de exportação completa (VGV, comissão bruta/líquida, impostos, rateio)
+- [x] Criar job dreSyncJob.ts com execução a cada 1 hora
+- [x] Registrar job no servidor (server/_core/index.ts)
+- [x] Adicionar trigger automático ao criar contrato (routers.ts)
+- [x] Adicionar trigger automático ao editar contrato (routers.ts)
+- [x] Adicionar trigger automático ao registrar distrato (routers.ts)
+- [x] Adicionar trigger automático ao desfazer distrato (routers.ts)
+- [x] Adicionar procedure backup.sincronizarDRE para sincronização manual
+- [x] Adicionar botão "Sincronizar Planilha DRE Agora" na página Sincronização BI
+- [x] Criar 20 testes unitários para cálculos de comissão, formatação de datas e mapeamento de status
+- [x] Testar sincronização: 30 contratos ativos exportados com sucesso
+
+## Bug Fix: Metas Globais criando duplicatas (06/03/2026)
+- [x] Identificar causa: tabela metas_globais sem UNIQUE constraint em (mes, ano)
+- [x] Remover 3 duplicatas existentes no banco (mantendo registro mais recente)
+- [x] Adicionar UNIQUE KEY uk_mes_ano (mes, ano) na tabela metas_globais
+- [x] Corrigir getMetaGlobal para tratar ER_DUP_ENTRY graciosamente (INSERT com try/catch)
+- [x] Testar que meses anteriores não são alterados ao salvar meta do mês atual
