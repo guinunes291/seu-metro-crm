@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,35 +23,59 @@ interface UrgentLeadPopupProps {
  * Popup urgente para leads Facebook Ads
  * Mostra dados do lead e botão para contatar via WhatsApp
  * Marca automaticamente primeira interação e muda status para "Em Atendimento"
+ * Fecha automaticamente com countdown se o lead for transferido para outro corretor
  */
 export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [leadTransferido, setLeadTransferido] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { user } = useAuth();
   
   const utils = trpc.useUtils();
 
-  // Verificar se o lead ainda pertence ao corretor logado
+  // Verificar se o lead ainda pertence ao corretor logado (polling a cada 5s)
   const { data: leadAtual, isError: leadError } = trpc.leads.getById.useQuery(
     { id: lead.id },
     {
-      refetchInterval: 5000, // Verificar a cada 5s se o lead ainda é do corretor
+      refetchInterval: 5000,
       retry: false,
+      refetchOnWindowFocus: false,
     }
   );
 
   // Detectar se o lead foi transferido para outro corretor
   useEffect(() => {
-    // Se der erro FORBIDDEN, o lead foi transferido
-    if (leadError) {
+    const foiTransferido =
+      leadError ||
+      (leadAtual != null && user != null && leadAtual.corretorId !== user.id);
+
+    if (foiTransferido && !leadTransferido) {
       setLeadTransferido(true);
-      return;
+      toast.warning(`Lead "${lead.nome}" foi transferido para outro corretor.`);
     }
-    // Se o lead carregou mas pertence a outro corretor
-    if (leadAtual && user && leadAtual.corretorId !== user.id) {
-      setLeadTransferido(true);
-    }
-  }, [leadAtual, leadError, user]);
+  }, [leadAtual, leadError, user, leadTransferido, lead.nome]);
+
+  // Iniciar countdown automático de 5s quando lead for transferido
+  useEffect(() => {
+    if (!leadTransferido) return;
+
+    setCountdown(5);
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current!);
+          onClose();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [leadTransferido, onClose]);
   
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
     onSuccess: () => {
@@ -67,7 +91,6 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
   
   const updateStatusMutation = trpc.leads.update.useMutation({
     onSuccess: () => {
-      // Após atualizar status, registrar interação
       addInteractionMutation.mutate({
         leadId: lead.id,
         tipo: "whatsapp",
@@ -86,20 +109,15 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
       toast.error("Lead não possui telefone cadastrado");
       return;
     }
-    
     setIsProcessing(true);
-    
-    // 1. Atualizar status para "Em Atendimento"
     updateStatusMutation.mutate({
       id: lead.id,
       data: { status: "em_atendimento" },
     });
-    
-    // 2. Abrir WhatsApp com mensagem personalizada
     window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, lead.projectNome), "_blank");
   };
   
-  // Se o lead foi transferido, mostrar aviso e fechar
+  // Tela de aviso quando lead foi transferido — fecha automaticamente com countdown
   if (leadTransferido) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
@@ -113,8 +131,23 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
               Este lead foi transferido para outro corretor e não está mais disponível para você.
             </DialogDescription>
           </DialogHeader>
+          <div className="py-2 text-center">
+            <p className="text-sm text-muted-foreground">
+              Esta janela fechará automaticamente em{" "}
+              <span className="font-bold text-yellow-600">{countdown}s</span>
+            </p>
+            {/* Barra de progresso do countdown */}
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-yellow-500 transition-all duration-1000"
+                style={{ width: `${(countdown / 5) * 100}%` }}
+              />
+            </div>
+          </div>
           <DialogFooter>
-            <Button onClick={onClose}>Fechar</Button>
+            <Button variant="outline" onClick={onClose}>
+              Fechar agora
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
