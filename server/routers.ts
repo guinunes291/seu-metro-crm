@@ -625,12 +625,10 @@ export const appRouter = router({
           });
         }
         
-        // Se o lead tem corretor diferente mas está em follow-up, reatribuir ao corretor atual
-        // Isso acontece quando o lead foi transferido automaticamente
+        // Se o lead pertence a outro corretor, bloquear a interação
+        // Isso evita que um corretor acesse dados de leads transferidos para outro
         if (ctx.user.role === 'corretor' && lead.corretorId && lead.corretorId !== ctx.user.id) {
-          await db.updateLead(input.leadId, {
-            corretorId: ctx.user.id,
-          });
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead foi transferido para outro corretor. Você não pode mais interagir com ele.' });
         }
         
         // Registrar interação na tabela interacoes

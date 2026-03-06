@@ -62,6 +62,7 @@ import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
 import RelatorioEscolhasDiarias from "@/pages/RelatorioEscolhasDiarias";
 
 import { AlertasNotification } from "./components/AlertasNotification";
+import { CorretorNotifications } from "./components/CorretorNotifications";
 
 
 
@@ -143,6 +144,7 @@ function App() {
               <Toaster />
               <Router />
               <AlertasNotification />
+              <CorretorNotifications />
             </TooltipProvider>
           </CopilotProvider>
         </CompareProvider>

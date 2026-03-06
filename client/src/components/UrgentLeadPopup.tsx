@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Phone, MessageCircle, Mail, X, Flame } from "lucide-react";
+import { Phone, MessageCircle, Mail, X, Flame, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { gerarLinkWhatsApp } from "@/lib/whatsapp";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface UrgentLeadPopupProps {
   lead: {
@@ -25,8 +26,32 @@ interface UrgentLeadPopupProps {
  */
 export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [leadTransferido, setLeadTransferido] = useState(false);
+  const { user } = useAuth();
   
   const utils = trpc.useUtils();
+
+  // Verificar se o lead ainda pertence ao corretor logado
+  const { data: leadAtual, isError: leadError } = trpc.leads.getById.useQuery(
+    { id: lead.id },
+    {
+      refetchInterval: 5000, // Verificar a cada 5s se o lead ainda é do corretor
+      retry: false,
+    }
+  );
+
+  // Detectar se o lead foi transferido para outro corretor
+  useEffect(() => {
+    // Se der erro FORBIDDEN, o lead foi transferido
+    if (leadError) {
+      setLeadTransferido(true);
+      return;
+    }
+    // Se o lead carregou mas pertence a outro corretor
+    if (leadAtual && user && leadAtual.corretorId !== user.id) {
+      setLeadTransferido(true);
+    }
+  }, [leadAtual, leadError, user]);
   
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
     onSuccess: () => {
@@ -74,6 +99,28 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
     window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, lead.projectNome), "_blank");
   };
   
+  // Se o lead foi transferido, mostrar aviso e fechar
+  if (leadTransferido) {
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md border-2 border-yellow-500">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-yellow-600" />
+              <DialogTitle className="text-xl">Lead Transferido</DialogTitle>
+            </div>
+            <DialogDescription>
+              Este lead foi transferido para outro corretor e não está mais disponível para você.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={onClose}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md border-2 border-red-500">

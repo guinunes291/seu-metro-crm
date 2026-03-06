@@ -5067,3 +5067,13 @@
 - [x] Corrigir useWebhookLeadNotification: remover urgentLead das dependências do useEffect para evitar re-notificações ao fechar popup
 - [x] Adicionar proteção anti-duplicata no backend: bloquear criação de alerta se já existe um não lido para o mesmo lead/corretor nos últimos 2 minutos
 - [x] Escrever 13 testes unitários cobrindo toda a lógica de rastreamento e anti-duplicata
+
+## Bug Fix: Gestores recebem alertas de leads Facebook ADS
+- [ ] Remover useWebhookLeadNotification da página LeadsPorCorretor (usada por gestores)
+- [ ] Garantir que o hook só dispara quando user já carregou E role === 'corretor'
+- [ ] Verificar se gestor acessa página Leads.tsx e se o hook é ativado lá
+
+## Bug Fix: Corretor vê dados de lead após transferência
+- [ ] Bloquear exibição do popup urgente se lead não pertence mais ao corretor
+- [ ] Bloquear botão "Contatar Agora" se lead foi transferido
+- [ ] Verificar se NotificationListener expõe dados de leads de outros corretores

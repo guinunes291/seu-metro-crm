@@ -43,7 +43,7 @@ import { ProjectCombobox } from "@/components/ProjectCombobox";
 import { FilterProjectCombobox } from "@/components/FilterProjectCombobox";
 import LeadTimer, { LeadUrgencyBadge } from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
-import { useWebhookLeadNotification } from "@/hooks/useWebhookLeadNotification";
+// useWebhookLeadNotification movido para CorretorNotifications (App.tsx) — gestores não recebem sons/popups de leads
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
@@ -152,8 +152,7 @@ export default function Leads() {
   const isGestor = user?.role === 'gestor' || user?.role === 'admin' || user?.role === 'superintendente';
   const [selectedLead, setSelectedLead] = useState<any>(null);
   
-  // Hook de notificação para leads Facebook Ads
-  const { popup: webhookPopup } = useWebhookLeadNotification();
+  // Hook de notificação movido para CorretorNotifications (App.tsx)
   
   // Hook para integrar com o Copilot flutuante
   const { openWithLead } = useCopilot();
@@ -2111,8 +2110,7 @@ export default function Leads() {
         </Dialog>
       </div>
       
-      {/* Popup urgente para leads Facebook Ads */}
-      {webhookPopup}
+      {/* Popup urgente para leads Facebook Ads — movido para CorretorNotifications (App.tsx) */}
       
       {/* Dialog de atribuição de corretor */}
       <AtribuirCorretorDialog
