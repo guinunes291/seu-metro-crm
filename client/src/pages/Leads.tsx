@@ -805,6 +805,7 @@ export default function Leads() {
                               nomeCliente={lead.nome}
                               leadId={lead.id}
                               showProgress={true}
+                              isCorretor={user?.role === 'corretor'}
                             />
                           </div>
                         </div>
@@ -1126,6 +1127,7 @@ export default function Leads() {
                               nomeCliente={lead.nome}
                               leadId={lead.id}
                               showProgress={true}
+                              isCorretor={user?.role === 'corretor'}
                             />
                           </div>
                         </TableCell>

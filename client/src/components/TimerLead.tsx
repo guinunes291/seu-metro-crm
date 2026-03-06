@@ -21,6 +21,12 @@ interface TimerLeadProps {
   showProgress?: boolean;
   /** Tamanho do componente: 'sm' | 'md' (padrão: 'sm') */
   size?: "sm" | "md";
+  /**
+   * Se true, habilita notificações do navegador para este lead.
+   * DEVE ser true apenas quando o usuário logado for role=corretor.
+   * Gestores e admins NÃO devem receber notificações de prazo de lead.
+   */
+  isCorretor?: boolean;
 }
 
 /** Tempo total do timer em milissegundos (15 minutos) */
@@ -54,6 +60,7 @@ export function TimerLead({
   leadId,
   showProgress = false,
   size = "sm",
+  isCorretor = false,
 }: TimerLeadProps) {
   const [tempoRestante, setTempoRestante] = useState<number>(TIMER_TOTAL_MS);
   const [expirado, setExpirado] = useState(false);
@@ -111,8 +118,8 @@ export function TimerLead({
       const isUrgente = restante <= LIMITE_URGENCIA_MS;
 
       if (isUrgente && isLeadFacebookADS(origem)) {
-        // ── Notificação do navegador (apenas uma vez) ──────────────────────
-        if (!notificacaoEnviada.current) {
+        // ── Notificação do navegador (apenas uma vez, apenas para corretor) ─
+        if (!notificacaoEnviada.current && isCorretor) {
           notificacaoEnviada.current = true;
           enviarNotificacaoLead({
             nomeCliente: nomeCliente || "Cliente",

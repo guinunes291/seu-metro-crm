@@ -481,6 +481,7 @@ export default function LeadsPorCorretor() {
                             nomeCliente={lead.nome}
                             leadId={lead.id}
                             showProgress={true}
+                            isCorretor={false}
                           />
                         </TableCell>
                         <TableCell>

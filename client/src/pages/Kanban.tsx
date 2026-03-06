@@ -278,6 +278,7 @@ export default function Kanban() {
                                 nomeCliente={lead.nome}
                                 leadId={lead.id}
                                 showProgress={true}
+                                isCorretor={user?.role === 'corretor'}
                               />
                             </div>
                           </div>

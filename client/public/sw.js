@@ -82,8 +82,30 @@ self.addEventListener('fetch', (event) => {
 
 // Receber mensagens do cliente
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (!event.data) return;
+
+  if (event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+    return;
+  }
+
+  // Notificação de timer de lead Facebook ADS (enviada pelo TimerLead)
+  // Funciona em segundo plano e é compatível com Safari iOS
+  if (event.data.type === 'LEAD_TIMER_ALERT') {
+    const { title, body, leadId, icon, badge, tag } = event.data;
+    event.waitUntil(
+      self.registration.showNotification(title || '⚠️ Lead Facebook ADS — Prazo Urgente!', {
+        body: body || 'Atenda agora!',
+        icon: icon || '/favicon.ico',
+        badge: badge || '/favicon.ico',
+        tag: tag || `lead-timer-${leadId}`,
+        requireInteraction: true,
+        vibrate: [200, 100, 200],
+        data: { url: '/leads', leadId },
+      }).catch((err) => {
+        console.error('[SW] Erro ao exibir notificação de lead:', err);
+      })
+    );
   }
 });
 
