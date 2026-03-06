@@ -11,55 +11,61 @@ import { useAuth } from '@/_core/hooks/useAuth';
  * - Som de alerta
  * - Toast visual
  * - Popup urgente com botão WhatsApp
+ *
+ * Correções aplicadas:
+ * 1. `since` é agora um estado reativo (useState) — a query atualiza o parâmetro
+ *    corretamente após detectar novos leads, evitando re-notificações dos mesmos leads.
+ * 2. O timestamp inicial é limitado a no máximo 10 minutos atrás — evita popup
+ *    de leads antigos ao recarregar a página.
+ * 3. O hook só é montado para corretores (via CorretorNotifications no App.tsx).
  */
 export function useWebhookLeadNotification() {
   const { user } = useAuth();
-  
+
   // Apenas corretores devem receber notificações sonoras
-  // Gestores e admins não recebem sons
   const shouldNotify = user?.role === 'corretor';
-  
-  // Inicializar lastCheck do localStorage ou usar timestamp atual
-  const getInitialLastCheck = () => {
+
+  // Inicializar since: máximo 10 minutos atrás para evitar popups de leads antigos
+  const getInitialSince = (): string => {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     const stored = localStorage.getItem('lastWebhookLeadCheck');
+
     if (stored) {
-      return new Date(stored);
+      const storedDate = new Date(stored);
+      // Usar o mais recente entre o armazenado e 10 minutos atrás
+      return storedDate > tenMinutesAgo ? storedDate.toISOString() : tenMinutesAgo.toISOString();
     }
-    // Se não houver timestamp salvo, usar timestamp atual para evitar notificações de leads antigos
+
     const now = new Date();
     localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
-    return now;
+    return now.toISOString();
   };
-  
-  const lastCheckRef = useRef(getInitialLastCheck());
+
+  // `since` como estado reativo — a query atualiza quando avança o timestamp
+  const [since, setSince] = useState<string>(getInitialSince);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const notifiedLeadsRef = useRef<Set<number>>(new Set());
   const [urgentLead, setUrgentLead] = useState<any>(null);
 
-  // Query para buscar novos leads webhook
-  // Apenas habilitar polling para corretores
+  // Query com polling — usa `since` reativo para sempre buscar leads após o último processado
   const { data: newLeads } = trpc.leads.getNewWebhookLeads.useQuery(
-    { 
-      since: lastCheckRef.current.toISOString(),
-    },
+    { since },
     {
-      enabled: shouldNotify, // Desabilitar para gestores/admins
-      refetchInterval: shouldNotify ? 5000 : false, // Polling apenas para corretores
+      enabled: shouldNotify,
+      refetchInterval: shouldNotify ? 5000 : false,
       refetchIntervalInBackground: shouldNotify,
     }
   );
 
   // Inicializar áudio de alerta urgente
   useEffect(() => {
-    // Apenas corretores devem carregar o áudio
     if (!shouldNotify) return;
-    
-    // Som de alarme urgente para leads de Facebook Ads/Webhook
-    // Usando som de emergência mais chamativo
+
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3');
-    audioRef.current.volume = 1.0; // Volume máximo (100%) para urgência
+    audioRef.current.volume = 1.0;
     audioRef.current.load();
-    
+
     // Habilitar autoplay após primeira interação do usuário
     const enableAudio = () => {
       if (audioRef.current) {
@@ -69,11 +75,10 @@ export function useWebhookLeadNotification() {
         }).catch(() => {});
       }
     };
-    
-    // Escutar primeira interação (click ou keydown)
+
     document.addEventListener('click', enableAudio, { once: true });
     document.addEventListener('keydown', enableAudio, { once: true });
-    
+
     return () => {
       document.removeEventListener('click', enableAudio);
       document.removeEventListener('keydown', enableAudio);
@@ -86,26 +91,31 @@ export function useWebhookLeadNotification() {
 
   // Solicitar permissão para notificações push
   useEffect(() => {
-    // Apenas corretores devem solicitar permissão de notificação
     if (!shouldNotify) return;
-    
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }, [shouldNotify]);
 
-  // Processar novos leads — urgentLead removido das dependências para evitar re-disparos
+  // Processar novos leads
   useEffect(() => {
-    // Não processar se não deve notificar (gestor/admin)
     if (!shouldNotify) return;
     if (!newLeads || newLeads.length === 0) return;
 
     let hasNewLeads = false;
+    let latestCreatedAt: Date | null = null;
+
     newLeads.forEach((lead) => {
       // Evitar notificar o mesmo lead múltiplas vezes
       if (notifiedLeadsRef.current.has(lead.id)) return;
       notifiedLeadsRef.current.add(lead.id);
       hasNewLeads = true;
+
+      // Rastrear o lead mais recente para avançar o `since`
+      const leadDate = lead.createdAt ? new Date(lead.createdAt as string) : null;
+      if (leadDate && (!latestCreatedAt || leadDate > latestCreatedAt)) {
+        latestCreatedAt = leadDate;
+      }
 
       // 1. Toast visual
       toast.error(`🔥 NOVO LEAD FACEBOOK ADS: ${lead.nome}`, {
@@ -121,16 +131,13 @@ export function useWebhookLeadNotification() {
 
       // 2. Som de alerta
       if (audioRef.current) {
-        audioRef.current.play()
-          .then(() => {
-            console.log('[Webhook Notification] Som tocado com sucesso!');
-          })
-          .catch((e) => {
-            console.error('[Webhook Notification] Erro ao tocar som:', e);
-          });
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch((e) => {
+          console.error('[Webhook Notification] Erro ao tocar som:', e);
+        });
       }
 
-      // 3. Notificação push do navegador (funciona mesmo com aba em segundo plano)
+      // 3. Notificação push do navegador
       if ('Notification' in window && Notification.permission === 'granted') {
         try {
           const notification = new Notification('🔥 Novo Lead Facebook Ads!', {
@@ -140,7 +147,6 @@ export function useWebhookLeadNotification() {
             requireInteraction: true,
             silent: false,
           });
-
           notification.onclick = () => {
             window.focus();
             window.location.href = `/leads?leadId=${lead.id}`;
@@ -150,16 +156,20 @@ export function useWebhookLeadNotification() {
           console.error('[Webhook Notification] Erro ao criar notificação:', error);
         }
       }
-      
+
       // 4. Popup urgente (mostra apenas o primeiro lead novo)
       setUrgentLead((prev: any) => prev ?? lead);
     });
 
     if (hasNewLeads) {
-      // Atualizar timestamp da última verificação e salvar no localStorage
-      const now = new Date();
-      lastCheckRef.current = now;
-      localStorage.setItem('lastWebhookLeadCheck', now.toISOString());
+      // Avançar `since` para 1ms após o lead mais recente processado
+      // Isso garante que a próxima query não retorne os mesmos leads
+      const newSince = latestCreatedAt
+        ? new Date((latestCreatedAt as Date).getTime() + 1).toISOString()
+        : new Date().toISOString();
+
+      setSince(newSince);
+      localStorage.setItem('lastWebhookLeadCheck', newSince);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newLeads, shouldNotify]);
