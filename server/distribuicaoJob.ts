@@ -55,12 +55,18 @@ export function agendarDistribuicaoAutomatica() {
 
   console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
   
-  // Agendar verificação de timer de leads (a cada 1 minuto)
+  // Executar verificação de timer imediatamente ao iniciar (após 5 segundos)
+  setTimeout(() => {
+    console.log("[Job] Executando primeira verificação de timer de leads...");
+    verificarTimerLeads().catch(console.error);
+  }, 5000);
+
+  // Agendar verificação de timer de leads (a cada 30 segundos para maior responsividade)
   setInterval(() => {
     verificarTimerLeads().catch(console.error);
-  }, 60000);
+  }, 30000);
   
-  console.log("[Job] Verificação de timer de leads agendada para executar a cada 1 minuto");
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 30 segundos");
   
   // Agendar verificação de transferências automáticas (a cada 1 hora)
   setInterval(() => {
