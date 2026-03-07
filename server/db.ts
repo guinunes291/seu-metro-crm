@@ -8557,6 +8557,41 @@ export async function cancelarFollowUpsPendentes(leadId: number) {
 }
 
 /**
+ * Cancela follow-ups pendentes de um lead quando ele é transferido para outro corretor.
+ * Diferente de cancelarFollowUpsPendentes, esta função cancela apenas os follow-ups
+ * do corretor anterior (corretorAnteriorId), independente do status do lead.
+ *
+ * @param leadId ID do lead transferido
+ * @param corretorAnteriorId ID do corretor que estava com o lead antes da transferência
+ * @returns Número de follow-ups cancelados
+ */
+export async function cancelarFollowUpsPorTransferencia(leadId: number, corretorAnteriorId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+
+  try {
+    const resultado = await db
+      .update(followUps)
+      .set({
+        status: 'cancelado',
+        observacao: `Cancelado automaticamente: lead transferido para outro corretor`
+      })
+      .where(and(
+        eq(followUps.leadId, leadId),
+        eq(followUps.corretorId, corretorAnteriorId),
+        eq(followUps.status, 'pendente')
+      ));
+
+    const cancelados = resultado.rowsAffected || 0;
+    console.log(`[cancelarFollowUpsPorTransferencia] Lead ${leadId}: ${cancelados} follow-ups do corretor ${corretorAnteriorId} cancelados`);
+    return cancelados;
+  } catch (error) {
+    console.error('[cancelarFollowUpsPorTransferencia] Erro:', error);
+    return 0;
+  }
+}
+
+/**
  * Job de limpeza periódica: cancela follow-ups pendentes de leads
  * que não estão mais com status "em_atendimento"
  * 

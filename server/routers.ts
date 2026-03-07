@@ -540,6 +540,11 @@ export const appRouter = router({
           console.log(`[updateLead] Próximo corretor encontrado: ${proximoCorretor ? proximoCorretor.name : 'nenhum'}`);
           
           if (proximoCorretor) {
+            // Cancelar follow-ups pendentes do corretor atual antes de transferir
+            if (lead.corretorId) {
+              await db.cancelarFollowUpsPorTransferencia(input.id, lead.corretorId);
+            }
+            
             // Transferir para próximo corretor
             await db.updateLead(input.id, {
               ...input.data,
@@ -686,6 +691,11 @@ export const appRouter = router({
         const corretorAnteriorId = lead.corretorId;
         const agora = new Date();
         
+        // Cancelar follow-ups pendentes do corretor anterior antes de transferir
+        if (corretorAnteriorId) {
+          await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
+        }
+        
         // Atualizar lead com novo corretor, status e ativar timer de 15 min
         await db.updateLead(input.leadId, {
           corretorId: input.novoCorretorId,
@@ -731,6 +741,11 @@ export const appRouter = router({
         
         const corretorAnteriorId = lead.corretorId;
         const statusAtual = lead.status;
+        
+        // Cancelar follow-ups pendentes do corretor anterior antes de reatribuir
+        if (corretorAnteriorId) {
+          await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
+        }
         
         // Atualizar lead com novo corretor MANTENDO o status atual
         await db.updateLead(input.leadId, {
@@ -781,6 +796,11 @@ export const appRouter = router({
             
             const corretorAnteriorId = lead.corretorId;
             const agora = Date.now();
+            
+            // Cancelar follow-ups pendentes do corretor anterior antes de transferir
+            if (corretorAnteriorId) {
+              await db.cancelarFollowUpsPorTransferencia(leadId, corretorAnteriorId);
+            }
             
             // Atualizar lead com novo corretor, status e ativar timer de 15 min
             await db.updateLead(leadId, {
@@ -6676,6 +6696,10 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         if (corretorAnteriorId === input.novoCorretorId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'O novo corretor é o mesmo que o atual' });
         }
+        
+        // Cancelar follow-ups pendentes do corretor anterior antes de reatribuir
+        const dbHelpers = await import('./db');
+        await dbHelpers.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
         
         // Atualizar lead
         await db
