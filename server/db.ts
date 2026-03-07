@@ -3731,6 +3731,7 @@ export async function getFollowUpsPendentes(corretorId: number) {
       eq(followUps.corretorId, corretorId),
       eq(followUps.status, "pendente"),
       lte(followUps.dataFollowUp, agora),
+      eq(leads.corretorId, corretorId), // Excluir leads transferidos para outro corretor
       // Excluir leads que têm tarefa agendada no futuro
       or(
         isNull(leads.proximaTarefaData),
@@ -3770,6 +3771,7 @@ export async function getFollowUpsDoDia(corretorId: number) {
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, inicioDeHoje),
       lte(followUps.dataFollowUp, fimDeHoje),
+      eq(leads.corretorId, corretorId), // Excluir leads transferidos para outro corretor
       // Excluir leads que têm tarefa agendada no futuro
       or(
         isNull(leads.proximaTarefaData),
@@ -3974,7 +3976,8 @@ export async function getFollowUpsDoDiaExpandido(
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, hoje),
       lt(followUps.dataFollowUp, amanha),
-      eq(leads.status, "em_atendimento") // APENAS leads Em Atendimento aparecem em Tarefas do Dia
+      eq(leads.status, "em_atendimento"), // APENAS leads Em Atendimento aparecem em Tarefas do Dia
+      eq(leads.corretorId, corretorId) // APENAS leads que ainda pertencem ao corretor (excluir transferidos)
     ];
     
     // Filtro por projeto (aplicado no lead)
@@ -7712,7 +7715,8 @@ export async function getTotalFollowUpsDoDia(corretorId: number, hojeParam?: Dat
       eq(followUps.status, "pendente"),
       gte(followUps.dataFollowUp, inicioDeHoje),
       lte(followUps.dataFollowUp, fimDeHoje),
-      eq(leads.status, "em_atendimento") // APENAS leads Em Atendimento
+      eq(leads.status, "em_atendimento"), // APENAS leads Em Atendimento
+      eq(leads.corretorId, corretorId) // APENAS leads que ainda pertencem ao corretor (excluir transferidos)
     ));
 }
 
