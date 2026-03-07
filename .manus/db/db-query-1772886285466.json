@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM leads) as total_leads_restantes,\n  (SELECT COUNT(*) FROM users WHERE role = 'user') as total_corretores_restantes,\n  (SELECT COUNT(*) FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso') as usuarios_teste_restantes,\n  (SELECT COUNT(*) FROM leads WHERE nome LIKE 'Lead Teste%' OR nome LIKE 'Lead Batch%' OR nome LIKE 'Lead Rank%' OR nome LIKE 'Lead C0 %' OR nome LIKE 'Lead C1 %' OR nome LIKE 'Lead C2 %' OR nome LIKE 'Lead Kanban Test%') as leads_teste_restantes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  (SELECT COUNT(*) FROM leads) as total_leads_restantes,\n  (SELECT COUNT(*) FROM users WHERE role = 'user') as total_corretores_restantes,\n  (SELECT COUNT(*) FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso') as usuarios_teste_restantes,\n  (SELECT COUNT(*) FROM leads WHERE nome LIKE 'Lead Teste%' OR nome LIKE 'Lead Batch%' OR nome LIKE 'Lead Rank%' OR nome LIKE 'Lead C0 %' OR nome LIKE 'Lead C1 %' OR nome LIKE 'Lead C2 %' OR nome LIKE 'Lead Kanban Test%') as leads_teste_restantes;",
+  "rows": [
+    {
+      "total_leads_restantes": "24998",
+      "total_corretores_restantes": "0",
+      "usuarios_teste_restantes": "0",
+      "leads_teste_restantes": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_leads_restantes\ttotal_corretores_restantes\tusuarios_teste_restantes\tleads_teste_restantes\n24998\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 98
+}

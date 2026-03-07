@@ -1,0 +1,181 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name;",
+  "rows": [
+    {
+      "table_name": "__drizzle_migrations"
+    },
+    {
+      "table_name": "agendamentos"
+    },
+    {
+      "table_name": "alertas"
+    },
+    {
+      "table_name": "alertas_produtividade"
+    },
+    {
+      "table_name": "analises_credito"
+    },
+    {
+      "table_name": "atividades_diarias"
+    },
+    {
+      "table_name": "bloqueios_agenda"
+    },
+    {
+      "table_name": "comissoes"
+    },
+    {
+      "table_name": "configuracao_pontuacao"
+    },
+    {
+      "table_name": "configuracao_projeto_foco"
+    },
+    {
+      "table_name": "conquistas"
+    },
+    {
+      "table_name": "construtoras"
+    },
+    {
+      "table_name": "contratos"
+    },
+    {
+      "table_name": "conversas_chatbot"
+    },
+    {
+      "table_name": "conversion_stats"
+    },
+    {
+      "table_name": "desbloqueio_corretor"
+    },
+    {
+      "table_name": "disponibilidade_corretor"
+    },
+    {
+      "table_name": "distribution_log"
+    },
+    {
+      "table_name": "documentacoes"
+    },
+    {
+      "table_name": "equipes"
+    },
+    {
+      "table_name": "escolha_diaria_follow_up"
+    },
+    {
+      "table_name": "faq_chatbot"
+    },
+    {
+      "table_name": "fila_distribuicao"
+    },
+    {
+      "table_name": "follow_ups"
+    },
+    {
+      "table_name": "historico_atribuicoes"
+    },
+    {
+      "table_name": "historico_presenca"
+    },
+    {
+      "table_name": "historicos_precos"
+    },
+    {
+      "table_name": "indicacoes"
+    },
+    {
+      "table_name": "interacoes"
+    },
+    {
+      "table_name": "lead_estoque"
+    },
+    {
+      "table_name": "lead_history"
+    },
+    {
+      "table_name": "lead_status_transitions"
+    },
+    {
+      "table_name": "leads"
+    },
+    {
+      "table_name": "links_agendamento"
+    },
+    {
+      "table_name": "log_transferencias"
+    },
+    {
+      "table_name": "logs_sincronizacao"
+    },
+    {
+      "table_name": "materiais"
+    },
+    {
+      "table_name": "metas"
+    },
+    {
+      "table_name": "metas_diarias"
+    },
+    {
+      "table_name": "metas_globais"
+    },
+    {
+      "table_name": "notifications"
+    },
+    {
+      "table_name": "project_suggestions"
+    },
+    {
+      "table_name": "projects"
+    },
+    {
+      "table_name": "properties"
+    },
+    {
+      "table_name": "propostas"
+    },
+    {
+      "table_name": "propostas_visitantes"
+    },
+    {
+      "table_name": "push_subscriptions"
+    },
+    {
+      "table_name": "quick_messages"
+    },
+    {
+      "table_name": "resumo_presenca_diaria"
+    },
+    {
+      "table_name": "system_config"
+    },
+    {
+      "table_name": "tabeloes"
+    },
+    {
+      "table_name": "tarefas"
+    },
+    {
+      "table_name": "templates_comissao"
+    },
+    {
+      "table_name": "tipos_conquista"
+    },
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "visitas"
+    },
+    {
+      "table_name": "webhook_config"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\n__drizzle_migrations\nagendamentos\nalertas\nalertas_produtividade\nanalises_credito\natividades_diarias\nbloqueios_agenda\ncomissoes\nconfiguracao_pontuacao\nconfiguracao_projeto_foco\nconquistas\nconstrutoras\ncontratos\nconversas_chatbot\nconversion_stats\ndesbloqueio_corretor\ndisponibilidade_corretor\ndistribution_log\ndocumentacoes\nequipes\nescolha_diaria_follow_up\nfaq_chatbot\nfila_distribuicao\nfollow_ups\nhistorico_atribuicoes\nhistorico_presenca\nhistoricos_precos\nindicacoes\ninteracoes\nlead_estoque\nlead_history\nlead_status_transitions\nleads\nlinks_agendamento\nlog_transferencias\nlogs_sincronizacao\nmateriais\nmetas\nmetas_diarias\nmetas_globais\nnotifications\nproject_suggestions\nprojects\nproperties\npropostas\npropostas_visitantes\npush_subscriptions\nquick_messages\nresumo_presenca_diaria\nsystem_config\ntabeloes\ntarefas\ntemplates_comissao\ntipos_conquista\nusers\nvisitas\nwebhook_config\n",
+  "stderr": "",
+  "execution_time_ms": 62
+}

@@ -5089,3 +5089,8 @@
 - [x] Usar COUNT(CASE WHEN) para contar total/aguardando/emAtendimento/perdido em 1 query
 - [x] Criar índice idx_followup_data em follow_ups(dataFollowUp, status)
 - [x] 6 testes unitários passando para validar otimização do getDashboardMetrics
+
+## Limpeza de Dados de Teste (Mar 2026)
+- [x] Apagar leads de teste (Lead Teste*, Lead Batch*, Lead Rank*, Lead C0*, Lead C2*, Lead Kanban Test*)
+- [x] Apagar corretores de teste (Corretor Teste*, Corretor Batch Test, Corretor Sheets Test, Corretor Rank*, Corretor 2, João Silva Teste, Sem nome, Juliana Alonso)
+- [x] Apagar todos os dados relacionados (histórico, agendamentos, visitas, contratos, follow-ups)
