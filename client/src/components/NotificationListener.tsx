@@ -126,13 +126,14 @@ export default function NotificationListener() {
     }
   };
   
-  // Query para buscar novas notificações (polling a cada 5 segundos)
+  // Query para buscar novas notificações (polling a cada 15 segundos)
   const { data: newNotifications } = trpc.notifications.getNewSince.useQuery(
     { since: lastCheck },
     {
       enabled: !!user,
-      refetchInterval: 5000, // Polling a cada 5 segundos
-      refetchIntervalInBackground: true,
+      refetchInterval: 15000, // Polling a cada 15 segundos (reduzido de 5s para menor carga)
+      refetchIntervalInBackground: false, // Não pollar em background para economizar recursos
+      refetchOnWindowFocus: false, // Não recarregar ao focar a janela
     }
   );
   

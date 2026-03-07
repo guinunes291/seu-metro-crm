@@ -230,7 +230,10 @@ export default function DashboardLayout({
 
 // Componente para badge de notificações
 function NotificationBadge() {
-  const { data: count } = trpc.notifications.unreadCount.useQuery();
+  const { data: count } = trpc.notifications.unreadCount.useQuery(undefined, {
+    refetchInterval: 15000, // Sincronizado com o NotificationListener (15s)
+    refetchOnWindowFocus: false,
+  });
   
   if (!count || count === 0) return null;
   

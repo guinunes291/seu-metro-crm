@@ -140,7 +140,7 @@ export default function Leads() {
     keepPreviousData: true, // Evita tela branca durante re-fetch
     refetchInterval: 30000, // Atualiza automaticamente a cada 30 segundos
     refetchOnMount: 'always', // Sempre busca dados frescos ao montar
-    refetchOnWindowFocus: true, // Atualiza quando a janela recebe foco
+    refetchOnWindowFocus: false, // Desabilitado para reduzir requisições (o polling de 30s já garante dados frescos)
   });
   const leads = leadsData?.leads || [];
   const totalPages = leadsData?.totalPages || 1;

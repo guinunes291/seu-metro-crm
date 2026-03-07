@@ -1716,100 +1716,108 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return null;
   
-  const conditions: any[] = [];
+  // Construir cláusulas de filtro reutilizáveis
+  const dateLeadConditions: any[] = [];
+  const dateOtherConditions: { agend: any[]; visit: any[]; analise: any[]; contrato: any[] } = {
+    agend: [], visit: [], analise: [], contrato: []
+  };
   
   if (filtros?.dataInicio) {
-    conditions.push(gte(leads.createdAt, filtros.dataInicio));
+    dateLeadConditions.push(gte(leads.createdAt, filtros.dataInicio));
+    dateOtherConditions.agend.push(gte(agendamentos.createdAt, filtros.dataInicio));
+    dateOtherConditions.visit.push(gte(visitas.createdAt, filtros.dataInicio));
+    dateOtherConditions.analise.push(gte(analises_credito.createdAt, filtros.dataInicio));
+    dateOtherConditions.contrato.push(gte(contratos.createdAt, filtros.dataInicio));
   }
   
   if (filtros?.dataFim) {
-    conditions.push(lte(leads.createdAt, filtros.dataFim));
+    dateLeadConditions.push(lte(leads.createdAt, filtros.dataFim));
+    dateOtherConditions.agend.push(lte(agendamentos.createdAt, filtros.dataFim));
+    dateOtherConditions.visit.push(lte(visitas.createdAt, filtros.dataFim));
+    dateOtherConditions.analise.push(lte(analises_credito.createdAt, filtros.dataFim));
+    dateOtherConditions.contrato.push(lte(contratos.createdAt, filtros.dataFim));
   }
   
   // Filtro por corretores (para gestores verem apenas sua equipe)
   if (filtros?.corretoresIds !== undefined && filtros.corretoresIds !== null) {
     if (filtros.corretoresIds.length === 0) {
       // Gestor sem corretores = não vê nada
-      conditions.push(sql`1 = 0`);
+      dateLeadConditions.push(sql`1 = 0`);
     } else {
-      conditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+      dateLeadConditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+      // Para tabelas relacionadas, filtrar via JOIN com leads
+      const corretorFilter = inArray(leads.corretorId, filtros.corretoresIds);
+      dateOtherConditions.agend.push(corretorFilter);
+      dateOtherConditions.visit.push(corretorFilter);
+      dateOtherConditions.analise.push(corretorFilter);
+      dateOtherConditions.contrato.push(corretorFilter);
     }
   }
   
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  const leadWhereClause = dateLeadConditions.length > 0 ? and(...dateLeadConditions) : undefined;
   
-  // Total de leads
-  const totalResult = await db.select({ count: sql<number>`count(*)` })
+  // OTIMIZAÇÃO: Consolidar counts de leads em UMA única query SQL com COUNT(CASE WHEN)
+  // Reduz de 3 queries separadas para 1 query com múltiplos contadores
+  const leadsCountsQuery = db.select({
+    total: sql<number>`COUNT(*)`,
+    aguardando: sql<number>`COUNT(CASE WHEN ${leads.status} = 'aguardando_atendimento' THEN 1 END)`,
+    emAtendimento: sql<number>`COUNT(CASE WHEN ${leads.status} = 'em_atendimento' THEN 1 END)`,
+    perdido: sql<number>`COUNT(CASE WHEN ${leads.status} = 'perdido' THEN 1 END)`,
+  })
     .from(leads)
-    .where(whereClause);
+    .where(leadWhereClause);
   
-  // Leads por status
-  const statusCounts = await Promise.all([
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'aguardando_atendimento')) : eq(leads.status, 'aguardando_atendimento')),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'em_atendimento')) : eq(leads.status, 'em_atendimento')),
-    db.select({ count: sql<number>`count(DISTINCT ${agendamentos.id})` })
-      .from(agendamentos)
-      .leftJoin(leads, eq(agendamentos.leadId, leads.id))
-      .where(and(
-        ...(filtros?.dataInicio ? [gte(agendamentos.createdAt, filtros.dataInicio)] : []),
-        ...(filtros?.dataFim ? [lte(agendamentos.createdAt, filtros.dataFim)] : []),
-        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
-      )),
-    db.select({ count: sql<number>`count(DISTINCT ${visitas.id})` })
-      .from(visitas)
-      .leftJoin(leads, eq(visitas.leadId, leads.id))
-      .where(and(
-        ...(filtros?.dataInicio ? [gte(visitas.createdAt, filtros.dataInicio)] : []),
-        ...(filtros?.dataFim ? [lte(visitas.createdAt, filtros.dataFim)] : []),
-        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
-      )),
-    db.select({ count: sql<number>`count(DISTINCT ${analises_credito.id})` })
-      .from(analises_credito)
-      .leftJoin(leads, eq(analises_credito.leadId, leads.id))
-      .where(and(
-        ...(filtros?.dataInicio ? [gte(analises_credito.createdAt, filtros.dataInicio)] : []),
-        ...(filtros?.dataFim ? [lte(analises_credito.createdAt, filtros.dataFim)] : []),
-        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
-      )),
-    db.select({ count: sql<number>`count(DISTINCT ${contratos.id})` })
-      .from(contratos)
-      .leftJoin(leads, eq(contratos.leadId, leads.id))
-      .where(and(
-        ...(filtros?.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
-        ...(filtros?.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : []),
-        ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
-      )),
-    db.select({ count: sql<number>`count(*)` })
-      .from(leads)
-      .where(conditions.length > 0 ? and(...conditions, eq(leads.status, 'perdido')) : eq(leads.status, 'perdido')),
-  ]);
+  // Queries para tabelas relacionadas (agendamentos, visitas, análises, contratos)
+  // Executadas em paralelo com a query consolidada de leads
+  const agendQuery = db.select({ count: sql<number>`COUNT(DISTINCT ${agendamentos.id})` })
+    .from(agendamentos)
+    .leftJoin(leads, eq(agendamentos.leadId, leads.id))
+    .where(dateOtherConditions.agend.length > 0 ? and(...dateOtherConditions.agend) : undefined);
   
-  // VGV - soma dos valores dos contratos fechados (excluindo distratos)
-  const vgvResult = await db.select({ 
+  const visitQuery = db.select({ count: sql<number>`COUNT(DISTINCT ${visitas.id})` })
+    .from(visitas)
+    .leftJoin(leads, eq(visitas.leadId, leads.id))
+    .where(dateOtherConditions.visit.length > 0 ? and(...dateOtherConditions.visit) : undefined);
+  
+  const analiseQuery = db.select({ count: sql<number>`COUNT(DISTINCT ${analises_credito.id})` })
+    .from(analises_credito)
+    .leftJoin(leads, eq(analises_credito.leadId, leads.id))
+    .where(dateOtherConditions.analise.length > 0 ? and(...dateOtherConditions.analise) : undefined);
+  
+  const contratoQuery = db.select({ count: sql<number>`COUNT(DISTINCT ${contratos.id})` })
+    .from(contratos)
+    .leftJoin(leads, eq(contratos.leadId, leads.id))
+    .where(dateOtherConditions.contrato.length > 0 ? and(...dateOtherConditions.contrato) : undefined);
+  
+  const vgvQuery = db.select({ 
     total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)` 
   })
     .from(contratos)
     .leftJoin(leads, eq(contratos.leadId, leads.id))
     .where(and(
       eq(contratos.distrato, false), // Excluir distratos do VGV
-      ...(filtros?.dataInicio ? [gte(contratos.createdAt, filtros.dataInicio)] : []),
-      ...(filtros?.dataFim ? [lte(contratos.createdAt, filtros.dataFim)] : []),
-      ...(filtros?.corretoresIds && filtros.corretoresIds.length > 0 ? [inArray(leads.corretorId, filtros.corretoresIds)] : [])
+      ...(dateOtherConditions.contrato.length > 0 ? dateOtherConditions.contrato : [])
     ));
   
+  // Executar todas as queries em paralelo (5 queries ao invés de 9)
+  const [leadsCounts, agendResult, visitResult, analiseResult, contratoResult, vgvResult] = await Promise.all([
+    leadsCountsQuery,
+    agendQuery,
+    visitQuery,
+    analiseQuery,
+    contratoQuery,
+    vgvQuery,
+  ]);
+  
   return {
-    total: Number(totalResult[0]?.count || 0),
-    aguardando: Number(statusCounts[0][0]?.count || 0),
-    emAtendimento: Number(statusCounts[1][0]?.count || 0),
-    agendado: Number(statusCounts[2][0]?.count || 0),
-    visitaRealizada: Number(statusCounts[3][0]?.count || 0),
-    analiseCredito: Number(statusCounts[4][0]?.count || 0),
-    contratoFechado: Number(statusCounts[5][0]?.count || 0),
-    perdido: Number(statusCounts[6][0]?.count || 0),
+    total: Number(leadsCounts[0]?.total || 0),
+    aguardando: Number(leadsCounts[0]?.aguardando || 0),
+    emAtendimento: Number(leadsCounts[0]?.emAtendimento || 0),
+    agendado: Number(agendResult[0]?.count || 0),
+    visitaRealizada: Number(visitResult[0]?.count || 0),
+    analiseCredito: Number(analiseResult[0]?.count || 0),
+    contratoFechado: Number(contratoResult[0]?.count || 0),
+    perdido: Number(leadsCounts[0]?.perdido || 0),
     vgv: Number(vgvResult[0]?.total || 0),
   };
 }

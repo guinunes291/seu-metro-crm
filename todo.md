@@ -5077,3 +5077,15 @@
 - [ ] Bloquear exibição do popup urgente se lead não pertence mais ao corretor
 - [ ] Bloquear botão "Contatar Agora" se lead foi transferido
 - [ ] Verificar se NotificationListener expõe dados de leads de outros corretores
+
+## Otimização de Performance - Polling e Queries (Mar 2026)
+- [x] Reduzir polling do NotificationListener de 5s para 15s
+- [x] Desabilitar refetchIntervalInBackground no NotificationListener
+- [x] Reduzir polling do useWebhookLeadNotification de 5s para 8s
+- [x] Aumentar polling do MonitoramentoFollowUps de 10s para 30s
+- [x] Desabilitar refetchOnWindowFocus na lista de leads (polling 30s já garante dados frescos)
+- [x] Adicionar refetchInterval 15s no NotificationBadge (sincronizado com NotificationListener)
+- [x] Consolidar getDashboardMetrics: de 9 queries separadas para 5 queries em paralelo
+- [x] Usar COUNT(CASE WHEN) para contar total/aguardando/emAtendimento/perdido em 1 query
+- [x] Criar índice idx_followup_data em follow_ups(dataFollowUp, status)
+- [x] 6 testes unitários passando para validar otimização do getDashboardMetrics
