@@ -5098,3 +5098,4 @@
 ## Bugs (Mar 2026)
 - [x] Leads transferidos para outro corretor aparecem no follow-up do corretor antigo — filtrar por corretorId atual do lead
 - [x] Cancelar automaticamente follow-ups pendentes do corretor antigo ao transferir lead
+- [x] Relatório de leads recebidos e perdidos por timer (15min) por corretor — visão ADM (todos) e gestor (seu time)

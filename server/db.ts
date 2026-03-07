@@ -10818,3 +10818,146 @@ export async function getMetricasDiariasCorretor(corretorId: number): Promise<{
     perdidosPorTimeout,
   };
 }
+
+/**
+ * Relatório agregado de leads Facebook ADS recebidos e perdidos por timer (15 min)
+ * por corretor, com filtro de período e equipe (para gestores).
+ *
+ * @param filtros.dataInicio - início do período (Date)
+ * @param filtros.dataFim - fim do período (Date)
+ * @param filtros.equipeId - se informado, filtra apenas corretores desta equipe
+ * @returns array de { corretorId, corretorNome, equipeId, recebidos, perdidosPorTimer }
+ */
+export async function getRelatorioLeadsTimerPorCorretor(filtros: {
+  dataInicio: Date;
+  dataFim: Date;
+  equipeId?: number;
+}): Promise<Array<{
+  corretorId: number;
+  corretorNome: string;
+  equipeId: number | null;
+  recebidos: number;
+  perdidosPorTimer: number;
+  taxaPerda: number;
+}>> {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    // 1. Buscar todos os corretores (filtrado por equipe se necessário)
+    const corretoresQuery = db
+      .select({ id: users.id, name: users.name, equipeId: users.equipeId })
+      .from(users)
+      .where(
+        and(
+          eq(users.role, 'corretor'),
+          filtros.equipeId ? eq(users.equipeId, filtros.equipeId) : undefined
+        )
+      );
+
+    const corretores = await corretoresQuery;
+    if (corretores.length === 0) return [];
+
+    const corretorIds = corretores.map(c => c.id);
+
+    // 2. Leads Facebook recebidos por corretor no período
+    //    (via distribution_log, origemWebhook=true)
+    const recebidosRows = await db
+      .select({
+        corretorId: distributionLog.corretorId,
+        count: sql<number>`COUNT(DISTINCT ${distributionLog.leadId})`,
+      })
+      .from(distributionLog)
+      .innerJoin(leads, eq(distributionLog.leadId, leads.id))
+      .where(
+        and(
+          inArray(distributionLog.corretorId, corretorIds),
+          eq(leads.origemWebhook, true),
+          gte(distributionLog.createdAt, filtros.dataInicio),
+          lte(distributionLog.createdAt, filtros.dataFim)
+        )
+      )
+      .groupBy(distributionLog.corretorId);
+
+    const recebidosMap = new Map<number, number>();
+    for (const row of recebidosRows) {
+      recebidosMap.set(row.corretorId, Number(row.count));
+    }
+
+    // 3. Leads perdidos por timer: logs com motivo contendo 'timeout' ou 'Fallback para admin'
+    //    no período, para leads origemWebhook=true
+    const logsTimeout = await db
+      .select({
+        leadId: distributionLog.leadId,
+        createdAt: distributionLog.createdAt,
+      })
+      .from(distributionLog)
+      .innerJoin(leads, eq(distributionLog.leadId, leads.id))
+      .where(
+        and(
+          sql`(${distributionLog.motivo} LIKE '%timeout%' OR ${distributionLog.motivo} LIKE '%Fallback para admin%')`,
+          eq(leads.origemWebhook, true),
+          gte(distributionLog.createdAt, filtros.dataInicio),
+          lte(distributionLog.createdAt, filtros.dataFim)
+        )
+      );
+
+    // Para cada redistribuição por timeout, descobrir quem perdeu o lead
+    const perdidosMap = new Map<number, number>();
+
+    const leadIdsUnicos = [...new Set(logsTimeout.map(l => l.leadId).filter(Boolean))] as number[];
+
+    for (const leadId of leadIdsUnicos) {
+      // Buscar os logs deste lead no período, ordenados do mais recente para o mais antigo
+      const logsDoLead = await db
+        .select({
+          corretorId: distributionLog.corretorId,
+          motivo: distributionLog.motivo,
+          createdAt: distributionLog.createdAt,
+        })
+        .from(distributionLog)
+        .where(
+          and(
+            eq(distributionLog.leadId, leadId),
+            gte(distributionLog.createdAt, filtros.dataInicio),
+            lte(distributionLog.createdAt, filtros.dataFim)
+          )
+        )
+        .orderBy(desc(distributionLog.createdAt));
+
+      // Para cada log de timeout, o log imediatamente anterior indica quem perdeu
+      for (let i = 0; i < logsDoLead.length - 1; i++) {
+        const logAtual = logsDoLead[i];
+        const logAnterior = logsDoLead[i + 1];
+        const isTimeout =
+          logAtual.motivo?.includes('timeout') ||
+          logAtual.motivo?.includes('Fallback para admin');
+
+        if (isTimeout && logAnterior.corretorId && corretorIds.includes(logAnterior.corretorId)) {
+          const atual = perdidosMap.get(logAnterior.corretorId) || 0;
+          perdidosMap.set(logAnterior.corretorId, atual + 1);
+          break;
+        }
+      }
+    }
+
+    // 4. Montar resultado
+    return corretores.map(c => {
+      const recebidos = recebidosMap.get(c.id) || 0;
+      const perdidosPorTimer = perdidosMap.get(c.id) || 0;
+      const taxaPerda = recebidos > 0 ? Math.round((perdidosPorTimer / recebidos) * 100) : 0;
+      return {
+        corretorId: c.id,
+        corretorNome: c.name || 'Sem nome',
+        equipeId: c.equipeId,
+        recebidos,
+        perdidosPorTimer,
+        taxaPerda,
+      };
+    });
+
+  } catch (error) {
+    console.error('[getRelatorioLeadsTimerPorCorretor] Erro:', error);
+    return [];
+  }
+}

@@ -1775,6 +1775,25 @@ export const appRouter = router({
         
         return await calcularConversaoPorCorretor(periodo, corretoresIds);
       }),
+
+    // Leads Facebook ADS recebidos e perdidos por timer (15 min) por corretor
+    leadsTimerPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        // Gestor vê apenas seu time; admin/superintendente vê todos
+        const equipeId = (ctx.user.role === 'gestor' && ctx.user.equipeId)
+          ? ctx.user.equipeId
+          : undefined;
+
+        return await db.getRelatorioLeadsTimerPorCorretor({
+          dataInicio: new Date(input.dataInicio),
+          dataFim: new Date(input.dataFim),
+          equipeId,
+        });
+      }),
   }),
 
   // ============================================================================
