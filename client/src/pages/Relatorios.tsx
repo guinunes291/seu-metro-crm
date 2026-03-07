@@ -27,15 +27,19 @@ function FacebookTimerRelatorio({
   dataFim: Date | undefined;
   periodo: string;
 }) {
-  // Datas padrão: mês atual
+  // Quando "all" (sem filtro), usar 1 ano atrás até hoje como período padrão
   const defaultInicio = useMemo(() => {
     const d = new Date();
-    d.setDate(1);
+    d.setFullYear(d.getFullYear() - 1);
     d.setHours(0, 0, 0, 0);
     return d;
   }, []);
 
-  const defaultFim = useMemo(() => new Date(), []);
+  const defaultFim = useMemo(() => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, []);
 
   const inicio = dataInicio || defaultInicio;
   const fim = dataFim || defaultFim;
@@ -223,12 +227,66 @@ export default function Relatorios() {
   const [customEnd, setCustomEnd] = useState<Date | undefined>();
 
   // Calcular datas baseado no período selecionado
-  const getDateRange = () => {
-    if (periodo === "custom" && customStart && customEnd) {
-      return { dataInicio: customStart, dataFim: customEnd };
+  const getDateRange = (): { dataInicio: Date | undefined; dataFim: Date | undefined } => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+    switch (periodo) {
+      case "all":
+        return { dataInicio: undefined, dataFim: undefined };
+
+      case "today":
+        return { dataInicio: today, dataFim: endOfToday };
+
+      case "yesterday": {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const endYesterday = new Date(yesterday);
+        endYesterday.setHours(23, 59, 59, 999);
+        return { dataInicio: yesterday, dataFim: endYesterday };
+      }
+
+      case "this_week": {
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        return { dataInicio: startOfWeek, dataFim: endOfToday };
+      }
+
+      case "last_week": {
+        const startOfLastWeek = new Date(today);
+        startOfLastWeek.setDate(today.getDate() - today.getDay() - 7);
+        const endOfLastWeek = new Date(startOfLastWeek);
+        endOfLastWeek.setDate(startOfLastWeek.getDate() + 6);
+        endOfLastWeek.setHours(23, 59, 59, 999);
+        return { dataInicio: startOfLastWeek, dataFim: endOfLastWeek };
+      }
+
+      case "this_month": {
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        return { dataInicio: startOfMonth, dataFim: endOfToday };
+      }
+
+      case "last_month": {
+        const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
+        return { dataInicio: startOfLastMonth, dataFim: endOfLastMonth };
+      }
+
+      case "this_year": {
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        return { dataInicio: startOfYear, dataFim: endOfToday };
+      }
+
+      case "custom":
+        if (customStart && customEnd) {
+          return { dataInicio: customStart, dataFim: customEnd };
+        }
+        return { dataInicio: undefined, dataFim: undefined };
+
+      default:
+        return { dataInicio: undefined, dataFim: undefined };
     }
-    // Para outros períodos, o DateRangeFilter já calcula
-    return { dataInicio: undefined, dataFim: undefined };
   };
 
   const { dataInicio, dataFim } = getDateRange();
