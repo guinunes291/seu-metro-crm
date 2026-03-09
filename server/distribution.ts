@@ -3,8 +3,8 @@ import { users, leads, conversionStats, distributionLog, leadEstoque } from "../
 import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
-const MINIMO_LEADS_GARANTIDO = 30;
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90%
+const MINIMO_LEADS_GARANTIDO = 40;
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60%
 const LOTE_SIZE = 20; // Total de leads por rodada
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 
@@ -21,9 +21,9 @@ interface CorretorStatus {
 
 /**
  * Verifica se um corretor está elegível para receber novos leads
- * Regras baseadas no AppScript:
+ * Regras:
  * 1. Status deve ser "presente"
- * 2. Deve ter menos de 30 leads OU ter trabalhado pelo menos 40% dos seus leads
+ * 2. Deve ter menos de 40 leads (carga inicial mínima) OU ter trabalhado pelo menos 60% dos seus leads
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -48,12 +48,12 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
 
   const totalLeads = leadsDoCorretor.length;
 
-  // Se tem menos que o mínimo garantido, é elegível
+  // Se tem menos que o mínimo garantido (40 leads), é elegível
   if (totalLeads < MINIMO_LEADS_GARANTIDO) {
     return true;
   }
 
-  // Verificar taxa de trabalho (40% rule)
+  // Verificar taxa de trabalho (60% rule)
   const leadsTrabalhados = leadsDoCorretor.filter(
     (lead) => lead.status !== "aguardando_atendimento"
   ).length;
@@ -488,7 +488,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
  * Retorna lista de IDs de corretores elegíveis para distribuição
  * Critérios:
  * - Status = "presente"
- * - Taxa de trabalho > 60% (ou menos de 30 leads)
+ * - Menos de 40 leads (carga inicial mínima) OU taxa de trabalho >= 60%
  */
 async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   const db = await getDb();
@@ -525,13 +525,13 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
 
     const totalLeads = leadsDoCorretor.length;
 
-    // Se tem menos que 30 leads, é elegível
+    // Se tem menos que 40 leads (carga inicial mínima), é elegível
     if (totalLeads < MINIMO_LEADS_GARANTIDO) {
       corretoresElegiveis.push(corretor.id);
       continue;
     }
 
-    // Verificar taxa de trabalho (40% rule)
+    // Verificar taxa de trabalho (60% rule)
     const leadsTrabalhados = leadsDoCorretor.filter(
       (lead) => lead.status !== "aguardando_atendimento"
     ).length;

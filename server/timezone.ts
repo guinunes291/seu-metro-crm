@@ -55,7 +55,7 @@ export function fimDoDiaHoje(): Date {
   
   // Criar Date em UTC que representa 23:59:59.999 SP
   // 23:59:59 SP = 02:59:59 UTC do dia seguinte
-  const fimDia = new Date(Date.UTC(ano, mes, dia, 26, 59, 59, 999)); // 26h = 02h do dia seguinte
+  const fimDia = new Date(Date.UTC(ano, mes, dia + 1, 2, 59, 59, 999));
   
   return fimDia;
 }
@@ -89,7 +89,8 @@ export function fimDoDia(data: Date): Date {
   const dia = dataSP.getDate();
   
   // Criar Date em UTC que representa 23:59:59.999 SP
-  const fimDia = new Date(Date.UTC(ano, mes, dia, 26, 59, 59, 999));
+  // 23:59:59 SP = 02:59:59 UTC do dia seguinte
+  const fimDia = new Date(Date.UTC(ano, mes, dia + 1, 2, 59, 59, 999));
   
   return fimDia;
 }
