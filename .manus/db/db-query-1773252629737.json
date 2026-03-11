@@ -1,0 +1,16 @@
+{
+  "query": "\nSELECT \n  COUNT(CASE WHEN l.corretorId IS NULL THEN 1 END) as sem_corretor,\n  COUNT(CASE WHEN u.role = 'admin' THEN 1 END) as com_gestor,\n  COUNT(CASE WHEN u.role = 'corretor' THEN 1 END) as com_corretor,\n  COUNT(*) as total\nFROM leads l\nLEFT JOIN users u ON l.corretorId = u.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  COUNT(CASE WHEN l.corretorId IS NULL THEN 1 END) as sem_corretor,\n  COUNT(CASE WHEN u.role = 'admin' THEN 1 END) as com_gestor,\n  COUNT(CASE WHEN u.role = 'corretor' THEN 1 END) as com_corretor,\n  COUNT(*) as total\nFROM leads l\nLEFT JOIN users u ON l.corretorId = u.id;\n",
+  "rows": [
+    {
+      "sem_corretor": "22115",
+      "com_gestor": "2",
+      "com_corretor": "2901",
+      "total": "25097"
+    }
+  ],
+  "messages": [],
+  "stdout": "sem_corretor\tcom_gestor\tcom_corretor\ttotal\n22115\t2\t2901\t25097\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

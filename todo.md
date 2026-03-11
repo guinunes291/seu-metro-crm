@@ -5102,3 +5102,5 @@
 - [x] Bug: filtro de data da aba Facebook Timer não respeita período selecionado (ex: "Hoje")
 - [x] Bug: erro "The string did not match the expected pattern" ao clicar em Distribuir Agora
 - [x] Bug: carga inicial de 40 leads por corretor não está sendo respeitada na distribuição
+- [x] Bug crítico: distribuição automática não distribui leads (nem inicial 40 leads, nem reposição)
+- [x] Bug crítico: sistema lento para todos os usuários após atualização recente

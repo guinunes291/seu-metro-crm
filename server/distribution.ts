@@ -344,9 +344,9 @@ export async function distribuirLeadsEmLote(
 /**
  * Distribui todos os leads não atribuídos em lotes
  * Regras:
- * - Distribui leads com corretorId = null (não atribuídos a nenhum corretor)
+ * - Distribui leads com corretorId = null (sem corretor) OU com corretorId de um admin/gestor
  * - Apenas para corretores presentes
- * - Apenas para corretores com taxa de trabalho > 40%
+ * - Apenas para corretores com taxa de trabalho >= 60% ou menos de 40 leads
  * - Limite de 20 leads por ação
  */
 export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
@@ -359,18 +359,48 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
     return { success: 0, failed: 0, details: [] };
   }
 
-  // Buscar leads não atribuídos (corretorId = null)
-  const leadsNaoAtribuidos = await db
-    .select()
-    .from(leads)
-    .where(isNull(leads.corretorId))
-    .limit(LOTE_SIZE);
+  // Buscar IDs dos gestores/admins
+  const gestores = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.role, "admin"));
 
-  if (leadsNaoAtribuidos.length === 0) {
+  const gestorIds = gestores.map((g) => g.id);
+
+  // Buscar leads sem corretor OU com corretor gestor (aguardando distribuição)
+  // Status: aguardando_atendimento ou sem status definido
+  let leadsParaDistribuir;
+
+  if (gestorIds.length > 0) {
+    leadsParaDistribuir = await db
+      .select()
+      .from(leads)
+      .where(
+        sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
+            AND ${leads.status} = 'aguardando_atendimento'`
+      )
+      .limit(LOTE_SIZE);
+  } else {
+    leadsParaDistribuir = await db
+      .select()
+      .from(leads)
+      .where(
+        and(
+          isNull(leads.corretorId),
+          eq(leads.status, "aguardando_atendimento")
+        )
+      )
+      .limit(LOTE_SIZE);
+  }
+
+  if (leadsParaDistribuir.length === 0) {
+    console.log("[Distribuição] Nenhum lead aguardando distribuição");
     return { success: 0, failed: 0, details: [] };
   }
 
-  const leadIds = leadsNaoAtribuidos.map((lead) => lead.id);
+  console.log(`[Distribuição] ${leadsParaDistribuir.length} leads aguardando distribuição`);
+
+  const leadIds = leadsParaDistribuir.map((lead) => lead.id);
 
   return await distribuirLeadsEmLoteParaElegiveis(leadIds);
 }
@@ -489,57 +519,64 @@ async function distribuirLeadsEmLoteParaElegiveis(
  * Critérios:
  * - Status = "presente"
  * - Menos de 40 leads (carga inicial mínima) OU taxa de trabalho >= 60%
+ * Otimizado: usa uma única query SQL com agregação em vez de N+1 queries
  */
 async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   const db = await getDb();
   if (!db) return [];
 
-  // Buscar todos os corretores presentes
-  const corretoresPresentes = await db
-    .select()
-    .from(users)
-    .where(
-      and(
-        eq(users.role, "corretor"),
-        eq(users.status, "presente")
-      )
-    );
+  // Calcular início do dia em SP (UTC-3) para limite diário
+  const agora = new Date();
+  const offsetSP = -3 * 60; // UTC-3 em minutos
+  const agoraSP = new Date(agora.getTime() + (offsetSP - agora.getTimezoneOffset()) * 60 * 1000);
+  const inicioDiaSP = new Date(agoraSP);
+  inicioDiaSP.setHours(0, 0, 0, 0);
+  const inicioDiaUTC = new Date(inicioDiaSP.getTime() - offsetSP * 60 * 1000);
+  const fimDiaSP = new Date(agoraSP);
+  fimDiaSP.setHours(23, 59, 59, 999);
+  const fimDiaUTC = new Date(fimDiaSP.getTime() - offsetSP * 60 * 1000);
+
+  // Uma única query: busca corretores presentes com contagens de leads agregadas
+  const resultado = await db.execute(sql`
+    SELECT 
+      u.id,
+      u.limiteDiarioLeads,
+      COUNT(l.id) as total_leads,
+      SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as leads_trabalhados,
+      COUNT(dl.id) as leads_recebidos_hoje
+    FROM users u
+    LEFT JOIN leads l ON l.corretorId = u.id
+    LEFT JOIN distribution_log dl ON dl.corretorId = u.id 
+      AND dl.createdAt >= ${inicioDiaUTC}
+      AND dl.createdAt <= ${fimDiaUTC}
+    WHERE u.role = 'corretor' AND u.status = 'presente'
+    GROUP BY u.id, u.limiteDiarioLeads
+  `);
 
   const corretoresElegiveis: number[] = [];
 
-  for (const corretor of corretoresPresentes) {
-    // Verificar limite diário de distribuição automática
-    const limiteDiario = corretor.limiteDiarioLeads || 50;
-    const leadsRecebidosHoje = await countLeadsRecebidosHoje(corretor.id);
-    
+  for (const row of (resultado.rows as any[])) {
+    const corretorId = Number(row.id);
+    const limiteDiario = Number(row.limiteDiarioLeads) || 50;
+    const leadsRecebidosHoje = Number(row.leads_recebidos_hoje) || 0;
+    const totalLeads = Number(row.total_leads) || 0;
+    const leadsTrabalhados = Number(row.leads_trabalhados) || 0;
+
+    // Verificar limite diário
     if (leadsRecebidosHoje >= limiteDiario) {
-      // Corretor já atingiu o limite diário de distribuição automática
       continue;
     }
 
-    // Buscar leads do corretor
-    const leadsDoCorretor = await db
-      .select()
-      .from(leads)
-      .where(eq(leads.corretorId, corretor.id));
-
-    const totalLeads = leadsDoCorretor.length;
-
     // Se tem menos que 40 leads (carga inicial mínima), é elegível
     if (totalLeads < MINIMO_LEADS_GARANTIDO) {
-      corretoresElegiveis.push(corretor.id);
+      corretoresElegiveis.push(corretorId);
       continue;
     }
 
     // Verificar taxa de trabalho (60% rule)
-    const leadsTrabalhados = leadsDoCorretor.filter(
-      (lead) => lead.status !== "aguardando_atendimento"
-    ).length;
-
-    const taxaTrabalho = leadsTrabalhados / totalLeads;
-
+    const taxaTrabalho = totalLeads > 0 ? leadsTrabalhados / totalLeads : 0;
     if (taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO) {
-      corretoresElegiveis.push(corretor.id);
+      corretoresElegiveis.push(corretorId);
     }
   }
 
