@@ -67,12 +67,12 @@ describe("Distribuição Automática - Correções", () => {
       expect(elegivel).toBe(true);
     });
 
-    it("corretor com 40+ leads e 60%+ trabalhados deve ser elegível", () => {
+    it("corretor com 40+ leads e 90%+ trabalhados deve ser elegível", () => {
       const MINIMO_LEADS_GARANTIDO = 40;
-      const PERCENTUAL_CONCLUSAO_MINIMO = 0.6;
+      const PERCENTUAL_CONCLUSAO_MINIMO = 0.9;
       
       const totalLeads = 40;
-      const leadsTrabalhados = 24; // 60%
+      const leadsTrabalhados = 36; // 90%
       const leadsRecebidosHoje = 5;
       const limiteDiario = 50;
       
@@ -86,12 +86,12 @@ describe("Distribuição Automática - Correções", () => {
       expect(elegivel).toBe(true);
     });
 
-    it("corretor com 40+ leads e menos de 60% trabalhados NÃO deve ser elegível", () => {
+    it("corretor com 40+ leads e menos de 90% trabalhados NÃO deve ser elegível", () => {
       const MINIMO_LEADS_GARANTIDO = 40;
-      const PERCENTUAL_CONCLUSAO_MINIMO = 0.6;
+      const PERCENTUAL_CONCLUSAO_MINIMO = 0.9;
       
       const totalLeads = 40;
-      const leadsTrabalhados = 20; // 50% - abaixo do mínimo
+      const leadsTrabalhados = 32; // 80% - abaixo do mínimo
       const leadsRecebidosHoje = 5;
       const limiteDiario = 50;
       
@@ -128,9 +128,9 @@ describe("Distribuição Automática - Correções", () => {
       expect(MINIMO_LEADS_GARANTIDO).toBe(40);
     });
 
-    it("PERCENTUAL_CONCLUSAO_MINIMO deve ser 0.6 (60%)", () => {
-      const PERCENTUAL_CONCLUSAO_MINIMO = 0.6;
-      expect(PERCENTUAL_CONCLUSAO_MINIMO).toBe(0.6);
+    it("PERCENTUAL_CONCLUSAO_MINIMO deve ser 0.9 (90%)", () => {
+      const PERCENTUAL_CONCLUSAO_MINIMO = 0.9;
+      expect(PERCENTUAL_CONCLUSAO_MINIMO).toBe(0.9);
     });
 
     it("intervalo do metricasSyncJob deve ser 5 minutos (300000ms)", () => {

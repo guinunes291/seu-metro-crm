@@ -4,7 +4,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40;
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60%
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90%
 const LOTE_SIZE = 20; // Total de leads por rodada
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 
