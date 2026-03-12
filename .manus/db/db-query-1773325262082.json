@@ -1,0 +1,170 @@
+{
+  "query": "\nSELECT \n  dl.corretorId,\n  u.name,\n  COUNT(*) as total_log,\n  COUNT(DISTINCT dl.leadId) as leads_unicos,\n  SUM(CASE WHEN dl.tipo = 'automatica' THEN 1 ELSE 0 END) as automatica,\n  SUM(CASE WHEN dl.tipo = 'manual' THEN 1 ELSE 0 END) as manual\nFROM distribution_log dl\nJOIN users u ON u.id = dl.corretorId\nWHERE dl.createdAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)\nGROUP BY dl.corretorId, u.name\nORDER BY total_log DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  dl.corretorId,\n  u.name,\n  COUNT(*) as total_log,\n  COUNT(DISTINCT dl.leadId) as leads_unicos,\n  SUM(CASE WHEN dl.tipo = 'automatica' THEN 1 ELSE 0 END) as automatica,\n  SUM(CASE WHEN dl.tipo = 'manual' THEN 1 ELSE 0 END) as manual\nFROM distribution_log dl\nJOIN users u ON u.id = dl.corretorId\nWHERE dl.createdAt >= DATE_SUB(NOW(), INTERVAL 24 HOUR)\nGROUP BY dl.corretorId, u.name\nORDER BY total_log DESC;\n",
+  "rows": [
+    {
+      "corretorId": "14580001",
+      "name": "Juliana Alonso",
+      "total_log": "92",
+      "leads_unicos": "88",
+      "automatica": "92",
+      "manual": "0"
+    },
+    {
+      "corretorId": "13835170",
+      "name": "Jefferson Luiz",
+      "total_log": "89",
+      "leads_unicos": "82",
+      "automatica": "89",
+      "manual": "0"
+    },
+    {
+      "corretorId": "11632920",
+      "name": "Bella Brancaccio",
+      "total_log": "57",
+      "leads_unicos": "57",
+      "automatica": "57",
+      "manual": "0"
+    },
+    {
+      "corretorId": "11388281",
+      "name": "Thaynara Meneses",
+      "total_log": "38",
+      "leads_unicos": "33",
+      "automatica": "38",
+      "manual": "0"
+    },
+    {
+      "corretorId": "8071179",
+      "name": "Hellen Rodrigues",
+      "total_log": "21",
+      "leads_unicos": "8",
+      "automatica": "21",
+      "manual": "0"
+    },
+    {
+      "corretorId": "10409127",
+      "name": "Carla Quaresma",
+      "total_log": "17",
+      "leads_unicos": "11",
+      "automatica": "17",
+      "manual": "0"
+    },
+    {
+      "corretorId": "7860001",
+      "name": "Leticia Castro",
+      "total_log": "16",
+      "leads_unicos": "13",
+      "automatica": "16",
+      "manual": "0"
+    },
+    {
+      "corretorId": "10319087",
+      "name": "lacerdaniel.imoveis",
+      "total_log": "15",
+      "leads_unicos": "11",
+      "automatica": "15",
+      "manual": "0"
+    },
+    {
+      "corretorId": "7862260",
+      "name": "Andrew",
+      "total_log": "15",
+      "leads_unicos": "9",
+      "automatica": "15",
+      "manual": "0"
+    },
+    {
+      "corretorId": "11184140",
+      "name": "Luis Veras",
+      "total_log": "15",
+      "leads_unicos": "10",
+      "automatica": "15",
+      "manual": "0"
+    },
+    {
+      "corretorId": "13835629",
+      "name": "Maria Clara",
+      "total_log": "13",
+      "leads_unicos": "8",
+      "automatica": "13",
+      "manual": "0"
+    },
+    {
+      "corretorId": "13507682",
+      "name": "Bruno Soares Martins",
+      "total_log": "13",
+      "leads_unicos": "9",
+      "automatica": "13",
+      "manual": "0"
+    },
+    {
+      "corretorId": "7958356",
+      "name": "Pitter Reis",
+      "total_log": "11",
+      "leads_unicos": "2",
+      "automatica": "11",
+      "manual": "0"
+    },
+    {
+      "corretorId": "9816082",
+      "name": "graziele gomes de jesus graziele gomes",
+      "total_log": "10",
+      "leads_unicos": "8",
+      "automatica": "10",
+      "manual": "0"
+    },
+    {
+      "corretorId": "14732614",
+      "name": "Monica Santos",
+      "total_log": "10",
+      "leads_unicos": "10",
+      "automatica": "10",
+      "manual": "0"
+    },
+    {
+      "corretorId": "15122234",
+      "name": "Jhonata S. Roberto",
+      "total_log": "7",
+      "leads_unicos": "7",
+      "automatica": "7",
+      "manual": "0"
+    },
+    {
+      "corretorId": "15123844",
+      "name": "Taynara da Costa Souza",
+      "total_log": "7",
+      "leads_unicos": "7",
+      "automatica": "7",
+      "manual": "0"
+    },
+    {
+      "corretorId": "14738412",
+      "name": "Bianca Haikel",
+      "total_log": "6",
+      "leads_unicos": "6",
+      "automatica": "6",
+      "manual": "0"
+    },
+    {
+      "corretorId": "12402494",
+      "name": "Gabriel Antônio Martins",
+      "total_log": "6",
+      "leads_unicos": "6",
+      "automatica": "6",
+      "manual": "0"
+    },
+    {
+      "corretorId": "7723881",
+      "name": "Paula Akahoshi",
+      "total_log": "2",
+      "leads_unicos": "2",
+      "automatica": "2",
+      "manual": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\tname\ttotal_log\tleads_unicos\tautomatica\tmanual\n14580001\tJuliana Alonso\t92\t88\t92\t0\n13835170\tJefferson Luiz\t89\t82\t89\t0\n11632920\tBella Brancaccio\t57\t57\t57\t0\n11388281\tThaynara Meneses\t38\t33\t38\t0\n8071179\tHellen Rodrigues\t21\t8\t21\t0\n10409127\tCarla Quaresma\t17\t11\t17\t0\n7860001\tLeticia Castro\t16\t13\t16\t0\n10319087\tlacerdaniel.imoveis\t15\t11\t15\t0\n7862260\tAndrew\t15\t9\t15\t0\n11184140\tLuis Veras\t15\t10\t15\t0\n13835629\tMaria Clara\t13\t8\t13\t0\n13507682\tBruno Soares Martins\t13\t9\t13\t0\n7958356\tPitter Reis\t11\t2\t11\t0\n9816082\tgraziele gomes de jesus graziele gomes\t10\t8\t10\t0\n14732614\tMonica Santos\t10\t10\t10\t0\n15122234\tJhonata S. Roberto\t7\t7\t7\t0\n15123844\tTaynara da Costa Souza\t7\t7\t7\t0\n14738412\tBianca Haikel\t6\t6\t6\t0\n12402494\tGabriel Antônio Martins\t6\t6\t6\t0\n7723881\tPaula Akahoshi\t2\t2\t2\t0\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

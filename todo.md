@@ -5104,3 +5104,5 @@
 - [x] Bug: carga inicial de 40 leads por corretor não está sendo respeitada na distribuição
 - [x] Bug crítico: distribuição automática não distribui leads (nem inicial 40 leads, nem reposição)
 - [x] Bug crítico: sistema lento para todos os usuários após atualização recente
+- [x] Confirmar e ativar cron de distribuição automática a cada 5 minutos no servidor
+- [ ] Bug: distribuição retorna "0 leads distribuídos" mesmo com 4 corretores elegíveis e 25k leads no banco

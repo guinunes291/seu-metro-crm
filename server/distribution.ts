@@ -5,7 +5,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40;
 const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90%
-const LOTE_SIZE = 20; // Total de leads por rodada
+const LOTE_SIZE = 200; // Total de leads por rodada (aumentado para distribuição mais rápida)
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 
 interface CorretorStatus {
@@ -241,15 +241,21 @@ export async function distribuirLeadAutomatico(
         sql`SELECT * FROM ${leads} WHERE id = ${leadId} FOR UPDATE`
       );
 
-      if (!leadLocked.rows || leadLocked.rows.length === 0) {
+      const leadLockedRows = (leadLocked as any)[0] as any[];
+      if (!leadLockedRows || leadLockedRows.length === 0) {
         throw new Error("Lead não encontrado");
       }
 
-      const leadData = leadLocked.rows[0] as any;
+      const leadData = leadLockedRows[0] as any;
 
-      // Verificar se o lead ainda pertence ao gestor (pode ter sido distribuído)
-      if (leadData.corretorId !== gestorId) {
-        throw new Error("Lead já foi distribuído");
+      // Verificar se o lead ainda pode ser distribuído (sem corretor OU com corretor gestor)
+      if (leadData.corretorId !== null && leadData.corretorId !== gestorId) {
+        throw new Error("Lead já foi distribuído para um corretor");
+      }
+
+      // Verificar se o status permite distribuição
+      if (leadData.status !== 'novo' && leadData.status !== 'aguardando_atendimento') {
+        throw new Error(`Lead com status '${leadData.status}' não pode ser redistribuído automaticamente`);
       }
 
       // Buscar corretores elegíveis (fora da transação para não travar)
@@ -377,7 +383,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
       .from(leads)
       .where(
         sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
-            AND ${leads.status} = 'aguardando_atendimento'`
+            AND ${leads.status} IN ('novo', 'aguardando_atendimento')`
       )
       .limit(LOTE_SIZE);
   } else {
@@ -387,7 +393,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
       .where(
         and(
           isNull(leads.corretorId),
-          eq(leads.status, "aguardando_atendimento")
+          sql`${leads.status} IN ('novo', 'aguardando_atendimento')`
         )
       )
       .limit(LOTE_SIZE);
@@ -536,26 +542,36 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   fimDiaSP.setHours(23, 59, 59, 999);
   const fimDiaUTC = new Date(fimDiaSP.getTime() - offsetSP * 60 * 1000);
 
-  // Uma única query: busca corretores presentes com contagens de leads agregadas
+  // Query corrigida: usa subqueries separadas para evitar multiplicacao de linhas no JOIN duplo
   const resultado = await db.execute(sql`
     SELECT 
       u.id,
       u.limiteDiarioLeads,
-      COUNT(l.id) as total_leads,
-      SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as leads_trabalhados,
-      COUNT(dl.id) as leads_recebidos_hoje
+      COALESCE(leads_agg.total_leads, 0) as total_leads,
+      COALESCE(leads_agg.leads_trabalhados, 0) as leads_trabalhados,
+      COALESCE(dist_agg.leads_recebidos_hoje, 0) as leads_recebidos_hoje
     FROM users u
-    LEFT JOIN leads l ON l.corretorId = u.id
-    LEFT JOIN distribution_log dl ON dl.corretorId = u.id 
-      AND dl.createdAt >= ${inicioDiaUTC}
-      AND dl.createdAt <= ${fimDiaUTC}
+    LEFT JOIN (
+      SELECT corretorId,
+        COUNT(*) as total_leads,
+        SUM(CASE WHEN status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as leads_trabalhados
+      FROM leads
+      GROUP BY corretorId
+    ) leads_agg ON leads_agg.corretorId = u.id
+    LEFT JOIN (
+      SELECT corretorId, COUNT(*) as leads_recebidos_hoje
+      FROM distribution_log
+      WHERE createdAt >= ${inicioDiaUTC} AND createdAt <= ${fimDiaUTC}
+      GROUP BY corretorId
+    ) dist_agg ON dist_agg.corretorId = u.id
     WHERE u.role = 'corretor' AND u.status = 'presente'
-    GROUP BY u.id, u.limiteDiarioLeads
   `);
 
   const corretoresElegiveis: number[] = [];
+  const rows = (resultado as any)[0] as any[];
+  if (!rows || !Array.isArray(rows)) return [];
 
-  for (const row of (resultado.rows as any[])) {
+  for (const row of rows) {
     const corretorId = Number(row.id);
     const limiteDiario = Number(row.limiteDiarioLeads) || 50;
     const leadsRecebidosHoje = Number(row.leads_recebidos_hoje) || 0;
