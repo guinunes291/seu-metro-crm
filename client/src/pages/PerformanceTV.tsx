@@ -690,7 +690,22 @@ export default function PerformanceTV() {
   const gapMeta = resumo?.gapMeta || 0;
   const corretoresDashboard = useMemo(() => dashboardData?.corretores || [], [dashboardData?.corretores]);
   const evolucaoData = useMemo(() => evolucaoMensal || [], [evolucaoMensal]);
-  
+
+  // Cálculo de tendência: projeção de como o mês vai fechar com base no ritmo atual
+  // Fórmula: (VGV realizado ÷ dias corridos do mês) × total de dias do mês
+  const tendenciaMes = useMemo(() => {
+    const hoje = new Date();
+    const anoRef = selectedAno;
+    const mesRef = selectedMes; // 1-12
+    const totalDiasMes = new Date(anoRef, mesRef, 0).getDate(); // último dia do mês
+    const ehMesAtual = hoje.getFullYear() === anoRef && (hoje.getMonth() + 1) === mesRef;
+    const diaAtual = ehMesAtual ? hoje.getDate() : totalDiasMes; // se mês passado, usa todos os dias
+    if (diaAtual <= 0) return 0;
+    const vgvRealizado = totalVGV; // VGV do período selecionado
+    const projecaoVGV = (vgvRealizado / diaAtual) * totalDiasMes;
+    return metaVGV > 0 ? Math.round((projecaoVGV / metaVGV) * 100) : 0;
+  }, [totalVGV, metaVGV, selectedMes, selectedAno]);
+
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
   return (
@@ -907,7 +922,7 @@ export default function PerformanceTV() {
               <KPICard label="Faturamento" value={formatCurrency(totalVGV)} icon={DollarSign} variant="success" highlight />
               <KPICard label="Realizado" value={`${totalVGV > 0 ? Math.round((totalVGV / metaVGV) * 100) : 0}%`} icon={TrendingUp} variant={totalVGV >= metaVGV ? "success" : totalVGV >= metaVGV * 0.5 ? "warning" : "danger"} />
               <KPICard label="Gap da Meta" value={formatCurrency(Math.abs(metaVGV - totalVGV))} subValue={metaVGV - totalVGV > 0 ? "faltam" : "excedido"} icon={Target} variant={metaVGV - totalVGV > 0 ? "warning" : "success"} />
-              <KPICard label="Tendência" value={`${totalVGV > 0 ? Math.round((totalVGV / metaVGV) * 100) : 0}%`} icon={TrendingUp} variant="accent" />
+              <KPICard label="Tendência" value={`${tendenciaMes}%`} subValue="projeção do mês" icon={TrendingUp} variant={tendenciaMes >= 100 ? "success" : tendenciaMes >= 70 ? "accent" : "warning"} />
               <KPICard label="Contratos" value={totalContratos.toString()} icon={FileCheck} variant="success" />
               <KPICard label="Corretores" value={totalCorretores.toString()} icon={Users} variant="info" />
             </div>
