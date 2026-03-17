@@ -29,8 +29,8 @@ interface TimerLeadProps {
   isCorretor?: boolean;
 }
 
-/** Tempo total do timer em milissegundos (15 minutos) */
-const TIMER_TOTAL_MS = 15 * 60 * 1000;
+/** Tempo total do timer em milissegundos (30 minutos) */
+const TIMER_TOTAL_MS = 30 * 60 * 1000;
 /** Limite de urgência para notificação e alerta sonoro (3 minutos) */
 const LIMITE_URGENCIA_MS = 3 * 60 * 1000;
 /** Intervalo de lembrete sonoro periódico nos últimos 3 minutos (30 segundos) */
@@ -44,7 +44,7 @@ function isLeadFacebookADS(origem?: string | null): boolean {
 }
 
 /**
- * Componente que exibe um cronômetro regressivo para leads Facebook ADS com prazo de 15 minutos.
+ * Componente que exibe um cronômetro regressivo para leads Facebook ADS com prazo de 30 minutos.
  * Dispara notificação nativa do navegador e alerta sonoro quando entrar nos últimos 3 minutos.
  *
  * Alertas sonoros (Web Audio API — sem arquivos externos):
