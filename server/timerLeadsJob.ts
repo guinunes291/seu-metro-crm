@@ -147,9 +147,23 @@ export async function verificarTimerLeads() {
     console.log(`[Timer Job] Verificando leads com timer ativo (limite: ${TIMER_MINUTOS} min)...`);
 
     // Buscar leads com timer ativo que ultrapassaram 30 minutos
-    // e ainda estão em status "aguardando_atendimento"
+    // Seleciona apenas campos necessários e limita a 50 por rodada para não bloquear o event loop
     const leadsExpirados = await db
-      .select()
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        email: leads.email,
+        origem: leads.origem,
+        status: leads.status,
+        corretorId: leads.corretorId,
+        projectId: leads.projectId,
+        tipoFilaOrigem: leads.tipoFilaOrigem,
+        timerAtivo: leads.timerAtivo,
+        timestampRecebimento: leads.timestampRecebimento,
+        tentativasRedistribuicao: leads.tentativasRedistribuicao,
+        faixaRenda: leads.faixaRenda,
+      })
       .from(leads)
       .where(
         and(
@@ -157,7 +171,8 @@ export async function verificarTimerLeads() {
           eq(leads.status, "aguardando_atendimento"),
           lt(leads.timestampRecebimento, limiteTempoAtras)
         )
-      );
+      )
+      .limit(50);
 
     console.log(`[Timer Job] Encontrados ${leadsExpirados.length} leads expirados`);
 

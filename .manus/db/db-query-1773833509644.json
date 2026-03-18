@@ -1,0 +1,472 @@
+{
+  "query": "SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX, NON_UNIQUE \nFROM information_schema.STATISTICS \nWHERE TABLE_SCHEMA = DATABASE() \nAND TABLE_NAME IN ('leads', 'users', 'contratos', 'agendamentos', 'interacoes', 'followUps', 'distribution_log', 'log_transferencias')\nORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX, NON_UNIQUE \nFROM information_schema.STATISTICS \nWHERE TABLE_SCHEMA = DATABASE() \nAND TABLE_NAME IN ('leads', 'users', 'contratos', 'agendamentos', 'interacoes', 'followUps', 'distribution_log', 'log_transferencias')\nORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;",
+  "rows": [
+    {
+      "TABLE_NAME": "agendamentos",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "agendamentos",
+      "INDEX_NAME": "agendamento_corretor_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "agendamentos",
+      "INDEX_NAME": "agendamento_data_idx",
+      "COLUMN_NAME": "dataAgendamento",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "agendamentos",
+      "INDEX_NAME": "agendamento_lead_idx",
+      "COLUMN_NAME": "leadId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "agendamentos",
+      "INDEX_NAME": "agendamento_status_idx",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "contratos",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "contratos",
+      "INDEX_NAME": "contratos_corretor_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "contratos",
+      "INDEX_NAME": "contratos_created_at_idx",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "contratos",
+      "INDEX_NAME": "contratos_distrato_idx",
+      "COLUMN_NAME": "distrato",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "contratos",
+      "INDEX_NAME": "contratos_lead_idx",
+      "COLUMN_NAME": "leadId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "distribution_log",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "distribution_log",
+      "INDEX_NAME": "dist_log_corretor_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "distribution_log",
+      "INDEX_NAME": "dist_log_created_idx",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "distribution_log",
+      "INDEX_NAME": "dist_log_lead_idx",
+      "COLUMN_NAME": "leadId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "INDEX_NAME": "interacoes_corretor_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "INDEX_NAME": "interacoes_created_at_idx",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "INDEX_NAME": "interacoes_lead_idx",
+      "COLUMN_NAME": "leadId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "INDEX_NAME": "interacoes_tipo_idx",
+      "COLUMN_NAME": "tipo",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "campanha_idx",
+      "COLUMN_NAME": "campanha",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "corretor_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "corretor_status_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "corretor_status_idx",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "data_distribuicao_idx",
+      "COLUMN_NAME": "dataDistribuicao",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_corretor_created",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_corretor_created",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_corretor_status",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_corretor_status",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_email",
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_lixeira_corretor",
+      "COLUMN_NAME": "naLixeira",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_lixeira_corretor",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_origem",
+      "COLUMN_NAME": "origem",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_project",
+      "COLUMN_NAME": "projectId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_status",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_status_lixeira",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_status_lixeira",
+      "COLUMN_NAME": "naLixeira",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_telefone",
+      "COLUMN_NAME": "telefone",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_webhook_corretor",
+      "COLUMN_NAME": "origemWebhook",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_webhook_corretor",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "idx_leads_webhook_corretor",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "3",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_corretor_status_idx",
+      "COLUMN_NAME": "corretorId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_corretor_status_idx",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "2",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_cpf_idx",
+      "COLUMN_NAME": "cpf",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_email_idx",
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_lixeira_idx",
+      "COLUMN_NAME": "naLixeira",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_proximo_followup_idx",
+      "COLUMN_NAME": "proximoFollowup",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "lead_ultima_interacao_idx",
+      "COLUMN_NAME": "ultimaInteracao",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "leads_created_idx",
+      "COLUMN_NAME": "createdAt",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "leads_idPrincipal_unique",
+      "COLUMN_NAME": "idPrincipal",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "project_idx",
+      "COLUMN_NAME": "projectId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "status_idx",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "telefone_idx",
+      "COLUMN_NAME": "telefone",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "leads",
+      "INDEX_NAME": "ultima_interacao_idx",
+      "COLUMN_NAME": "ultimaInteracao",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "log_transferencias",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "PRIMARY",
+      "COLUMN_NAME": "id",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_cpf_idx",
+      "COLUMN_NAME": "cpf",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_email_idx",
+      "COLUMN_NAME": "email",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_equipe_idx",
+      "COLUMN_NAME": "equipeId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_role_idx",
+      "COLUMN_NAME": "role",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_situacao_idx",
+      "COLUMN_NAME": "situacao",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "user_status_idx",
+      "COLUMN_NAME": "status",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "1"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "users_codigoIndicacao_unique",
+      "COLUMN_NAME": "codigoIndicacao",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    },
+    {
+      "TABLE_NAME": "users",
+      "INDEX_NAME": "users_openId_unique",
+      "COLUMN_NAME": "openId",
+      "SEQ_IN_INDEX": "1",
+      "NON_UNIQUE": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tINDEX_NAME\tCOLUMN_NAME\tSEQ_IN_INDEX\tNON_UNIQUE\nagendamentos\tPRIMARY\tid\t1\t0\nagendamentos\tagendamento_corretor_idx\tcorretorId\t1\t1\nagendamentos\tagendamento_data_idx\tdataAgendamento\t1\t1\nagendamentos\tagendamento_lead_idx\tleadId\t1\t1\nagendamentos\tagendamento_status_idx\tstatus\t1\t1\ncontratos\tPRIMARY\tid\t1\t0\ncontratos\tcontratos_corretor_idx\tcorretorId\t1\t1\ncontratos\tcontratos_created_at_idx\tcreatedAt\t1\t1\ncontratos\tcontratos_distrato_idx\tdistrato\t1\t1\ncontratos\tcontratos_lead_idx\tleadId\t1\t1\ndistribution_log\tPRIMARY\tid\t1\t0\ndistribution_log\tdist_log_corretor_idx\tcorretorId\t1\t1\ndistribution_log\tdist_log_created_idx\tcreatedAt\t1\t1\ndistribution_log\tdist_log_lead_idx\tleadId\t1\t1\ninteracoes\tPRIMARY\tid\t1\t0\ninteracoes\tinteracoes_corretor_idx\tcorretorId\t1\t1\ninteracoes\tinteracoes_created_at_idx\tcreatedAt\t1\t1\ninteracoes\tinteracoes_lead_idx\tleadId\t1\t1\ninteracoes\tinteracoes_tipo_idx\ttipo\t1\t1\nleads\t\tcorretorId\t1\t1\nleads\t\tcreatedAt\t2\t1\nleads\tPRIMARY\tid\t1\t0\nleads\tcampanha_idx\tcampanha\t1\t1\nleads\tcorretor_idx\tcorretorId\t1\t1\nleads\tcorretor_status_idx\tcorretorId\t1\t1\nleads\tcorretor_status_idx\tstatus\t2\t1\nleads\tdata_distribuicao_idx\tdataDistribuicao\t1\t1\nleads\tidx_leads_corretor_created\tcorretorId\t1\t1\nleads\tidx_leads_corretor_created\tcreatedAt\t2\t1\nleads\tidx_leads_corretor_status\tcorretorId\t1\t1\nleads\tidx_leads_corretor_status\tstatus\t2\t1\nleads\tidx_leads_email\temail\t1\t1\nleads\tidx_leads_lixeira_corretor\tnaLixeira\t1\t1\nleads\tidx_leads_lixeira_corretor\tcorretorId\t2\t1\nleads\tidx_leads_origem\torigem\t1\t1\nleads\tidx_leads_project\tprojectId\t1\t1\nleads\tidx_leads_status\tstatus\t1\t1\nleads\tidx_leads_status_lixeira\tstatus\t1\t1\nleads\tidx_leads_status_lixeira\tnaLixeira\t2\t1\nleads\tidx_leads_telefone\ttelefone\t1\t1\nleads\tidx_leads_webhook_corretor\torigemWebhook\t1\t1\nleads\tidx_leads_webhook_corretor\tcorretorId\t2\t1\nleads\tidx_leads_webhook_corretor\tcreatedAt\t3\t1\nleads\tlead_corretor_status_idx\tcorretorId\t1\t1\nleads\tlead_corretor_status_idx\tstatus\t2\t1\nleads\tlead_cpf_idx\tcpf\t1\t1\nleads\tlead_email_idx\temail\t1\t1\nleads\tlead_lixeira_idx\tnaLixeira\t1\t1\nleads\tlead_proximo_followup_idx\tproximoFollowup\t1\t1\nleads\tlead_ultima_interacao_idx\tultimaInteracao\t1\t1\nleads\tleads_created_idx\tcreatedAt\t1\t1\nleads\tleads_idPrincipal_unique\tidPrincipal\t1\t0\nleads\tproject_idx\tprojectId\t1\t1\nleads\tstatus_idx\tstatus\t1\t1\nleads\ttelefone_idx\ttelefone\t1\t1\nleads\tultima_interacao_idx\tultimaInteracao\t1\t1\nlog_transferencias\tPRIMARY\tid\t1\t0\nusers\tPRIMARY\tid\t1\t0\nusers\tuser_cpf_idx\tcpf\t1\t1\nusers\tuser_email_idx\temail\t1\t1\nusers\tuser_equipe_idx\tequipeId\t1\t1\nusers\tuser_role_idx\trole\t1\t1\nusers\tuser_situacao_idx\tsituacao\t1\t1\nusers\tuser_status_idx\tstatus\t1\t1\nusers\tusers_codigoIndicacao_unique\tcodigoIndicacao\t1\t0\nusers\tusers_openId_unique\topenId\t1\t0\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

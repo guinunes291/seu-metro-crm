@@ -2,17 +2,24 @@ import { distribuirTodosLeadsNaoDistribuidos, distribuirLeadsDoEstoque } from ".
 import { verificarTimerLeads } from "./timerLeadsJob";
 import { verificarTransferenciasAutomaticas } from "./transferenciaJob";
 
+// Flag para evitar execuções concorrentes dos jobs
+let distribuicaoEmExecucao = false;
+let timerEmExecucao = false;
+
 /**
  * Job de distribuição automática periódica
- * Executa a cada hora para distribuir leads não distribuídos
- * Baseado no AppScript: processa 20 leads por rodada
+ * Executa a cada 5 minutos para distribuir leads não distribuídos
  */
 export async function executarDistribuicaoAutomatica() {
+  if (distribuicaoEmExecucao) {
+    console.log("[Job] Distribuição já em execução, pulando...");
+    return { success: 0, failed: 0, details: [], skipped: true };
+  }
+  distribuicaoEmExecucao = true;
   console.log("[Job] Iniciando distribuição automática periódica...");
   
   try {
     // 1. Distribuir leads do estoque primeiro
-    console.log("[Job] Processando estoque de leads...");
     const estoqueResultado = await distribuirLeadsDoEstoque();
     console.log(`[Job] Estoque: ${estoqueResultado.distribuidos} distribuídos, ${estoqueResultado.erros} erros`);
     
@@ -33,21 +40,36 @@ export async function executarDistribuicaoAutomatica() {
       details: [],
       error: error instanceof Error ? error.message : "Erro desconhecido"
     };
+  } finally {
+    distribuicaoEmExecucao = false;
   }
 }
 
 /**
- * Agenda o job para executar a cada hora
+ * Wrapper do timer com proteção contra execuções concorrentes
+ */
+async function executarTimerLeads() {
+  if (timerEmExecucao) return;
+  timerEmExecucao = true;
+  try {
+    await verificarTimerLeads();
+  } finally {
+    timerEmExecucao = false;
+  }
+}
+
+/**
+ * Agenda os jobs periódicos
  */
 export function agendarDistribuicaoAutomatica() {
   
-  // Executar imediatamente na inicialização (após 30 segundos)
+  // Distribuição: primeira execução após 60 segundos (servidor precisa estar estável)
   setTimeout(() => {
     console.log("[Job] Executando primeira distribuição automática...");
     executarDistribuicaoAutomatica().catch(console.error);
-  }, 30000);
+  }, 60000);
 
-  // Executar a cada 5 minutos (300000 ms)
+  // Distribuição: a cada 5 minutos
   setInterval(() => {
     console.log("[Job] Executando distribuição automática agendada...");
     executarDistribuicaoAutomatica().catch(console.error);
@@ -55,23 +77,23 @@ export function agendarDistribuicaoAutomatica() {
 
   console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
   
-  // Executar verificação de timer imediatamente ao iniciar (após 5 segundos)
+  // Timer de leads: primeira execução após 90 segundos
   setTimeout(() => {
     console.log("[Job] Executando primeira verificação de timer de leads...");
-    verificarTimerLeads().catch(console.error);
-  }, 5000);
+    executarTimerLeads().catch(console.error);
+  }, 90000);
 
-  // Agendar verificação de timer de leads (a cada 30 segundos para maior responsividade)
+  // Timer de leads: a cada 2 minutos (era 30 segundos — reduziu 4x a carga)
   setInterval(() => {
-    verificarTimerLeads().catch(console.error);
-  }, 30000);
+    executarTimerLeads().catch(console.error);
+  }, 120000);
   
-  console.log("[Job] Verificação de timer de leads agendada para executar a cada 30 segundos");
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 2 minutos");
   
-  // Agendar verificação de transferências automáticas (a cada 1 hora)
+  // Transferências automáticas: a cada 1 hora
   setInterval(() => {
     verificarTransferenciasAutomaticas().catch(console.error);
-  }, 3600000); // 1 hora
+  }, 3600000);
   
   console.log("[Job] Verificação de transferências automáticas agendada para executar a cada 1 hora");
 }

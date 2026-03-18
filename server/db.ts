@@ -9266,79 +9266,108 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
     corretoresResult = corretoresResult.filter(c => membrosIds.includes(c.id));
   }
   
-  // Dados por corretor
+  // ── Queries em lote com GROUP BY (elimina N+1) ──────────────────────────
+  const idsAtivos = corretoresResult
+    .filter(c => c.situacao !== 'inativo')
+    .map(c => c.id);
+
+  if (idsAtivos.length === 0) {
+    return {
+      metaGlobal,
+      resumo: { totalVGV: 0, totalContratos: 0, totalLeads: 0, totalAgendamentos: 0, totalVisitas: 0, metaVGV: 0, percentualAtingimento: 0, gapMeta: 0, totalCorretores: 0 },
+      corretores: [],
+    };
+  }
+
+  // VGV e contratos por corretor — 1 query
+  const vgvPorCorretor = await db.select({
+    corretorId: contratos.corretorId,
+    total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(contratos)
+    .where(and(
+      inArray(contratos.corretorId, idsAtivos),
+      eq(contratos.distrato, false),
+      gte(contratos.createdAt, dataInicio),
+      lte(contratos.createdAt, dataFim)
+    ))
+    .groupBy(contratos.corretorId);
+
+  const vgvMap = new Map<number, { vgv: number; contratos: number }>();
+  for (const row of vgvPorCorretor) {
+    vgvMap.set(row.corretorId!, { vgv: Number(row.total), contratos: Number(row.count) });
+  }
+
+  // Leads por corretor e status — 1 query
+  const leadsPorCorretorStatus = await db.select({
+    corretorId: leads.corretorId,
+    status: leads.status,
+    count: sql<number>`COUNT(*)`,
+  })
+    .from(leads)
+    .where(and(
+      inArray(leads.corretorId, idsAtivos),
+      gte(leads.createdAt, dataInicio),
+      lte(leads.createdAt, dataFim)
+    ))
+    .groupBy(leads.corretorId, leads.status);
+
+  const leadsMap = new Map<number, { total: number; agendamentos: number; visitas: number }>();
+  for (const row of leadsPorCorretorStatus) {
+    const cid = row.corretorId!;
+    if (!leadsMap.has(cid)) leadsMap.set(cid, { total: 0, agendamentos: 0, visitas: 0 });
+    const entry = leadsMap.get(cid)!;
+    const cnt = Number(row.count);
+    entry.total += cnt;
+    if (row.status === 'agendado') entry.agendamentos = cnt;
+    if (row.status === 'visita_realizada') entry.visitas = cnt;
+  }
+
+  // Metas individuais — 1 query
+  const metasRows = await db.select()
+    .from(metas)
+    .where(and(
+      inArray(metas.corretorId, idsAtivos),
+      eq(metas.mes, mes),
+      eq(metas.ano, ano)
+    ));
+  const metasMap = new Map<number, typeof metasRows[0]>();
+  for (const m of metasRows) metasMap.set(m.corretorId, m);
+
+  // Montar resultado
   const corretoresData = [];
   let totalVGV = 0;
   let totalContratos = 0;
   let totalLeads = 0;
   let totalAgendamentos = 0;
   let totalVisitas = 0;
-  
+
   for (const corretor of corretoresResult) {
     if (corretor.situacao === 'inativo') continue;
-    
-    // VGV do corretor (contratos fechados, excluindo distratos)
-    const vgvResult = await db.select({
-      total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
-      count: sql<number>`COUNT(*)`
-    })
-      .from(contratos)
-      .where(and(
-        eq(contratos.corretorId, corretor.id),
-        eq(contratos.distrato, false), // Excluir distratos
-        gte(contratos.createdAt, dataInicio),
-        lte(contratos.createdAt, dataFim)
-      ));
-    
-    const vgvCorretor = Number(vgvResult[0]?.total || 0); // Manter em reais
-    const contratosCorretor = Number(vgvResult[0]?.count || 0);
-    
-    // Leads do corretor no período
-    const leadsResult = await db.select({
-      status: leads.status,
-      count: sql<number>`COUNT(*)`
-    })
-      .from(leads)
-      .where(and(
-        eq(leads.corretorId, corretor.id),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim)
-      ))
-      .groupBy(leads.status);
-    
-    let leadsCorretor = 0;
-    let agendamentosCorretor = 0;
-    let visitasCorretor = 0;
-    
-    for (const row of leadsResult) {
-      const count = Number(row.count);
-      leadsCorretor += count;
-      if (row.status === 'agendado') agendamentosCorretor = count;
-      if (row.status === 'visita_realizada') visitasCorretor = count;
-    }
-    
-    // Buscar meta individual do corretor
-    const metaIndividual = await getMetaByCorretorMesAno(corretor.id, mes, ano);
-    
-    totalVGV += vgvCorretor;
-    totalContratos += contratosCorretor;
-    totalLeads += leadsCorretor;
-    totalAgendamentos += agendamentosCorretor;
-    totalVisitas += visitasCorretor;
-    
+    const vgvInfo = vgvMap.get(corretor.id) ?? { vgv: 0, contratos: 0 };
+    const leadsInfo = leadsMap.get(corretor.id) ?? { total: 0, agendamentos: 0, visitas: 0 };
+    const meta = metasMap.get(corretor.id);
+
+    totalVGV += vgvInfo.vgv;
+    totalContratos += vgvInfo.contratos;
+    totalLeads += leadsInfo.total;
+    totalAgendamentos += leadsInfo.agendamentos;
+    totalVisitas += leadsInfo.visitas;
+
     corretoresData.push({
       id: corretor.id,
       nome: corretor.name || 'Sem nome',
       fotoUrl: corretor.fotoUrl,
       equipeId: corretor.equipeId,
-      vgv: vgvCorretor,
-      contratos: contratosCorretor,
-      leads: leadsCorretor,
-      agendamentos: agendamentosCorretor,
-      visitas: visitasCorretor,
-      metaVGV: metaIndividual?.metaVGV || 0,
-      metaContratos: metaIndividual?.metaContratos || 0,
-      metaLeads: metaIndividual?.metaLeads || 0,
+      vgv: vgvInfo.vgv,
+      contratos: vgvInfo.contratos,
+      leads: leadsInfo.total,
+      agendamentos: leadsInfo.agendamentos,
+      visitas: leadsInfo.visitas,
+      metaVGV: meta?.metaVGV || 0,
+      metaContratos: meta?.metaContratos || 0,
+      metaLeads: meta?.metaLeads || 0,
     });
   }
   
@@ -9376,90 +9405,79 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
 export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: number, corretoresIds?: number[]) {
   const db = await getDb();
   if (!db) return [];
-  
+
+  const MESES_NOMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  // ── Buscar metas globais do ano — 1 query ────────────────────────────────
+  const metasGlobaisRows = await db.select()
+    .from(metasGlobais)
+    .where(eq(metasGlobais.ano, anoReferencia));
+  const metasGlobaisMap = new Map<number, number>();
+  for (const m of metasGlobaisRows) metasGlobaisMap.set(m.mes, Number(m.metaVGV || 0));
+
+  // ── Montar filtro de corretores ───────────────────────────────────────────
+  let membroIds: number[] = [];
+  let usarFiltroIds = false;
+
+  if (corretoresIds && corretoresIds.length > 0) {
+    membroIds = corretoresIds;
+    usarFiltroIds = true;
+  } else if (equipeId) {
+    const membros = await db.select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.role, 'corretor'), eq(users.equipeId, equipeId)));
+    membroIds = membros.map(m => m.id);
+    usarFiltroIds = membroIds.length > 0;
+  }
+
+  // ── Buscar todos os contratos do ano — 1 query ───────────────────────────
+  const dataInicioAno = new Date(anoReferencia, 0, 1);
+  const dataFimAno = new Date(anoReferencia, 11, 31, 23, 59, 59, 999);
+
+  const baseWhere = and(
+    eq(contratos.distrato, false),
+    gte(contratos.createdAt, dataInicioAno),
+    lte(contratos.createdAt, dataFimAno)
+  );
+
+  const contratosAno = await db.select({
+    valorVenda: contratos.valorVenda,
+    createdAt: contratos.createdAt,
+  })
+    .from(contratos)
+    .where(
+      usarFiltroIds && membroIds.length > 0
+        ? and(baseWhere, inArray(contratos.corretorId, membroIds))
+        : baseWhere
+    );
+
+  // Agrupar em memória por mês
+  const vgvPorMes = new Map<number, number>();
+  for (const c of contratosAno) {
+    const mes = new Date(c.createdAt).getMonth() + 1;
+    vgvPorMes.set(mes, (vgvPorMes.get(mes) ?? 0) + Number(c.valorVenda || 0));
+  }
+
+  // ── Montar resultado ──────────────────────────────────────────────────────
   const resultado = [];
-  
   for (let mes = 1; mes <= 12; mes++) {
-    const dataInicio = new Date(anoReferencia, mes - 1, 1);
-    const dataFim = new Date(anoReferencia, mes, 0, 23, 59, 59, 999);
-    
-    // Buscar meta global do mês
-    const metaGlobal = await db.select()
-      .from(metasGlobais)
-      .where(and(
-        eq(metasGlobais.mes, mes),
-        eq(metasGlobais.ano, anoReferencia)
-      ))
-      .limit(1);
-    
-    const metaVGV = Number(metaGlobal[0]?.metaVGV || 0);
-    
-    // VGV realizado (excluindo distratos)
-    let vgvQuery = db.select({
-      total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
-    }).from(contratos);
-    
-    if (corretoresIds && corretoresIds.length > 0) {
-      // Filtrar diretamente por lista de IDs (usado pelo superintendente)
-      vgvQuery = vgvQuery.where(and(
-        eq(contratos.distrato, false),
-        inArray(contratos.corretorId, corretoresIds),
-        gte(contratos.createdAt, dataInicio),
-        lte(contratos.createdAt, dataFim)
-      ));
-    } else if (equipeId) {
-      // Buscar IDs dos corretores da equipe
-      const corretoresEquipe = await db.select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.role, 'corretor'), eq(users.equipeId, equipeId)));
-      const membroIds = corretoresEquipe.map(c => c.id);
-      
-      if (membroIds.length > 0) {
-        vgvQuery = vgvQuery.where(and(
-          eq(contratos.distrato, false), // Excluir distratos
-          inArray(contratos.corretorId, membroIds),
-          gte(contratos.createdAt, dataInicio),
-          lte(contratos.createdAt, dataFim)
-        ));
-      } else {
-        resultado.push({
-          mes,
-          mesNome: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][mes - 1],
-          vgvRealizado: 0,
-          metaVGV,
-          percentual: 0,
-          diferenca: -metaVGV,
-        });
-        continue;
-      }
-    } else {
-      vgvQuery = vgvQuery.where(and(
-        eq(contratos.distrato, false), // Excluir distratos
-        gte(contratos.createdAt, dataInicio),
-        lte(contratos.createdAt, dataFim)
-      ));
-    }
-    
-    const vgvResult = await vgvQuery;
-    const vgvRealizado = Number(vgvResult[0]?.total || 0); // Manter em reais
+    const metaVGV = metasGlobaisMap.get(mes) ?? 0;
+    const vgvRealizado = vgvPorMes.get(mes) ?? 0;
     const percentual = metaVGV > 0 ? Math.round((vgvRealizado / metaVGV) * 10000) / 100 : 0;
-    
     resultado.push({
       mes,
-      mesNome: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][mes - 1],
+      mesNome: MESES_NOMES[mes - 1],
       vgvRealizado,
       metaVGV,
       percentual,
       diferenca: vgvRealizado - metaVGV,
     });
   }
-  
+
   return resultado;
 }
-
-
 // ============================================================================
-// RELATÓRIO DE PERFORMANCE SEMANAL POR CORRETOR
+// RELATÓRIO DE PERFORMANCE SEMANAL POR CORRETOROR
 // ============================================================================
 
 export interface PerformanceSemanalCorretor {
