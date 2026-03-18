@@ -6326,14 +6326,44 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }),
     
     // Contar membros da equipe
-    contarMembros: gestorProcedure
+     contarMembros: gestorProcedure
       .input(z.object({ equipeId: z.number() }))
       .query(async ({ input }) => {
         const { contarMembrosEquipe } = await import('./equipes');
         return await contarMembrosEquipe(input.equipeId);
       }),
-  }),
 
+    // Listar todos os superintendentes (apenas admin)
+    listSuperintendentes: adminProcedure.query(async () => {
+      const { listarSuperintendentes } = await import('./equipes');
+      return await listarSuperintendentes();
+    }),
+
+    // Atribuir superintendente a uma equipe (apenas admin)
+    atribuirSuperintendente: adminProcedure
+      .input(z.object({
+        equipeId: z.number(),
+        superintendenteId: z.number().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        const { atribuirSuperintendenteAEquipe } = await import('./equipes');
+        await atribuirSuperintendenteAEquipe(input.equipeId, input.superintendenteId);
+        return { success: true };
+      }),
+
+    // Listar equipes visíveis para o usuário logado (admin = todas, super = suas, gestor = a sua)
+    minhasEquipes: gestorProcedure.query(async ({ ctx }) => {
+      const { listarEquipesPorSuperintendente, listarEquipes, getEquipeByGestor } = await import('./equipes');
+      if (ctx.user.role === 'admin') {
+        return await listarEquipes(true);
+      }
+      if (ctx.user.role === 'superintendente') {
+        return await listarEquipesPorSuperintendente(ctx.user.id);
+      }
+      const equipe = await getEquipeByGestor(ctx.user.id);
+      return equipe ? [equipe] : [];
+    }),
+  }),
   // ============================================================================
   // PORTAL DE PROJETOS IMOBILIARIOS - CONSTRUTORAS
   // ============================================================================

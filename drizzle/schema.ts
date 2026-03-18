@@ -94,6 +94,7 @@ export const equipes = mysqlTable("equipes", {
   nome: varchar("nome", { length: 255 }).notNull(),
   descricao: text("descricao"),
   gestorId: int("gestorId").notNull(), // ID do gestor responsável
+  superintendenteId: int("superintendenteId"), // ID do superintendente responsável (nullable)
   cor: varchar("cor", { length: 7 }).default("#3b82f6").notNull(), // Cor em hexadecimal
   metaMensal: int("metaMensal").default(10).notNull(), // Meta de vendas da equipe
   ativa: boolean("ativa").default(true).notNull(),
@@ -101,6 +102,7 @@ export const equipes = mysqlTable("equipes", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
   gestorIdx: index("equipe_gestor_idx").on(table.gestorId),
+  superintendenteIdx: index("equipe_superintendente_idx").on(table.superintendenteId),
   ativaIdx: index("equipe_ativa_idx").on(table.ativa),
 }));
 

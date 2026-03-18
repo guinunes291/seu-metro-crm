@@ -14,7 +14,7 @@ export async function listarEquipes(apenasAtivas = false) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  let query = db
+  const rows = await db
     .select({
       id: equipes.id,
       nome: equipes.nome,
@@ -22,6 +22,7 @@ export async function listarEquipes(apenasAtivas = false) {
       gestorId: equipes.gestorId,
       gestorNome: users.name,
       gestorEmail: users.email,
+      superintendenteId: equipes.superintendenteId,
       cor: equipes.cor,
       metaMensal: equipes.metaMensal,
       ativa: equipes.ativa,
@@ -31,11 +32,7 @@ export async function listarEquipes(apenasAtivas = false) {
     .from(equipes)
     .leftJoin(users, eq(equipes.gestorId, users.id));
 
-  if (apenasAtivas) {
-    query = query.where(eq(equipes.ativa, true));
-  }
-
-  return await query;
+  return apenasAtivas ? rows.filter(e => e.ativa) : rows;
 }
 
 /**
@@ -53,6 +50,7 @@ export async function getEquipeById(id: number) {
       gestorId: equipes.gestorId,
       gestorNome: users.name,
       gestorEmail: users.email,
+      superintendenteId: equipes.superintendenteId,
       cor: equipes.cor,
       metaMensal: equipes.metaMensal,
       ativa: equipes.ativa,
@@ -218,6 +216,94 @@ export async function usuarioPertenceAEquipe(userId: number, equipeId: number): 
 }
 
 // ============================================================================
+// FUNÇÕES DE SUPERINTENDÊNCIA
+// ============================================================================
+
+/**
+ * Listar equipes de um superintendente específico
+ */
+export async function listarEquipesPorSuperintendente(superintendenteId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .select({
+      id: equipes.id,
+      nome: equipes.nome,
+      descricao: equipes.descricao,
+      gestorId: equipes.gestorId,
+      gestorNome: users.name,
+      gestorEmail: users.email,
+      superintendenteId: equipes.superintendenteId,
+      cor: equipes.cor,
+      metaMensal: equipes.metaMensal,
+      ativa: equipes.ativa,
+      createdAt: equipes.createdAt,
+      updatedAt: equipes.updatedAt,
+    })
+    .from(equipes)
+    .leftJoin(users, eq(equipes.gestorId, users.id))
+    .where(and(
+      eq(equipes.superintendenteId, superintendenteId),
+      eq(equipes.ativa, true)
+    ));
+}
+
+/**
+ * Atribuir superintendente a uma equipe
+ */
+export async function atribuirSuperintendenteAEquipe(equipeId: number, superintendenteId: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(equipes)
+    .set({ superintendenteId, updatedAt: new Date() })
+    .where(eq(equipes.id, equipeId));
+}
+
+/**
+ * Listar todos os superintendentes do sistema
+ */
+export async function listarSuperintendentes() {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  return await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+      situacao: users.situacao,
+    })
+    .from(users)
+    .where(eq(users.role, 'superintendente'));
+}
+
+/**
+ * Retorna IDs de todos os corretores das equipes de um superintendente
+ */
+export async function getCorretoresIdsPorSuperintendente(superintendenteId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const equipesDoSuper = await db
+    .select({ id: equipes.id })
+    .from(equipes)
+    .where(and(
+      eq(equipes.superintendenteId, superintendenteId),
+      eq(equipes.ativa, true)
+    ));
+  if (equipesDoSuper.length === 0) return [];
+  const equipeIds = equipesDoSuper.map(e => e.id);
+  const corretores = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(
+      sql`${users.equipeId} IN (${sql.join(equipeIds.map(id => sql`${id}`), sql`, `)})`,
+      eq(users.role, 'corretor')
+    ));
+  return corretores.map(c => c.id);
+}
+
+// ============================================================================
 // HELPERS PARA FILTROS POR EQUIPE
 // ============================================================================
 
@@ -227,9 +313,16 @@ export async function usuarioPertenceAEquipe(userId: number, equipeId: number): 
  * Se o usuário for gestor, retorna array com IDs dos corretores da sua equipe
  */
 export async function getCorretoresIdsParaFiltro(userId: number, userRole: string): Promise<number[] | null> {
-  // Admin e Superintendente veem tudo
-  if (userRole === 'admin' || userRole === 'superintendente') {
+  // Admin vê tudo
+  if (userRole === 'admin') {
     return null;
+  }
+
+  // Superintendente vê apenas as equipes atribuídas a ele
+  if (userRole === 'superintendente') {
+    const corretoresIds = await getCorretoresIdsPorSuperintendente(userId);
+    // Se não tem equipes atribuídas, retorna null (vê tudo) para não bloquear
+    return corretoresIds.length > 0 ? corretoresIds : null;
   }
   
   // Gestor vê apenas sua equipe

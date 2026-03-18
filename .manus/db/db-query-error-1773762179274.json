@@ -1,0 +1,10 @@
+{
+  "query": "\nSELECT COUNT(*) as total_projetos FROM projects WHERE status = 'ativo';\n\nSELECT p.nome, p.construtora, p.cidade, COUNT(l.id) as total_leads, SUM(CASE WHEN l.status='contrato_fechado' THEN 1 ELSE 0 END) as contratos\nFROM projects p\nLEFT JOIN leads l ON l.projetoId = p.id\nWHERE p.construtora IS NOT NULL AND p.construtora != 'NULL'\nGROUP BY p.id, p.nome, p.construtora, p.cidade\nHAVING total_leads > 0\nORDER BY contratos DESC, total_leads DESC\nLIMIT 15;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT COUNT(*) as total_projetos FROM projects WHERE status = 'ativo';\n\nSELECT p.nome, p.construtora, p.cidade, COUNT(l.id) as total_leads, SUM(CASE WHEN l.status='contrato_fechado' THEN 1 ELSE 0 END) as contratos\nFROM projects p\nLEFT JOIN leads l ON l.projetoId = p.id\nWHERE p.construtora IS NOT NULL AND p.construtora != 'NULL'\nGROUP BY p.id, p.nome, p.construtora, p.cidade\nHAVING total_leads > 0\nORDER BY contratos DESC, total_leads DESC\nLIMIT 15;\n",
+  "returncode": 1,
+  "logs": [
+    "total_projetos",
+    "1398",
+    "ERROR 1054 (42S22) at line 4: Unknown column 'l.projetoid' in 'on clause'"
+  ]
+}
