@@ -9564,6 +9564,10 @@ export async function getPerformanceSemanal(
     }
   }
 
+  // Datas extremas do período
+  const dataInicioPeriodo = semanasUnicas[0].inicio;
+  const dataFimPeriodo = semanasUnicas[semanasUnicas.length - 1].fim;
+
   // Buscar todos os corretores relevantes
   let corretoresQuery = db.select({
     id: users.id,
@@ -9580,89 +9584,141 @@ export async function getPerformanceSemanal(
   }
 
   const corretoresResult = await corretoresQuery;
+  const corretorIds = corretoresResult.map(c => c.id);
 
-  // Para cada corretor e cada semana, buscar métricas
+  if (corretorIds.length === 0) {
+    return { semanas: semanasUnicas.map(s => s.label), corretores: [], totaisPorSemana: [] };
+  }
+
+  // ============================================================
+  // QUERY 1: Leads recebidos por corretor por semana (1 query)
+  // ============================================================
+  const leadsRows = await db.execute(sql`
+    SELECT
+      corretorId,
+      YEARWEEK(createdAt, 0) AS yw,
+      MIN(DATE_SUB(createdAt, INTERVAL DAYOFWEEK(createdAt)-1 DAY)) AS semanaInicio,
+      COUNT(*) AS total
+    FROM leads
+    WHERE corretorId IN (${sql.raw(corretorIds.join(','))})
+      AND createdAt >= ${dataInicioPeriodo}
+      AND createdAt <= ${dataFimPeriodo}
+    GROUP BY corretorId, YEARWEEK(createdAt, 0)
+  `) as any;
+
+  // ============================================================
+  // QUERY 2: Transições de status por corretor por semana (1 query)
+  // ============================================================
+  const transicoesRows = await db.execute(sql`
+    SELECT
+      corretorId,
+      YEARWEEK(createdAt, 0) AS yw,
+      statusNovo,
+      COUNT(DISTINCT leadId) AS total
+    FROM lead_status_transitions
+    WHERE corretorId IN (${sql.raw(corretorIds.join(','))})
+      AND createdAt >= ${dataInicioPeriodo}
+      AND createdAt <= ${dataFimPeriodo}
+      AND statusNovo IN ('em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado')
+    GROUP BY corretorId, YEARWEEK(createdAt, 0), statusNovo
+  `) as any;
+
+  // ============================================================
+  // QUERY 3: Contratos por corretor por semana (1 query)
+  // ============================================================
+  const contratosRows = await db.execute(sql`
+    SELECT
+      corretorId,
+      YEARWEEK(createdAt, 0) AS yw,
+      COUNT(*) AS total
+    FROM contratos
+    WHERE corretorId IN (${sql.raw(corretorIds.join(','))})
+      AND createdAt >= ${dataInicioPeriodo}
+      AND createdAt <= ${dataFimPeriodo}
+    GROUP BY corretorId, YEARWEEK(createdAt, 0)
+  `) as any;
+
+  // Extrair arrays de rows (MySQL2 retorna [rows, fields])
+  const leadsData: any[] = Array.isArray(leadsRows[0]) ? leadsRows[0] : leadsRows;
+  const transicoesData: any[] = Array.isArray(transicoesRows[0]) ? transicoesRows[0] : transicoesRows;
+  const contratosData: any[] = Array.isArray(contratosRows[0]) ? contratosRows[0] : contratosRows;
+
+  // Montar mapas para lookup rápido: key = `${corretorId}-${yw}`
+  const leadsMap = new Map<string, number>();
+  for (const row of leadsData) {
+    leadsMap.set(`${row.corretorId}-${row.yw}`, Number(row.total));
+  }
+
+  // Mapa de transições: key = `${corretorId}-${yw}-${statusNovo}`
+  const transicoesMap = new Map<string, number>();
+  for (const row of transicoesData) {
+    transicoesMap.set(`${row.corretorId}-${row.yw}-${row.statusNovo}`, Number(row.total));
+  }
+
+  // Mapa de contatados (qualquer status >= em_atendimento): key = `${corretorId}-${yw}`
+  const contatadosMap = new Map<string, number>();
+  const statusContatados = ['em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado'];
+  // Para contatados, precisamos somar DISTINCT leads por semana/corretor
+  // Já temos o COUNT(DISTINCT leadId) por status, mas precisamos de DISTINCT por semana
+  // Vamos usar uma abordagem: para cada semana/corretor, pegar o máximo de contatados
+  // Na prática, vamos re-agregar via SQL auxiliar em memória
+  // Como já temos COUNT(DISTINCT leadId) por status, somamos todos os status
+  // Isso pode supercontar se um lead teve múltiplos status na mesma semana
+  // Para ser preciso, vamos fazer uma query adicional apenas para contatados
+  const contatadosRows = await db.execute(sql`
+    SELECT
+      corretorId,
+      YEARWEEK(createdAt, 0) AS yw,
+      COUNT(DISTINCT leadId) AS total
+    FROM lead_status_transitions
+    WHERE corretorId IN (${sql.raw(corretorIds.join(','))})
+      AND createdAt >= ${dataInicioPeriodo}
+      AND createdAt <= ${dataFimPeriodo}
+      AND statusNovo IN ('em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado')
+    GROUP BY corretorId, YEARWEEK(createdAt, 0)
+  `) as any;
+  const contatadosData: any[] = Array.isArray(contatadosRows[0]) ? contatadosRows[0] : contatadosRows;
+  for (const row of contatadosData) {
+    contatadosMap.set(`${row.corretorId}-${row.yw}`, Number(row.total));
+  }
+
+  const contratosMap = new Map<string, number>();
+  for (const row of contratosData) {
+    contratosMap.set(`${row.corretorId}-${row.yw}`, Number(row.total));
+  }
+
+  // Função para calcular o YEARWEEK de uma data (modo 0 = domingo como primeiro dia)
+  function calcYearWeek(date: Date): number {
+    const d = new Date(date);
+    // Encontrar o domingo da semana
+    const day = d.getDay(); // 0=domingo
+    const sunday = new Date(d);
+    sunday.setDate(d.getDate() - day);
+    const year = sunday.getFullYear();
+    // Calcular semana do ano
+    const startOfYear = new Date(year, 0, 1);
+    const startDay = startOfYear.getDay();
+    const dayOfYear = Math.floor((sunday.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNum = Math.floor((dayOfYear + startDay) / 7);
+    return year * 100 + weekNum;
+  }
+
+  // Montar performance por corretor
   const corretoresPerformance: PerformanceSemanalCorretor[] = [];
 
   for (const corretor of corretoresResult) {
     const semanasData: PerformanceSemanalCorretor['semanas'] = [];
 
     for (const semana of semanasUnicas) {
-      // Leads recebidos nessa semana
-      const leadsRecebidosResult = await db.select({
-        count: sql<number>`COUNT(*)`
-      })
-        .from(leads)
-        .where(and(
-          eq(leads.corretorId, corretor.id),
-          gte(leads.createdAt, semana.inicio),
-          lte(leads.createdAt, semana.fim)
-        ));
-      const leadsRecebidos = Number(leadsRecebidosResult[0]?.count || 0);
+      const yw = calcYearWeek(semana.inicio);
+      const key = `${corretor.id}-${yw}`;
 
-      // Leads contatados (status >= em_atendimento) - usando transições de status
-      const leadsContatadosResult = await db.select({
-        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
-      })
-        .from(leadStatusTransitions)
-        .where(and(
-          eq(leadStatusTransitions.corretorId, corretor.id),
-          inArray(leadStatusTransitions.statusNovo, ['em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado']),
-          gte(leadStatusTransitions.createdAt, semana.inicio),
-          lte(leadStatusTransitions.createdAt, semana.fim)
-        ));
-      const leadsContatados = Number(leadsContatadosResult[0]?.count || 0);
-
-      // Agendamentos nessa semana (transições para status agendado)
-      const agendamentosResult = await db.select({
-        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
-      })
-        .from(leadStatusTransitions)
-        .where(and(
-          eq(leadStatusTransitions.corretorId, corretor.id),
-          eq(leadStatusTransitions.statusNovo, 'agendado'),
-          gte(leadStatusTransitions.createdAt, semana.inicio),
-          lte(leadStatusTransitions.createdAt, semana.fim)
-        ));
-      const agendamentosCount = Number(agendamentosResult[0]?.count || 0);
-
-      // Visitas realizadas nessa semana
-      const visitasResult = await db.select({
-        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
-      })
-        .from(leadStatusTransitions)
-        .where(and(
-          eq(leadStatusTransitions.corretorId, corretor.id),
-          eq(leadStatusTransitions.statusNovo, 'visita_realizada'),
-          gte(leadStatusTransitions.createdAt, semana.inicio),
-          lte(leadStatusTransitions.createdAt, semana.fim)
-        ));
-      const visitasCount = Number(visitasResult[0]?.count || 0);
-
-      // Análises de crédito nessa semana
-      const analisesResult = await db.select({
-        count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`
-      })
-        .from(leadStatusTransitions)
-        .where(and(
-          eq(leadStatusTransitions.corretorId, corretor.id),
-          eq(leadStatusTransitions.statusNovo, 'analise_credito'),
-          gte(leadStatusTransitions.createdAt, semana.inicio),
-          lte(leadStatusTransitions.createdAt, semana.fim)
-        ));
-      const analisesCount = Number(analisesResult[0]?.count || 0);
-
-      // Contratos fechados nessa semana
-      const contratosResult = await db.select({
-        count: sql<number>`COUNT(*)`
-      })
-        .from(contratos)
-        .where(and(
-          eq(contratos.corretorId, corretor.id),
-          gte(contratos.createdAt, semana.inicio),
-          lte(contratos.createdAt, semana.fim)
-        ));
-      const contratosCount = Number(contratosResult[0]?.count || 0);
+      const leadsRecebidos = leadsMap.get(key) || 0;
+      const leadsContatados = contatadosMap.get(key) || 0;
+      const agendamentosCount = transicoesMap.get(`${key}-agendado`) || 0;
+      const visitasCount = transicoesMap.get(`${key}-visita_realizada`) || 0;
+      const analisesCount = transicoesMap.get(`${key}-analise_credito`) || 0;
+      const contratosCount = contratosMap.get(key) || 0;
 
       semanasData.push({
         semana: semana.label,

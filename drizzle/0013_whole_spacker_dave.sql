@@ -1,0 +1,2 @@
+CREATE INDEX `transition_corretor_created_status_idx` ON `lead_status_transitions` (`corretorId`,`createdAt`,`statusNovo`);--> statement-breakpoint
+CREATE INDEX `lead_corretor_created_at_idx` ON `leads` (`corretorId`,`createdAt`);

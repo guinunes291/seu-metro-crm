@@ -342,6 +342,8 @@ export const leads = mysqlTable("leads", {
   
   // Índice composto para dashboard de corretores (query mais comum)
   corretorStatusIdx: index("lead_corretor_status_idx").on(table.corretorId, table.status),
+  // Índice composto para getPerformanceSemanal (leads por corretor por período)
+  corretorCreatedAtIdx: index("lead_corretor_created_at_idx").on(table.corretorId, table.createdAt),
 }));
 
 export type Lead = typeof leads.$inferSelect;
@@ -435,6 +437,8 @@ export const leadStatusTransitions = mysqlTable("lead_status_transitions", {
   corretorIdx: index("transition_corretor_idx").on(table.corretorId),
   statusNovoIdx: index("transition_status_novo_idx").on(table.statusNovo),
   createdAtIdx: index("transition_created_idx").on(table.createdAt),
+  // Índice composto para getPerformanceSemanal (transições por corretor+data+status)
+  corretorCreatedStatusIdx: index("transition_corretor_created_status_idx").on(table.corretorId, table.createdAt, table.statusNovo),
 }));
 
 export type LeadStatusTransition = typeof leadStatusTransitions.$inferSelect;

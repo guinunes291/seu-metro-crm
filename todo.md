@@ -5106,3 +5106,12 @@
 - [x] Bug crítico: sistema lento para todos os usuários após atualização recente
 - [x] Confirmar e ativar cron de distribuição automática a cada 5 minutos no servidor
 - [ ] Bug: distribuição retorna "0 leads distribuídos" mesmo com 4 corretores elegíveis e 25k leads no banco
+
+## Otimização de Performance - Jobs e Queries N+1 (Mar 2026)
+- [x] Aumentar intervalo do conquistasJob de 5 min para 30 min (reduz 195 queries/5min)
+- [x] Aumentar intervalo do metricasSyncJob de 5 min para 10 min
+- [x] Aumentar intervalo do pontuacaoJob de 5 min para 15 min
+- [x] Aumentar intervalo do linksCleanupJob de 1 min para 10 min
+- [x] Reescrever getPerformanceSemanal: de 1.872 queries (N+1 loop) para 4 queries com GROUP BY
+- [x] Criar índice composto lead_corretor_created_at_idx em leads(corretorId, createdAt)
+- [x] Criar índice composto transition_corretor_created_status_idx em lead_status_transitions(corretorId, createdAt, statusNovo)

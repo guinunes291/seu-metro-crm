@@ -35,7 +35,7 @@ export function iniciarJobLimpezaLinks(): void {
     }
   });
   
-  // Executar a cada 1 minuto
+  // Executar a cada 10 minutos (reduzido de 1 min para diminuir carga no banco)
   setInterval(async () => {
     try {
       const count = await limparLinksExpirados();
@@ -45,5 +45,5 @@ export function iniciarJobLimpezaLinks(): void {
     } catch (error) {
       console.error("[Links Cleanup Job] Erro ao limpar links expirados:", error);
     }
-  }, 60 * 1000); // 1 minuto
+  }, 10 * 60 * 1000); // 10 minutos
 }
