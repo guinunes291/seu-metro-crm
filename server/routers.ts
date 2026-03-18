@@ -1720,12 +1720,8 @@ export const appRouter = router({
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
         
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await calcularEstatisticasGerais(periodo, corretoresIds);
       }),
@@ -1743,12 +1739,8 @@ export const appRouter = router({
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
         
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await calcularConversaoPorProjeto(periodo, corretoresIds);
       }),
@@ -1766,12 +1758,8 @@ export const appRouter = router({
           dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
         } : undefined;
         
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await calcularConversaoPorCorretor(periodo, corretoresIds);
       }),
@@ -1783,16 +1771,14 @@ export const appRouter = router({
         dataFim: z.string(),
       }))
       .query(async ({ input, ctx }) => {
-        // Gestor vê apenas seu time; admin/superintendente vê todos
-        const equipeId = (ctx.user.role === 'gestor' && ctx.user.equipeId)
-          ? ctx.user.equipeId
-          : undefined;
-
+        // Gestor vê apenas seu time; superintendente vê suas equipes; admin vê todos
+        const { getCorretoresIdsParaFiltro: _timerFiltro } = await import('./equipes');
+        const timerCorretoresIds = await _timerFiltro(ctx.user.id, ctx.user.role);
         return await db.getRelatorioLeadsTimerPorCorretor({
           dataInicio: new Date(input.dataInicio),
           dataFim: new Date(input.dataFim),
-          equipeId,
-        });
+          corretoresIds: timerCorretoresIds || undefined,
+        });;
       }),
   }),
 
@@ -2270,17 +2256,13 @@ export const appRouter = router({
         ano: z.number(),
       }))
       .query(async ({ input, ctx }) => {
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const todasMetas = await db.getMetasDoMes(input.mes, input.ano);
         
         // Filtrar por equipe se necessário
-        if (corretoresIds) {
+        if (corretoresIds !== null) {
           return todasMetas.filter(m => corretoresIds!.includes(m.corretorId));
         }
         
@@ -2808,10 +2790,12 @@ export const appRouter = router({
         const amanha = new Date(hoje);
         amanha.setDate(amanha.getDate() + 1);
         
-        // Buscar corretores ativos (filtrado por equipe se for gestor)
+        // Buscar corretores ativos (filtrado por equipe se for gestor/superintendente)
         let corretores;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          corretores = await db.getCorretoresByEquipe(ctx.user.equipeId);
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const _filtroIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        if (_filtroIds !== null) {
+          corretores = await db.getCorretoresByIds(_filtroIds);
         } else {
           corretores = await db.getCorretoresAtivos();
         }
@@ -3047,17 +3031,13 @@ export const appRouter = router({
         offset: z.number().min(0).default(0),
       }).optional())
       .query(async ({ input, ctx }) => {
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const historico = await db.getHistoricoDistribuicao(input);
         
         // Filtrar por equipe se necessário
-        if (corretoresIds) {
+        if (corretoresIds !== null) {
           return {
             ...historico,
             items: historico.items.filter(h => corretoresIds!.includes(h.corretorId))
@@ -3388,17 +3368,13 @@ export const appRouter = router({
     // Listar metas diárias de todos os corretores (filtrado por equipe para gestores)
     list: gestorProcedure
       .query(async ({ ctx }) => {
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | undefined = undefined;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const todasMetas = await db.getMetasDiarias();
         
         // Filtrar por equipe se necessário
-        if (corretoresIds) {
+        if (corretoresIds !== null) {
           return todasMetas.filter(m => corretoresIds!.includes(m.corretorId));
         }
         
@@ -5812,12 +5788,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']).optional()
       }).optional())
       .query(async ({ input, ctx }) => {
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | null = null;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await db.getAllAgendamentos({
           ...input,
@@ -5832,12 +5804,8 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         dataFim: z.string().optional()
       }).optional())
       .query(async ({ input, ctx }) => {
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | null = null;
-        if (ctx.user.role === 'gestor' && ctx.user.equipeId) {
-          const corretoresDaEquipe = await db.getCorretoresByEquipe(ctx.user.equipeId);
-          corretoresIds = corretoresDaEquipe.map(c => c.id);
-        }
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const agendamentos = await db.getAllAgendamentos({
           ...input,
@@ -5883,26 +5851,10 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         
         console.log('[getCalendario] User:', ctx.user.email, 'Role:', ctx.user.role, 'UserId:', ctx.user.id);
         
-        // Se for gestor (não admin), buscar apenas corretores da sua equipe
-        let corretoresIds: number[] | null = null;
-        if (ctx.user.role === 'gestor') {
-          // Buscar equipe do gestor usando a função getEquipeByGestor
-          const { getEquipeByGestor } = await import('./equipes');
-          const equipe = await getEquipeByGestor(ctx.user.id);
-          console.log('[getCalendario] Equipe do gestor:', equipe);
-          
-          if (equipe) {
-            console.log('[getCalendario] Buscando corretores da equipe ID:', equipe.id);
-            const corretoresDaEquipe = await db.getCorretoresByEquipe(equipe.id);
-            console.log('[getCalendario] Corretores encontrados:', corretoresDaEquipe.length, corretoresDaEquipe.map(c => ({ id: c.id, name: c.name })));
-            corretoresIds = corretoresDaEquipe.map(c => c.id);
-            console.log('[getCalendario] Gestor - Filtrando por corretores IDs:', corretoresIds);
-          } else {
-            console.log('[getCalendario] Gestor sem equipe - Sem filtro');
-          }
-        } else {
-          console.log('[getCalendario] Admin - Sem filtro');
-        }
+        // Filtrar por equipe: gestor vê sua equipe, superintendente vê suas equipes, admin vê tudo
+        const { getCorretoresIdsParaFiltro: _getIds } = await import('./equipes');
+        const corretoresIds = await _getIds(ctx.user.id, ctx.user.role);
+        console.log('[getCalendario] User:', ctx.user.email, 'Role:', ctx.user.role, 'CorretoresIds:', corretoresIds);
         
         console.log('[getCalendario] Buscando agendamentos com filtro:', { dataInicio: dataInicio.toISOString(), dataFim: dataFim.toISOString(), corretoresIds });
         
@@ -6663,11 +6615,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        // Gestor sempre vê apenas sua equipe, admin/superintendente vê tudo
-        const equipeId = ctx.user.role === 'gestor' 
-          ? ctx.user.equipeId 
-          : input.equipeId; // Admin/Superintendente pode filtrar por equipe
-        return await db.getDashboardPerformance(input.mes, input.ano, equipeId || undefined);
+        // Gestor vê sua equipe, superintendente vê suas equipes, admin vê tudo
+        const { getCorretoresIdsParaFiltro: _perfFiltro } = await import('./equipes');
+        const perfCorretoresIds = await _perfFiltro(ctx.user.id, ctx.user.role);
+        const equipeId = ctx.user.role === 'gestor' ? (ctx.user.equipeId || undefined) : (ctx.user.role === 'admin' ? input.equipeId : undefined);
+        return await db.getDashboardPerformance(input.mes, input.ano, equipeId, perfCorretoresIds || undefined);
       }),
     
     // Evolução mensal de VGV
@@ -6677,11 +6629,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
         equipeId: z.number().optional(), // Filtro de equipe (apenas admin pode usar)
       }))
       .query(async ({ input, ctx }) => {
-        // Gestor sempre vê apenas sua equipe, admin/superintendente vê tudo
-        const equipeId = ctx.user.role === 'gestor' 
-          ? ctx.user.equipeId 
-          : input.equipeId; // Admin/Superintendente pode filtrar por equipe
-        return await db.getEvolucaoMensalVGV(input.ano, equipeId || undefined);
+        // Gestor vê sua equipe, superintendente vê suas equipes, admin vê tudo
+        const { getCorretoresIdsParaFiltro: _evolFiltro } = await import('./equipes');
+        const evolCorretoresIds = await _evolFiltro(ctx.user.id, ctx.user.role);
+        const evolEquipeId = ctx.user.role === 'gestor' ? (ctx.user.equipeId || undefined) : (ctx.user.role === 'admin' ? input.equipeId : undefined);
+        return await db.getEvolucaoMensalVGV(input.ano, evolEquipeId, evolCorretoresIds || undefined);
       }),
   }),
 

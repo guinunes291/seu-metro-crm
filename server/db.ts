@@ -9231,7 +9231,7 @@ export async function updateMetaGlobal(id: number, data: {
  * Dashboard de Performance: dados agregados de VGV por corretor vs meta
  * Retorna dados para gráficos e tabelas do dashboard
  */
-export async function getDashboardPerformance(mes: number, ano: number, equipeId?: number) {
+export async function getDashboardPerformance(mes: number, ano: number, equipeId?: number, corretoresIds?: number[]) {
   const db = await getDb();
   if (!db) return null;
   
@@ -9247,7 +9247,10 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
     inArray(users.role, ['corretor', 'gestor', 'admin'])
   );
   
-  if (equipeId) {
+  if (corretoresIds && corretoresIds.length > 0) {
+    // Filtrar diretamente por lista de IDs (usado pelo superintendente)
+    corretoresResult = corretoresResult.filter(c => corretoresIds!.includes(c.id));
+  } else if (equipeId) {
     // Buscar membros da equipe + gestor
     const { getCorretoresDaEquipe, getEquipeById } = await import('./equipes');
     const equipe = await getEquipeById(equipeId);
@@ -9370,7 +9373,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
 /**
  * Evolução mensal de VGV (últimos 12 meses)
  */
-export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: number) {
+export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: number, corretoresIds?: number[]) {
   const db = await getDb();
   if (!db) return [];
   
@@ -9396,7 +9399,15 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
       total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
     }).from(contratos);
     
-    if (equipeId) {
+    if (corretoresIds && corretoresIds.length > 0) {
+      // Filtrar diretamente por lista de IDs (usado pelo superintendente)
+      vgvQuery = vgvQuery.where(and(
+        eq(contratos.distrato, false),
+        inArray(contratos.corretorId, corretoresIds),
+        gte(contratos.createdAt, dataInicio),
+        lte(contratos.createdAt, dataFim)
+      ));
+    } else if (equipeId) {
       // Buscar IDs dos corretores da equipe
       const corretoresEquipe = await db.select({ id: users.id })
         .from(users)
@@ -10832,6 +10843,7 @@ export async function getRelatorioLeadsTimerPorCorretor(filtros: {
   dataInicio: Date;
   dataFim: Date;
   equipeId?: number;
+  corretoresIds?: number[];
 }): Promise<Array<{
   corretorId: number;
   corretorNome: string;
@@ -10844,14 +10856,16 @@ export async function getRelatorioLeadsTimerPorCorretor(filtros: {
   if (!db) return [];
 
   try {
-    // 1. Buscar todos os corretores (filtrado por equipe se necessário)
+    // 1. Buscar todos os corretores (filtrado por equipe/lista de IDs se necessário)
     const corretoresQuery = db
       .select({ id: users.id, name: users.name, equipeId: users.equipeId })
       .from(users)
       .where(
         and(
           eq(users.role, 'corretor'),
-          filtros.equipeId ? eq(users.equipeId, filtros.equipeId) : undefined
+          filtros.corretoresIds && filtros.corretoresIds.length > 0
+            ? inArray(users.id, filtros.corretoresIds)
+            : filtros.equipeId ? eq(users.equipeId, filtros.equipeId) : undefined
         )
       );
 
