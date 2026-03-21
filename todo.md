@@ -5115,3 +5115,10 @@
 - [x] Reescrever getPerformanceSemanal: de 1.872 queries (N+1 loop) para 4 queries com GROUP BY
 - [x] Criar índice composto lead_corretor_created_at_idx em leads(corretorId, createdAt)
 - [x] Criar índice composto transition_corretor_created_status_idx em lead_status_transitions(corretorId, createdAt, statusNovo)
+
+## Correções de Bug - Leads Facebook ADS
+- [x] Filtrar leads na lixeira (naLixeira=false) em getAllLeads por padrão
+- [x] Filtrar leads na lixeira em getLeadsByCorretor por padrão
+- [x] Filtrar leads na lixeira em getLeadsPorCorretorComFiltros por padrão
+- [x] Filtrar leads na lixeira e por status ativo em getNewWebhookLeadsSince (popup urgente)
+- [x] Corrigir novoCorretor.nome → novoCorretor.name no transferenciaAutomaticaJob

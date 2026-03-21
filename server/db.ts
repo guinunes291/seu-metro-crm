@@ -906,7 +906,9 @@ export async function getAllLeads(options?: {
   const offset = (page - 1) * limit;
   
   // Construir condições de filtro
-  const conditions: any[] = [];
+  const conditions: any[] = [
+    eq(leads.naLixeira, false), // Sempre excluir leads na lixeira da listagem principal
+  ];
   
   // Filtro por equipe (corretoresIds)
   if (options?.corretoresIds && options.corretoresIds.length > 0) {
@@ -1015,7 +1017,10 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   const offset = (page - 1) * limit;
   
   // Construir condições de filtro
-  const conditions = [eq(leads.corretorId, corretorId)];
+  const conditions = [
+    eq(leads.corretorId, corretorId),
+    eq(leads.naLixeira, false), // Excluir leads na lixeira
+  ];
   
   // Busca por nome, telefone ou email
   if (options?.searchTerm) {
@@ -1104,14 +1109,17 @@ export async function getNewWebhookLeadsSince(corretorId: number, since: Date) {
       and(
         eq(leads.corretorId, corretorId),
         eq(leads.origemWebhook, true),
-        gt(leads.createdAt, since)
+        gt(leads.createdAt, since),
+        eq(leads.naLixeira, false), // Não notificar de leads na lixeira
+        or(
+          eq(leads.status, 'aguardando_atendimento'),
+          eq(leads.status, 'em_atendimento')
+        ) // Apenas leads ativos (não perdidos, não fechados)
       )
     )
     .orderBy(leads.createdAt);
-
   return result;
 }
-
 export async function getLeadById(id: number) {
   const db = await getDb();
   if (!db) return undefined;
@@ -1468,7 +1476,9 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
   const db = await getDb();
   if (!db) return [];
   
-  const conditions: any[] = [];
+  const conditions: any[] = [
+    eq(leads.naLixeira, false), // Excluir leads na lixeira da listagem de gestores
+  ];
   
   // Filtro por equipe (corretoresIds)
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {

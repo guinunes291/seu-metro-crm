@@ -81,14 +81,14 @@ export async function verificarTransferenciasAutomaticas() {
             corretorOrigemId: lead.corretorId || null,
             corretorOrigemNome: null, // Buscar nome depois se necessário
             corretorDestinoId: novoCorretor.id,
-            corretorDestinoNome: novoCorretor.nome,
+            corretorDestinoNome: novoCorretor.name,
             motivo: "2_dias_sem_interacao",
             statusFinal: "transferido",
             dataTransferencia: agora(),
           });
 
           console.log(
-            `[Transferência Automática] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretor.id} (${novoCorretor.nome})`
+            `[Transferência Automática] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretor.id} (${novoCorretor.name})`
           );
           
           transferidos++;   } else {
