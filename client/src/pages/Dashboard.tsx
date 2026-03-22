@@ -1107,30 +1107,34 @@ export default function Dashboard() {
             </div>
 
             {/* Tabelas de ranking */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {/* Leads por Corretor */}
-              <Card>
-                <CardHeader>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-base">Leads por Corretor</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   {leadsPorCorretor && leadsPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Leads</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {leadsPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.totalLeads}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <div className="overflow-y-auto overflow-x-hidden max-h-80">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead className="sticky top-0 bg-card z-10 border-b">
+                          <tr>
+                            <th className="pl-4 py-2 text-left text-muted-foreground font-medium w-8">#</th>
+                            <th className="py-2 text-left text-muted-foreground font-medium">Corretor</th>
+                            <th className="pr-4 py-2 text-right text-muted-foreground font-medium w-20">Leads</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leadsPorCorretor.map((item, idx) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                              <td className="pl-4 py-2 text-muted-foreground w-8">{idx + 1}</td>
+                              <td className="py-2 font-medium">{item.nome}</td>
+                              <td className="pr-4 py-2 text-right font-semibold tabular-nums w-20">{item.totalLeads}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1138,28 +1142,32 @@ export default function Dashboard() {
               </Card>
 
               {/* Agendamentos por Corretor */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Agendamentos</CardTitle>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Agendamentos por Corretor</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {agendamentosPorCorretor && agendamentosPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Agend.</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {agendamentosPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.agendados}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="p-0">
+                  {agendamentosPorCorretor && agendamentosPorCorretor.filter(i => i.agendados > 0).length > 0 ? (
+                    <div className="overflow-y-auto overflow-x-hidden max-h-80">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead className="sticky top-0 bg-card z-10 border-b">
+                          <tr>
+                            <th className="pl-4 py-2 text-left text-muted-foreground font-medium w-8">#</th>
+                            <th className="py-2 text-left text-muted-foreground font-medium">Corretor</th>
+                            <th className="pr-4 py-2 text-right text-muted-foreground font-medium w-24">Agend.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {agendamentosPorCorretor.filter(i => i.agendados > 0).map((item, idx) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                              <td className="pl-4 py-2 text-muted-foreground w-8">{idx + 1}</td>
+                              <td className="py-2 font-medium">{item.nome}</td>
+                              <td className="pr-4 py-2 text-right font-semibold tabular-nums w-24">{item.agendados}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1167,28 +1175,32 @@ export default function Dashboard() {
               </Card>
 
               {/* Visitas por Corretor */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Visitas Realizadas</CardTitle>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Visitas Realizadas por Corretor</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {visitasPorCorretor && visitasPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Visitas</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {visitasPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.visitas}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="p-0">
+                  {visitasPorCorretor && visitasPorCorretor.filter(i => i.visitas > 0).length > 0 ? (
+                    <div className="overflow-y-auto overflow-x-hidden max-h-80">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead className="sticky top-0 bg-card z-10 border-b">
+                          <tr>
+                            <th className="pl-4 py-2 text-left text-muted-foreground font-medium w-8">#</th>
+                            <th className="py-2 text-left text-muted-foreground font-medium">Corretor</th>
+                            <th className="pr-4 py-2 text-right text-muted-foreground font-medium w-24">Visitas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {visitasPorCorretor.filter(i => i.visitas > 0).map((item, idx) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                              <td className="pl-4 py-2 text-muted-foreground w-8">{idx + 1}</td>
+                              <td className="py-2 font-medium">{item.nome}</td>
+                              <td className="pr-4 py-2 text-right font-semibold tabular-nums w-24">{item.visitas}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1196,33 +1208,34 @@ export default function Dashboard() {
               </Card>
 
               {/* Vendas por Corretor */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Vendas / VGV</CardTitle>
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Vendas / VGV por Corretor</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {vendasPorCorretor && vendasPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Vendas</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {vendasPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">
-                              {item.vendas}
-                              <span className="text-xs text-muted-foreground ml-1">
-                                ({formatCurrency(item.vgv)})
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                <CardContent className="p-0">
+                  {vendasPorCorretor && vendasPorCorretor.filter(i => i.vendas > 0).length > 0 ? (
+                    <div className="overflow-y-auto overflow-x-hidden max-h-80">
+                      <table className="w-full caption-bottom text-sm">
+                        <thead className="sticky top-0 bg-card z-10 border-b">
+                          <tr>
+                            <th className="pl-4 py-2 text-left text-muted-foreground font-medium w-8">#</th>
+                            <th className="py-2 text-left text-muted-foreground font-medium">Corretor</th>
+                            <th className="px-2 py-2 text-right text-muted-foreground font-medium w-16">Vendas</th>
+                            <th className="pr-4 py-2 text-right text-muted-foreground font-medium w-40">VGV</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {vendasPorCorretor.filter(i => i.vendas > 0).map((item, idx) => (
+                            <tr key={item.id} className="border-b last:border-0 hover:bg-muted/40 transition-colors">
+                              <td className="pl-4 py-2 text-muted-foreground w-8">{idx + 1}</td>
+                              <td className="py-2 font-medium">{item.nome}</td>
+                              <td className="px-2 py-2 text-right font-semibold tabular-nums w-16">{item.vendas}</td>
+                              <td className="pr-4 py-2 text-right font-medium text-emerald-600 tabular-nums w-40 whitespace-nowrap">{formatCurrency(item.vgv)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
