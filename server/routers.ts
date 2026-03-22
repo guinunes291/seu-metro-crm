@@ -1042,6 +1042,15 @@ export const appRouter = router({
           const { enviarConviteCorretor } = await import("./conviteCorretor");
           await enviarConviteCorretor(input.name, input.email);
         }
+
+        // Criar página de onboarding no Notion (não bloquear se falhar)
+        import("./notionService").then(({ criarOnboardingCorretor }) => {
+          criarOnboardingCorretor({
+            corretorNome: input.name,
+            corretorEmail: input.email,
+            dataIngresso: new Date(),
+          }).catch(() => {});
+        }).catch(() => {});
         
         return resultado;
       }),
@@ -3694,6 +3703,16 @@ export const appRouter = router({
           console.error('[Agendamento] Erro ao sincronizar métricas:', error);
           // Não propagar erro - agendamento foi criado com sucesso
         }
+
+        // Criar tarefa no Notion (não bloquear se falhar)
+        import("./notionService").then(({ tarefaVisitaAgendada }) => {
+          tarefaVisitaAgendada({
+            leadNome: (lead as any).nome || (lead as any).name || `Lead #${input.leadId}`,
+            corretorNome: ctx.user.name || ctx.user.email || "Corretor",
+            dataVisita: dataAgendamentoParsed,
+            leadId: input.leadId,
+          }).catch(() => {});
+        }).catch(() => {});
         
         return agendamento;
       }),
@@ -4004,6 +4023,18 @@ export const appRouter = router({
           console.error("Erro ao registrar pontos de venda:", error);
         }
         
+        // Criar tarefa no Notion (não bloquear se falhar)
+        import("./notionService").then(({ tarefaContratoFechado }) => {
+          tarefaContratoFechado({
+            leadNome: (lead as any).nome || (lead as any).name || `Lead #${input.leadId}`,
+            corretorNome: ctx.user.name || ctx.user.email || "Corretor",
+            gestorNome: "Gestor",
+            projeto: (lead as any).projetoCustom || undefined,
+            valorVenda: input.valorVenda,
+            leadId: input.leadId,
+          }).catch(() => {});
+        }).catch(() => {});
+
         return { success: true, contratoId: contrato.id };
       }),
     
@@ -4151,6 +4182,16 @@ export const appRouter = router({
           console.error("Erro ao registrar pontos de análise de crédito:", error);
         }
         
+        // Criar tarefa no Notion (não bloquear se falhar)
+        import("./notionService").then(({ tarefaAnaliseCredito }) => {
+          tarefaAnaliseCredito({
+            leadNome: (lead as any).nome || (lead as any).name || `Lead #${input.leadId}`,
+            corretorNome: ctx.user.name || ctx.user.email || "Corretor",
+            leadId: input.leadId,
+            projeto: (lead as any).projetoCustom || undefined,
+          }).catch(() => {});
+        }).catch(() => {});
+
         return { success: true, analiseId: analise.id };
       }),
     

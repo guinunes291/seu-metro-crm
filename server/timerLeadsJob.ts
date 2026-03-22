@@ -269,6 +269,18 @@ export async function verificarTimerLeads() {
           } catch (emailError) {
             console.error(`[Timer Job] Erro ao enviar email de redistribuição:`, emailError);
           }
+          // Criar tarefa no Notion (não bloquear se falhar)
+          import("./notionService").then(async ({ tarefaLeadRedistribuido }) => {
+            const corretorAnterior = await getUserById(lead.corretorId!).catch(() => null);
+            const novoCorretor = await getUserById(proximoCorretorId!).catch(() => null);
+            tarefaLeadRedistribuido({
+              leadNome: lead.nome || `Lead #${lead.id}`,
+              corretorAnteriorNome: corretorAnterior?.name || `Corretor #${lead.corretorId}`,
+              novoCorretorNome: novoCorretor?.name || `Corretor #${proximoCorretorId}`,
+              gestorNome: "Gestor",
+              leadId: lead.id,
+            }).catch(() => {});
+          }).catch(() => {});
         } else {
           // Nenhum corretor disponível na fila correta → fallback para admin Guilherme Nunes
           console.log(

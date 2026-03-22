@@ -1,0 +1,60 @@
+{
+  "query": "\nSELECT l.projetoCustom as projeto, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN leads l ON c.leadId = l.id\nWHERE c.distrato = 0 AND l.projetoCustom IS NOT NULL AND l.projetoCustom != ''\nGROUP BY l.projetoCustom\nORDER BY contratos DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT l.projetoCustom as projeto, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN leads l ON c.leadId = l.id\nWHERE c.distrato = 0 AND l.projetoCustom IS NOT NULL AND l.projetoCustom != ''\nGROUP BY l.projetoCustom\nORDER BY contratos DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "projeto": "Estação Conceição",
+      "contratos": "3",
+      "vgv": "779025.71"
+    },
+    {
+      "projeto": "Vibe Longitude",
+      "contratos": "1",
+      "vgv": "226900.00"
+    },
+    {
+      "projeto": "Direcional Itaim Paulista",
+      "contratos": "1",
+      "vgv": "237500.00"
+    },
+    {
+      "projeto": "CONQUISTA CLUB JABOATÃO",
+      "contratos": "1",
+      "vgv": "207880.00"
+    },
+    {
+      "projeto": "MUNDO APTO ALTO DO IPIRANGA",
+      "contratos": "1",
+      "vgv": "236811.73"
+    },
+    {
+      "projeto": "Estação Lapa",
+      "contratos": "1",
+      "vgv": "276732.50"
+    },
+    {
+      "projeto": "Facil Freguesia Integra",
+      "contratos": "1",
+      "vgv": "205330.00"
+    },
+    {
+      "projeto": "Cidade Lapa - Santa Marina",
+      "contratos": "1",
+      "vgv": "416546.72"
+    },
+    {
+      "projeto": "Raiz Home Clube",
+      "contratos": "1",
+      "vgv": "308424.00"
+    },
+    {
+      "projeto": "Zen Longitude",
+      "contratos": "1",
+      "vgv": "223900.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "projeto\tcontratos\tvgv\nEstação Conceição\t3\t779025.71\nVibe Longitude\t1\t226900.00\nDirecional Itaim Paulista\t1\t237500.00\nCONQUISTA CLUB JABOATÃO\t1\t207880.00\nMUNDO APTO ALTO DO IPIRANGA\t1\t236811.73\nEstação Lapa\t1\t276732.50\nFacil Freguesia Integra\t1\t205330.00\nCidade Lapa - Santa Marina\t1\t416546.72\nRaiz Home Clube\t1\t308424.00\nZen Longitude\t1\t223900.00\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

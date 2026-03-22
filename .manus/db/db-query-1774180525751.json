@@ -1,0 +1,262 @@
+{
+  "query": "\nSELECT u.name, u.role, e.nome as equipe, \n  (SELECT COUNT(*) FROM leads l WHERE l.corretorId = u.id AND l.naLixeira = 0 AND l.status NOT IN ('contrato_fechado', 'perdido')) as leads_ativos\nFROM users u\nLEFT JOIN equipes e ON u.equipeId = e.id\nWHERE u.role IN ('corretor', 'gerente', 'gestor', 'superintendente')\nORDER BY u.role, u.name\nLIMIT 50;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT u.name, u.role, e.nome as equipe, \n  (SELECT COUNT(*) FROM leads l WHERE l.corretorId = u.id AND l.naLixeira = 0 AND l.status NOT IN ('contrato_fechado', 'perdido')) as leads_ativos\nFROM users u\nLEFT JOIN equipes e ON u.equipeId = e.id\nWHERE u.role IN ('corretor', 'gerente', 'gestor', 'superintendente')\nORDER BY u.role, u.name\nLIMIT 50;\n",
+  "rows": [
+    {
+      "name": "Dayane Prince Saraiva Moreira da Silva ",
+      "role": "superintendente",
+      "equipe": "NULL",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "Gabriel Prado",
+      "role": "superintendente",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "42"
+    },
+    {
+      "name": "Guilherme Nunes",
+      "role": "gestor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "sheldonbarbosaa",
+      "role": "gestor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "6"
+    },
+    {
+      "name": "Alana Imobi",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "38"
+    },
+    {
+      "name": "Aline Silva",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "205"
+    },
+    {
+      "name": "Andrew",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "75"
+    },
+    {
+      "name": "Bella Brancaccio",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "66"
+    },
+    {
+      "name": "Bianca Haikel",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "85"
+    },
+    {
+      "name": "Bruno Soares Martins",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "72"
+    },
+    {
+      "name": "Camille Derolle",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "211"
+    },
+    {
+      "name": "Carla Quaresma",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "41"
+    },
+    {
+      "name": "Emilly Vitória",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "185"
+    },
+    {
+      "name": "fabio paes",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "Gabriel Antônio Martins",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "44"
+    },
+    {
+      "name": "Gabriel Salles",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "4142"
+    },
+    {
+      "name": "Gabriel Soares",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "169"
+    },
+    {
+      "name": "giliardepedro",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "207"
+    },
+    {
+      "name": "graziele gomes de jesus graziele gomes",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "39"
+    },
+    {
+      "name": "Hellen Rodrigues",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "41"
+    },
+    {
+      "name": "Igor Nigro",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "165"
+    },
+    {
+      "name": "jcmds94",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "223"
+    },
+    {
+      "name": "Jefferson Luiz",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "244"
+    },
+    {
+      "name": "Jhonata S. Roberto",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "42"
+    },
+    {
+      "name": "João Victor Ferreira Santos",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "107"
+    },
+    {
+      "name": "Juliana Alonso",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "61"
+    },
+    {
+      "name": "kauanthyago34",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "lacerdaniel.imoveis",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "213"
+    },
+    {
+      "name": "Letícia Brandão",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "Leticia Castro",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "179"
+    },
+    {
+      "name": "Luis Veras",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "98"
+    },
+    {
+      "name": "luiz deveras",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "0"
+    },
+    {
+      "name": "Maria Clara",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "70"
+    },
+    {
+      "name": "Monica Santos",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "90"
+    },
+    {
+      "name": "Patricia Santos",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "41"
+    },
+    {
+      "name": "Paula Akahoshi",
+      "role": "corretor",
+      "equipe": "Equipe Guilherme Nunes",
+      "leads_ativos": "41"
+    },
+    {
+      "name": "Pitter Reis",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "218"
+    },
+    {
+      "name": "ramon barrato ",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "184"
+    },
+    {
+      "name": "Selma Marta",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "40"
+    },
+    {
+      "name": "Taynara Souza Consultora Imobiliária",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "251"
+    },
+    {
+      "name": "Thauany Cobra",
+      "role": "corretor",
+      "equipe": "NULL",
+      "leads_ativos": "18"
+    },
+    {
+      "name": "Thaynara Meneses",
+      "role": "corretor",
+      "equipe": "Equipe Sheldon",
+      "leads_ativos": "159"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\trole\tequipe\tleads_ativos\nDayane Prince Saraiva Moreira da Silva \tsuperintendente\tNULL\t0\nGabriel Prado\tsuperintendente\tEquipe Sheldon\t42\nGuilherme Nunes\tgestor\tEquipe Guilherme Nunes\t0\nsheldonbarbosaa\tgestor\tEquipe Sheldon\t6\nAlana Imobi\tcorretor\tEquipe Guilherme Nunes\t38\nAline Silva\tcorretor\tEquipe Sheldon\t205\nAndrew\tcorretor\tEquipe Guilherme Nunes\t75\nBella Brancaccio\tcorretor\tEquipe Guilherme Nunes\t66\nBianca Haikel\tcorretor\tEquipe Sheldon\t85\nBruno Soares Martins\tcorretor\tEquipe Guilherme Nunes\t72\nCamille Derolle\tcorretor\tNULL\t211\nCarla Quaresma\tcorretor\tEquipe Guilherme Nunes\t41\nEmilly Vitória\tcorretor\tEquipe Sheldon\t185\nfabio paes\tcorretor\tEquipe Guilherme Nunes\t0\nGabriel Antônio Martins\tcorretor\tEquipe Sheldon\t44\nGabriel Salles\tcorretor\tEquipe Guilherme Nunes\t4142\nGabriel Soares\tcorretor\tNULL\t169\ngiliardepedro\tcorretor\tNULL\t207\ngraziele gomes de jesus graziele gomes\tcorretor\tEquipe Guilherme Nunes\t39\nHellen Rodrigues\tcorretor\tEquipe Sheldon\t41\nIgor Nigro\tcorretor\tEquipe Sheldon\t165\njcmds94\tcorretor\tNULL\t223\nJefferson Luiz\tcorretor\tEquipe Guilherme Nunes\t244\nJhonata S. Roberto\tcorretor\tNULL\t42\nJoão Victor Ferreira Santos\tcorretor\tEquipe Guilherme Nunes\t107\nJuliana Alonso\tcorretor\tEquipe Guilherme Nunes\t61\nkauanthyago34\tcorretor\tEquipe Guilherme Nunes\t0\nlacerdaniel.imoveis\tcorretor\tEquipe Guilherme Nunes\t213\nLetícia Brandão\tcorretor\tEquipe Guilherme Nunes\t0\nLeticia Castro\tcorretor\tEquipe Guilherme Nunes\t179\nLuis Veras\tcorretor\tEquipe Guilherme Nunes\t98\nluiz deveras\tcorretor\tNULL\t0\nMaria Clara\tcorretor\tEquipe Guilherme Nunes\t70\nMonica Santos\tcorretor\tEquipe Guilherme Nunes\t90\nPatricia Santos\tcorretor\tEquipe Guilherme Nunes\t41\nPaula Akahoshi\tcorretor\tEquipe Guilherme Nunes\t41\nPitter Reis\tcorretor\tEquipe Sheldon\t218\nramon barrato \tcorretor\tNULL\t184\nSelma Marta\tcorretor\tNULL\t40\nTaynara Souza Consultora Imobiliária\tcorretor\tNULL\t251\nThauany Cobra\tcorretor\tNULL\t18\nThaynara Meneses\tcorretor\tEquipe Sheldon\t159\n",
+  "stderr": "",
+  "execution_time_ms": 84
+}

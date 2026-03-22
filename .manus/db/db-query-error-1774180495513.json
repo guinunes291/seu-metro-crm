@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT projeto, COUNT(*) as contratos, SUM(CAST(valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN leads l ON c.leadId = l.id\nWHERE c.distrato = 0\nGROUP BY projeto\nORDER BY contratos DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT projeto, COUNT(*) as contratos, SUM(CAST(valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN leads l ON c.leadId = l.id\nWHERE c.distrato = 0\nGROUP BY projeto\nORDER BY contratos DESC\nLIMIT 10;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'projeto' in 'group statement'"
+  ]
+}

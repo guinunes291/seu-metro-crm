@@ -176,6 +176,14 @@ async function startServer() {
     // Job de importação automática de leads DESATIVADO permanentemente
     // Motivo: Requisição do usuário - importação apenas manual
     // Importação manual disponível em: Sistema → Importação de Leads
+
+    // Inicializar job de automações Notion (relatório semanal + alertas)
+    import("../notionJob").then(({ startNotionJob }) => {
+      startNotionJob();
+      console.log("[Job] Automações Notion inicializadas (relatório semanal toda segunda às 7h)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job Notion:", err);
+    });
   });
 }
 

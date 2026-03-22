@@ -5122,3 +5122,28 @@
 - [x] Filtrar leads na lixeira em getLeadsPorCorretorComFiltros por padrão
 - [x] Filtrar leads na lixeira e por status ativo em getNewWebhookLeadsSince (popup urgente)
 - [x] Corrigir novoCorretor.nome → novoCorretor.name no transferenciaAutomaticaJob
+
+## Automações Notion
+
+- [ ] Criar banco de dados "Tarefas Operacionais" no Notion
+- [ ] Criar notionService.ts com helpers para criar/atualizar tarefas e páginas
+- [ ] Automação Nível 1: relatório semanal automático (toda segunda, 7h)
+- [ ] Automação Nível 1: atualização do foco da semana e meta do mês
+- [ ] Automação Nível 1: onboarding automático ao cadastrar novo corretor
+- [ ] Automação Nível 2: tarefa ao agendar visita
+- [ ] Automação Nível 2: tarefa ao entrar em análise de crédito
+- [ ] Automação Nível 2: tarefa ao fechar contrato
+- [ ] Automação Nível 2: tarefa ao redistribuir lead por timer
+- [ ] Automação Nível 2: alerta ao gestor quando corretor fica 24h sem atendimento
+
+## Automações Notion (22/03/2026)
+
+- [x] Banco de dados "Tarefas Operacionais" criado no Notion
+- [x] notionService.ts criado com helpers para criar tarefas e páginas
+- [x] notionJob.ts criado com relatório semanal automático (toda segunda às 7h)
+- [x] Gatilho: visita agendada → cria tarefa no Notion
+- [x] Gatilho: análise de crédito → cria tarefa no Notion
+- [x] Gatilho: contrato fechado → cria tarefa no Notion
+- [x] Gatilho: lead redistribuído (timer) → cria tarefa no Notion
+- [x] Gatilho: novo corretor cadastrado → cria página de onboarding no Notion
+- [x] notionJob registrado no index.ts do servidor
