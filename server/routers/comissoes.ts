@@ -11,7 +11,7 @@ export const comissoesRouter = router({
     }).optional())
     .query(async ({ ctx, input }) => {
       return await db.getComissoes({
-        usuarioId: ctx.user.role === 'admin' ? undefined : ctx.user.id,
+        usuarioId: (ctx.user.role === 'admin' || ctx.user.role === 'superintendente') ? undefined : ctx.user.id,
         status: input?.status,
         tipo: input?.tipo,
       });
