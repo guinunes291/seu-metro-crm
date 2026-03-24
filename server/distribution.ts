@@ -2,11 +2,15 @@ import { getDb, notifyLeadDistribuido, countLeadsRecebidosHoje } from "./db";
 import { users, leads, conversionStats, distributionLog, leadEstoque } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
-// Configurações de distribuição (baseado no AppScript)
-const MINIMO_LEADS_GARANTIDO = 40;
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90%
-const LOTE_SIZE = 200; // Total de leads por rodada (aumentado para distribuição mais rápida)
-const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
+// Configurações de distribuição
+const MINIMO_LEADS_GARANTIDO = 40; // Carga inicial mínima por corretor (primeiro recebimento)
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90% dos leads ATIVOS trabalhados para receber mais
+const LOTE_SIZE = 99999; // Sem limite de leads por rodada — processa tudo disponível
+const LEADS_POR_RODADA = 20; // Leads distribuídos por vez para cada corretor
+// Critério de elegibilidade: sem limite de leads ativos simultâneos
+// Um corretor é elegível se tem status 'presente' e trabalhou 90% dos seus leads ativos
+// (ou se está recebendo pela primeira vez — menos de 40 leads ativos)
+const MAX_LEADS_ATIVOS = 99999; // Sem limite máximo de leads ativos por corretor
 
 interface CorretorStatus {
   id: number;
@@ -23,7 +27,11 @@ interface CorretorStatus {
  * Verifica se um corretor está elegível para receber novos leads
  * Regras:
  * 1. Status deve ser "presente"
- * 2. Deve ter menos de 40 leads (carga inicial mínima) OU ter trabalhado pelo menos 60% dos seus leads
+ * 2. Deve ter menos de MAX_LEADS_ATIVOS leads ativos (aguardando_atendimento + em_atendimento)
+ *    OU ter trabalhado pelo menos 90% dos seus leads ativos
+ * 
+ * IMPORTANTE: Usa leads ATIVOS (não histórico total) para não bloquear corretores
+ * que acumularam leads antigos sem nunca os ter trabalhado.
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -40,25 +48,32 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
     return false;
   }
 
-  // Buscar leads do corretor
-  const leadsDoCorretor = await db
+  // Buscar apenas leads ATIVOS do corretor (não na lixeira)
+  const leadsAtivos = await db
     .select()
     .from(leads)
-    .where(eq(leads.corretorId, corretorId));
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.naLixeira, false),
+        sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
+      )
+    );
 
-  const totalLeads = leadsDoCorretor.length;
+  const totalAtivos = leadsAtivos.length;
 
-  // Se tem menos que o mínimo garantido (40 leads), é elegível
-  if (totalLeads < MINIMO_LEADS_GARANTIDO) {
+  // Primeiro recebimento: se tem menos de 40 leads ativos, é elegível
+  if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
     return true;
   }
 
-  // Verificar taxa de trabalho (60% rule)
-  const leadsTrabalhados = leadsDoCorretor.filter(
-    (lead) => lead.status !== "aguardando_atendimento"
+  // Já tem 40+ leads ativos: verificar se trabalhou 90% deles (em_atendimento)
+  // Sem limite máximo — pode receber mais desde que esteja trabalhando
+  const emAtendimento = leadsAtivos.filter(
+    (lead) => lead.status === "em_atendimento"
   ).length;
 
-  const taxaTrabalho = leadsTrabalhados / totalLeads;
+  const taxaTrabalho = emAtendimento / totalAtivos;
 
   return taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO;
 }
@@ -78,14 +93,21 @@ export async function getCorretorStatus(corretorId: number): Promise<CorretorSta
 
   if (!corretor.length) return null;
 
-  const leadsDoCorretor = await db
+  // Usar leads ATIVOS (aguardando + em_atendimento) para o status real
+  const leadsAtivos = await db
     .select()
     .from(leads)
-    .where(eq(leads.corretorId, corretorId));
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.naLixeira, false),
+        sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
+      )
+    );
 
-  const totalLeads = leadsDoCorretor.length;
-  const leadsTrabalhados = leadsDoCorretor.filter(
-    (lead) => lead.status !== "aguardando_atendimento"
+  const totalLeads = leadsAtivos.length;
+  const leadsTrabalhados = leadsAtivos.filter(
+    (lead) => lead.status === "em_atendimento"
   ).length;
 
   const taxaTrabalho = totalLeads > 0 ? leadsTrabalhados / totalLeads : 0;
@@ -542,22 +564,24 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   fimDiaSP.setHours(23, 59, 59, 999);
   const fimDiaUTC = new Date(fimDiaSP.getTime() - offsetSP * 60 * 1000);
 
-  // Query corrigida: usa subqueries separadas para evitar multiplicacao de linhas no JOIN duplo
+  // Query otimizada: usa leads ATIVOS (aguardando_atendimento + em_atendimento, naLixeira=0)
+  // para não bloquear corretores com histórico acumulado de leads antigos
   const resultado = await db.execute(sql`
     SELECT 
       u.id,
       u.limiteDiarioLeads,
-      COALESCE(leads_agg.total_leads, 0) as total_leads,
-      COALESCE(leads_agg.leads_trabalhados, 0) as leads_trabalhados,
+      COALESCE(ativos_agg.total_ativos, 0) as total_ativos,
+      COALESCE(ativos_agg.em_atendimento, 0) as em_atendimento,
       COALESCE(dist_agg.leads_recebidos_hoje, 0) as leads_recebidos_hoje
     FROM users u
     LEFT JOIN (
       SELECT corretorId,
-        COUNT(*) as total_leads,
-        SUM(CASE WHEN status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as leads_trabalhados
+        COUNT(*) as total_ativos,
+        SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento
       FROM leads
+      WHERE status IN ('aguardando_atendimento', 'em_atendimento') AND naLixeira = 0
       GROUP BY corretorId
-    ) leads_agg ON leads_agg.corretorId = u.id
+    ) ativos_agg ON ativos_agg.corretorId = u.id
     LEFT JOIN (
       SELECT corretorId, COUNT(*) as leads_recebidos_hoje
       FROM distribution_log
@@ -575,22 +599,23 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
     const corretorId = Number(row.id);
     const limiteDiario = Number(row.limiteDiarioLeads) || 50;
     const leadsRecebidosHoje = Number(row.leads_recebidos_hoje) || 0;
-    const totalLeads = Number(row.total_leads) || 0;
-    const leadsTrabalhados = Number(row.leads_trabalhados) || 0;
+    const totalAtivos = Number(row.total_ativos) || 0;
+    const emAtendimento = Number(row.em_atendimento) || 0;
 
     // Verificar limite diário
     if (leadsRecebidosHoje >= limiteDiario) {
       continue;
     }
 
-    // Se tem menos que 40 leads (carga inicial mínima), é elegível
-    if (totalLeads < MINIMO_LEADS_GARANTIDO) {
+    // Primeiro recebimento: menos de 40 leads ativos → elegível
+    if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
       corretoresElegiveis.push(corretorId);
       continue;
     }
 
-    // Verificar taxa de trabalho (60% rule)
-    const taxaTrabalho = totalLeads > 0 ? leadsTrabalhados / totalLeads : 0;
+    // Já tem 40+ leads ativos: verificar se trabalhou 90% deles
+    // Sem limite máximo — pode receber mais desde que esteja trabalhando
+    const taxaTrabalho = totalAtivos > 0 ? emAtendimento / totalAtivos : 0;
     if (taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO) {
       corretoresElegiveis.push(corretorId);
     }

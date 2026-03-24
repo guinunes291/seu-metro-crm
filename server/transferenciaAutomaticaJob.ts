@@ -1,6 +1,6 @@
 import { getDb } from "./db";
-import { leads, users, logTransferencias } from "../drizzle/schema";
-import { eq, and, lt, ne, isNull, or } from "drizzle-orm";
+import { leads, users, logTransferencias, distributionLog } from "../drizzle/schema";
+import { eq, and, lt, ne, sql, inArray } from "drizzle-orm";
 import { agora } from "./timezone";
 
 /**
@@ -47,22 +47,44 @@ export async function verificarTransferenciasAutomaticas() {
     let perdidos = 0;
     let erros = 0;
 
+    // Contador global para round-robin entre todos os leads
+    let roundRobinIndex = 0;
+
     for (const lead of leadsParaTransferir) {
       try {
-        // Buscar próximo corretor disponível (excluindo o atual)
-        const corretoresDisponiveis = await db
+        // Buscar corretores que já trabalharam este lead (via log de distribuição)
+        const corretoresQueJaTrabalharamRows = await db
+          .select({ corretorId: distributionLog.corretorId })
+          .from(distributionLog)
+          .where(eq(distributionLog.leadId, lead.id));
+
+        const idsQueJaTrabalharam = new Set(
+          corretoresQueJaTrabalharamRows
+            .map((r) => r.corretorId)
+            .filter((id): id is number => id !== null)
+        );
+        // Incluir o corretor atual na lista de exclusão
+        if (lead.corretorId) idsQueJaTrabalharam.add(lead.corretorId);
+
+        // Buscar todos os corretores presentes excluindo quem já trabalhou
+        const todosCorretores = await db
           .select()
           .from(users)
           .where(
             and(
               eq(users.role, "corretor"),
-              ne(users.id, lead.corretorId || 0)
+              eq(users.status, "presente")
             )
           );
 
+        const corretoresDisponiveis = todosCorretores.filter(
+          (c) => !idsQueJaTrabalharam.has(c.id)
+        );
+
         if (corretoresDisponiveis.length > 0) {
-          // Transferir para o próximo corretor (round-robin simples)
-          const novoCorretor = corretoresDisponiveis[0];
+          // Round-robin real: usa índice global rotativo
+          const novoCorretor = corretoresDisponiveis[roundRobinIndex % corretoresDisponiveis.length];
+          roundRobinIndex++;
                   await db
             .update(leads)
             .set({
@@ -79,7 +101,7 @@ export async function verificarTransferenciasAutomaticas() {
             leadId: lead.id,
             leadNome: lead.nome,
             corretorOrigemId: lead.corretorId || null,
-            corretorOrigemNome: null, // Buscar nome depois se necessário
+            corretorOrigemNome: null,
             corretorDestinoId: novoCorretor.id,
             corretorDestinoNome: novoCorretor.name,
             motivo: "2_dias_sem_interacao",
@@ -87,11 +109,20 @@ export async function verificarTransferenciasAutomaticas() {
             dataTransferencia: agora(),
           });
 
+          // Registrar no distribution_log para rastrear histórico de corretores que já trabalharam
+          await db.insert(distributionLog).values({
+            leadId: lead.id,
+            corretorId: novoCorretor.id,
+            tipo: "automatica",
+            motivo: "Transferência automática por 2 dias sem interação (round-robin)",
+          });
+
           console.log(
             `[Transferência Automática] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretor.id} (${novoCorretor.name})`
           );
-          
-          transferidos++;   } else {
+
+          transferidos++;
+        } else {
           // Não há mais corretores disponíveis → marcar como perdido e mover para lixeira
           await db
             .update(leads)
