@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { getDb, updateLead, registrarTentativaFollowUp } from './db';
 import { leads, followUps, users } from '../drizzle/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, like } from 'drizzle-orm';
 
 describe('Prevenção de Duplicação de Follow-ups', () => {
   let testLeadId: number;
@@ -138,6 +138,26 @@ describe('Prevenção de Duplicação de Follow-ups', () => {
     // Verificar que não há mais de 1 follow-up por data
     for (const [data, count] of porData.entries()) {
       expect(count).toBe(1, `Encontrados ${count} follow-ups para a data ${data}, esperado 1`);
+    }
+  });
+
+  afterAll(async () => {
+    const db = await getDb();
+    if (!db) return;
+    // Limpar follow-ups do lead de teste
+    if (testLeadId) {
+      await db.delete(followUps).where(eq(followUps.leadId, testLeadId));
+      await db.delete(leads).where(eq(leads.id, testLeadId));
+    }
+    // Limpar corretor de teste
+    if (testCorretorId) {
+      await db.delete(users).where(eq(users.id, testCorretorId));
+    }
+    // Limpeza extra: remover qualquer usuário com email de teste
+    const testUsers = await db.select({ id: users.id }).from(users).where(like(users.email, '%@test.com'));
+    for (const u of testUsers) {
+      await db.delete(leads).where(eq(leads.corretorId, u.id));
+      await db.delete(users).where(eq(users.id, u.id));
     }
   });
 });

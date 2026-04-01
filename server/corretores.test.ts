@@ -1,8 +1,31 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as db from "./db";
+import { getDb } from "./db";
+import { users, leads } from "../drizzle/schema";
+import { like, or, eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 describe("Gestão de Corretores", () => {
   let testCorretor: any;
+
+  afterEach(async () => {
+    // Limpar todos os corretores de teste criados com @exemplo.com
+    const database = await getDb();
+    if (!database) return;
+    // Buscar IDs dos usuários de teste
+    const testUsers = await database
+      .select({ id: users.id })
+      .from(users)
+      .where(or(
+        like(users.email, '%@exemplo.com'),
+      ));
+    for (const u of testUsers) {
+      // Remover leads associados
+      await database.delete(leads).where(eq(leads.corretorId, u.id));
+      // Remover usuário
+      await database.delete(users).where(eq(users.id, u.id));
+    }
+  });
 
   beforeEach(async () => {
     // Criar corretor de teste antes de cada teste

@@ -1,6 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { testarConexaoSheets } from "./sheetsSyncReal";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
+import { getDb } from "./db";
+import { users, leads } from "../drizzle/schema";
+
+afterAll(async () => {
+  // Limpar todos os usuários e leads de teste criados por estes testes
+  const db = await getDb();
+  if (!db) return;
+  const testUsers = await db.select({ id: users.id }).from(users).where(
+    like(users.email, '%@test.com')
+  );
+  for (const u of testUsers) {
+    await db.delete(leads).where(eq(leads.corretorId, u.id));
+    await db.delete(users).where(eq(users.id, u.id));
+  }
+  // Limpar leads "Lead Batch" e "Lead Teste Sheets"
+  await db.delete(leads).where(like(leads.nome, 'Lead Batch%'));
+  await db.delete(leads).where(like(leads.nome, 'Lead Teste Sheets%'));
+});
 
 describe("Google Sheets API - Sincronização Real", () => {
   it("deve conectar com Google Sheets usando Service Account", async () => {
@@ -12,7 +30,6 @@ describe("Google Sheets API - Sincronização Real", () => {
     
     console.log(`✅ Conectado à planilha: ${resultado.spreadsheetTitle}`);
   }, 30000); // Timeout de 30 segundos para chamada de API
-});
 
   it("deve buscar linha de lead por telefone na planilha", async () => {
     // Este teste requer que exista um lead na planilha
@@ -67,6 +84,9 @@ describe("Google Sheets API - Sincronização Real", () => {
     // Registrar no histórico
     const resultado = await registrarDistribuicaoNaPlanilha(lead.insertId);
 
+    // Limpar lead criado
+    await db.delete(leads).where(eq(leads.id, lead.insertId));
+
     expect(resultado.success).toBe(true);
     console.log(`📝 Histórico registrado: ${resultado.message}`);
   }, 30000);
@@ -115,6 +135,11 @@ describe("Google Sheets API - Sincronização Real", () => {
     // Sincronizar em lote
     const resultado = await sincronizarLeadsEmLote(leadIds);
 
+    // Limpar leads criados
+    for (const id of leadIds) {
+      await db.delete(leads).where(eq(leads.id, id));
+    }
+
     // Verificar que a função executou para todos os leads
     expect(resultado.details.length).toBe(3);
     expect(resultado.success + resultado.failed).toBe(3);
@@ -140,3 +165,4 @@ describe("Google Sheets API - Sincronização Real", () => {
       console.log(`Exemplos:`, resultado.inconsistencias.slice(0, 3));
     }
   }, 60000); // Timeout de 60 segundos para verificar todos os leads
+});

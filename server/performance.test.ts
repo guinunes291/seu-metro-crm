@@ -1,12 +1,40 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { calcularPerformanceCorretor, calcularRankingCorretores } from "./performance";
 import { getDb } from "./db";
 import { leads, users, projects } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 
 describe("Performance - Cálculos de Métricas", () => {
   let testCorretor: any;
   let testProject: any;
+  const createdUserOpenIds: string[] = [];
+  const createdProjectNames: string[] = [];
+
+  afterEach(async () => {
+    const db = await getDb();
+    if (!db) return;
+    // Limpar usuários de teste criados neste teste
+    for (const openId of createdUserOpenIds) {
+      const [u] = await db.select({ id: users.id }).from(users).where(eq(users.openId, openId)).limit(1);
+      if (u) {
+        await db.delete(leads).where(eq(leads.corretorId, u.id));
+        await db.delete(users).where(eq(users.id, u.id));
+      }
+    }
+    // Limpar projetos de teste
+    for (const nome of createdProjectNames) {
+      await db.delete(projects).where(eq(projects.nome, nome));
+    }
+    createdUserOpenIds.length = 0;
+    createdProjectNames.length = 0;
+    // Limpeza extra: remover qualquer usuário com email @test.com criado por este describe
+    await db.delete(leads).where(like(leads.email, '%@test.com'));
+    const testUsersLeft = await db.select({ id: users.id }).from(users).where(like(users.email, '%@test.com'));
+    for (const u of testUsersLeft) {
+      await db.delete(leads).where(eq(leads.corretorId, u.id));
+      await db.delete(users).where(eq(users.id, u.id));
+    }
+  });
 
   beforeEach(async () => {
     const db = await getDb();
@@ -15,25 +43,29 @@ describe("Performance - Cálculos de Métricas", () => {
     const uniqueId = Date.now();
 
     // Criar corretor de teste
+    const openId = `test-corretor-${uniqueId}`;
     await db.insert(users).values({
-      openId: `test-corretor-${uniqueId}`,
+      openId,
       name: "Corretor Teste Performance",
       email: `corretor-perf-${uniqueId}@test.com`,
       role: "corretor",
     });
+    createdUserOpenIds.push(openId);
     
-    const corretorResult = await db.select().from(users).where(eq(users.openId, `test-corretor-${uniqueId}`)).limit(1);
+    const corretorResult = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
     testCorretor = corretorResult[0];
 
     // Criar projeto de teste
+    const projetoNome = `Projeto Teste Performance ${uniqueId}`;
     await db.insert(projects).values({
-      nome: `Projeto Teste Performance ${uniqueId}`,
+      nome: projetoNome,
       construtora: "CURY",
       zona: "sul",
       status: "ativo",
     });
+    createdProjectNames.push(projetoNome);
     
-    const projectResult = await db.select().from(projects).where(eq(projects.nome, `Projeto Teste Performance ${uniqueId}`)).limit(1);
+    const projectResult = await db.select().from(projects).where(eq(projects.nome, projetoNome)).limit(1);
     testProject = projectResult[0];
   });
 
