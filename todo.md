@@ -5210,3 +5210,8 @@
 - [ ] Adicionar campo diasNaCarteira calculado no backend (dias desde adicionadoEm)
 - [ ] Exibir os dois contadores nos cards da pagina CarteiraAtiva.tsx com cores de alerta
 - [x] Adicionar ordenação por dias sem contato na Carteira Ativa
+
+## Bug Fix: Estoque de Leads zerado / distribuição automática não funcionava
+- [x] Migrar 28.647 leads em aguardando_atendimento para tabela lead_estoque
+- [x] Nulificar corretorId dos leads migrados para que a distribuição os processe
+- [x] Corrigir distribuirLeadsDoEstoque para usar getCorretoresElegiveisParaDistribuicao (filtra por presente)

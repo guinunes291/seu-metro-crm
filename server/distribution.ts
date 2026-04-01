@@ -706,11 +706,8 @@ export async function distribuirLeadsDoEstoque(): Promise<{
 
       const leadData = lead[0];
 
-      // Buscar corretores elegíveis
-      const corretoresElegiveis = await getCorretoresElegiveis(
-        leadData.projectId || undefined,
-        leadData.origem || undefined
-      );
+      // Buscar corretores elegíveis (apenas presentes, com limite diário e taxa de trabalho)
+      const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
 
       if (corretoresElegiveis.length === 0) {
         // Ainda não há corretores disponíveis, incrementar tentativas
