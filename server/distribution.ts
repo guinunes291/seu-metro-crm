@@ -21,6 +21,18 @@ interface CorretorStatus {
 }
 
 /**
+ * Helper: retorna o início do dia atual no fuso de São Paulo (UTC-3) como Date UTC
+ */
+function getInicioDiaUTC(): Date {
+  const agora = new Date();
+  const offsetSP = -3 * 60; // UTC-3 em minutos
+  const agoraSP = new Date(agora.getTime() + (offsetSP - agora.getTimezoneOffset()) * 60 * 1000);
+  const inicioDiaSP = new Date(agoraSP);
+  inicioDiaSP.setHours(0, 0, 0, 0);
+  return new Date(inicioDiaSP.getTime() - offsetSP * 60 * 1000);
+}
+
+/**
  * Verifica se um corretor está elegível para receber novos leads
  * Regras:
  * 1. Status deve ser "presente"
@@ -33,18 +45,25 @@ interface CorretorStatus {
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
-
   // Verificar status do corretor
   const corretor = await db
     .select()
     .from(users)
     .where(eq(users.id, corretorId))
     .limit(1);
-
   if (!corretor.length || corretor[0].status !== "presente") {
     return false;
   }
-
+  // Verificar limite diário: se já atingiu o limite hoje, não é elegível
+  const limiteDiario = corretor[0].limiteDiarioLeads ?? 50;
+  const inicioDiaUTC = getInicioDiaUTC();
+  const [{ leadsHoje }] = await db
+    .select({ leadsHoje: sql<number>`COUNT(*)` })
+    .from(distributionLog)
+    .where(and(eq(distributionLog.corretorId, corretorId), sql`${distributionLog.createdAt} >= ${inicioDiaUTC}`));
+  if (Number(leadsHoje) >= limiteDiario) {
+    return false;
+  }
   // Buscar apenas leads ATIVOS do corretor (não na lixeira)
   const leadsAtivos = await db
     .select()
@@ -56,22 +75,17 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
         sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
       )
     );
-
   const totalAtivos = leadsAtivos.length;
-
   // Primeiro recebimento: se tem menos de 40 leads ativos, é elegível
   if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
     return true;
   }
-
   // Já tem 40+ leads ativos: verificar se trabalhou 90% deles (em_atendimento)
   // Sem limite máximo — pode receber mais desde que esteja trabalhando
   const emAtendimento = leadsAtivos.filter(
     (lead) => lead.status === "em_atendimento"
   ).length;
-
   const taxaTrabalho = emAtendimento / totalAtivos;
-
   return taxaTrabalho >= PERCENTUAL_CONCLUSAO_MINIMO;
 }
 
