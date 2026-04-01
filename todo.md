@@ -5209,3 +5209,4 @@
 - [ ] Adicionar campo diasSemInteracao calculado no backend (dias desde ultima interacao no lead_history)
 - [ ] Adicionar campo diasNaCarteira calculado no backend (dias desde adicionadoEm)
 - [ ] Exibir os dois contadores nos cards da pagina CarteiraAtiva.tsx com cores de alerta
+- [x] Adicionar ordenação por dias sem contato na Carteira Ativa

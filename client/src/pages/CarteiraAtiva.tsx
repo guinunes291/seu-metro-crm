@@ -625,20 +625,37 @@ export function CarteiraAtivaQuickButton({ leadId, leadNome }: { leadId: number;
 // ─── Página Principal ─────────────────────────────────────────────────────────
 
 export default function CarteiraAtiva() {
-  const { user } = useAuth();
+    const { user } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
-
+  const [ordenacao, setOrdenacao] = useState<"urgencia" | "semContato" | "naCarteira" | "expiracao">("urgencia");
   const { data: carteira, isLoading, refetch } = trpc.carteiraAtiva.listar.useQuery(undefined, {
     refetchInterval: 60000, // Atualizar a cada minuto
   });
-
   const { data: tarefasHoje } = trpc.carteiraAtiva.tarefasHoje.useQuery(undefined, {
     refetchInterval: 60000,
   });
-
   const totalItens = carteira?.length ?? 0;
   const itensExpirados = carteira?.filter((i) => i.expirado).length ?? 0;
   const tarefasHojeCount = tarefasHoje?.length ?? 0;
+
+  // Ordenação dos cards
+  const carteiraOrdenada = carteira ? [...carteira].sort((a, b) => {
+    if (ordenacao === "semContato") {
+      return (b.diasSemInteracao ?? 0) - (a.diasSemInteracao ?? 0);
+    }
+    if (ordenacao === "naCarteira") {
+      return (b.diasNaCarteira ?? 0) - (a.diasNaCarteira ?? 0);
+    }
+    if (ordenacao === "expiracao") {
+      // Expirados primeiro, depois por menor dias restantes
+      if (a.expirado !== b.expirado) return a.expirado ? -1 : 1;
+      return a.diasRestantes - b.diasRestantes;
+    }
+    // urgencia: expirados + sem contato há mais tempo primeiro
+    const scoreA = (a.expirado ? 1000 : 0) + (a.diasSemInteracao ?? 0);
+    const scoreB = (b.expirado ? 1000 : 0) + (b.diasSemInteracao ?? 0);
+    return scoreB - scoreA;
+  }) : [];;
 
   return (
     <DashboardLayout>
@@ -653,6 +670,30 @@ export default function CarteiraAtiva() {
             <p className="text-sm text-muted-foreground mt-1">
               Leads em tratamento ativo — protegidos contra redistribuição automática
             </p>
+          </div>
+          {/* Seletor de ordenação */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground hidden sm:block">Ordenar por:</span>
+            <div className="flex gap-1 flex-wrap">
+              {([
+                { key: "urgencia", label: "Urgência" },
+                { key: "semContato", label: "Sem contato" },
+                { key: "naCarteira", label: "Tempo na carteira" },
+                { key: "expiracao", label: "Expiração" },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setOrdenacao(key)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    ordenacao === key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -732,12 +773,9 @@ export default function CarteiraAtiva() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {/* Expirados primeiro */}
-                {carteira
-                  .sort((a, b) => (a.expirado === b.expirado ? a.diasRestantes - b.diasRestantes : a.expirado ? -1 : 1))
-                  .map((item) => (
-                    <CarteiraCard key={item.id} item={item} onRefresh={refetch} />
-                  ))}
+                {carteiraOrdenada.map((item) => (
+                  <CarteiraCard key={item.id} item={item} onRefresh={refetch} />
+                ))}
               </div>
             )}
           </TabsContent>
