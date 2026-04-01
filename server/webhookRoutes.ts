@@ -3,6 +3,13 @@ import * as db from './db';
 
 const router = Router();
 
+/** Mascara dados pessoais para logs — exibe só primeiros 3 chars + *** */
+function maskPII(value: string | undefined | null): string {
+  if (!value) return '(vazio)';
+  if (value.length <= 3) return '***';
+  return `${value.substring(0, 3)}***`;
+}
+
 /**
  * Busca os dados completos do lead via Graph API do Facebook
  */
@@ -151,9 +158,16 @@ async function fetchLeadDataFromFacebook(leadgenId: string): Promise<{
 router.post('/facebook/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+
+    // Validar token antes de qualquer processamento
+    const webhookConfig = await db.getWebhookConfigByToken(token);
+    if (!webhookConfig) {
+      return res.status(401).json({ success: false, error: 'Token inválido' });
+    }
+
     const body = req.body;
-    
-    console.log('[Webhook Facebook] Recebido:', JSON.stringify(body, null, 2));
+
+    console.log('[Webhook Facebook] Recebido — entry count:', body?.entry?.length ?? 0);
     
     let nome = '';
     let email = '';
@@ -275,13 +289,12 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     }
     
     console.log('[Webhook Facebook] Dados finais antes de processar:', {
-      nome,
-      email,
-      telefone,
+      nome: maskPII(nome),
+      email: maskPII(email),
+      telefone: maskPII(telefone),
       faixaRenda,
       formId,
       projectId,
-      webhookToken: token
     });
     
     // Processar lead via roleta
@@ -331,9 +344,16 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
 router.post('/facebook-foco/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+
+    // Validar token antes de qualquer processamento
+    const webhookFocoConfig = await db.getWebhookConfigByToken(token);
+    if (!webhookFocoConfig) {
+      return res.status(401).json({ success: false, error: 'Token inválido' });
+    }
+
     const body = req.body;
-    
-    console.log('[Webhook Foco] Recebido:', JSON.stringify(body, null, 2));
+
+    console.log('[Webhook Foco] Recebido — entry count:', body?.entry?.length ?? 0);
     
     let nome = '';
     let email = '';
@@ -591,9 +611,16 @@ router.get('/facebook/:token', async (req: Request, res: Response) => {
 router.post('/lead/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
+
+    // Validar token antes de qualquer processamento
+    const webhookLeadConfig = await db.getWebhookConfigByToken(token);
+    if (!webhookLeadConfig) {
+      return res.status(401).json({ success: false, error: 'Token inválido' });
+    }
+
     const body = req.body;
-    
-    console.log('[Webhook Lead] Recebido:', JSON.stringify(body, null, 2));
+
+    console.log('[Webhook Lead] Recebido — campos:', Object.keys(body).join(', '));
     
     // Extrair nome de várias possíveis chaves
     const leadNome = body.nome || body.name || body.full_name || 

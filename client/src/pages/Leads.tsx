@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearch, useLocation } from "wouter";
 import {
   Dialog,
@@ -158,21 +158,22 @@ export default function Leads() {
   const { openWithLead } = useCopilot();
   const [detailsDialog, setDetailsDialog] = useState(false);
   const [, setLocation] = useLocation();
-  
-  // Ler leadId da URL para abrir modal automaticamente
+
+  // Ler leadId da URL para abrir modal automaticamente — roda uma vez por mount
+  // Usa ref para não disparar novamente quando `leads` é atualizado pelo React Query
+  const urlLeadIdHandled = useRef(false);
   useEffect(() => {
+    if (urlLeadIdHandled.current || !leads) return;
     const urlParams = new URLSearchParams(window.location.search);
     const leadIdParam = urlParams.get('leadId');
-    
-    if (leadIdParam && leads) {
-      const leadId = parseInt(leadIdParam);
-      const lead = leads.find(l => l.id === leadId);
-      if (lead) {
-        setSelectedLead(lead);
-        setDetailsDialog(true);
-        // Limpar o parâmetro da URL após abrir o modal
-        window.history.replaceState({}, '', '/leads');
-      }
+    if (!leadIdParam) return;
+    const leadId = parseInt(leadIdParam);
+    const lead = leads.find(l => l.id === leadId);
+    if (lead) {
+      urlLeadIdHandled.current = true;
+      setSelectedLead(lead);
+      setDetailsDialog(true);
+      window.history.replaceState({}, '', '/leads');
     }
   }, [leads]);
   const [interactionDialog, setInteractionDialog] = useState(false);

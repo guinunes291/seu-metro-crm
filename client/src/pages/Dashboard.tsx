@@ -161,64 +161,44 @@ export default function Dashboard() {
     return getDateRange(filterPreset);
   }, [filterPreset, customDateRange]);
   
+  // Opções padrão para queries do dashboard do gestor:
+  // staleTime de 2 min evita re-fetch em cada troca de aba/foco
+  // refetchInterval de 5 min mantém dados atualizados sem avalanche de requests
+  const gestorQueryOpts = { enabled: isGestor, staleTime: 2 * 60 * 1000, refetchInterval: 5 * 60 * 1000 };
+
   // Queries para o dashboard do gestor
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  
+  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorQueryOpts);
+  const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+  const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+  const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+  const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+
   // Queries para gráficos do gestor
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
     { dias: 30 },
-    { enabled: isGestor }
+    { enabled: isGestor, staleTime: 5 * 60 * 1000 }
   );
   const { data: dadosFunil } = trpc.graficos.funil.useQuery(
     { dias: 30 },
-    { enabled: isGestor }
-  );
-  
-  // Query de leads para o gestor (para o card de urgência)
-  const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
-    enabled: isGestor
-  });
-  
-  // Query para o relatório de leads criados por corretor
-  const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  
-  // Queries para tabelas de contratos fechados
-  const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
-  const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(
-    dateFilter,
-    { enabled: isGestor }
+    { enabled: isGestor, staleTime: 5 * 60 * 1000 }
   );
 
+  // Query de leads para o gestor (para o card de urgência)
+  const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
+    enabled: isGestor,
+    staleTime: 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+  });
+
+  // Query para o relatório de leads criados por corretor
+  const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, gestorQueryOpts);
+
+  // Queries para tabelas de contratos fechados
+  const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(dateFilter, gestorQueryOpts);
+  const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(dateFilter, gestorQueryOpts);
+
   // Query de métricas de distratos (filtrada pelo mesmo período do dashboard)
-  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(
-    dateFilter,
-    { enabled: isGestor }
-  );
+  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(dateFilter, gestorQueryOpts);
   
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR

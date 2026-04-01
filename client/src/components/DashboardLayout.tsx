@@ -39,7 +39,7 @@ import {
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
@@ -269,6 +269,7 @@ function DashboardContent({
   const isMobile = useIsMobile();
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const utils = trpc.useUtils();
   
   // Estado dos grupos abertos/fechados
@@ -301,28 +302,31 @@ function DashboardContent({
     refetchInterval: 30000,
   });
 
-  // Função para tocar som ao mudar status
-  const playStatusSound = (isPresente: boolean) => {
+  // Função para tocar som ao mudar status — reutiliza AudioContext singleton para evitar memory leak
+  const playStatusSound = useCallback((isPresente: boolean) => {
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const audioContext = audioContextRef.current;
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = isPresente ? 880 : 440;
       oscillator.type = 'sine';
-      
+
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
     } catch (e) {
       console.log('Som não suportado');
     }
-  };
+  }, []);
 
   // Mutation para alterar status
   const alterarStatusMutation = trpc.corretores.alterarMeuStatus.useMutation({

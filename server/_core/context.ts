@@ -15,8 +15,14 @@ export async function createContext(
 
   try {
     user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
+  } catch (error: unknown) {
     // Authentication is optional for public procedures.
+    // Log apenas rotas protegidas (ignora ruído de assets/health)
+    const url = opts.req.url ?? '';
+    if (!url.startsWith('/api/trpc/system.health')) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn('[Auth] Falha na autenticação:', { url, error: msg });
+    }
     user = null;
   }
 
