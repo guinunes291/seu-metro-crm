@@ -44,7 +44,7 @@ function FacebookTimerRelatorio({
   const inicio = dataInicio || defaultInicio;
   const fim = dataFim || defaultFim;
 
-  const { data, isLoading, error } = trpc.relatorios.leadsTimerPorCorretor.useQuery({
+  const { data, isLoading, error } = trpc.analytics.leadsTimerPorCorretor.useQuery({
     dataInicio: inicio.toISOString(),
     dataFim: fim.toISOString(),
   }, {
@@ -292,10 +292,10 @@ export default function Relatorios() {
   const { dataInicio, dataFim } = getDateRange();
 
   // Queries para todos os relatórios
-  const funilQuery = trpc.relatorios.funilConversao.useQuery({ dataInicio, dataFim });
-  const taxaConversaoQuery = trpc.relatorios.taxaConversaoPorCorretor.useQuery({ dataInicio, dataFim });
-  const tempoMedioQuery = trpc.relatorios.tempoMedioPorEtapa.useQuery({ dataInicio, dataFim });
-  const evolucaoVendasQuery = trpc.relatorios.evolucaoVendas.useQuery(
+  const funilQuery = trpc.analytics.funilConversao.useQuery({ dataInicio, dataFim });
+  const taxaConversaoQuery = trpc.analytics.taxaConversaoPorCorretor.useQuery({ dataInicio, dataFim });
+  const tempoMedioQuery = trpc.analytics.tempoMedioPorEtapa.useQuery({ dataInicio, dataFim });
+  const evolucaoVendasQuery = trpc.analytics.evolucaoVendas.useQuery(
     { 
       dataInicio: dataInicio || new Date(new Date().setMonth(new Date().getMonth() - 3)), 
       dataFim: dataFim || new Date(),
@@ -303,17 +303,17 @@ export default function Relatorios() {
     },
     { enabled: !!dataInicio || !!dataFim }
   );
-  const distribuicaoProjetosQuery = trpc.relatorios.distribuicaoVendasPorProjeto.useQuery({ dataInicio, dataFim });
-  const origemEfetivaQuery = trpc.relatorios.origemLeadsMaisEfetiva.useQuery({ dataInicio, dataFim });
-  const leadsPorHorarioQuery = trpc.relatorios.leadsPorHorarioEntrada.useQuery({ dataInicio, dataFim });
-  const rankingQuery = trpc.relatorios.rankingCorretores.useQuery({ dataInicio, dataFim });
-  const produtividadeQuery = trpc.relatorios.produtividadePorCorretor.useQuery({ dataInicio, dataFim });
-  const comparativoMensalQuery = trpc.relatorios.comparativoMensalCorretores.useQuery({
+  const distribuicaoProjetosQuery = trpc.analytics.distribuicaoVendasPorProjeto.useQuery({ dataInicio, dataFim });
+  const origemEfetivaQuery = trpc.analytics.origemLeadsMaisEfetiva.useQuery({ dataInicio, dataFim });
+  const leadsPorHorarioQuery = trpc.analytics.leadsPorHorarioEntrada.useQuery({ dataInicio, dataFim });
+  const rankingQuery = trpc.analytics.rankingCorretores.useQuery({ dataInicio, dataFim });
+  const produtividadeQuery = trpc.analytics.produtividadePorCorretor.useQuery({ dataInicio, dataFim });
+  const comparativoMensalQuery = trpc.analytics.comparativoMensalCorretores.useQuery({
     anoInicio: new Date().getFullYear() - 1,
     anoFim: new Date().getFullYear()
   });
-  const cargaTrabalhoQuery = trpc.relatorios.cargaTrabalho.useQuery();
-  const previsaoVendasQuery = trpc.relatorios.previsaoVendas.useQuery();
+  const cargaTrabalhoQuery = trpc.analytics.cargaTrabalho.useQuery();
+  const previsaoVendasQuery = trpc.analytics.previsaoVendas.useQuery();
 
   const isLoading = funilQuery.isLoading || taxaConversaoQuery.isLoading;
 

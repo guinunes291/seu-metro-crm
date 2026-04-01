@@ -5223,3 +5223,9 @@
 ## Bug Fix: Corretores ciclando entre elegível/não elegível no mesmo dia
 - [ ] Investigar por que corretores recebem leads, perdem elegibilidade e voltam a ser elegíveis
 - [ ] Corrigir lógica de elegibilidade para evitar o ciclo indesejado
+
+## Merge Branch: correções de relatórios (claude/review-optimize-code-DfO8R)
+- [x] Aplicar Dashboard.tsx com tabelas shadcn/ui e estados vazios melhores
+- [x] Corrigir namespace trpc.relatorios → trpc.analytics em Relatorios.tsx (página estava em branco)
+- [x] Preservar Carteira Ativa (não removida)
+- [x] Manter threshold de 40 leads e 90% (não alterado para 30/60%)
