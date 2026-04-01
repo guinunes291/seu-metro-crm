@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import { leads, users, logTransferencias, distributionLog } from "../drizzle/schema";
 import { eq, and, lt, ne, sql, inArray } from "drizzle-orm";
 import { agora } from "./timezone";
+import { getLeadsProtegidosCarteira } from "./routers/carteiraAtiva";
 
 /**
  * Job de Transferência Automática de Leads
@@ -50,7 +51,14 @@ export async function verificarTransferenciasAutomaticas() {
     // Contador global para round-robin entre todos os leads
     let roundRobinIndex = 0;
 
-    for (const lead of leadsParaTransferir) {
+    // ⚠️ IMUNIDADE: Buscar todos os leads protegidos pela Carteira Ativa
+    const leadsProtegidos = new Set(await getLeadsProtegidosCarteira());
+    const leadsElegiveis = leadsParaTransferir.filter(l => !leadsProtegidos.has(l.id));
+    if (leadsProtegidos.size > 0) {
+      console.log(`[Transferência Automática] ${leadsProtegidos.size} leads IMUNES (Carteira Ativa) ignorados`);
+    }
+
+    for (const lead of leadsElegiveis) {
       try {
         // Buscar corretores que já trabalharam este lead (via log de distribuição)
         const corretoresQueJaTrabalharamRows = await db

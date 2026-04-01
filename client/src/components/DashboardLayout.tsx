@@ -36,7 +36,8 @@ import {
   Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
-  FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash
+  FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
+  Shield
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -70,6 +71,7 @@ const menuGroups = [
     icon: Users,
     items: [
       { icon: Users, label: "Meus Leads", path: "/leads" },
+      { icon: Shield, label: "Carteira Ativa", path: "/carteira-ativa" },
       { icon: Kanban, label: "Kanban", path: "/kanban" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda", roles: ["corretor"] },

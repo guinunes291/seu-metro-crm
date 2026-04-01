@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import { distribuirLeadAutomatico } from "./distribution";
 import { leads } from "../drizzle/schema";
 import { and, eq, lt, isNotNull } from "drizzle-orm";
+import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
 
 /**
  * Job de transferência automática de leads sem interação
@@ -10,7 +11,8 @@ import { and, eq, lt, isNotNull } from "drizzle-orm";
  * 1. Busca leads com aguardandoTransferencia = true
  * 2. Verifica se dataUltimaInteracao foi há mais de 2 dias
  * 3. Transfere para outro corretor (exceto origem "captacao_corretor")
- * 4. Novo corretor recebe lead em status "em_atendimento" com follow-up para amanhã
+ * 4. Leads na Carteira Ativa são IMUNES a esta transferência
+ * 5. Novo corretor recebe lead em status "em_atendimento" com follow-up para amanhã
  */
 export async function verificarTransferenciasAutomaticas() {
   console.log("[Transferência Job] Verificando leads para transferência automática...");
@@ -45,16 +47,21 @@ export async function verificarTransferenciasAutomaticas() {
     
     let transferidos = 0;
     let erros = 0;
+    let imunes = 0;
     
     for (const lead of leadsParaTransferir) {
       try {
         // Não transferir leads de origem "captacao_corretor"
         if (lead.origem === "captacao_corretor") {
           console.log(`[Transferência Job] Lead ${lead.id} ignorado (origem: captacao_corretor)`);
-          
-          // Lead de captação própria não é transferido
-          console.log(`[Transferência Job] Lead ${lead.id} não será transferido (captação própria)`);
-          
+          continue;
+        }
+        
+        // ⚠️ IMUNIDADE: Não transferir leads protegidos pela Carteira Ativa
+        const protegido = await isLeadProtegidoCarteira(lead.id);
+        if (protegido) {
+          console.log(`[Transferência Job] Lead ${lead.id} IMUNE (Carteira Ativa ativa)`);
+          imunes++;
           continue;
         }
         
@@ -64,9 +71,6 @@ export async function verificarTransferenciasAutomaticas() {
         if (resultado.success) {
           transferidos++;
           console.log(`[Transferência Job] Lead ${lead.id} transferido com sucesso para corretor ${resultado.corretorId}`);
-          
-          // Lead transferido com sucesso
-          console.log(`[Transferência Job] Lead ${lead.id} transferido com sucesso`);
         } else {
           erros++;
           console.error(`[Transferência Job] Erro ao transferir lead ${lead.id}:`, resultado.message);
@@ -77,9 +81,9 @@ export async function verificarTransferenciasAutomaticas() {
       }
     }
     
-    console.log(`[Transferência Job] Concluído: ${transferidos} transferidos, ${erros} erros`);
+    console.log(`[Transferência Job] Concluído: ${transferidos} transferidos, ${imunes} imunes (Carteira Ativa), ${erros} erros`);
     
-    return { transferidos, erros };
+    return { transferidos, erros, imunes };
   } catch (error) {
     console.error("[Transferência Job] Erro na verificação:", error);
     return { transferidos: 0, erros: 0 };

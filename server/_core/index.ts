@@ -208,6 +208,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job Notion:", err);
     });
+
+    // Inicializar job da Carteira Ativa (expiração + lembretes de tarefas)
+    import("../carteiraAtivaJob").then(({ iniciarCarteiraAtivaJob }) => {
+      iniciarCarteiraAtivaJob();
+      console.log("[Job] Carteira Ativa inicializada (verifica expiração a cada 30min)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job Carteira Ativa:", err);
+    });
   });
 }
 

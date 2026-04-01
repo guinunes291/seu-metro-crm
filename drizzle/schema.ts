@@ -2272,3 +2272,67 @@ export const jobControl = mysqlTable("job_control", {
 });
 export type JobControl = typeof jobControl.$inferSelect;
 export type InsertJobControl = typeof jobControl.$inferInsert;
+
+// ============================================================================
+// CARTEIRA ATIVA
+// ============================================================================
+/**
+ * Carteira Ativa: leads que o corretor está tratando ativamente.
+ * - Proteção de 15 dias contra transferência automática
+ * - Renovações de 3 dias após vencimento (ilimitadas)
+ * - Limite de 25% dos leads totais do corretor
+ * - Visível para gestor/admin
+ */
+export const carteiraAtiva = mysqlTable("carteira_ativa", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  // Prazo de proteção: 15 dias iniciais, renovações de 3 dias
+  protecaoAte: timestamp("protecaoAte").notNull(),
+  // Número de renovações de 3 dias após os 15 dias iniciais
+  renovacoes: int("renovacoes").default(0).notNull(),
+  // Observação livre do corretor sobre o cliente
+  observacao: text("observacao"),
+  // Controle de notificação de expiração iminente
+  notificadoExpiracao: boolean("notificadoExpiracao").default(false).notNull(),
+  // true = proteção ativa, false = encerrada (corretor não renovou)
+  ativo: boolean("ativo").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  carteiraLeadIdx: index("carteira_lead_idx").on(table.leadId),
+  carteiraCorretorIdx: index("carteira_corretor_idx").on(table.corretorId),
+  carteiraAtivoIdx: index("carteira_ativo_idx").on(table.ativo),
+  carteiraLeadCorretorIdx: index("carteira_lead_corretor_idx").on(table.leadId, table.corretorId),
+}));
+export type CarteiraAtiva = typeof carteiraAtiva.$inferSelect;
+export type InsertCarteiraAtiva = typeof carteiraAtiva.$inferInsert;
+
+// ============================================================================
+// TAREFAS DA CARTEIRA ATIVA
+// ============================================================================
+/**
+ * Tarefas futuras vinculadas a um lead na Carteira Ativa.
+ * O corretor cria lembretes com texto livre e data/hora.
+ * No dia da tarefa, o CRM notifica o corretor.
+ */
+export const carteiraTarefas = mysqlTable("carteira_tarefas", {
+  id: int("id").autoincrement().primaryKey(),
+  carteiraId: int("carteiraId").notNull(),
+  leadId: int("leadId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  descricao: text("descricao").notNull(),
+  dataLembrete: timestamp("dataLembrete").notNull(),
+  concluida: boolean("concluida").default(false).notNull(),
+  dataConclusao: timestamp("dataConclusao"),
+  notificacaoEnviada: boolean("notificacaoEnviada").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  tarefaCarteiraIdx: index("tarefa_carteira_idx").on(table.carteiraId),
+  tarefaCorretorIdx: index("tarefa_corretor_idx").on(table.corretorId),
+  tarefaDataLembreteIdx: index("tarefa_data_lembrete_idx").on(table.dataLembrete),
+  tarefaConcluidaIdx: index("tarefa_concluida_idx").on(table.concluida),
+}));
+export type CarteiraTarefa = typeof carteiraTarefas.$inferSelect;
+export type InsertCarteiraTarefa = typeof carteiraTarefas.$inferInsert;

@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, protectedProcedure, gestorProcedure, router } from "./trpc";
 import { verificarTransferenciasAutomaticas } from "../transferenciaAutomaticaJob";
+import { getLeadsProtegidosCarteira } from "../routers/carteiraAtiva";
 
 export const systemRouter = router({
   health: publicProcedure
@@ -55,7 +56,9 @@ export const systemRouter = router({
       const dataLimite = new Date();
       dataLimite.setDate(dataLimite.getDate() - input.diasParado);
       
-      const leadsElegiveis = await db
+      // ⚠️ IMUNIDADE: Buscar leads protegidos pela Carteira Ativa
+      const idsProtegidos = await getLeadsProtegidosCarteira();
+      const leadsElegiveisRaw = await db
         .select({
           id: leads.id,
           nome: leads.nome,
@@ -70,6 +73,11 @@ export const systemRouter = router({
             ne(leads.origem, "captacao_corretor") // Não redistribuir leads de captação própria
           )
         );
+      const protegidosSet = new Set(idsProtegidos);
+      const leadsElegiveis = leadsElegiveisRaw.filter(l => !protegidosSet.has(l.id));
+      if (idsProtegidos.length > 0) {
+        console.log(`[redistribuirLeadsParados] ${idsProtegidos.length} leads IMUNES (Carteira Ativa) ignorados`);
+      }
       
       if (leadsElegiveis.length === 0) {
         return {
@@ -352,7 +360,11 @@ export const systemRouter = router({
       const dataLimite = new Date();
       dataLimite.setDate(dataLimite.getDate() - 2);
       
-      const leadsElegiveis = await db
+      // ⚠️ IMUNIDADE: Buscar leads protegidos pela Carteira Ativa
+      const idsProtegidosCarteira = await getLeadsProtegidosCarteira();
+      const protegidosSetCarteira = new Set(idsProtegidosCarteira);
+      
+      const leadsElegiveisRaw2 = await db
         .select({
           id: leads.id,
           corretorId: leads.corretorId,
@@ -372,6 +384,10 @@ export const systemRouter = router({
             )
           )
         );
+      const leadsElegiveis = leadsElegiveisRaw2.filter(l => !protegidosSetCarteira.has(l.id));
+      if (idsProtegidosCarteira.length > 0) {
+        console.log(`[redistribuirLeadsParadosDistribuicao] ${idsProtegidosCarteira.length} leads IMUNES (Carteira Ativa) ignorados`);
+      }
       
       if (leadsElegiveis.length === 0) {
         return {

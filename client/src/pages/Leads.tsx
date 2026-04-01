@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
-  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText
+  Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +52,7 @@ import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 import { ExecutandoComIA } from "@/components/ExecutandoComIA";
+import { CarteiraAtivaQuickButton } from "@/pages/CarteiraAtiva";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -1485,6 +1487,11 @@ export default function Leads() {
                         )}
                       </div>
                       
+                      {/* Botão Carteira Ativa (apenas para o próprio corretor) */}
+                      {!isGestor && selectedLead.status !== 'perdido' && selectedLead.status !== 'contrato_fechado' && (
+                        <CarteiraAtivaQuickButton leadId={selectedLead.id} leadNome={selectedLead.nome} />
+                      )}
+
                       {/* Botões de Transferência e Reatribuição (apenas para gestores) */}
                       {isGestor && corretores && corretores.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">

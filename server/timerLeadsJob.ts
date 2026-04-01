@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import { leads, distributionLog, filaDistribuicao, users, configuracaoProjetoFoco } from "../drizzle/schema";
 import { and, eq, lt, sql, ne, inArray } from "drizzle-orm";
 import { getUserById, getProjectById } from "./db";
+import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
 
 /**
  * ID do admin Guilherme Nunes - fallback quando nenhum corretor está disponível
@@ -178,6 +179,13 @@ export async function verificarTimerLeads() {
 
     for (const lead of leadsExpirados) {
       try {
+        // ⚠️ IMUNIDADE: Leads na Carteira Ativa são imunes ao timer de 30 min
+        const protegido = await isLeadProtegidoCarteira(lead.id);
+        if (protegido) {
+          console.log(`[Timer Job] Lead ${lead.id} IMUNE (Carteira Ativa ativa) - ignorando`);
+          continue;
+        }
+
         const tipoFila = lead.tipoFilaOrigem || "geral";
 
         console.log(

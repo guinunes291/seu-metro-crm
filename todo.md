@@ -5164,3 +5164,43 @@
 - [x] Corrigir addInteraction — corretor não pode auto-atribuir lead sem dono
 - [x] Migrar controle de backup de /tmp para banco de dados (tabela job_control)
 - [x] Retry automático nos emails de notificação (até 3 tentativas com backoff exponencial)
+
+## Carteira Ativa
+- [ ] Criar tabela carteira_ativa no schema
+- [ ] Criar tabela carteira_tarefas no schema
+- [ ] Rodar pnpm db:push para migrar o banco
+- [ ] Criar router carteiraAtiva.ts com procedures
+- [ ] Integrar proteção contra transferência automática
+- [ ] Job de verificação de expiração da carteira ativa
+- [ ] Job de lembretes de tarefas
+- [ ] Criar página CarteiraAtiva.tsx para corretores
+- [ ] Criar visão do gestor/admin na página CarteiraAtiva.tsx
+- [ ] Adicionar rota /carteira-ativa no App.tsx
+- [ ] Adicionar item de navegação no DashboardLayout.tsx
+- [ ] Registrar no histórico do lead ao adicionar/remover/renovar
+- [ ] Limite de 25 porcento dos leads totais da base do corretor
+- [ ] Testes unitários para as procedures da Carteira Ativa
+
+## Carteira Ativa
+- [x] Criar tabelas carteira_ativa e carteira_tarefas no schema do banco
+- [x] Rodar migration (0015_flaky_umar.sql)
+- [x] Criar router carteiraAtiva.ts com procedures: adicionar, listar, renovar, encerrar, criarTarefa, concluirTarefa, excluirTarefa, tarefasHoje, visaoGestor
+- [x] Imunidade total: transferenciaJob.ts, transferenciaAutomaticaJob.ts, timerLeadsJob.ts, systemRouter.ts redistribuição manual
+- [x] Criar página CarteiraAtiva.tsx (cards, tarefas, renovação, encerrar, visão gestor)
+- [x] Componente CarteiraAtivaQuickButton exportado e integrado no modal de detalhes do lead (Leads.tsx)
+- [x] Adicionar rota /carteira-ativa no App.tsx
+- [x] Adicionar item "Carteira Ativa" no menu do DashboardLayout
+- [x] Criar job carteiraAtivaJob.ts (expiração a cada 30min + lembretes de tarefas às 8-10h)
+- [x] Registrar carteiraAtivaJob no server/_core/index.ts
+
+## Carteira Ativa
+- [x] Criar tabelas carteira_ativa e carteira_tarefas no schema do banco
+- [x] Rodar migration (0015_flaky_umar.sql)
+- [x] Criar router carteiraAtiva.ts com procedures: adicionar, listar, renovar, encerrar, criarTarefa, concluirTarefa, excluirTarefa, tarefasHoje, visaoGestor
+- [x] Imunidade total: transferenciaJob.ts, transferenciaAutomaticaJob.ts, timerLeadsJob.ts, systemRouter.ts redistribuicao manual
+- [x] Criar pagina CarteiraAtiva.tsx (cards, tarefas, renovacao, encerrar, visao gestor)
+- [x] Componente CarteiraAtivaQuickButton exportado e integrado no modal de detalhes do lead (Leads.tsx)
+- [x] Adicionar rota /carteira-ativa no App.tsx
+- [x] Adicionar item Carteira Ativa no menu do DashboardLayout
+- [x] Criar job carteiraAtivaJob.ts (expiracao a cada 30min + lembretes de tarefas as 8-10h)
+- [x] Registrar carteiraAtivaJob no server/_core/index.ts

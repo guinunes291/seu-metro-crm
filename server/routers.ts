@@ -18,6 +18,7 @@ import * as onboarding from "./modules/onboarding";
 import { comissoesRouter } from "./routers/comissoes";
 import { templatesRouter } from "./routers/templates";
 import { iaRouter } from "./routers/ia";
+import { carteiraAtivaRouter } from "./routers/carteiraAtiva";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -100,6 +101,7 @@ export const appRouter = router({
   comissoes: comissoesRouter,
   templates: templatesRouter,
   ia: iaRouter,
+  carteiraAtiva: carteiraAtivaRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -60,7 +60,7 @@ import LimpezaDuplicatas from "@/pages/LimpezaDuplicatas";
 import AtualizarProjetosEmMassa from "@/pages/AtualizarProjetosEmMassa";
 import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
 import RelatorioEscolhasDiarias from "@/pages/RelatorioEscolhasDiarias";
-
+import CarteiraAtiva from "@/pages/CarteiraAtiva";
 import { AlertasNotification } from "./components/AlertasNotification";
 import { CorretorNotifications } from "./components/CorretorNotifications";
 
@@ -120,8 +120,8 @@ function Router() {
       <Route path="/log-transferencias" component={LogTransferencias} />
       <Route path="/gestao-equipes" component={GestaoEquipes} />
       <Route path="/minha-equipe" component={MinhaEquipe} />
+      <Route path="/carteira-ativa" component={CarteiraAtiva} />
 
-      
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />
       <Route path="/chatbot" component={ChatbotPublico} />
