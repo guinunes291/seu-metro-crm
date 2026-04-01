@@ -13,8 +13,6 @@ interface Lead {
   nome: string;
   empreendimento?: string;
   projetoCustom?: string;
-  regiao?: string;
-  cidade?: string;
 }
 
 interface ScriptWhatsAppIAProps {
@@ -191,12 +189,7 @@ export function ScriptWhatsAppIA({ lead, nomeEmpreendimento }: ScriptWhatsAppIAP
               <span className="font-medium">{empreendimento}</span>
             </>
           )}
-          {regiao && (
-            <>
-              <span className="text-muted-foreground">Região:</span>
-              <span className="font-medium">{regiao}</span>
-            </>
-          )}
+
           <span className="text-muted-foreground">Corretor:</span>
           <span className="font-medium">{user?.name || "—"}</span>
         </div>

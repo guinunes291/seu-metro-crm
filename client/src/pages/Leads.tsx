@@ -1641,8 +1641,6 @@ export default function Leads() {
                       status: selectedLead.status,
                       projectId: selectedLead.projectId,
                       projetoCustom: selectedLead.projetoCustom,
-                      regiao: selectedLead.regiao,
-                      cidade: selectedLead.cidade,
                     }}
                     nomeEmpreendimento={
                       projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
