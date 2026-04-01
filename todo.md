@@ -5215,3 +5215,11 @@
 - [x] Migrar 28.647 leads em aguardando_atendimento para tabela lead_estoque
 - [x] Nulificar corretorId dos leads migrados para que a distribuição os processe
 - [x] Corrigir distribuirLeadsDoEstoque para usar getCorretoresElegiveisParaDistribuicao (filtra por presente)
+
+## Bug Fix: Distribuição manual retorna 0 distribuídos, 200 falhas
+- [ ] Investigar erro exato na função distribuirTodosLeadsNaoDistribuidos
+- [ ] Corrigir a causa raiz das 200 falhas por ciclo
+
+## Bug Fix: Corretores ciclando entre elegível/não elegível no mesmo dia
+- [ ] Investigar por que corretores recebem leads, perdem elegibilidade e voltam a ser elegíveis
+- [ ] Corrigir lógica de elegibilidade para evitar o ciclo indesejado

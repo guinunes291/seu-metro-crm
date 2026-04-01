@@ -457,7 +457,7 @@ export default function ControleDistribuicao() {
                   let motivo = "";
                   if (corretor.status !== "presente") {
                     motivo = "Ausente";
-                  } else if (corretor.totalLeads >= 30 && corretor.taxaTrabalho < 0.9) {
+                  } else if (corretor.totalLeads >= 40 && corretor.taxaTrabalho < 0.9) {
                     motivo = "Taxa < 90%";
                   } else {
                     motivo = "Outro";
@@ -606,9 +606,9 @@ export default function ControleDistribuicao() {
           <div className="flex items-start gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
-              <p className="font-medium">Mínimo de 30 Leads Garantido</p>
+              <p className="font-medium">Mínimo de 40 Leads Garantido</p>
               <p className="text-sm text-muted-foreground">
-                Corretores com menos de 30 leads sempre recebem novos leads
+                Corretores com menos de 40 leads ativos sempre recebem novos leads
               </p>
             </div>
           </div>
@@ -617,7 +617,7 @@ export default function ControleDistribuicao() {
             <div>
               <p className="font-medium">Taxa de Trabalho de 90%</p>
               <p className="text-sm text-muted-foreground">
-                Corretores com 30+ leads devem ter trabalhado pelo menos 90% deles
+                Corretores com 40+ leads ativos devem ter trabalhado pelo menos 90% deles
               </p>
             </div>
           </div>

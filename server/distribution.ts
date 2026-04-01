@@ -4,7 +4,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40; // Carga inicial mínima por corretor (primeiro recebimento)
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60% dos leads ATIVOS trabalhados para receber mais (AppScript)
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90% dos leads ATIVOS trabalhados para receber mais
 const LOTE_SIZE = 200; // Total de leads por rodada
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 const MAX_LEADS_ATIVOS = 99999; // Sem limite máximo de leads ativos por corretor
@@ -25,7 +25,7 @@ interface CorretorStatus {
  * Regras:
  * 1. Status deve ser "presente"
  * 2. Deve ter menos de MAX_LEADS_ATIVOS leads ativos (aguardando_atendimento + em_atendimento)
- *    OU ter trabalhado pelo menos 90% dos seus leads ativos
+ *    OU ter trabalhado pelo menos 90% (PERCENTUAL_CONCLUSAO_MINIMO) dos seus leads ativos
  * 
  * IMPORTANTE: Usa leads ATIVOS (não histórico total) para não bloquear corretores
  * que acumularam leads antigos sem nunca os ter trabalhado.
@@ -373,7 +373,7 @@ export async function distribuirLeadsEmLote(
  * Regras:
  * - Distribui leads com corretorId = null (sem corretor) OU com corretorId de um admin/gestor
  * - Apenas para corretores presentes
- * - Apenas para corretores com taxa de trabalho >= 60% ou menos de 40 leads
+ * - Apenas para corretores com taxa de trabalho >= 90% ou menos de 40 leads
  * - Limite de 20 leads por ação
  */
 export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
@@ -434,7 +434,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
 
 /**
  * Distribui leads em lote apenas para corretores elegíveis
- * (presentes e com taxa de trabalho > 40%)
+ * (presentes e com taxa de trabalho >= 90% ou menos de 40 leads ativos)
  */
 async function distribuirLeadsEmLoteParaElegiveis(
   leadIds: number[]
@@ -454,7 +454,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
     details: [] as Array<{ leadId: number; success: boolean; corretorId?: number; message?: string }>,
   };
 
-  // Buscar corretores elegíveis (presentes e com taxa de trabalho > 40%)
+  // Buscar corretores elegíveis (presentes e com taxa de trabalho >= 90% ou menos de 40 leads ativos)
   const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
 
   if (corretoresElegiveis.length === 0) {
@@ -463,7 +463,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
       results.details.push({
         leadId,
         success: false,
-        message: "Nenhum corretor elegível disponível (presente e com taxa de trabalho > 40%)",
+        message: "Nenhum corretor elegível disponível (presente e com taxa de trabalho >= 90% ou menos de 40 leads ativos)",
       });
       results.failed++;
     }
@@ -547,7 +547,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
  * Retorna lista de IDs de corretores elegíveis para distribuição
  * Critérios:
  * - Status = "presente"
- * - Menos de 40 leads (carga inicial mínima) OU taxa de trabalho >= 60%
+ * - Menos de 40 leads (carga inicial mínima) OU taxa de trabalho >= 90%
  * Otimizado: usa uma única query SQL com agregação em vez de N+1 queries
  */
 async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
@@ -682,6 +682,54 @@ export async function distribuirLeadsDoEstoque(): Promise<{
 
   mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque...`);
 
+  // Buscar corretores elegíveis UMA vez antes do loop (evita N+1 queries)
+  // e rastrear quantos leads cada corretor recebeu neste ciclo
+  const corretoresElegiveisInicial = await getCorretoresElegiveisParaDistribuicao();
+  if (corretoresElegiveisInicial.length === 0) {
+    // Incrementar tentativas de todos os leads do lote
+    for (const estoqueItem of leadsEmEstoque) {
+      await db
+        .update(leadEstoque)
+        .set({
+          tentativasDistribuicao: estoqueItem.tentativasDistribuicao + 1,
+          ultimaTentativa: new Date(),
+        })
+        .where(eq(leadEstoque.id, estoqueItem.id));
+    }
+    return { distribuidos: 0, erros: 0, mensagens: ["Nenhum corretor elegível disponível (presente e com taxa de trabalho >= 90% ou menos de 40 leads ativos)"] };
+  }
+
+  // Mapa de limite restante por corretor neste ciclo
+  // Buscar limite diário e leads já recebidos hoje para cada corretor elegível
+  const limitePorCorretor = new Map<number, number>();
+  for (const corretorId of corretoresElegiveisInicial) {
+    const corretorInfo = await db
+      .select({ limiteDiarioLeads: users.limiteDiarioLeads })
+      .from(users)
+      .where(eq(users.id, corretorId))
+      .limit(1);
+    const limite = corretorInfo[0]?.limiteDiarioLeads ?? 50;
+    // Calcular início do dia SP (UTC-3)
+    const agora = new Date();
+    const offsetSP = -3 * 60;
+    const agoraSP = new Date(agora.getTime() + (offsetSP - agora.getTimezoneOffset()) * 60 * 1000);
+    const inicioDiaSP = new Date(agoraSP);
+    inicioDiaSP.setHours(0, 0, 0, 0);
+    const inicioDiaUTC = new Date(inicioDiaSP.getTime() - offsetSP * 60 * 1000);
+    const [{ leadsHoje }] = await db
+      .select({ leadsHoje: sql<number>`COUNT(*)` })
+      .from(distributionLog)
+      .where(and(eq(distributionLog.corretorId, corretorId), sql`${distributionLog.createdAt} >= ${inicioDiaUTC}`));
+    const restante = limite - (Number(leadsHoje) || 0);
+    if (restante > 0) {
+      limitePorCorretor.set(corretorId, restante);
+    }
+  }
+
+  // Filtrar apenas corretores com capacidade restante hoje
+  let corretoresDisponiveis = corretoresElegiveisInicial.filter(id => (limitePorCorretor.get(id) ?? 0) > 0);
+  let corretorIndex = 0;
+
   for (const estoqueItem of leadsEmEstoque) {
     try {
       // Buscar informações do lead
@@ -706,10 +754,10 @@ export async function distribuirLeadsDoEstoque(): Promise<{
 
       const leadData = lead[0];
 
-      // Buscar corretores elegíveis (apenas presentes, com limite diário e taxa de trabalho)
-      const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
+      // Remover corretores que atingiram o limite neste ciclo
+      corretoresDisponiveis = corretoresDisponiveis.filter(id => (limitePorCorretor.get(id) ?? 0) > 0);
 
-      if (corretoresElegiveis.length === 0) {
+      if (corretoresDisponiveis.length === 0) {
         // Ainda não há corretores disponíveis, incrementar tentativas
         await db
           .update(leadEstoque)
@@ -723,8 +771,12 @@ export async function distribuirLeadsDoEstoque(): Promise<{
         continue;
       }
 
-      // Selecionar o melhor corretor
-      const melhorCorretor = corretoresElegiveis[0];
+      // Round-robin entre corretores disponíveis
+      corretorIndex = corretorIndex % corretoresDisponiveis.length;
+      const melhorCorretor = corretoresDisponiveis[corretorIndex];
+      corretorIndex++;
+      // Decrementar o limite restante do corretor selecionado
+      limitePorCorretor.set(melhorCorretor, (limitePorCorretor.get(melhorCorretor) ?? 1) - 1);
 
       // Atualizar lead
       await db
