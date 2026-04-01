@@ -5147,3 +5147,10 @@
 - [x] Gatilho: lead redistribuído (timer) → cria tarefa no Notion
 - [x] Gatilho: novo corretor cadastrado → cria página de onboarding no Notion
 - [x] notionJob registrado no index.ts do servidor
+
+## Feature: Aba "Executando com IA" no painel do lead
+- [x] Criar componente QualificadorIA.tsx com lógica das 7 Dimensões
+- [x] Pré-carregar dados do lead (nome, renda, origem, observações, finalidade)
+- [x] Integrar aba "Executando com IA" no Dialog de detalhes do lead
+- [x] Estruturar Dialog em 3 abas: Detalhes | Copilot & Histórico | Executando com IA
+- [x] Escrever e passar testes unitários da lógica de qualificação (8/8 passando)

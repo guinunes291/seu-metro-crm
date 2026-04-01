@@ -50,6 +50,7 @@ import TransferirLeadButton from "@/components/TransferirLeadButton";
 import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
+import { QualificadorIA } from "@/components/QualificadorIA";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -1273,7 +1274,18 @@ export default function Leads() {
             </DialogHeader>
             
             {selectedLead && (
-              <div className="space-y-6">
+              <Tabs defaultValue="detalhes" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 mb-4">
+                  <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
+                  <TabsTrigger value="copilot">Copilot & Histórico</TabsTrigger>
+                  <TabsTrigger value="ia" className="flex items-center gap-1.5">
+                    <span>🤖</span> Executando com IA
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* ── ABA: DETALHES ── */}
+                <TabsContent value="detalhes">
+                <div className="space-y-6">
                 {/* Informações básicas */}
                 <div>
                   <h3 className="font-semibold mb-3">Informações de Contato</h3>
@@ -1520,6 +1532,13 @@ export default function Leads() {
                   />
                 </div>
 
+                </div>
+                </TabsContent>
+
+                {/* ── ABA: COPILOT & HISTÓRICO ── */}
+                <TabsContent value="copilot">
+                <div className="space-y-6">
+
                 <Separator />
 
                 {/* SMQ Copilot - Assistente de IA */}
@@ -1605,7 +1624,22 @@ export default function Leads() {
                     </div>
                   )}
                 </div>
-              </div>
+                </div>
+                </TabsContent>
+
+                {/* ── ABA: EXECUTANDO COM IA ── */}
+                <TabsContent value="ia">
+                  <QualificadorIA lead={{
+                    id: selectedLead.id,
+                    nome: selectedLead.nome,
+                    faixaRenda: selectedLead.faixaRenda,
+                    origem: selectedLead.origem,
+                    observacoes: selectedLead.observacoes,
+                    finalidadeImovel: selectedLead.finalidadeImovel,
+                    status: selectedLead.status,
+                  }} />
+                </TabsContent>
+              </Tabs>
             )}
           </DialogContent>
         </Dialog>
