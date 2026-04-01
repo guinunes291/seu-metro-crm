@@ -5156,3 +5156,11 @@
 - [x] Escrever e passar testes unitários da lógica de qualificação (8/8 passando)
 - [x] Aba "Executando com IA" - Script WhatsApp G.P.V.A. (procedure backend + componente frontend)
 - [x] Componente ExecutandoComIA.tsx (container com sub-abas: Qualificador + Script WhatsApp)
+
+## Merge branch claude/review-optimize-code-DfO8R + Melhorias
+- [x] Merge do branch claude/review-optimize-code-DfO8R no main (threshold 60%, timerAtivo, roles superintendente, segurança webhooks, PII logs, upload 10MB, AudioContext, Dashboard 12 req)
+- [x] Adicionar helmet (headers de segurança HTTP) no Express
+- [x] Rate limiting nos webhooks (/api/webhook/*) — máximo 10 req/min por token
+- [x] Corrigir addInteraction — corretor não pode auto-atribuir lead sem dono
+- [x] Migrar controle de backup de /tmp para banco de dados (tabela job_control)
+- [x] Retry automático nos emails de notificação (até 3 tentativas com backoff exponencial)

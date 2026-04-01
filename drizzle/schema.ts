@@ -2256,3 +2256,19 @@ export const escolhaDiariaFollowUp = mysqlTable("escolha_diaria_follow_up", {
 
 export type EscolhaDiariaFollowUp = typeof escolhaDiariaFollowUp.$inferSelect;
 export type InsertEscolhaDiariaFollowUp = typeof escolhaDiariaFollowUp.$inferInsert;
+
+// ============================================================================
+// CONFIGURAÇÕES DO SISTEMA (controle de jobs, parâmetros globais)
+// ============================================================================
+/**
+ * Tabela de configurações chave-valor do sistema.
+ * Usada para persistir estado de jobs (ex: data do último backup)
+ * sem depender de arquivos /tmp que são apagados em reinicializações.
+ */
+export const jobControl = mysqlTable("job_control", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type JobControl = typeof jobControl.$inferSelect;
+export type InsertJobControl = typeof jobControl.$inferInsert;

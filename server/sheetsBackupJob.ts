@@ -9,9 +9,10 @@
  */
 
 import { performSheetsBackup } from "./sheetsBackup";
-import { writeFileSync, readFileSync, existsSync } from "fs";
+import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
 
-const LAST_SHEETS_BACKUP_FILE = "/tmp/last-sheets-backup.txt";
+const LAST_SHEETS_BACKUP_KEY = "last_sheets_backup_date";
+
 const BACKUP_INTERVAL_MS = 60 * 60 * 1000; // 1 hora
 
 let isRunning = false;

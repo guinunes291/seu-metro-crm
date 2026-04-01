@@ -9,9 +9,10 @@
  * Planilha DRE: https://docs.google.com/spreadsheets/d/10GeJ8Zba4kFUJa2HwvUVu09BDkGuKCQGrpBDaLVlr38
  */
 import { sincronizarDRE } from "./dreSync";
-import { writeFileSync, readFileSync, existsSync } from "fs";
+import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
 
-const LAST_DRE_SYNC_FILE = "/tmp/last-dre-sync.txt";
+const LAST_DRE_SYNC_KEY = "last_dre_sync_date";
+
 const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hora
 
 let isRunning = false;

@@ -617,17 +617,15 @@ export const appRouter = router({
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
         }
         
-        // Se o lead não tem corretor, atribuir ao corretor que está registrando a interação
-        if (!lead.corretorId) {
-          await db.updateLead(input.leadId, {
-            corretorId: ctx.user.id,
-          });
-        }
-        
-        // Se o lead pertence a outro corretor, bloquear a interação
-        // Isso evita que um corretor acesse dados de leads transferidos para outro
-        if (ctx.user.role === 'corretor' && lead.corretorId && lead.corretorId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead foi transferido para outro corretor. Você não pode mais interagir com ele.' });
+        // Corretores só podem interagir com leads que lhes pertencem
+        // Não permitir auto-atribuição silenciosa de lead sem dono
+        if (ctx.user.role === 'corretor') {
+          if (!lead.corretorId) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead ainda não foi atribuído. Aguarde a distribuição automática ou solicite ao gestor.' });
+          }
+          if (lead.corretorId !== ctx.user.id) {
+            throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead pertence a outro corretor. Você não pode interagir com ele.' });
+          }
         }
         
         // Registrar interação na tabela interacoes

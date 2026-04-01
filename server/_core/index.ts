@@ -9,6 +9,8 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import webhookRoutes from "../webhookRoutes";
 import uploadRoutes from "../uploadRoutes";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -33,14 +35,36 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // Segurança HTTP: headers de proteção (HSTS, X-Frame-Options, X-Content-Type, etc.)
+  app.use(helmet({
+    contentSecurityPolicy: false, // Desabilitado para compatibilidade com Vite/React
+    crossOriginEmbedderPolicy: false,
+  }));
+
   // Limite de 10 MB cobre uploads de PDF/imagem sem expor o servidor a payloads gigantes
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
+
+  // Rate limiting para webhooks: máximo 10 requisições por minuto por token
+  const webhookRateLimit = rateLimit({
+    windowMs: 60 * 1000, // 1 minuto
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Muitas requisições. Tente novamente em 1 minuto.' },
+    keyGenerator: (req) => {
+      // Usar token do header como chave (mais preciso que IP para webhooks)
+      const token = (req.headers['x-webhook-token'] || req.headers['authorization'] || req.ip || 'unknown') as string;
+      return token;
+    },
+  });
+
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   
-  // Webhook routes (público, sem autenticação)
-  app.use('/api/webhook', webhookRoutes);
+  // Webhook routes (público, com rate limiting de 10 req/min por token)
+  app.use('/api/webhook', webhookRateLimit, webhookRoutes);
   
   // Upload routes (requer autenticação via cookie)
   app.use('/api', uploadRoutes);

@@ -8,19 +8,17 @@
  * Horário: diariamente às 3h da manhã (horário de Brasília, UTC-3)
  * Na inicialização: executa backup imediato se o backup de hoje ainda não foi feito.
  *
- * Rastreamento: usa arquivo /tmp/last-backup-date.txt para saber quando foi
- * o último backup (persiste enquanto o processo está rodando; na reinicialização
- * o arquivo some e o backup é executado imediatamente — comportamento desejado).
+ * Rastreamento: usa a tabela system_config no banco de dados para persistir
+ * a data do último backup entre reinicializações do servidor.
  */
 
 import { performBackup } from "./backup";
-import { writeFileSync, readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
 
 let isRunning = false;
 let checkInterval: ReturnType<typeof setInterval> | null = null;
 
-const LAST_BACKUP_FILE = join("/tmp", "last-backup-date.txt");
+const LAST_BACKUP_KEY = "last_backup_date";
 
 /**
  * Retorna a data de hoje no formato YYYY-MM-DD no fuso de Brasília
@@ -51,26 +49,17 @@ function hourBrasilia(): number {
 }
 
 /**
- * Lê a data do último backup do arquivo de controle
+ * Lê a data do último backup do banco de dados
  */
-function getLastBackupDate(): string | null {
-  try {
-    if (existsSync(LAST_BACKUP_FILE)) {
-      return readFileSync(LAST_BACKUP_FILE, "utf-8").trim();
-    }
-  } catch {}
-  return null;
+async function getLastBackupDate(): Promise<string | null> {
+  return await getSystemConfig(LAST_BACKUP_KEY);
 }
 
 /**
- * Salva a data do último backup no arquivo de controle
+ * Salva a data do último backup no banco de dados
  */
-function saveLastBackupDate(date: string): void {
-  try {
-    writeFileSync(LAST_BACKUP_FILE, date, "utf-8");
-  } catch (err) {
-    console.error("[Backup Job] Erro ao salvar data do backup:", err);
-  }
+async function saveLastBackupDate(date: string): Promise<void> {
+  await setSystemConfig(LAST_BACKUP_KEY, date);
 }
 
 /**
@@ -90,7 +79,7 @@ async function runBackup(reason: string = "agendado"): Promise<void> {
 
     if (result.success) {
       const today = todayBrasilia();
-      saveLastBackupDate(today);
+      await saveLastBackupDate(today);
       console.log(`[Backup Job] ✅ Backup concluído com sucesso!`);
       console.log(`[Backup Job] Arquivo: ${result.filename}`);
       console.log(`[Backup Job] URL: ${result.url}`);
@@ -121,7 +110,7 @@ export async function startBackupJob(): Promise<void> {
     "[Backup Job] Inicializando job de backup automático (diário às 3h, horário de Brasília)"
   );
 
-  const lastBackupDate = getLastBackupDate();
+  const lastBackupDate = await getLastBackupDate();
   const today = todayBrasilia();
 
   if (lastBackupDate !== today) {
@@ -140,7 +129,7 @@ export async function startBackupJob(): Promise<void> {
   checkInterval = setInterval(async () => {
     const hour = hourBrasilia();
     const currentDate = todayBrasilia();
-    const lastDate = getLastBackupDate();
+    const lastDate = await getLastBackupDate();
 
     // Executar se: hora >= 3h E backup de hoje ainda não foi feito
     if (hour >= 3 && lastDate !== currentDate) {

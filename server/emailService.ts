@@ -181,6 +181,35 @@ function buildEmailHtml({
 // NOTIFICAÇÃO: NOVO LEAD (distribuição inicial)
 // ============================================================================
 
+
+// ============================================================================
+// RETRY HELPER — até 3 tentativas com backoff exponencial (1s, 2s, 4s)
+// ============================================================================
+async function sendWithRetry(
+  transport: import('nodemailer').Transporter,
+  mailOptions: Parameters<import('nodemailer').Transporter['sendMail']>[0],
+  maxAttempts = 3
+): Promise<{ messageId: string }> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const info = await transport.sendMail(mailOptions);
+      if (attempt > 1) {
+        console.log(`[Email] Enviado na tentativa ${attempt}/${maxAttempts}`);
+      }
+      return info as { messageId: string };
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        const delayMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+        console.warn(`[Email] Tentativa ${attempt}/${maxAttempts} falhou. Retentando em ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function enviarNotificacaoLeadWebhook(dados: {
   corretorNome: string;
   corretorEmail: string;
@@ -237,7 +266,7 @@ export async function enviarNotificacaoLeadWebhook(dados: {
       footerNote: 'Acesse o sistema para registrar suas interações e acompanhar o lead.',
     });
 
-    const info = await transport.sendMail({
+    const info = await sendWithRetry(transport, {
       from,
       to: dados.corretorEmail,
       subject: `🔔 Novo Lead: ${dados.leadNome} — ${dados.leadOrigem}`,
@@ -318,7 +347,7 @@ export async function enviarNotificacaoLeadRedistribuido(dados: {
       footerNote: 'Acesse o sistema para registrar suas interações e acompanhar o lead.',
     });
 
-    const info = await transport.sendMail({
+    const info = await sendWithRetry(transport, {
       from,
       to: dados.corretorEmail,
       subject: `🔁 Lead Transferido: ${dados.leadNome} — Atenda agora!`,
@@ -344,7 +373,7 @@ export async function testarConfiguracao(emailDestino: string) {
       process.env.EMAIL_FROM ||
       'CRM Seu Metro Quadrado <noreply@seumetroquadrado.com.br>';
 
-    const info = await transport.sendMail({
+    const info = await sendWithRetry(transport, {
       from,
       to: emailDestino,
       subject: 'Teste de Configuração — CRM Seu Metro Quadrado',
