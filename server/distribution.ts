@@ -4,7 +4,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40;
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90%
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60%
 const LOTE_SIZE = 200; // Total de leads por rodada (aumentado para distribuição mais rápida)
 const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 
@@ -286,6 +286,8 @@ export async function distribuirLeadAutomatico(
           corretorId: melhorCorretor,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, leadId));
 
@@ -480,6 +482,8 @@ async function distribuirLeadsEmLoteParaElegiveis(
           corretorId,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, leadId));
 
@@ -488,7 +492,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
         leadId,
         corretorId,
         tipo: "automatica",
-        motivo: "Distribuição manual via botão Distribuir Agora",
+        motivo: "Distribuição automática em lote",
       });
 
       // Enviar notificação para o corretor
@@ -710,6 +714,8 @@ export async function distribuirLeadsDoEstoque(): Promise<{
           corretorId: melhorCorretor,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, estoqueItem.leadId));
 
