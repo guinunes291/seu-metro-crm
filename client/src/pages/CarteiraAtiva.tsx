@@ -278,6 +278,41 @@ function CarteiraCard({ item, onRefresh }: { item: any; onRefresh: () => void })
           </div>
         </div>
 
+        {/* Contadores de dias */}
+        <div className="flex items-center gap-3 mt-3 pt-2 border-t border-border/50">
+          {/* Dias na Carteira Ativa */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <CalendarDays className="h-3 w-3 text-blue-500" />
+              <span className="text-blue-700 dark:text-blue-400 font-medium">
+                {item.diasNaCarteira === 0
+                  ? "Hoje"
+                  : `${item.diasNaCarteira} dia${item.diasNaCarteira !== 1 ? "s" : ""} na carteira`}
+              </span>
+            </div>
+          </div>
+          {/* Dias sem interação */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <div
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full border font-medium ${
+                item.diasSemInteracao === 0
+                  ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400"
+                  : item.diasSemInteracao <= 2
+                  ? "bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400"
+                  : item.diasSemInteracao <= 5
+                  ? "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400"
+                  : "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400"
+              }`}
+            >
+              <Clock className="h-3 w-3" />
+              <span>
+                {item.diasSemInteracao === 0
+                  ? "Interagido hoje"
+                  : `${item.diasSemInteracao} dia${item.diasSemInteracao !== 1 ? "s" : ""} sem contato`}
+              </span>
+            </div>
+          </div>
+        </div>
         {/* Observação */}
         {item.observacao && (
           <p className="text-xs text-muted-foreground mt-2 italic border-l-2 border-muted pl-2">

@@ -5204,3 +5204,8 @@
 - [x] Adicionar item Carteira Ativa no menu do DashboardLayout
 - [x] Criar job carteiraAtivaJob.ts (expiracao a cada 30min + lembretes de tarefas as 8-10h)
 - [x] Registrar carteiraAtivaJob no server/_core/index.ts
+
+## Carteira Ativa - Contadores
+- [ ] Adicionar campo diasSemInteracao calculado no backend (dias desde ultima interacao no lead_history)
+- [ ] Adicionar campo diasNaCarteira calculado no backend (dias desde adicionadoEm)
+- [ ] Exibir os dois contadores nos cards da pagina CarteiraAtiva.tsx com cores de alerta

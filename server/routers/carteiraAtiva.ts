@@ -122,7 +122,7 @@ export const carteiraAtivaRouter = router({
         )
       );
 
-    // Para cada item, buscar tarefas pendentes
+    // Para cada item, buscar tarefas pendentes + contadores
     const result = await Promise.all(
       itens.map(async (item) => {
         const tarefasPendentes = await db
@@ -154,12 +154,37 @@ export const carteiraAtivaRouter = router({
           )
         );
 
+        // Contador 1: dias sem interação no lead (desde a última entrada em lead_history)
+        const [ultimaInteracao] = await db
+          .select({ createdAt: leadHistory.createdAt })
+          .from(leadHistory)
+          .where(eq(leadHistory.leadId, item.leadId))
+          .orderBy(sql`${leadHistory.createdAt} DESC`)
+          .limit(1);
+
+        const diasSemInteracao = ultimaInteracao
+          ? Math.floor(
+              (agr.getTime() - ultimaInteracao.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24)
+            )
+          : Math.floor(
+              (agr.getTime() - item.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24)
+            );
+
+        // Contador 2: dias totais na Carteira Ativa (desde adicionadoEm)
+        const diasNaCarteira = Math.floor(
+          (agr.getTime() - item.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
         return {
           ...item,
           tarefasPendentes,
           tarefasHoje,
           expirado,
           diasRestantes,
+          diasSemInteracao: Math.max(0, diasSemInteracao),
+          diasNaCarteira: Math.max(0, diasNaCarteira),
         };
       })
     );
