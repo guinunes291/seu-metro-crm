@@ -881,7 +881,9 @@ export async function createLead(lead: InsertLead) {
   if (!createdLead) throw new Error("Failed to retrieve created lead");
   
   // Sincronizar com Google Sheets (async, não bloqueia)
-  syncLeadToGoogleSheets(createdLead);
+  syncLeadToGoogleSheets(createdLead).catch(err =>
+    console.error('[GoogleSheets] Erro ao sincronizar lead criado:', err)
+  );
   
   return createdLead;
 }

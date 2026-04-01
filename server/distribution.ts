@@ -2,14 +2,11 @@ import { getDb, notifyLeadDistribuido, countLeadsRecebidosHoje } from "./db";
 import { users, leads, conversionStats, distributionLog, leadEstoque } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
-// Configurações de distribuição
+// Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40; // Carga inicial mínima por corretor (primeiro recebimento)
-const PERCENTUAL_CONCLUSAO_MINIMO = 0.9; // 90% dos leads ATIVOS trabalhados para receber mais
-const LOTE_SIZE = 99999; // Sem limite de leads por rodada — processa tudo disponível
-const LEADS_POR_RODADA = 20; // Leads distribuídos por vez para cada corretor
-// Critério de elegibilidade: sem limite de leads ativos simultâneos
-// Um corretor é elegível se tem status 'presente' e trabalhou 90% dos seus leads ativos
-// (ou se está recebendo pela primeira vez — menos de 40 leads ativos)
+const PERCENTUAL_CONCLUSAO_MINIMO = 0.6; // 60% dos leads ATIVOS trabalhados para receber mais (AppScript)
+const LOTE_SIZE = 200; // Total de leads por rodada
+const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
 const MAX_LEADS_ATIVOS = 99999; // Sem limite máximo de leads ativos por corretor
 
 interface CorretorStatus {
@@ -308,6 +305,8 @@ export async function distribuirLeadAutomatico(
           corretorId: melhorCorretor,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, leadId));
 
@@ -502,6 +501,8 @@ async function distribuirLeadsEmLoteParaElegiveis(
           corretorId,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, leadId));
 
@@ -510,7 +511,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
         leadId,
         corretorId,
         tipo: "automatica",
-        motivo: "Distribuição manual via botão Distribuir Agora",
+        motivo: "Distribuição automática em lote",
       });
 
       // Enviar notificação para o corretor
@@ -735,6 +736,8 @@ export async function distribuirLeadsDoEstoque(): Promise<{
           corretorId: melhorCorretor,
           dataDistribuicao: new Date(),
           status: "aguardando_atendimento",
+          timerAtivo: true,
+          timestampRecebimento: new Date(),
         })
         .where(eq(leads.id, estoqueItem.leadId));
 

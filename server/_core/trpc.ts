@@ -48,7 +48,7 @@ export const gestorProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user || (ctx.user.role !== 'admin' && ctx.user.role !== 'gestor')) {
+    if (!ctx.user || (ctx.user.role !== 'admin' && ctx.user.role !== 'gestor' && ctx.user.role !== 'superintendente')) {
       throw new TRPCError({ code: "FORBIDDEN", message: "Apenas gestores e administradores podem acessar este recurso" });
     }
 
