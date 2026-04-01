@@ -5154,3 +5154,5 @@
 - [x] Integrar aba "Executando com IA" no Dialog de detalhes do lead
 - [x] Estruturar Dialog em 3 abas: Detalhes | Copilot & Histórico | Executando com IA
 - [x] Escrever e passar testes unitários da lógica de qualificação (8/8 passando)
+- [x] Aba "Executando com IA" - Script WhatsApp G.P.V.A. (procedure backend + componente frontend)
+- [x] Componente ExecutandoComIA.tsx (container com sub-abas: Qualificador + Script WhatsApp)

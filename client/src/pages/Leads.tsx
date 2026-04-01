@@ -50,7 +50,7 @@ import TransferirLeadButton from "@/components/TransferirLeadButton";
 import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
-import { QualificadorIA } from "@/components/QualificadorIA";
+import { ExecutandoComIA } from "@/components/ExecutandoComIA";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -1629,15 +1629,26 @@ export default function Leads() {
 
                 {/* ── ABA: EXECUTANDO COM IA ── */}
                 <TabsContent value="ia">
-                  <QualificadorIA lead={{
-                    id: selectedLead.id,
-                    nome: selectedLead.nome,
-                    faixaRenda: selectedLead.faixaRenda,
-                    origem: selectedLead.origem,
-                    observacoes: selectedLead.observacoes,
-                    finalidadeImovel: selectedLead.finalidadeImovel,
-                    status: selectedLead.status,
-                  }} />
+                  <ExecutandoComIA
+                    lead={{
+                      id: selectedLead.id,
+                      nome: selectedLead.nome,
+                      faixaRenda: selectedLead.faixaRenda,
+                      origem: selectedLead.origem,
+                      observacoes: selectedLead.observacoes,
+                      finalidadeImovel: selectedLead.finalidadeImovel,
+                      status: selectedLead.status,
+                      projectId: selectedLead.projectId,
+                      projetoCustom: selectedLead.projetoCustom,
+                      regiao: selectedLead.regiao,
+                      cidade: selectedLead.cidade,
+                    }}
+                    nomeEmpreendimento={
+                      projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
+                      selectedLead.projetoCustom ||
+                      undefined
+                    }
+                  />
                 </TabsContent>
               </Tabs>
             )}

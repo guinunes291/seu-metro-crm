@@ -17,6 +17,7 @@ import * as limparProjetosOrfaos from "./modules/limparProjetosOrfaos";
 import * as onboarding from "./modules/onboarding";
 import { comissoesRouter } from "./routers/comissoes";
 import { templatesRouter } from "./routers/templates";
+import { iaRouter } from "./routers/ia";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -106,6 +107,7 @@ export const appRouter = router({
   system: systemRouter,
   comissoes: comissoesRouter,
   templates: templatesRouter,
+  ia: iaRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
