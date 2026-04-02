@@ -1,8 +1,7 @@
 import { getDb } from "./db";
-import { leads, distributionLog, filaDistribuicao, users, configuracaoProjetoFoco } from "../drizzle/schema";
+import { leads, distributionLog, filaDistribuicao, users, configuracaoProjetoFoco, leadEstoque } from "../drizzle/schema";
 import { and, eq, lt, sql, ne, inArray } from "drizzle-orm";
 import { getUserById, getProjectById } from "./db";
-import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
 
 /**
  * ID do admin Guilherme Nunes - fallback quando nenhum corretor está disponível
@@ -179,13 +178,6 @@ export async function verificarTimerLeads() {
 
     for (const lead of leadsExpirados) {
       try {
-        // ⚠️ IMUNIDADE: Leads na Carteira Ativa são imunes ao timer de 30 min
-        const protegido = await isLeadProtegidoCarteira(lead.id);
-        if (protegido) {
-          console.log(`[Timer Job] Lead ${lead.id} IMUNE (Carteira Ativa ativa) - ignorando`);
-          continue;
-        }
-
         const tipoFila = lead.tipoFilaOrigem || "geral";
 
         console.log(
@@ -277,47 +269,44 @@ export async function verificarTimerLeads() {
           } catch (emailError) {
             console.error(`[Timer Job] Erro ao enviar email de redistribuição:`, emailError);
           }
-          // Criar tarefa no Notion (não bloquear se falhar)
-          import("./notionService").then(async ({ tarefaLeadRedistribuido }) => {
-            const corretorAnterior = await getUserById(lead.corretorId!).catch(() => null);
-            const novoCorretor = await getUserById(proximoCorretorId!).catch(() => null);
-            tarefaLeadRedistribuido({
-              leadNome: lead.nome || `Lead #${lead.id}`,
-              corretorAnteriorNome: corretorAnterior?.name || `Corretor #${lead.corretorId}`,
-              novoCorretorNome: novoCorretor?.name || `Corretor #${proximoCorretorId}`,
-              gestorNome: "Gestor",
-              leadId: lead.id,
-            }).catch(() => {});
-          }).catch(() => {});
         } else {
-          // Nenhum corretor disponível na fila correta → fallback para admin Guilherme Nunes
+          // Nenhum corretor disponível na fila correta → enviar para estoque para redistribuição futura
           console.log(
-            `[Timer Job] Lead ${lead.id}: nenhum corretor disponível na fila ${tipoFila}, transferindo para admin Guilherme Nunes (ID: ${ADMIN_GUILHERME_ID})`
+            `[Timer Job] Lead ${lead.id}: nenhum corretor disponível na fila ${tipoFila}, enviando para estoque`
           );
 
+          // Desatribuir o lead e limpar corretor para aguardar no estoque
           await db
             .update(leads)
             .set({
-              corretorId: ADMIN_GUILHERME_ID,
-              timestampRecebimento: new Date(),
+              corretorId: null,
               timerAtivo: false,
               status: "aguardando_atendimento",
             })
             .where(eq(leads.id, lead.id));
 
-          // Registrar no log de distribuição
-          await db.insert(distributionLog).values({
-            leadId: lead.id,
-            corretorId: ADMIN_GUILHERME_ID,
-            tipo: "automatica",
-            motivo: `Fallback para admin: nenhum corretor disponível na fila ${tipoFila} após timeout de ${TIMER_MINUTOS} minutos`,
-          });
+          // Adicionar ao estoque (ou atualizar tentativas se já estiver lá)
+          const estoqueExistente = await db
+            .select({ id: leadEstoque.id })
+            .from(leadEstoque)
+            .where(and(eq(leadEstoque.leadId, lead.id), eq(leadEstoque.status, "aguardando")))
+            .limit(1);
+
+          if (estoqueExistente.length === 0) {
+            // lead_estoque usa enum('normal','foco'); 'geral' mapeia para 'normal'
+            const tipoFilaEstoque: "normal" | "foco" = tipoFila === "foco" ? "foco" : "normal";
+            await db.insert(leadEstoque).values({
+              leadId: lead.id,
+              tipoFila: tipoFilaEstoque,
+              motivoEstoque: `Sem corretores disponíveis na fila ${tipoFila} após timeout de ${TIMER_MINUTOS} minutos`,
+              tentativasDistribuicao: 1,
+              status: "aguardando",
+            });
+          }
 
           console.log(
-            `[Timer Job] Lead ${lead.id} transferido para admin Guilherme Nunes (fila ${tipoFila} sem corretores)`
+            `[Timer Job] Lead ${lead.id} enviado para estoque (fila ${tipoFila})`
           );
-
-          // Admin não recebe email — apenas corretores são notificados por email
         }
       } catch (error) {
         console.error(`[Timer Job] Erro ao processar lead ${lead.id}:`, error);

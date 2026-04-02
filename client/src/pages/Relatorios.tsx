@@ -44,7 +44,7 @@ function FacebookTimerRelatorio({
   const inicio = dataInicio || defaultInicio;
   const fim = dataFim || defaultFim;
 
-  const { data, isLoading, error } = trpc.analytics.leadsTimerPorCorretor.useQuery({
+  const { data, isLoading, error } = trpc.relatorios.leadsTimerPorCorretor.useQuery({
     dataInicio: inicio.toISOString(),
     dataFim: fim.toISOString(),
   }, {
@@ -221,6 +221,38 @@ function FacebookTimerRelatorio({
   );
 }
 
+function ChartSkeleton({ title, description, height = 48 }: { title: string; description?: string; height?: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>
+        <div className={`flex items-center justify-center`} style={{ height: `${height}px` }}>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ChartEmpty({ title, description, height = 48 }: { title: string; description?: string; height?: number }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-center text-muted-foreground text-sm" style={{ height: `${height}px` }}>
+          Nenhum dado encontrado para o período selecionado.
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Relatorios() {
   const [periodo, setPeriodo] = useState<string>("all");
   const [customStart, setCustomStart] = useState<Date | undefined>();
@@ -292,30 +324,69 @@ export default function Relatorios() {
   const { dataInicio, dataFim } = getDateRange();
 
   // Queries para todos os relatórios
-  const funilQuery = trpc.analytics.funilConversao.useQuery({ dataInicio, dataFim });
-  const taxaConversaoQuery = trpc.analytics.taxaConversaoPorCorretor.useQuery({ dataInicio, dataFim });
-  const tempoMedioQuery = trpc.analytics.tempoMedioPorEtapa.useQuery({ dataInicio, dataFim });
-  const evolucaoVendasQuery = trpc.analytics.evolucaoVendas.useQuery(
-    { 
-      dataInicio: dataInicio || new Date(new Date().setMonth(new Date().getMonth() - 3)), 
-      dataFim: dataFim || new Date(),
-      agrupamento: 'dia'
-    },
-    { enabled: !!dataInicio || !!dataFim }
+  // NOTA: estes endpoints estão no router `analytics`, não `relatorios`
+  // O router `relatorios` contém apenas: estatisticasGerais, conversaoPorProjeto,
+  // conversaoPorCorretor, leadsTimerPorCorretor
+  const funilQuery = trpc.analytics.funilConversao.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
   );
-  const distribuicaoProjetosQuery = trpc.analytics.distribuicaoVendasPorProjeto.useQuery({ dataInicio, dataFim });
-  const origemEfetivaQuery = trpc.analytics.origemLeadsMaisEfetiva.useQuery({ dataInicio, dataFim });
-  const leadsPorHorarioQuery = trpc.analytics.leadsPorHorarioEntrada.useQuery({ dataInicio, dataFim });
-  const rankingQuery = trpc.analytics.rankingCorretores.useQuery({ dataInicio, dataFim });
-  const produtividadeQuery = trpc.analytics.produtividadePorCorretor.useQuery({ dataInicio, dataFim });
-  const comparativoMensalQuery = trpc.analytics.comparativoMensalCorretores.useQuery({
-    anoInicio: new Date().getFullYear() - 1,
-    anoFim: new Date().getFullYear()
-  });
-  const cargaTrabalhoQuery = trpc.analytics.cargaTrabalho.useQuery();
-  const previsaoVendasQuery = trpc.analytics.previsaoVendas.useQuery();
+  const taxaConversaoQuery = trpc.analytics.taxaConversaoPorCorretor.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const tempoMedioQuery = trpc.analytics.tempoMedioPorEtapa.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
 
-  const isLoading = funilQuery.isLoading || taxaConversaoQuery.isLoading;
+  // evolucaoVendas exige datas obrigatórias — usa os últimos 3 meses como padrão
+  const evolucaoInicio = dataInicio ?? new Date(new Date().setMonth(new Date().getMonth() - 3));
+  const evolucaoFim = dataFim ?? new Date();
+  const evolucaoVendasQuery = trpc.analytics.evolucaoVendas.useQuery(
+    {
+      dataInicio: evolucaoInicio,
+      dataFim: evolucaoFim,
+      agrupamento: 'mes',
+    },
+    { staleTime: 2 * 60 * 1000 }
+  );
+
+  const distribuicaoProjetosQuery = trpc.analytics.distribuicaoVendasPorProjeto.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const origemEfetivaQuery = trpc.analytics.origemLeadsMaisEfetiva.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const leadsPorHorarioQuery = trpc.analytics.leadsPorHorarioEntrada.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const rankingQuery = trpc.analytics.rankingCorretores.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const produtividadeQuery = trpc.analytics.produtividadePorCorretor.useQuery(
+    { dataInicio, dataFim },
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const comparativoMensalQuery = trpc.analytics.comparativoMensalCorretores.useQuery(
+    {
+      anoInicio: new Date().getFullYear() - 1,
+      anoFim: new Date().getFullYear()
+    },
+    { staleTime: 5 * 60 * 1000 }
+  );
+  const cargaTrabalhoQuery = trpc.analytics.cargaTrabalho.useQuery(
+    undefined,
+    { staleTime: 2 * 60 * 1000 }
+  );
+  const previsaoVendasQuery = trpc.analytics.previsaoVendas.useQuery(
+    undefined,
+    { staleTime: 5 * 60 * 1000 }
+  );
 
   return (
     <DashboardLayout>
@@ -338,12 +409,7 @@ export default function Relatorios() {
           />
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <Tabs defaultValue="vendas" className="space-y-6">
+        <Tabs defaultValue="vendas" className="space-y-6">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="vendas">Vendas</TabsTrigger>
               <TabsTrigger value="leads">Leads</TabsTrigger>
@@ -356,15 +422,25 @@ export default function Relatorios() {
             {/* ABA: VENDAS */}
             <TabsContent value="vendas" className="space-y-6">
               {/* Funil de Conversão */}
-              <FunilChart
-                data={funilQuery.data || []}
-                title="Funil de Conversão Geral"
-                description="Leads em cada etapa do funil com taxas de conversão"
-              />
+              {funilQuery.isLoading ? (
+                <ChartSkeleton title="Funil de Conversão Geral" description="Leads em cada etapa do funil com taxas de conversão" height={300} />
+              ) : !funilQuery.data || funilQuery.data.length === 0 ? (
+                <ChartEmpty title="Funil de Conversão Geral" description="Leads em cada etapa do funil com taxas de conversão" height={300} />
+              ) : (
+                <FunilChart
+                  data={funilQuery.data}
+                  title="Funil de Conversão Geral"
+                  description="Leads em cada etapa do funil com taxas de conversão"
+                />
+              )}
 
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Evolução de Vendas (VGV) */}
-                {evolucaoVendasQuery.data && evolucaoVendasQuery.data.length > 0 && (
+                {evolucaoVendasQuery.isLoading ? (
+                  <ChartSkeleton title="Evolução de Vendas (VGV)" description="Valor total de vendas por período" height={350} />
+                ) : !evolucaoVendasQuery.data || evolucaoVendasQuery.data.length === 0 ? (
+                  <ChartEmpty title="Evolução de Vendas (VGV)" description="Valor total de vendas por período" height={350} />
+                ) : (
                   <LineChart
                     data={evolucaoVendasQuery.data}
                     dataKeys={[
@@ -379,7 +455,11 @@ export default function Relatorios() {
                 )}
 
                 {/* Distribuição por Projeto */}
-                {distribuicaoProjetosQuery.data && distribuicaoProjetosQuery.data.length > 0 && (
+                {distribuicaoProjetosQuery.isLoading ? (
+                  <ChartSkeleton title="Distribuição de Vendas por Projeto" description="Percentual de vendas de cada empreendimento" height={350} />
+                ) : !distribuicaoProjetosQuery.data || distribuicaoProjetosQuery.data.length === 0 ? (
+                  <ChartEmpty title="Distribuição de Vendas por Projeto" description="Percentual de vendas de cada empreendimento" height={350} />
+                ) : (
                   <PieChart
                     data={distribuicaoProjetosQuery.data}
                     dataKey="quantidade"
@@ -392,7 +472,11 @@ export default function Relatorios() {
               </div>
 
               {/* Tempo Médio por Etapa */}
-              {tempoMedioQuery.data && tempoMedioQuery.data.length > 0 && (
+              {tempoMedioQuery.isLoading ? (
+                <ChartSkeleton title="Tempo Médio por Etapa do Funil" description="Quantos dias os leads permanecem em cada status" height={300} />
+              ) : !tempoMedioQuery.data || tempoMedioQuery.data.length === 0 ? (
+                <ChartEmpty title="Tempo Médio por Etapa do Funil" description="Quantos dias os leads permanecem em cada status" height={300} />
+              ) : (
                 <BarChart
                   data={tempoMedioQuery.data}
                   dataKeys={[
@@ -410,7 +494,11 @@ export default function Relatorios() {
             <TabsContent value="leads" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Origem de Leads mais Efetiva */}
-                {origemEfetivaQuery.data && origemEfetivaQuery.data.length > 0 && (
+                {origemEfetivaQuery.isLoading ? (
+                  <ChartSkeleton title="Origem de Leads mais Efetiva" description="Volume e conversão por origem" height={350} />
+                ) : !origemEfetivaQuery.data || origemEfetivaQuery.data.length === 0 ? (
+                  <ChartEmpty title="Origem de Leads mais Efetiva" description="Volume e conversão por origem" height={350} />
+                ) : (
                   <BarChart
                     data={origemEfetivaQuery.data}
                     dataKeys={[
@@ -425,7 +513,11 @@ export default function Relatorios() {
                 )}
 
                 {/* Qualidade de Leads por Origem (Scatter) */}
-                {origemEfetivaQuery.data && origemEfetivaQuery.data.length > 0 && (
+                {origemEfetivaQuery.isLoading ? (
+                  <ChartSkeleton title="Qualidade de Leads por Origem" description="Volume vs Taxa de Conversão" height={350} />
+                ) : !origemEfetivaQuery.data || origemEfetivaQuery.data.length === 0 ? (
+                  <ChartEmpty title="Qualidade de Leads por Origem" description="Volume vs Taxa de Conversão" height={350} />
+                ) : (
                   <ScatterChart
                     data={origemEfetivaQuery.data}
                     xKey="totalLeads"
@@ -440,7 +532,11 @@ export default function Relatorios() {
               </div>
 
               {/* Heatmap de Horários */}
-              {leadsPorHorarioQuery.data && leadsPorHorarioQuery.data.length > 0 && (
+              {leadsPorHorarioQuery.isLoading ? (
+                <ChartSkeleton title="Leads por Horário de Entrada" description="Concentração de novos leads por dia da semana e hora" height={200} />
+              ) : !leadsPorHorarioQuery.data || leadsPorHorarioQuery.data.length === 0 ? (
+                <ChartEmpty title="Leads por Horário de Entrada" description="Concentração de novos leads por dia da semana e hora" height={200} />
+              ) : (
                 <Heatmap
                   data={leadsPorHorarioQuery.data}
                   title="Leads por Horário de Entrada"
@@ -452,28 +548,32 @@ export default function Relatorios() {
             {/* ABA: CORRETORES */}
             <TabsContent value="corretores" className="space-y-6">
               {/* Ranking de Corretores */}
-              {rankingQuery.data && rankingQuery.data.length > 0 && (
+              {rankingQuery.isLoading ? (
+                <ChartSkeleton title="Ranking de Corretores" description="Métricas completas de performance" height={200} />
+              ) : !rankingQuery.data || rankingQuery.data.length === 0 ? (
+                <ChartEmpty title="Ranking de Corretores" description="Métricas completas de performance" height={200} />
+              ) : (
                 <DataTable
                   data={rankingQuery.data}
                   columns={[
                     { key: 'corretorNome', label: 'Corretor', align: 'left' },
                     { key: 'leadsAtendidos', label: 'Leads Atendidos', align: 'center' },
                     { key: 'leadsFechados', label: 'Leads Fechados', align: 'center' },
-                    { 
-                      key: 'taxaConversao', 
-                      label: 'Taxa Conversão', 
+                    {
+                      key: 'taxaConversao',
+                      label: 'Taxa Conversão',
                       align: 'center',
                       format: (val) => `${val}%`
                     },
-                    { 
-                      key: 'vgvGerado', 
-                      label: 'VGV Gerado', 
+                    {
+                      key: 'vgvGerado',
+                      label: 'VGV Gerado',
                       align: 'right',
                       format: (val) => `R$ ${val.toLocaleString('pt-BR')}`
                     },
-                    { 
-                      key: 'tempoMedioRespostaMinutos', 
-                      label: 'Tempo Resposta (min)', 
+                    {
+                      key: 'tempoMedioRespostaMinutos',
+                      label: 'Tempo Resposta (min)',
                       align: 'center',
                       format: (val) => val ? Math.round(val) : '-'
                     }
@@ -485,7 +585,11 @@ export default function Relatorios() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Taxa de Conversão por Corretor */}
-                {taxaConversaoQuery.data && taxaConversaoQuery.data.length > 0 && (
+                {taxaConversaoQuery.isLoading ? (
+                  <ChartSkeleton title="Taxa de Conversão por Corretor" description="Percentual de leads fechados" height={400} />
+                ) : !taxaConversaoQuery.data || taxaConversaoQuery.data.length === 0 ? (
+                  <ChartEmpty title="Taxa de Conversão por Corretor" description="Percentual de leads fechados" height={400} />
+                ) : (
                   <BarChart
                     data={taxaConversaoQuery.data}
                     dataKeys={[
@@ -500,7 +604,11 @@ export default function Relatorios() {
                 )}
 
                 {/* Carga de Trabalho */}
-                {cargaTrabalhoQuery.data && cargaTrabalhoQuery.data.length > 0 && (
+                {cargaTrabalhoQuery.isLoading ? (
+                  <ChartSkeleton title="Carga de Trabalho" description="Leads ativos vs capacidade ideal (50 leads)" height={400} />
+                ) : !cargaTrabalhoQuery.data || cargaTrabalhoQuery.data.length === 0 ? (
+                  <ChartEmpty title="Carga de Trabalho" description="Leads ativos vs capacidade ideal (50 leads)" height={400} />
+                ) : (
                   <BarChart
                     data={cargaTrabalhoQuery.data}
                     dataKeys={[
@@ -517,7 +625,11 @@ export default function Relatorios() {
               </div>
 
               {/* Produtividade por Corretor */}
-              {produtividadeQuery.data && produtividadeQuery.data.length > 0 && (
+              {produtividadeQuery.isLoading ? (
+                <ChartSkeleton title="Produtividade por Corretor" description="Distribuição de leads por etapa" height={350} />
+              ) : !produtividadeQuery.data || produtividadeQuery.data.length === 0 ? (
+                <ChartEmpty title="Produtividade por Corretor" description="Distribuição de leads por etapa" height={350} />
+              ) : (
                 <BarChart
                   data={produtividadeQuery.data}
                   dataKeys={[
@@ -534,11 +646,14 @@ export default function Relatorios() {
               )}
 
               {/* Comparativo Mensal */}
-              {comparativoMensalQuery.data && comparativoMensalQuery.data.length > 0 && (
+              {comparativoMensalQuery.isLoading ? (
+                <ChartSkeleton title="Comparativo Mensal de Corretores" description="Evolução de vendas mês a mês" height={400} />
+              ) : !comparativoMensalQuery.data || comparativoMensalQuery.data.length === 0 ? (
+                <ChartEmpty title="Comparativo Mensal de Corretores" description="Evolução de vendas mês a mês" height={400} />
+              ) : (
                 <LineChart
                   data={comparativoMensalQuery.data}
                   dataKeys={
-                    // Criar uma linha para cada corretor
                     Array.from(new Set(comparativoMensalQuery.data.map(d => d.corretorNome)))
                       .map((nome, i) => ({
                         key: `vendas_${nome}`,
@@ -565,7 +680,11 @@ export default function Relatorios() {
 
             {/* ABA: PREVISÃO */}
             <TabsContent value="previsao" className="space-y-6">
-              {previsaoVendasQuery.data && (
+              {previsaoVendasQuery.isLoading ? (
+                <ChartSkeleton title="Previsão de Vendas" description="Baseado no pipeline atual" height={300} />
+              ) : !previsaoVendasQuery.data ? (
+                <ChartEmpty title="Previsão de Vendas" description="Baseado no pipeline atual" height={300} />
+              ) : (
                 <>
                   <div className="grid gap-6 md:grid-cols-3">
                     <Card>
@@ -642,7 +761,6 @@ export default function Relatorios() {
               <CustomReportBuilder />
             </TabsContent>
           </Tabs>
-        )}
       </div>
     </DashboardLayout>
   );

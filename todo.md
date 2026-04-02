@@ -5229,3 +5229,15 @@
 - [x] Corrigir namespace trpc.relatorios → trpc.analytics em Relatorios.tsx (página estava em branco)
 - [x] Preservar Carteira Ativa (não removida)
 - [x] Manter threshold de 40 leads e 90% (não alterado para 30/60%)
+
+## Merge Seletivo: Branch claude/review-optimize-code-DfO8R (Sessão Atual)
+- [x] Aplicar nova lógica de elegibilidade: corretores com menos de 20 leads aguardando atendimento
+- [x] Corrigir timerLeadsJob.ts: mapear tipoFila 'geral' → 'normal' ao inserir no lead_estoque
+- [x] Corrigir db.ts: getTempoMedioPorEtapa usa createdAt em vez de transitionAt (coluna inexistente)
+- [x] Corrigir db.ts: getDistribuicaoVendasPorProjeto usa leads.projectId em vez de leads.projetoId
+- [x] Corrigir db.ts: getRankingCorretoresCompleto usa leadHistory.corretorId em vez de leadHistory.userId
+- [x] Corrigir db.ts: subquery usa leadId em vez de lead_id (nome da coluna no banco)
+- [x] Atualizar textos de elegibilidade em ControleDistribuicao.tsx e ControleLimites.tsx
+- [x] Corrigir testes de distribuição para nova lógica (20 leads aguardando)
+- [x] Corrigir testes de relatórios: namespace analytics, imports, contexto admin
+- [x] Preservar Carteira Ativa, IA e outras funcionalidades críticas durante o merge

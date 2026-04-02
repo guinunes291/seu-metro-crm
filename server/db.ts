@@ -7921,8 +7921,8 @@ export async function getTempoMedioPorEtapa(dataInicio?: Date, dataFim?: Date) {
   let whereCondition = undefined;
   if (dataInicio && dataFim) {
     whereCondition = and(
-      gte(leadStatusTransitions.transitionAt, dataInicio),
-      lte(leadStatusTransitions.transitionAt, dataFim)
+      gte(leadStatusTransitions.createdAt, dataInicio),
+      lte(leadStatusTransitions.createdAt, dataFim)
     );
   }
 
@@ -7931,7 +7931,7 @@ export async function getTempoMedioPorEtapa(dataInicio?: Date, dataFim?: Date) {
     .select()
     .from(leadStatusTransitions)
     .where(whereCondition)
-    .orderBy(asc(leadStatusTransitions.leadId), asc(leadStatusTransitions.transitionAt));
+    .orderBy(asc(leadStatusTransitions.leadId), asc(leadStatusTransitions.createdAt));
 
   // Calcular tempo em cada status
   const temposPorStatus: Record<string, number[]> = {};
@@ -7944,19 +7944,19 @@ export async function getTempoMedioPorEtapa(dataInicio?: Date, dataFim?: Date) {
     if (transition.leadId !== currentLeadId) {
       // Novo lead
       currentLeadId = transition.leadId;
-      currentStatus = transition.toStatus;
-      currentTime = transition.transitionAt;
+      currentStatus = transition.statusNovo;
+      currentTime = transition.createdAt;
     } else if (currentStatus && currentTime) {
       // Calcular tempo no status anterior
-      const tempoEmHoras = (transition.transitionAt.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+      const tempoEmHoras = (transition.createdAt.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
       
       if (!temposPorStatus[currentStatus]) {
         temposPorStatus[currentStatus] = [];
       }
       temposPorStatus[currentStatus].push(tempoEmHoras);
 
-      currentStatus = transition.toStatus;
-      currentTime = transition.transitionAt;
+      currentStatus = transition.statusNovo;
+      currentTime = transition.createdAt;
     }
   }
 
@@ -7994,16 +7994,14 @@ export async function getEvolucaoVendas(
       break;
   }
 
-  // Valor médio estimado por venda (R$ 300.000)
-  const valorMedioPorVenda = 300000;
-
   const vendas = await db
     .select({
       periodo: sql<string>`DATE_FORMAT(${leads.createdAt}, ${dateFormat})`.as('periodo'),
-      vgv: sql<number>`SUM(${valorMedioPorVenda})`.as('vgv'),
-      quantidade: sql<number>`COUNT(*)`.as('quantidade')
+      vgv: sql<number>`SUM(COALESCE(${contratos.valorVenda}, 0))`.as('vgv'),
+      quantidade: sql<number>`COUNT(DISTINCT ${leads.id})`.as('quantidade')
     })
     .from(leads)
+    .leftJoin(contratos, eq(contratos.leadId, leads.id))
     .where(
       and(
         eq(leads.status, 'contrato_fechado'),
@@ -8046,9 +8044,9 @@ export async function getDistribuicaoVendasPorProjeto(dataInicio?: Date, dataFim
       vgv: sql<number>`SUM(300000)`.as('vgv') // Valor médio estimado por venda
     })
     .from(leads)
-    .leftJoin(projects, eq(leads.projetoId, projects.id))
+    .leftJoin(projects, eq(leads.projectId, projects.id))
     .where(whereCondition)
-    .groupBy(leads.projetoId, projects.nome);
+    .groupBy(leads.projectId, projects.nome);
 
   const total = vendas.reduce((sum, v) => sum + Number(v.quantidade), 0);
 
@@ -8152,17 +8150,18 @@ export async function getRankingCorretoresCompleto(dataInicio?: Date, dataFim?: 
       corretorNome: users.name,
       leadsAtendidos: sql<number>`COUNT(*)`.as('leadsAtendidos'),
       leadsFechados: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 1 ELSE 0 END)`.as('leadsFechados'),
-      vgvGerado: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN 300000 ELSE 0 END)`.as('vgvGerado') // Valor médio estimado
+      vgvGerado: sql<number>`SUM(CASE WHEN ${leads.status} = 'contrato_fechado' THEN COALESCE(${contratos.valorVenda}, 0) ELSE 0 END)`.as('vgvGerado')
     })
     .from(leads)
     .leftJoin(users, eq(leads.corretorId, users.id))
+    .leftJoin(contratos, eq(contratos.leadId, leads.id))
     .where(whereCondition)
     .groupBy(leads.corretorId, users.name);
 
   // Calcular tempo médio de resposta (primeira interação)
   const temposResposta = await db
     .select({
-      corretorId: leadHistory.userId,
+      corretorId: leadHistory.corretorId,
       tempoMedioMinutos: sql<number>`AVG(TIMESTAMPDIFF(MINUTE, ${leads.createdAt}, ${leadHistory.createdAt}))`.as('tempoMedioMinutos')
     })
     .from(leadHistory)
@@ -8170,10 +8169,10 @@ export async function getRankingCorretoresCompleto(dataInicio?: Date, dataFim?: 
     .where(
       and(
         whereCondition,
-        sql`${leadHistory.createdAt} = (SELECT MIN(createdAt) FROM lead_history WHERE lead_id = ${leadHistory.leadId})`
+        sql`${leadHistory.createdAt} = (SELECT MIN(createdAt) FROM lead_history WHERE leadId = ${leadHistory.leadId})`
       )
     )
-    .groupBy(leadHistory.userId);
+    .groupBy(leadHistory.corretorId);
 
   return ranking.map(r => {
     const tempoResposta = temposResposta.find(t => t.corretorId === r.corretorId);

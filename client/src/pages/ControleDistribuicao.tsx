@@ -392,8 +392,8 @@ export default function ControleDistribuicao() {
                   <TableHead>Corretor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total Leads</TableHead>
-                  <TableHead className="text-right">Trabalhados</TableHead>
-                  <TableHead className="text-right">Taxa de Trabalho</TableHead>
+                  <TableHead className="text-right">Em Atendimento</TableHead>
+                  <TableHead className="text-right">Aguardando</TableHead>
                   <TableHead>Elegibilidade</TableHead>
                 </TableRow>
               </TableHeader>
@@ -412,10 +412,11 @@ export default function ControleDistribuicao() {
                         Presente
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{corretor.totalLeads}</TableCell>
                     <TableCell className="text-right">{corretor.leadsTrabalhados}</TableCell>
                     <TableCell className="text-right">
-                      {(corretor.taxaTrabalho * 100).toFixed(0)}%
+                      <span className="text-green-600 font-medium">
+                        {(corretor as any).aguardandoLeads ?? (corretor.totalLeads - corretor.leadsTrabalhados)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Badge variant="default" className="bg-green-600">
@@ -446,23 +447,14 @@ export default function ControleDistribuicao() {
                 <TableRow>
                   <TableHead>Corretor</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total Leads</TableHead>
-                  <TableHead className="text-right">Trabalhados</TableHead>
-                  <TableHead className="text-right">Taxa de Trabalho</TableHead>
-                  <TableHead>Motivo</TableHead>
+                  <TableHead className="text-right">Em Atendimento</TableHead>
+                  <TableHead className="text-right">Aguardando</TableHead>
+                  <TableHead>Motivo do Bloqueio</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {corretoresNaoElegiveis.map((corretor) => {
-                  let motivo = "";
-                  if (corretor.status !== "presente") {
-                    motivo = "Ausente";
-                  } else if (corretor.totalLeads >= 40 && corretor.taxaTrabalho < 0.9) {
-                    motivo = "Taxa < 90%";
-                  } else {
-                    motivo = "Outro";
-                  }
-
+                  const motivo = (corretor as any).motivoBloqueio || (corretor.status !== "presente" ? "Ausente" : "Aguardando distribuição");
                   return (
                     <TableRow key={corretor.id}>
                       <TableCell className="font-medium">
@@ -488,10 +480,15 @@ export default function ControleDistribuicao() {
                           {corretor.status === "presente" ? "Presente" : "Ausente"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{corretor.totalLeads}</TableCell>
                       <TableCell className="text-right">{corretor.leadsTrabalhados}</TableCell>
                       <TableCell className="text-right">
-                        {(corretor.taxaTrabalho * 100).toFixed(0)}%
+                        <span className={
+                          ((corretor as any).aguardandoLeads ?? 0) >= 20
+                            ? "text-red-600 font-semibold"
+                            : "text-yellow-600 font-medium"
+                        }>
+                          {(corretor as any).aguardandoLeads ?? (corretor.totalLeads - corretor.leadsTrabalhados)}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Badge variant="destructive">
@@ -606,18 +603,18 @@ export default function ControleDistribuicao() {
           <div className="flex items-start gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
-              <p className="font-medium">Mínimo de 40 Leads Garantido</p>
+              <p className="font-medium">Lote Inicial Garantido (40 leads)</p>
               <p className="text-sm text-muted-foreground">
-                Corretores com menos de 40 leads ativos sempre recebem novos leads
+                Corretores com menos de 40 leads sempre recebem novos leads
               </p>
             </div>
           </div>
           <div className="flex items-start gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
             <div>
-              <p className="font-medium">Taxa de Trabalho de 90%</p>
+              <p className="font-medium">Máximo de 20 Leads Aguardando</p>
               <p className="text-sm text-muted-foreground">
-                Corretores com 40+ leads ativos devem ter trabalhado pelo menos 90% deles
+                Corretores com 40+ leads só recebem mais quando tiverem menos de 20 leads aguardando atendimento
               </p>
             </div>
           </div>

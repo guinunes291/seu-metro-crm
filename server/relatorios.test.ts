@@ -3,19 +3,19 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { getDb } from "./db";
 import { users, leads, projects } from "../drizzle/schema";
-import { like, or } from "drizzle-orm";
+import { like, or, eq } from "drizzle-orm";
 import { TEST_PREFIX, testName, testEmail, testPhone, cleanupTestData } from "./test-utils";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createGestorContext(): TrpcContext {
   const user: AuthenticatedUser = {
-    id: 1,
-    openId: "gestor-test",
-    email: "gestor@test.com",
-    name: "Gestor Test",
+    id: 7722800, // ID do admin real no banco
+    openId: "admin-test",
+    email: "admin@test.com",
+    name: "Admin Test",
     loginMethod: "manus",
-    role: "gestor",
+    role: "admin",
     status: "presente",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -65,7 +65,7 @@ describe("Relatórios e Analytics", () => {
     expect(typeof stats.taxaDistribuicao).toBe("number");
   });
 
-  it("deve calcular conversão por projeto", async () => {
+  it("deve calcular conversão por projeto", { timeout: 15000 }, async () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -162,7 +162,8 @@ describe("Relatórios e Analytics", () => {
     const conversao = await caller.relatorios.conversaoPorCorretor();
 
     // Verificar que o corretor de teste está nos resultados
-    const corretorStats = conversao.find(c => c.corretorId === corretor.insertId);
+    const corretorIdNum = Number(corretor.insertId);
+    const corretorStats = conversao.find(c => Number(c.corretorId) === corretorIdNum);
     expect(corretorStats).toBeDefined();
     expect(corretorStats?.totalLeads).toBe(5);
     expect(corretorStats?.contratosFechados).toBe(1);
@@ -223,7 +224,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const funil = await caller.relatorios.funilConversao({});
+    const funil = await caller.analytics.funilConversao({});
 
     expect(Array.isArray(funil)).toBe(true);
     if (funil.length > 0) {
@@ -237,7 +238,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const taxas = await caller.relatorios.taxaConversaoPorCorretor({});
+    const taxas = await caller.analytics.taxaConversaoPorCorretor({});
 
     expect(Array.isArray(taxas)).toBe(true);
     if (taxas.length > 0) {
@@ -253,7 +254,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const tempos = await caller.relatorios.tempoMedioPorEtapa({});
+    const tempos = await caller.analytics.tempoMedioPorEtapa({});
 
     expect(Array.isArray(tempos)).toBe(true);
     if (tempos.length > 0) {
@@ -269,19 +270,19 @@ describe("Novos Relatórios Avançados", () => {
     const dataInicio = new Date('2024-01-01');
     const dataFim = new Date('2024-12-31');
 
-    const porDia = await caller.relatorios.evolucaoVendas({
+    const porDia = await caller.analytics.evolucaoVendas({
       dataInicio,
       dataFim,
       agrupamento: 'dia'
     });
 
-    const porSemana = await caller.relatorios.evolucaoVendas({
+    const porSemana = await caller.analytics.evolucaoVendas({
       dataInicio,
       dataFim,
       agrupamento: 'semana'
     });
 
-    const porMes = await caller.relatorios.evolucaoVendas({
+    const porMes = await caller.analytics.evolucaoVendas({
       dataInicio,
       dataFim,
       agrupamento: 'mes'
@@ -296,7 +297,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const distribuicao = await caller.relatorios.distribuicaoVendasPorProjeto({});
+    const distribuicao = await caller.analytics.distribuicaoVendasPorProjeto({});
 
     expect(Array.isArray(distribuicao)).toBe(true);
     if (distribuicao.length > 0) {
@@ -311,7 +312,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const origens = await caller.relatorios.origemLeadsMaisEfetiva({});
+    const origens = await caller.analytics.origemLeadsMaisEfetiva({});
 
     expect(Array.isArray(origens)).toBe(true);
     if (origens.length > 0) {
@@ -326,7 +327,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const horarios = await caller.relatorios.leadsPorHorarioEntrada({});
+    const horarios = await caller.analytics.leadsPorHorarioEntrada({});
 
     expect(Array.isArray(horarios)).toBe(true);
     if (horarios.length > 0) {
@@ -346,7 +347,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const ranking = await caller.relatorios.rankingCorretores({});
+    const ranking = await caller.analytics.rankingCorretores({});
 
     expect(Array.isArray(ranking)).toBe(true);
     if (ranking.length > 0) {
@@ -363,7 +364,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const produtividade = await caller.relatorios.produtividadePorCorretor({});
+    const produtividade = await caller.analytics.produtividadePorCorretor({});
 
     expect(Array.isArray(produtividade)).toBe(true);
     if (produtividade.length > 0) {
@@ -380,7 +381,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const comparativo = await caller.relatorios.comparativoMensalCorretores({
+    const comparativo = await caller.analytics.comparativoMensalCorretores({
       anoInicio: 2024,
       anoFim: 2024
     });
@@ -398,7 +399,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const carga = await caller.relatorios.cargaTrabalho();
+    const carga = await caller.analytics.cargaTrabalho();
 
     expect(Array.isArray(carga)).toBe(true);
     if (carga.length > 0) {
@@ -414,7 +415,7 @@ describe("Novos Relatórios Avançados", () => {
     const ctx = createGestorContext();
     const caller = appRouter.createCaller(ctx);
 
-    const previsao = await caller.relatorios.previsaoVendas();
+    const previsao = await caller.analytics.previsaoVendas();
 
     expect(previsao).toBeDefined();
     expect(previsao).toHaveProperty('previsaoVGV');

@@ -308,7 +308,7 @@ export default function ControleLimites() {
             <div className="flex items-start gap-2">
               <RefreshCw className="h-4 w-4 mt-0.5 text-blue-500 flex-shrink-0" />
               <div>
-                <strong className="text-foreground">Distribuição Automática:</strong> Limite para leads da base que são redistribuídos automaticamente. Corretores com 90% dos leads trabalhados e status "Presente" recebem leads até atingir este limite.
+                <strong className="text-foreground">Distribuição Automática:</strong> Limite para leads da base que são redistribuídos automaticamente. Corretores com status "Presente" e menos de 20 leads aguardando atendimento recebem leads até atingir este limite.
               </div>
             </div>
             <div className="flex items-start gap-2">
