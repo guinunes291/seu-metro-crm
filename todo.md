@@ -5241,3 +5241,13 @@
 - [x] Corrigir testes de distribuição para nova lógica (20 leads aguardando)
 - [x] Corrigir testes de relatórios: namespace analytics, imports, contexto admin
 - [x] Preservar Carteira Ativa, IA e outras funcionalidades críticas durante o merge
+
+## Bug: Distribuição Automática não está rodando
+- [x] Diagnosticar por que o job de distribuição automática não está sendo executado a cada 5 minutos
+- [x] Corrigir ou reimplementar o job de distribuição automática no servidor
+- [x] Verificar que os leads do estoque estão sendo distribuídos corretamente
+
+## Distribuição Automática: 20 leads por corretor elegível por rodada
+- [x] Remover limite de 50 leads por ciclo em distribuirLeadsDoEstoque
+- [x] Garantir que cada corretor elegível receba exatamente 20 leads por rodada
+- [x] Remover limites artificiais de LOTE_SIZE e LEADS_POR_RODADA

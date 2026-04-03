@@ -5,9 +5,7 @@ import { eq, and, sql, isNull } from "drizzle-orm";
 // Configurações de distribuição (baseado no AppScript)
 const MINIMO_LEADS_GARANTIDO = 40; // Carga inicial mínima por corretor (primeiro recebimento)
 const MAXIMO_LEADS_AGUARDANDO = 20; // Máximo de leads em aguardando_atendimento para receber mais
-const LOTE_SIZE = 200; // Total de leads por rodada
-const LEADS_POR_RODADA = 4; // Leads distribuídos por vez para cada corretor
-const MAX_LEADS_ATIVOS = 99999; // Sem limite máximo de leads ativos por corretor
+const LEADS_POR_RODADA_ESTOQUE = 20; // Leads distribuídos para cada corretor elegível por rodada
 
 interface CorretorStatus {
   id: number;
@@ -448,7 +446,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
         sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
             AND ${leads.status} IN ('novo', 'aguardando_atendimento')`
       )
-      .limit(LOTE_SIZE);
+      ;
   } else {
     leadsParaDistribuir = await db
       .select()
@@ -458,8 +456,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
           isNull(leads.corretorId),
           sql`${leads.status} IN ('novo', 'aguardando_atendimento')`
         )
-      )
-      .limit(LOTE_SIZE);
+      );
   }
 
   if (leadsParaDistribuir.length === 0) {
@@ -700,6 +697,7 @@ export async function getEstatisticasDistribuicao(): Promise<CorretorStatus[]> {
 
 /**
  * Distribui leads do estoque para corretores disponíveis
+ * Cada rodada distribui LEADS_POR_RODADA_ESTOQUE leads para cada corretor elegível
  * Chamado automaticamente a cada 5 minutos
  */
 export async function distribuirLeadsDoEstoque(): Promise<{
@@ -716,70 +714,56 @@ export async function distribuirLeadsDoEstoque(): Promise<{
   let distribuidos = 0;
   let erros = 0;
 
-  // Buscar leads aguardando no estoque (ordenar por mais antigo primeiro)
+  // Buscar corretores elegíveis primeiro
+  const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
+  if (corretoresElegiveis.length === 0) {
+    return { distribuidos: 0, erros: 0, mensagens: ["Nenhum corretor elegível disponível"] };
+  }
+
+  // Total de leads a buscar = 20 por corretor elegível
+  const totalParaBuscar = corretoresElegiveis.length * LEADS_POR_RODADA_ESTOQUE;
+
+  // Buscar leads aguardando no estoque (ordenar por mais antigo primeiro, sem limite artificial)
   const leadsEmEstoque = await db
     .select()
     .from(leadEstoque)
     .where(eq(leadEstoque.status, "aguardando"))
     .orderBy(leadEstoque.criadoEm)
-    .limit(50); // Processar no máximo 50 por vez
+    .limit(totalParaBuscar);
 
   if (leadsEmEstoque.length === 0) {
     return { distribuidos: 0, erros: 0, mensagens: ["Nenhum lead em estoque"] };
   }
 
-  mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque...`);
+  mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque para ${corretoresElegiveis.length} corretores elegíveis (${LEADS_POR_RODADA_ESTOQUE} leads/corretor)...`);
 
-  // Buscar corretores elegíveis UMA vez antes do loop (evita N+1 queries)
-  // e rastrear quantos leads cada corretor recebeu neste ciclo
-  const corretoresElegiveisInicial = await getCorretoresElegiveisParaDistribuicao();
-  if (corretoresElegiveisInicial.length === 0) {
-    // Incrementar tentativas de todos os leads do lote
-    for (const estoqueItem of leadsEmEstoque) {
-      await db
-        .update(leadEstoque)
-        .set({
-          tentativasDistribuicao: estoqueItem.tentativasDistribuicao + 1,
-          ultimaTentativa: new Date(),
-        })
-        .where(eq(leadEstoque.id, estoqueItem.id));
-    }
-    return { distribuidos: 0, erros: 0, mensagens: ["Nenhum corretor elegível disponível (presente e com taxa de trabalho >= 90% ou menos de 40 leads ativos)"] };
-  }
+  // Rastrear quantos leads cada corretor recebeu nesta rodada
+  const leadsRecebidosPorCorretor = new Map<number, number>();
+  for (const id of corretoresElegiveis) leadsRecebidosPorCorretor.set(id, 0);
 
-  // Mapa de limite restante por corretor neste ciclo
-  // Buscar limite diário e leads já recebidos hoje para cada corretor elegível
-  const limitePorCorretor = new Map<number, number>();
-  for (const corretorId of corretoresElegiveisInicial) {
-    const corretorInfo = await db
-      .select({ limiteDiarioLeads: users.limiteDiarioLeads })
-      .from(users)
-      .where(eq(users.id, corretorId))
-      .limit(1);
-    const limite = corretorInfo[0]?.limiteDiarioLeads ?? 50;
-    // Calcular início do dia SP (UTC-3)
-    const agora = new Date();
-    const offsetSP = -3 * 60;
-    const agoraSP = new Date(agora.getTime() + (offsetSP - agora.getTimezoneOffset()) * 60 * 1000);
-    const inicioDiaSP = new Date(agoraSP);
-    inicioDiaSP.setHours(0, 0, 0, 0);
-    const inicioDiaUTC = new Date(inicioDiaSP.getTime() - offsetSP * 60 * 1000);
-    const [{ leadsHoje }] = await db
-      .select({ leadsHoje: sql<number>`COUNT(*)` })
-      .from(distributionLog)
-      .where(and(eq(distributionLog.corretorId, corretorId), sql`${distributionLog.createdAt} >= ${inicioDiaUTC}`));
-    const restante = limite - (Number(leadsHoje) || 0);
-    if (restante > 0) {
-      limitePorCorretor.set(corretorId, restante);
-    }
-  }
-
-  // Filtrar apenas corretores com capacidade restante hoje
-  let corretoresDisponiveis = corretoresElegiveisInicial.filter(id => (limitePorCorretor.get(id) ?? 0) > 0);
   let corretorIndex = 0;
 
   for (const estoqueItem of leadsEmEstoque) {
     try {
+      // Avançar para o próximo corretor que ainda não atingiu o limite desta rodada
+      let tentativas = 0;
+      while (
+        (leadsRecebidosPorCorretor.get(corretoresElegiveis[corretorIndex % corretoresElegiveis.length]) ?? 0) >= LEADS_POR_RODADA_ESTOQUE &&
+        tentativas < corretoresElegiveis.length
+      ) {
+        corretorIndex++;
+        tentativas++;
+      }
+
+      // Se todos atingiram o limite desta rodada, parar
+      if (tentativas >= corretoresElegiveis.length) {
+        mensagens.push(`Todos os ${corretoresElegiveis.length} corretores atingiram o limite de ${LEADS_POR_RODADA_ESTOQUE} leads nesta rodada`);
+        break;
+      }
+
+      const melhorCorretor = corretoresElegiveis[corretorIndex % corretoresElegiveis.length];
+      corretorIndex++;
+
       // Buscar informações do lead
       const lead = await db
         .select()
@@ -788,43 +772,16 @@ export async function distribuirLeadsDoEstoque(): Promise<{
         .limit(1);
 
       if (!lead.length) {
-        mensagens.push(`Lead ${estoqueItem.leadId} não encontrado`);
-        
-        // Marcar como cancelado
+        // Lead não encontrado — marcar como cancelado
         await db
           .update(leadEstoque)
           .set({ status: "cancelado" })
           .where(eq(leadEstoque.id, estoqueItem.id));
-        
         erros++;
         continue;
       }
 
       const leadData = lead[0];
-
-      // Remover corretores que atingiram o limite neste ciclo
-      corretoresDisponiveis = corretoresDisponiveis.filter(id => (limitePorCorretor.get(id) ?? 0) > 0);
-
-      if (corretoresDisponiveis.length === 0) {
-        // Ainda não há corretores disponíveis, incrementar tentativas
-        await db
-          .update(leadEstoque)
-          .set({
-            tentativasDistribuicao: estoqueItem.tentativasDistribuicao + 1,
-            ultimaTentativa: new Date(),
-          })
-          .where(eq(leadEstoque.id, estoqueItem.id));
-
-        mensagens.push(`Lead ${estoqueItem.leadId}: Nenhum corretor disponível (tentativa ${estoqueItem.tentativasDistribuicao + 1})`);
-        continue;
-      }
-
-      // Round-robin entre corretores disponíveis
-      corretorIndex = corretorIndex % corretoresDisponiveis.length;
-      const melhorCorretor = corretoresDisponiveis[corretorIndex];
-      corretorIndex++;
-      // Decrementar o limite restante do corretor selecionado
-      limitePorCorretor.set(melhorCorretor, (limitePorCorretor.get(melhorCorretor) ?? 1) - 1);
 
       // Atualizar lead
       await db
@@ -862,16 +819,16 @@ export async function distribuirLeadsDoEstoque(): Promise<{
         console.error("Erro ao enviar notificação:", error);
       }
 
-      mensagens.push(`Lead ${estoqueItem.leadId} distribuído para corretor ${melhorCorretor}`);
+      leadsRecebidosPorCorretor.set(melhorCorretor, (leadsRecebidosPorCorretor.get(melhorCorretor) ?? 0) + 1);
       distribuidos++;
 
     } catch (error) {
       console.error(`Erro ao distribuir lead ${estoqueItem.leadId} do estoque:`, error);
-      mensagens.push(`Erro ao distribuir lead ${estoqueItem.leadId}: ${error}`);
       erros++;
     }
   }
 
+  mensagens.push(`Rodada concluída: ${distribuidos} distribuídos, ${erros} erros`);
   return { distribuidos, erros, mensagens };
 }
 
