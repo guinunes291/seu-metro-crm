@@ -814,15 +814,15 @@ export async function checkLeadDuplicado(
   // Verificar telefone duplicado (se fornecido e não vazio)
   if (telefone && telefone.trim()) {
     const telefoneNormalizado = normalizarTelefone(telefone);
-    // Pegar os últimos 9 dígitos (número do celular sem DDD)
-    const ultimosDigitos = telefoneNormalizado.slice(-9);
     
-    if (ultimosDigitos.length >= 8) {
-      // Busca comparando os últimos 9 dígitos do telefone armazenado
+    if (telefoneNormalizado.length >= 8) {
+      // Busca comparando o telefone completo normalizado (incluindo DDD)
+      // A normalização remove apenas formatação: parênteses, traços, espaços e prefixo internacional +55
+      // NÃO remove o DDD para evitar falsos positivos entre números de DDDs diferentes
       const [existingByPhone] = await db
         .select({ id: leads.id, nome: leads.nome, telefone: leads.telefone })
         .from(leads)
-        .where(sql`RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+', ''), '55', ''), 9) = ${ultimosDigitos}`)
+        .where(sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+55', '') = ${telefoneNormalizado}`)
         .limit(1);
       
       if (existingByPhone) {

@@ -5297,3 +5297,10 @@
 - [x] Melhoria: exibir nome do corretor e mudança de status no histórico
 - [x] Corrigir race condition nos testes (vitest singleFork)
 - [x] Corrigir afterAll do transferenciaJob.test.ts para limpar leadHistory
+
+## Bug: Detecção de duplicatas por telefone ignora DDD (04/04/2026)
+- [x] Corrigir lógica de duplicata para comparar telefone completo (com DDD), não apenas sufixo
+- [x] Garantir que normalização remove apenas formatação (parênteses, traços, espaços), preservando DDD
+- [x] Testar cenário: (14) 991627888 vs (15) 99162-7888 — devem ser leads distintos
+- [x] Corrigir teste de stats para ser resiliente a leads distribuídos pelo job em background
+- [x] Todos os 19 testes passando
