@@ -5270,11 +5270,10 @@
 - [ ] Quando não há corretores disponíveis → ir para o estoque (nunca para perdido/lixeira)
 - [ ] Ajustar frequência do job de transferência para 30 segundos
 
-## Bug: Botão Registrar não salva interação corretamente
-- [ ] Verificar como o botão Registrar está funcionando na tela de Leads
-- [ ] Garantir que o botão salva tipo de contato, resultado e observações no histórico
-- [ ] Confirmar que ultimaInteracao é atualizado ao registrar
-
+### Bug: Botão Registrar não salva interação corretamente
+- [x] Verificar como o botão Registrar está funcionando na tela de Leads
+- [x] Garantir que o botão salva tipo de contato, resultado e observações no histórico
+- [x] Confirmar que ultimaInteracao é atualizado ao registrar
 ## Consolidação do Job de Transferência Automática (04/04/2026)
 - [x] Verificar que transferenciaJob.ts já tem a lógica unificada correta (SLA 10h + 2 dias)
 - [x] Confirmar que _core/index.ts usa agendarTransferenciaAutomatica do transferenciaJob.ts (30s)
@@ -5286,3 +5285,15 @@
 - [x] Validar regra de imunidade de captacao_corretor
 - [x] Validar que leads sem corretor disponível vão para estoque (não perdido/lixeira)
 - [x] Validar rastreamento de corretores que já trabalharam o lead via distribution_log
+
+## Auditoria: Botão "Registrar" na tela de Leads (04/04/2026)
+- [x] Auditar o componente frontend que renderiza o botão Registrar
+- [x] Verificar a procedure addInteraction no backend (routers.ts)
+- [x] Confirmar que ultimaInteracao é atualizado ao registrar interação
+- [x] Confirmar que a interação aparece no histórico do lead
+- [x] Confirmar que tipo de contato, resultado e observações são salvos corretamente
+- [x] Corrigir bug: histórico não era invalidado após registrar (utils.leads.getHistory.invalidate)
+- [x] Corrigir UX: dialog de interação não fechava o modal de detalhes
+- [x] Melhoria: exibir nome do corretor e mudança de status no histórico
+- [x] Corrigir race condition nos testes (vitest singleFork)
+- [x] Corrigir afterAll do transferenciaJob.test.ts para limpar leadHistory

@@ -196,6 +196,8 @@ export default function Leads() {
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
     onSuccess: () => {
       utils.leads.list.invalidate();
+      // Invalidar o histórico para que ele seja recarregado após registrar interação
+      utils.leads.getHistory.invalidate();
     },
   });
   const createLeadMutation = trpc.leads.createByCorretor.useMutation({
@@ -383,13 +385,11 @@ export default function Leads() {
 
   const handleAddInteraction = async () => {
     if (!selectedLead) return;
-
     try {
       await addInteractionMutation.mutateAsync({
         leadId: selectedLead.id,
         ...interactionForm,
       });
-
       toast.success("Interação registrada com sucesso!");
       setInteractionDialog(false);
       setInteractionForm({
@@ -397,6 +397,10 @@ export default function Leads() {
         resultado: "contato_realizado",
         observacoes: "",
       });
+      // Reabrir o modal de detalhes para que o usuário veja o histórico atualizado
+      if (selectedLead) {
+        setDetailsDialog(true);
+      }
       refetch();
     } catch (error) {
       toast.error("Erro ao registrar interação");
@@ -1596,7 +1600,7 @@ export default function Leads() {
                       size="sm"
                       onClick={() => {
                         setInteractionDialog(true);
-                        setDetailsDialog(false);
+                        // Não fechar o modal de detalhes — mantém contexto do lead
                       }}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
@@ -1609,17 +1613,25 @@ export default function Leads() {
                       {leadHistory.map((interaction: any) => (
                         <div key={interaction.id} className="p-3 border rounded-lg bg-muted/50">
                           <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge variant="outline">{tipoLabels[interaction.tipo]}</Badge>
                               <Badge variant="secondary">{resultadoLabels[interaction.resultado]}</Badge>
+                              {interaction.corretorNome && (
+                                <span className="text-xs text-muted-foreground font-medium">{interaction.corretorNome}</span>
+                              )}
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                               {format(new Date(interaction.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                             </span>
                           </div>
                           {interaction.observacoes && (
                             <p className="text-sm text-muted-foreground mt-2">
                               {interaction.observacoes}
+                            </p>
+                          )}
+                          {(interaction.statusAnterior && interaction.statusNovo) && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Status: {statusLabels[interaction.statusAnterior] || interaction.statusAnterior} → {statusLabels[interaction.statusNovo] || interaction.statusNovo}
                             </p>
                           )}
                         </div>

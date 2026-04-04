@@ -1327,9 +1327,22 @@ export async function getLeadHistory(leadId: number) {
   const db = await getDb();
   if (!db) return [];
   
-  return await db.select().from(leadHistory)
-    .where(eq(leadHistory.leadId, leadId))
-    .orderBy(desc(leadHistory.createdAt));
+  return await db.select({
+    id: leadHistory.id,
+    leadId: leadHistory.leadId,
+    corretorId: leadHistory.corretorId,
+    corretorNome: users.name,
+    tipo: leadHistory.tipo,
+    resultado: leadHistory.resultado,
+    observacoes: leadHistory.observacoes,
+    statusAnterior: leadHistory.statusAnterior,
+    statusNovo: leadHistory.statusNovo,
+    createdAt: leadHistory.createdAt,
+  })
+  .from(leadHistory)
+  .leftJoin(users, eq(leadHistory.corretorId, users.id))
+  .where(eq(leadHistory.leadId, leadId))
+  .orderBy(desc(leadHistory.createdAt));
 }
 
 // ============================================================================

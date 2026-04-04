@@ -14,6 +14,7 @@ import { getDb } from "./db";
 import {
   users,
   leads,
+  leadHistory,
   carteiraAtiva,
   distributionLog,
   leadEstoque,
@@ -77,6 +78,8 @@ afterAll(async () => {
     await db.delete(carteiraAtiva).where(inArray(carteiraAtiva.id, testIds.carteiras));
   }
   if (testIds.leads.length > 0) {
+    // Limpar lead_history antes de deletar leads (foreign key)
+    await db.delete(leadHistory).where(inArray(leadHistory.leadId, testIds.leads));
     await db.delete(distributionLog).where(inArray(distributionLog.leadId, testIds.leads));
     await db.delete(leadEstoque).where(inArray(leadEstoque.leadId, testIds.leads));
     await db.delete(logTransferencias).where(inArray(logTransferencias.leadId, testIds.leads));
