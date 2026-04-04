@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, protectedProcedure, gestorProcedure, router } from "./trpc";
-import { verificarTransferenciasAutomaticas } from "../transferenciaAutomaticaJob";
+import { verificarTransferenciasAutomaticas } from "../transferenciaJob";
 import { getLeadsProtegidosCarteira } from "../routers/carteiraAtiva";
 
 export const systemRouter = router({

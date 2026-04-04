@@ -630,28 +630,34 @@ export const appRouter = router({
           }
         }
         
-        // Registrar interação na tabela interacoes
         // Usar o corretorId do lead (dono) para que a pontuação vá para o corretor correto
         const corretorParaInteracao = lead.corretorId || ctx.user.id;
-        await db.createInteracao({
+        
+        // SEMPRE registrar no histórico do lead (lead_history) para que apareça na aba Histórico
+        // Isso garante que tipo de contato, resultado e observações fiquem registrados
+        await db.createLeadHistory({
           leadId: input.leadId,
           corretorId: corretorParaInteracao,
           tipo: input.tipo,
           resultado: input.resultado,
-          observacoes: input.observacoes || '',
+          observacoes: input.observacoes,
+          statusAnterior: input.statusAnterior,
+          statusNovo: input.statusNovo,
         });
         
-        // Também registrar no histórico de mudanças de status se houver
-        if (input.statusAnterior && input.statusNovo) {
-          await db.createLeadHistory({
-            leadId: input.leadId,
-            corretorId: corretorParaInteracao,
-            tipo: input.tipo,
-            resultado: input.resultado,
-            observacoes: input.observacoes,
-            statusAnterior: input.statusAnterior,
-            statusNovo: input.statusNovo,
-          });
+        // Também registrar na tabela interacoes para métricas (apenas ligação e whatsapp)
+        if (input.tipo === 'ligacao' || input.tipo === 'whatsapp') {
+          try {
+            await db.createInteracao({
+              leadId: input.leadId,
+              corretorId: corretorParaInteracao,
+              tipo: input.tipo as 'ligacao' | 'whatsapp',
+              observacoes: input.observacoes || '',
+            });
+          } catch (e) {
+            // Não falhar se a tabela interacoes tiver problema de schema
+            console.warn('[addInteraction] Erro ao salvar em interacoes:', e);
+          }
         }
         
         // Atualizar último contato e última interação do lead

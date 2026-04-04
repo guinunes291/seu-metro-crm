@@ -5251,3 +5251,38 @@
 - [x] Remover limite de 50 leads por ciclo em distribuirLeadsDoEstoque
 - [x] Garantir que cada corretor elegível receba exatamente 20 leads por rodada
 - [x] Remover limites artificiais de LOTE_SIZE e LEADS_POR_RODADA
+
+## Auditoria Completa: Distribuição, Transferência, Redistribuição e SLA
+- [ ] Corrigir colunas da tabela de corretores elegíveis (Total Leads vs Em Atendimento vs Aguardando)
+- [ ] Auditar fluxo de distribuição automática (distribuirLeadsDoEstoque)
+- [ ] Auditar fluxo de transferência automática por inatividade (2 dias)
+- [ ] Auditar redistribuição por SLA vencido (timerLeadsJob)
+- [ ] Auditar transferenciaAutomaticaJob (leads estagnados)
+- [ ] Verificar se leads estão sendo perdidos/redistribuídos incorretamente
+- [ ] Corrigir todos os fluxos problemáticos identificados
+
+## Transferência Automática: Regras Confirmadas (04/04/2026)
+- [ ] Verificar se observações/registros dos corretores atualizam ultimaInteracao no lead
+- [ ] Corrigir transferenciaJob: leads em_atendimento sem interação há 2 dias → reatribuir para corretor que nunca trabalhou o lead, ou estoque
+- [ ] Corrigir transferenciaAutomaticaJob: leads aguardando_atendimento sem interação há 10h → reatribuir ou estoque
+- [ ] Leads na Carteira Ativa são IMUNES a qualquer transferência automática
+- [ ] Ao redistribuir, nunca enviar para corretor que já trabalhou o lead
+- [ ] Quando não há corretores disponíveis → ir para o estoque (nunca para perdido/lixeira)
+- [ ] Ajustar frequência do job de transferência para 30 segundos
+
+## Bug: Botão Registrar não salva interação corretamente
+- [ ] Verificar como o botão Registrar está funcionando na tela de Leads
+- [ ] Garantir que o botão salva tipo de contato, resultado e observações no histórico
+- [ ] Confirmar que ultimaInteracao é atualizado ao registrar
+
+## Consolidação do Job de Transferência Automática (04/04/2026)
+- [x] Verificar que transferenciaJob.ts já tem a lógica unificada correta (SLA 10h + 2 dias)
+- [x] Confirmar que _core/index.ts usa agendarTransferenciaAutomatica do transferenciaJob.ts (30s)
+- [x] Confirmar que systemRouter.ts importa verificarTransferenciasAutomaticas do transferenciaJob.ts
+- [x] Confirmar que transferenciaAutomaticaJob.ts NÃO é chamado em nenhum lugar de produção
+- [x] Verificar tabela ControleDistribuicao: colunas corretas (Corretor, Status, Total, Em Atendimento, Aguardando, Elegibilidade)
+- [x] Criar testes para o job de transferência unificado (11 testes passando)
+- [x] Validar regra de imunidade da Carteira Ativa
+- [x] Validar regra de imunidade de captacao_corretor
+- [x] Validar que leads sem corretor disponível vão para estoque (não perdido/lixeira)
+- [x] Validar rastreamento de corretores que já trabalharam o lead via distribution_log

@@ -1,6 +1,5 @@
 import { distribuirTodosLeadsNaoDistribuidos, distribuirLeadsDoEstoque } from "./distribution";
 import { verificarTimerLeads } from "./timerLeadsJob";
-import { verificarTransferenciasAutomaticas } from "./transferenciaJob";
 
 // Flag para evitar execuções concorrentes dos jobs
 let distribuicaoEmExecucao = false;
@@ -90,10 +89,4 @@ export function agendarDistribuicaoAutomatica() {
   
   console.log("[Job] Verificação de timer de leads agendada para executar a cada 2 minutos");
   
-  // Transferências automáticas: a cada 1 hora
-  setInterval(() => {
-    verificarTransferenciasAutomaticas().catch(console.error);
-  }, 3600000);
-  
-  console.log("[Job] Verificação de transferências automáticas agendada para executar a cada 1 hora");
 }

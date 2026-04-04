@@ -412,10 +412,13 @@ export default function ControleDistribuicao() {
                         Presente
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-right">{corretor.totalLeads}</TableCell>
                     <TableCell className="text-right">{corretor.leadsTrabalhados}</TableCell>
                     <TableCell className="text-right">
-                      <span className="text-green-600 font-medium">
-                        {(corretor as any).aguardandoLeads ?? (corretor.totalLeads - corretor.leadsTrabalhados)}
+                      <span className={`font-medium ${
+                        ((corretor as any).aguardandoLeads ?? 0) >= 20 ? 'text-red-600' : 'text-green-600'
+                      }`}>
+                        {(corretor as any).aguardandoLeads ?? 0}
                       </span>
                     </TableCell>
                     <TableCell>
