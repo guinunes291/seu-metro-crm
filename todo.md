@@ -5316,3 +5316,9 @@
 - [x] Reduzir volume dos beeps de urgência (0.45 → 0.25) e expiração (0.55 → 0.35)
 - [x] Reduzir quantidade de beeps: urgência 3→2, expiração 5→3
 - [x] Manter apenas o alerta de entrada nos últimos 3 min (uma vez) e o alerta de expiração
+
+## UX: Manter apenas som de chegada de lead ADS (06/04/2026)
+- [x] Remover sons do TimerLead (urgência e expiração) — timer agora é apenas visual
+- [x] Remover som do NotificationListener (notificações gerais) — apenas toast visual
+- [x] Remover som do AlertasNotification — apenas alertas visuais
+- [x] Manter apenas o som de chegada de novo lead ADS no useWebhookLeadNotification

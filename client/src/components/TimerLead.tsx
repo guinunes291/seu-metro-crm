@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Clock, AlertTriangle, Zap } from "lucide-react";
 import { enviarNotificacaoLead } from "@/hooks/useNotificacaoLead";
-import {
-  initAudio,
-  playAlertaUrgencia,
-  playAlertaExpiracao,
-} from "@/lib/timerSound";
 
 interface TimerLeadProps {
   timestampRecebimento: Date | string | null;
@@ -30,7 +25,7 @@ interface TimerLeadProps {
 
 /** Tempo total do timer em milissegundos (30 minutos) */
 const TIMER_TOTAL_MS = 30 * 60 * 1000;
-/** Limite de urgência para notificação e alerta sonoro (3 minutos) */
+/** Limite de urgência para notificação do navegador (3 minutos) */
 const LIMITE_URGENCIA_MS = 3 * 60 * 1000;
 
 /** Verifica se a origem é de um lead Facebook ADS (webhook) */
@@ -42,11 +37,7 @@ function isLeadFacebookADS(origem?: string | null): boolean {
 
 /**
  * Componente que exibe um cronômetro regressivo para leads Facebook ADS com prazo de 30 minutos.
- * Dispara notificação nativa do navegador e alerta sonoro quando entrar nos últimos 3 minutos.
- *
- * Alertas sonoros (Web Audio API — sem arquivos externos):
- *  - Ao entrar nos últimos 3 min: 2 beeps suaves (alerta de atenção) — apenas uma vez
- *  - Ao expirar: 3 beeps descendentes
+ * Dispara notificação nativa do navegador quando entrar nos últimos 3 minutos (sem sons).
  */
 export function TimerLead({
   timestampRecebimento,
@@ -61,27 +52,12 @@ export function TimerLead({
   const [tempoRestante, setTempoRestante] = useState<number>(TIMER_TOTAL_MS);
   const [expirado, setExpirado] = useState(false);
 
-  // Flags para evitar disparos duplicados
+  // Flag para evitar notificação duplicada
   const notificacaoEnviada = useRef(false);
-  const alertaSonoroUrgenciaEnviado = useRef(false);
-  const alertaSonoroExpiracaoEnviado = useRef(false);
 
-  // Inicializar AudioContext na primeira interação do usuário com a página
-  useEffect(() => {
-    const handler = () => initAudio();
-    window.addEventListener("click", handler, { once: true });
-    window.addEventListener("keydown", handler, { once: true });
-    return () => {
-      window.removeEventListener("click", handler);
-      window.removeEventListener("keydown", handler);
-    };
-  }, []);
-
-  // Resetar flags quando o lead/timer mudar
+  // Resetar flag quando o lead/timer mudar
   useEffect(() => {
     notificacaoEnviada.current = false;
-    alertaSonoroUrgenciaEnviado.current = false;
-    alertaSonoroExpiracaoEnviado.current = false;
   }, [leadId, timerAtivo, timestampRecebimento]);
 
   useEffect(() => {
@@ -96,12 +72,6 @@ export function TimerLead({
       if (restante <= 0) {
         setExpirado(true);
         setTempoRestante(0);
-
-        // Alerta sonoro de expiração (apenas uma vez)
-        if (!alertaSonoroExpiracaoEnviado.current && isLeadFacebookADS(origem)) {
-          alertaSonoroExpiracaoEnviado.current = true;
-          playAlertaExpiracao();
-        }
         return;
       }
 
@@ -110,32 +80,21 @@ export function TimerLead({
 
       const isUrgente = restante <= LIMITE_URGENCIA_MS;
 
-      if (isUrgente && isLeadFacebookADS(origem)) {
-        // ── Notificação do navegador (apenas uma vez, apenas para corretor) ─
-        if (!notificacaoEnviada.current && isCorretor) {
-          notificacaoEnviada.current = true;
-          enviarNotificacaoLead({
-            nomeCliente: nomeCliente || "Cliente",
-            tempoRestanteMs: restante,
-            leadId: leadId ?? 0,
-          });
-        }
-
-        // ── Alerta sonoro de entrada nos últimos 3 min (apenas uma vez) ───
-        if (!alertaSonoroUrgenciaEnviado.current) {
-          alertaSonoroUrgenciaEnviado.current = true;
-          playAlertaUrgencia();
-        }
+      // Notificação do navegador apenas para corretor (sem som)
+      if (isUrgente && isLeadFacebookADS(origem) && !notificacaoEnviada.current && isCorretor) {
+        notificacaoEnviada.current = true;
+        enviarNotificacaoLead({
+          nomeCliente: nomeCliente || "Cliente",
+          tempoRestanteMs: restante,
+          leadId: leadId ?? 0,
+        });
       }
     };
 
-    // Calcular imediatamente
     calcularTempoRestante();
-
-    // Atualizar a cada segundo
     const interval = setInterval(calcularTempoRestante, 1000);
     return () => clearInterval(interval);
-  }, [timestampRecebimento, timerAtivo, origem, nomeCliente, leadId]);
+  }, [timestampRecebimento, timerAtivo, origem, nomeCliente, leadId, isCorretor]);
 
   // Exibir somente para leads Facebook ADS (webhook)
   if (!timerAtivo || !timestampRecebimento || !isLeadFacebookADS(origem)) {
@@ -146,11 +105,9 @@ export function TimerLead({
   const segundos = Math.floor((tempoRestante % 60000) / 1000);
   const percentualRestante = Math.max(0, (tempoRestante / TIMER_TOTAL_MS) * 100);
 
-  // Urgência baseada no tempo restante
-  const isUrgente = tempoRestante < LIMITE_URGENCIA_MS; // < 3 min
-  const isAtencao = tempoRestante < 7 * 60 * 1000;      // < 7 min
+  const isUrgente = tempoRestante < LIMITE_URGENCIA_MS;
+  const isAtencao = tempoRestante < 7 * 60 * 1000;
 
-  // Cores baseadas no tempo restante
   const getCorTimer = () => {
     if (expirado) return "text-red-700 bg-red-100 border-red-300";
     if (isUrgente) return "text-red-600 bg-red-50 border-red-200";

@@ -10,7 +10,6 @@ import { useLocation } from "wouter";
 export function AlertasNotification() {
   const [, setLocation] = useLocation();
   const [alertasVisiveis, setAlertasVisiveis] = useState<any[]>([]);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   // Rastrear IDs já notificados para evitar re-disparos ao refetch/remount
   const notifiedIdsRef = useRef<Set<number>>(new Set());
   // Flag para indicar que a primeira carga já foi feita (não notificar alertas pré-existentes)
@@ -47,13 +46,6 @@ export function AlertasNotification() {
     const novosAlertas = alertas.filter(a => !notifiedIdsRef.current.has(a.id));
     
     if (novosAlertas.length > 0) {
-      // Tocar som de notificação
-      if (audioRef.current) {
-        audioRef.current.play().catch(err => {
-          console.log("Não foi possível tocar o som:", err);
-        });
-      }
-      
       // Mostrar toast para cada novo alerta
       novosAlertas.forEach(alerta => {
         notifiedIdsRef.current.add(alerta.id);
@@ -97,12 +89,6 @@ export function AlertasNotification() {
   
   return (
     <>
-      {/* Som de notificação */}
-      <audio
-        ref={audioRef}
-        src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGWi78OScTgwOUKzn77RgGwU7k9v0yXkpBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBSh+zPLaizsKGGS56+mjUBELTKXh8bllHAU2jdXzzn0vBQ=="
-      />
-      
       {/* Alertas flutuantes */}
       <div className="fixed bottom-4 right-4 z-50 space-y-2 max-w-md">
         {alertasVisiveis.map((alerta) => (
