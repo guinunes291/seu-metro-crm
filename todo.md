@@ -5304,3 +5304,15 @@
 - [x] Testar cenário: (14) 991627888 vs (15) 99162-7888 — devem ser leads distintos
 - [x] Corrigir teste de stats para ser resiliente a leads distribuídos pelo job em background
 - [x] Todos os 19 testes passando
+
+## Bug/UX: Sons de transferência de lead muito irritantes (06/04/2026)
+- [ ] Mapear todos os sons de notificação de transferência no código
+- [ ] Reduzir volume e frequência dos sons
+- [ ] Adicionar controle de mute/volume para o usuário
+- [ ] Garantir que sons só toquem uma vez por evento, não repetidamente
+
+## UX: Remover lembrete periódico sonoro do timer (06/04/2026)
+- [x] Remover o beep a cada 30s (playLembrete) do TimerLead
+- [x] Reduzir volume dos beeps de urgência (0.45 → 0.25) e expiração (0.55 → 0.35)
+- [x] Reduzir quantidade de beeps: urgência 3→2, expiração 5→3
+- [x] Manter apenas o alerta de entrada nos últimos 3 min (uma vez) e o alerta de expiração

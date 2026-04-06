@@ -4,7 +4,6 @@ import { enviarNotificacaoLead } from "@/hooks/useNotificacaoLead";
 import {
   initAudio,
   playAlertaUrgencia,
-  playLembrete,
   playAlertaExpiracao,
 } from "@/lib/timerSound";
 
@@ -33,8 +32,6 @@ interface TimerLeadProps {
 const TIMER_TOTAL_MS = 30 * 60 * 1000;
 /** Limite de urgência para notificação e alerta sonoro (3 minutos) */
 const LIMITE_URGENCIA_MS = 3 * 60 * 1000;
-/** Intervalo de lembrete sonoro periódico nos últimos 3 minutos (30 segundos) */
-const INTERVALO_LEMBRETE_MS = 30 * 1000;
 
 /** Verifica se a origem é de um lead Facebook ADS (webhook) */
 function isLeadFacebookADS(origem?: string | null): boolean {
@@ -48,9 +45,8 @@ function isLeadFacebookADS(origem?: string | null): boolean {
  * Dispara notificação nativa do navegador e alerta sonoro quando entrar nos últimos 3 minutos.
  *
  * Alertas sonoros (Web Audio API — sem arquivos externos):
- *  - Ao entrar nos últimos 3 min: 3 beeps ascendentes (alerta de atenção)
- *  - A cada 30s nos últimos 3 min: 1 beep de lembrete
- *  - Ao expirar: 5 beeps descendentes urgentes
+ *  - Ao entrar nos últimos 3 min: 2 beeps suaves (alerta de atenção) — apenas uma vez
+ *  - Ao expirar: 3 beeps descendentes
  */
 export function TimerLead({
   timestampRecebimento,
@@ -69,8 +65,6 @@ export function TimerLead({
   const notificacaoEnviada = useRef(false);
   const alertaSonoroUrgenciaEnviado = useRef(false);
   const alertaSonoroExpiracaoEnviado = useRef(false);
-  // Timestamp do último lembrete periódico
-  const ultimoLembreteMs = useRef<number>(0);
 
   // Inicializar AudioContext na primeira interação do usuário com a página
   useEffect(() => {
@@ -88,7 +82,6 @@ export function TimerLead({
     notificacaoEnviada.current = false;
     alertaSonoroUrgenciaEnviado.current = false;
     alertaSonoroExpiracaoEnviado.current = false;
-    ultimoLembreteMs.current = 0;
   }, [leadId, timerAtivo, timestampRecebimento]);
 
   useEffect(() => {
@@ -132,16 +125,6 @@ export function TimerLead({
         if (!alertaSonoroUrgenciaEnviado.current) {
           alertaSonoroUrgenciaEnviado.current = true;
           playAlertaUrgencia();
-          ultimoLembreteMs.current = agora;
-        }
-
-        // ── Lembrete periódico a cada 30s ──────────────────────────────────
-        if (
-          ultimoLembreteMs.current > 0 &&
-          agora - ultimoLembreteMs.current >= INTERVALO_LEMBRETE_MS
-        ) {
-          ultimoLembreteMs.current = agora;
-          playLembrete();
         }
       }
     };

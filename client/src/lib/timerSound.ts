@@ -65,29 +65,20 @@ function playBeep(
 
 /**
  * Alerta de entrada nos últimos 3 minutos.
- * 3 beeps ascendentes — "atenção!"
+ * 2 beeps suaves — "atenção!" (apenas uma vez)
  */
 export function playAlertaUrgencia(): void {
-  playBeep(660, 0.12, 0.45, 0.00);   // Dó5
-  playBeep(880, 0.12, 0.45, 0.15);   // Lá5
-  playBeep(1100, 0.18, 0.50, 0.30);  // Dó#6 — tom mais alto
-}
-
-/**
- * Beep de lembrete periódico (a cada 30s nos últimos 3 minutos).
- * 1 beep curto e discreto.
- */
-export function playLembrete(): void {
-  playBeep(880, 0.10, 0.30, 0.00);
+  playBeep(660, 0.10, 0.25, 0.00);   // Dó5 — volume suave
+  playBeep(880, 0.10, 0.25, 0.15);   // Lá5 — volume suave
 }
 
 /**
  * Alerta de expiração do timer.
- * 5 beeps rápidos descendentes — "urgente!"
+ * 3 beeps descendentes — "urgente!"
  */
 export function playAlertaExpiracao(): void {
-  for (let i = 0; i < 5; i++) {
-    playBeep(1100 - i * 80, 0.10, 0.55, i * 0.14);
+  for (let i = 0; i < 3; i++) {
+    playBeep(1000 - i * 80, 0.10, 0.35, i * 0.15);
   }
 }
 
