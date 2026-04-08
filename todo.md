@@ -5305,6 +5305,7 @@
 - [x] Corrigir teste de stats para ser resiliente a leads distribuídos pelo job em background
 - [x] Todos os 19 testes passando
 
+<<<<<<< Updated upstream
 ## Bug/UX: Sons de transferência de lead muito irritantes (06/04/2026)
 - [ ] Mapear todos os sons de notificação de transferência no código
 - [ ] Reduzir volume e frequência dos sons
@@ -5322,3 +5323,10 @@
 - [x] Remover som do NotificationListener (notificações gerais) — apenas toast visual
 - [x] Remover som do AlertasNotification — apenas alertas visuais
 - [x] Manter apenas o som de chegada de novo lead ADS no useWebhookLeadNotification
+=======
+## Bug: Leads presos no estado "Transferindo..." por horas (08/04/2026)
+- [x] Investigar: "Transferindo..." é visual do TimerLead (30min) mas job só transferia após 10h
+- [x] Corrigir job: adicionar CASO 0 — leads webhook sem interação há > 30min são transferidos imediatamente
+- [x] Garantir que leads webhook com interação (em_atendimento) seguem SLA de 2 dias
+- [x] Adicionar 2 testes de SLA de 30min para leads webhook (13 testes passando)
+>>>>>>> Stashed changes

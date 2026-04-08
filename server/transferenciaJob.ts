@@ -8,16 +8,18 @@ import { getCorretoresElegiveis } from "./distribution";
  * Job de transferência automática de leads sem interação
  *
  * Regras:
- * 1. Leads `aguardando_atendimento` sem interação há mais de 10h → reatribuir
- * 2. Leads `em_atendimento` sem interação há mais de 2 dias → reatribuir
- * 3. Leads na Carteira Ativa → IMUNES (nunca transferir)
- * 4. Leads de origem `captacao_corretor` → IMUNES (nunca transferir)
- * 5. Quando não há corretores disponíveis → ir para o estoque (NUNCA para perdido/lixeira)
- * 6. Novo corretor deve ser alguém que NUNCA trabalhou o lead antes
+ * 1. Leads webhook (origemWebhook=true) `aguardando_atendimento` sem interação há mais de 30min → reatribuir
+ * 2. Leads `aguardando_atendimento` sem interação há mais de 10h → reatribuir
+ * 3. Leads `em_atendimento` sem interação há mais de 2 dias → reatribuir
+ * 4. Leads na Carteira Ativa → IMUNES (nunca transferir)
+ * 5. Leads de origem `captacao_corretor` → IMUNES (nunca transferir)
+ * 6. Quando não há corretores disponíveis → ir para o estoque (NUNCA para perdido/lixeira)
+ * 7. Novo corretor deve ser alguém que NUNCA trabalhou o lead antes
  *
  * Frequência: a cada 30 segundos
  */
 
+const MINUTOS_SLA_WEBHOOK = 30;    // 30min sem atender lead webhook → redistribuir
 const HORAS_SLA_AGUARDANDO = 10;   // 10h sem atender → redistribuir
 const DIAS_SLA_EM_ATENDIMENTO = 2; // 2 dias sem interagir → redistribuir
 
@@ -76,7 +78,7 @@ async function colocarNoEstoque(db: any, leadId: number, motivo: string): Promis
 async function transferirLead(
   db: any,
   lead: any,
-  motivo: "10h_sem_atendimento" | "2_dias_sem_interacao"
+  motivo: "30min_webhook_sem_atendimento" | "10h_sem_atendimento" | "2_dias_sem_interacao"
 ): Promise<"transferido" | "estoque" | "imune"> {
   // 1. Imunidade: captacao_corretor
   if (lead.origem === "captacao_corretor") {
@@ -189,6 +191,37 @@ export async function verificarTransferenciasAutomaticas() {
   let erros = 0;
 
   try {
+    // ── CASO 0: leads WEBHOOK aguardando_atendimento sem interação há mais de 30min ──
+    // Leads Facebook ADS têm SLA de 30 minutos (alinhado com o timer visual)
+    const limite30min = new Date();
+    limite30min.setMinutes(limite30min.getMinutes() - MINUTOS_SLA_WEBHOOK);
+
+    const leadsWebhookExpirados = await db
+      .select()
+      .from(leads)
+      .where(and(
+        eq(leads.status, "aguardando_atendimento"),
+        eq(leads.origemWebhook, true),
+        isNotNull(leads.corretorId),
+        // Nunca teve interação e foi recebido há mais de 30min
+        isNull(leads.ultimaInteracao),
+        isNotNull(leads.timestampRecebimento),
+        lt(leads.timestampRecebimento, limite30min)
+      ))
+      .limit(100);
+
+    for (const lead of leadsWebhookExpirados) {
+      try {
+        const resultado = await transferirLead(db, lead, "30min_webhook_sem_atendimento");
+        if (resultado === "transferido") transferidos++;
+        else if (resultado === "estoque") noEstoque++;
+        else if (resultado === "imune") imunes++;
+      } catch (error) {
+        erros++;
+        console.error(`[Transferência Job] Erro ao processar lead webhook ${lead.id}:`, error);
+      }
+    }
+
     // ── CASO 1: leads aguardando_atendimento sem interação há mais de 10h ──
     const limite10h = new Date();
     limite10h.setHours(limite10h.getHours() - HORAS_SLA_AGUARDANDO);
@@ -205,11 +238,12 @@ export async function verificarTransferenciasAutomaticas() {
             isNotNull(leads.ultimaInteracao),
             lt(leads.ultimaInteracao, limite10h)
           ),
-          // Nunca teve interação mas foi recebido há mais de 10h
+          // Nunca teve interação mas foi recebido há mais de 10h (não webhook — esses já foram tratados acima)
           and(
             isNull(leads.ultimaInteracao),
             isNotNull(leads.timestampRecebimento),
-            lt(leads.timestampRecebimento, limite10h)
+            lt(leads.timestampRecebimento, limite10h),
+            eq(leads.origemWebhook, false)
           )
         )
       ))

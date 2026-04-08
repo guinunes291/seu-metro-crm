@@ -292,6 +292,61 @@ describe("Job de Transferência Automática Unificado", () => {
     });
   });
 
+  describe("SLA de 30 minutos para leads Webhook (Facebook ADS)", () => {
+    it("deve identificar lead webhook aguardando_atendimento sem interação há mais de 30min", async () => {
+      const db = await getDb();
+      if (!db) throw new Error("DB não disponível");
+
+      const corretorId = await criarCorretorTeste("Corretor Webhook SLA");
+      const quarentaMinAtras = new Date(Date.now() - 40 * 60 * 1000); // 40 min atrás
+      const leadId = await criarLeadTeste({
+        nome: "Lead Webhook SLA 30min",
+        corretorId,
+        status: "aguardando_atendimento",
+        origem: "facebook",
+        timestampRecebimento: quarentaMinAtras,
+      });
+
+      // Marcar como origemWebhook=true
+      await db.update(leads).set({ origemWebhook: true }).where(eq(leads.id, leadId));
+
+      const [lead] = await db.select().from(leads).where(eq(leads.id, leadId));
+      expect(lead).toBeDefined();
+      expect(lead.origemWebhook).toBe(true);
+      expect(lead.status).toBe("aguardando_atendimento");
+      expect(lead.corretorId).toBe(corretorId);
+
+      // Verificar que o timer expirou (> 30 min)
+      const agora = new Date();
+      const diferencaMin = (agora.getTime() - lead.timestampRecebimento!.getTime()) / (1000 * 60);
+      expect(diferencaMin).toBeGreaterThan(30);
+    });
+
+    it("deve manter lead webhook com interacao recente (< 30min) sem transferir", async () => {
+      const db = await getDb();
+      if (!db) throw new Error("DB não disponível");
+
+      const corretorId = await criarCorretorTeste("Corretor Webhook Recente");
+      const cincoMinAtras = new Date(Date.now() - 5 * 60 * 1000); // 5 min atrás
+      const leadId = await criarLeadTeste({
+        nome: "Lead Webhook Recente",
+        corretorId,
+        status: "aguardando_atendimento",
+        origem: "facebook",
+        timestampRecebimento: cincoMinAtras,
+      });
+
+      await db.update(leads).set({ origemWebhook: true }).where(eq(leads.id, leadId));
+
+      const [lead] = await db.select().from(leads).where(eq(leads.id, leadId));
+      const agora = new Date();
+      const diferencaMin = (agora.getTime() - lead.timestampRecebimento!.getTime()) / (1000 * 60);
+
+      // Timer ainda não expirou
+      expect(diferencaMin).toBeLessThan(30);
+    });
+  });
+
   describe("Agendamento do job", () => {
     it("deve exportar a função agendarTransferenciaAutomatica", async () => {
       const { agendarTransferenciaAutomatica } = await import("./transferenciaJob");
