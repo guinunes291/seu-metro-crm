@@ -2,7 +2,7 @@ import { getDb } from "./db";
 import { leads, users, leadEstoque, distributionLog, logTransferencias } from "../drizzle/schema";
 import { and, eq, lt, isNotNull, or, isNull } from "drizzle-orm";
 import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
-import { getCorretoresElegiveis } from "./distribution";
+import { getCorretoresElegiveis, getCorretoresParaRedistribuicao } from "./distribution";
 
 /**
  * Job de transferência automática de leads sem interação
@@ -95,10 +95,18 @@ async function transferirLead(
   const jaTrabalharamIds = await getCorretoresQueJaTrabalharamLead(db, lead.id);
 
   // 4. Buscar corretores elegíveis
-  const elegiveisIds = await getCorretoresElegiveis(
-    lead.projectId || undefined,
-    lead.origem || undefined
-  );
+  // Para leads webhook expirados: usar todos os corretores PRESENTES (sem limite de aguardando)
+  // Para outros casos: usar a lógica normal de elegibilidade
+  let elegiveisIds: number[];
+  if (motivo === "30min_webhook_sem_atendimento") {
+    // Redistribuição urgente: qualquer corretor presente pode receber
+    elegiveisIds = await getCorretoresParaRedistribuicao();
+  } else {
+    elegiveisIds = await getCorretoresElegiveis(
+      lead.projectId || undefined,
+      lead.origem || undefined
+    );
+  }
 
   // 5. Filtrar: excluir quem já trabalhou o lead
   const novosElegiveisIds = (elegiveisIds as number[]).filter(

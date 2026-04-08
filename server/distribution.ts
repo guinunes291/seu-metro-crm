@@ -219,6 +219,45 @@ export async function getTaxaConversaoPorRegiao(
 }
 
 /**
+ * Obtém corretores presentes para redistribuição urgente de leads webhook
+ * Critério: apenas status "presente" — sem limite de aguardando_atendimento
+ * Ordenados por menor número de leads ativos (distribuição mais justa)
+ */
+export async function getCorretoresParaRedistribuicao(): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const todosCorretores = await db
+    .select()
+    .from(users)
+    .where(and(eq(users.role, "corretor"), eq(users.status, "presente")));
+
+  if (todosCorretores.length === 0) return [];
+
+  // Calcular carga atual de cada corretor (leads ativos)
+  const corretoresComCarga: Array<{ id: number; carga: number }> = [];
+
+  for (const corretor of todosCorretores) {
+    const [{ total }] = await db
+      .select({ total: sql<number>`COUNT(*)` })
+      .from(leads)
+      .where(
+        and(
+          eq(leads.corretorId, corretor.id),
+          eq(leads.naLixeira, false),
+          sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
+        )
+      );
+    corretoresComCarga.push({ id: corretor.id, carga: Number(total) });
+  }
+
+  // Ordenar por menor carga (distribuição mais justa)
+  corretoresComCarga.sort((a, b) => a.carga - b.carga);
+
+  return corretoresComCarga.map((c) => c.id);
+}
+
+/**
  * Retorna lista de corretores elegíveis ordenados por melhor taxa de conversão
  */
 export async function getCorretoresElegiveis(

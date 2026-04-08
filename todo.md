@@ -5332,6 +5332,8 @@
 - [x] 21 testes passando
 
 ## Bug: Transferência enviando para estoque em vez de redistribuir para corretor (08/04/2026)
-- [ ] Diagnosticar por que getCorretoresElegiveis retorna vazio na transferência webhook
-- [ ] Corrigir a lógica de elegibilidade para redistribuir para outro corretor da fila
-- [ ] Verificar se o projetoId está sendo usado como filtro e impedindo a redistribuição
+- [x] Diagnosticar: getCorretoresElegiveis retornava vazio pois todos os corretores tinham 20+ aguardando
+- [x] Criar getCorretoresParaRedistribuicao: usa apenas status="presente", ordenado por menor carga
+- [x] Corrigir transferirLead: leads webhook usam getCorretoresParaRedistribuicao (sem limite de aguardando)
+- [x] Leads não-webhook continuam usando getCorretoresElegiveis (com regras normais)
+- [x] 21 testes passando
