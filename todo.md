@@ -5323,3 +5323,15 @@
 - [x] Passar ultimaInteracao para TimerLead em Leads.tsx (cards + tabela)
 - [x] Passar ultimaInteracao para TimerLead em Kanban.tsx
 - [x] Passar ultimaInteracao para TimerLead em LeadsPorCorretor.tsx
+
+## Simplificação: Regra única de transferência ADS (08/04/2026)
+- [x] Regra: lead ADS chega → 30 min → se status != em_atendimento → transfere
+- [x] Remover lógica de ultimaInteracao do TimerLead (timer conta apenas desde timestampRecebimento)
+- [x] Simplificar o job: origemWebhook=true + aguardando_atendimento + 30min desde timestampRecebimento
+- [x] Timer visual expira em 30min a partir do timestampRecebimento, independente de interações
+- [x] 21 testes passando
+
+## Bug: Transferência enviando para estoque em vez de redistribuir para corretor (08/04/2026)
+- [ ] Diagnosticar por que getCorretoresElegiveis retorna vazio na transferência webhook
+- [ ] Corrigir a lógica de elegibilidade para redistribuir para outro corretor da fila
+- [ ] Verificar se o projetoId está sendo usado como filtro e impedindo a redistribuição

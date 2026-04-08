@@ -18,14 +18,9 @@ interface TimerLeadProps {
   /**
    * Se true, habilita notificações do navegador para este lead.
    * DEVE ser true apenas quando o usuário logado for role=corretor.
-   * Gestores e admins NÃO devem receber notificações de prazo de lead.
    */
   isCorretor?: boolean;
-  /**
-   * Última interação registrada pelo corretor.
-   * Quando presente, o timer é calculado a partir desta data (não do timestampRecebimento),
-   * pois o SLA de 30min reinicia após cada interação.
-   */
+  /** @deprecated Não utilizado. Timer conta apenas desde timestampRecebimento. */
   ultimaInteracao?: Date | string | null;
 }
 
@@ -42,9 +37,10 @@ function isLeadFacebookADS(origem?: string | null): boolean {
 }
 
 /**
- * Componente que exibe um cronômetro regressivo para leads Facebook ADS com prazo de 30 minutos.
- * O timer usa `ultimaInteracao` como referência quando disponível (o SLA reinicia após cada interação).
- * Dispara notificação nativa do navegador quando entrar nos últimos 3 minutos (sem sons).
+ * Componente que exibe um cronômetro regressivo para leads Facebook ADS.
+ * Regra: lead ADS chegou → 30 min a partir de timestampRecebimento → se não entrou em
+ * "em_atendimento", o job de backend transfere automaticamente.
+ * O timer visual reflete esse prazo contando desde timestampRecebimento.
  */
 export function TimerLead({
   timestampRecebimento,
@@ -55,7 +51,6 @@ export function TimerLead({
   showProgress = false,
   size = "sm",
   isCorretor = false,
-  ultimaInteracao,
 }: TimerLeadProps) {
   const [tempoRestante, setTempoRestante] = useState<number>(TIMER_TOTAL_MS);
   const [expirado, setExpirado] = useState(false);
@@ -66,21 +61,16 @@ export function TimerLead({
   // Resetar flag quando o lead/timer mudar
   useEffect(() => {
     notificacaoEnviada.current = false;
-  }, [leadId, timerAtivo, timestampRecebimento, ultimaInteracao]);
+  }, [leadId, timerAtivo, timestampRecebimento]);
 
   useEffect(() => {
     if (!timerAtivo || !timestampRecebimento) return;
 
     const calcularTempoRestante = () => {
       const agora = new Date().getTime();
-
-      // Usar ultimaInteracao como referência se disponível (SLA reinicia após interação)
-      // Caso contrário, usar timestampRecebimento
-      const referenciaTimestamp = ultimaInteracao
-        ? new Date(ultimaInteracao).getTime()
-        : new Date(timestampRecebimento).getTime();
-
-      const tempoDecorrido = agora - referenciaTimestamp;
+      // Timer conta SEMPRE desde timestampRecebimento — sem considerar interações
+      const recebidoEm = new Date(timestampRecebimento).getTime();
+      const tempoDecorrido = agora - recebidoEm;
       const restante = TIMER_TOTAL_MS - tempoDecorrido;
 
       if (restante <= 0) {
@@ -108,7 +98,7 @@ export function TimerLead({
     calcularTempoRestante();
     const interval = setInterval(calcularTempoRestante, 1000);
     return () => clearInterval(interval);
-  }, [timestampRecebimento, ultimaInteracao, timerAtivo, origem, nomeCliente, leadId, isCorretor]);
+  }, [timestampRecebimento, timerAtivo, origem, nomeCliente, leadId, isCorretor]);
 
   // Exibir somente para leads Facebook ADS (webhook)
   if (!timerAtivo || !timestampRecebimento || !isLeadFacebookADS(origem)) {
@@ -152,8 +142,8 @@ export function TimerLead({
         }`}
         title={
           expirado
-            ? "Timer expirado! Lead será redistribuído em breve"
-            : `Tempo restante: ${minutos}m ${segundos}s — Lead será transferido automaticamente ao expirar`
+            ? "Timer expirado — lead será redistribuído em breve"
+            : `Tempo restante: ${minutos}m ${segundos}s — Lead transferido automaticamente ao expirar sem atendimento`
         }
       >
         {getIcone()}

@@ -191,8 +191,9 @@ export async function verificarTransferenciasAutomaticas() {
   let erros = 0;
 
   try {
-    // ── CASO 0: leads WEBHOOK aguardando_atendimento sem interação há mais de 30min ──
-    // Leads Facebook ADS têm SLA de 30 minutos (alinhado com o timer visual)
+    // ── CASO 0: leads WEBHOOK com status != em_atendimento há mais de 30min ──
+    // Regra: lead ADS chegou → 30 min → se não entrou em em_atendimento → transfere
+    // Não importa se teve interação ou não — o critério é o STATUS
     const limite30min = new Date();
     limite30min.setMinutes(limite30min.getMinutes() - MINUTOS_SLA_WEBHOOK);
 
@@ -200,13 +201,13 @@ export async function verificarTransferenciasAutomaticas() {
       .select()
       .from(leads)
       .where(and(
-        eq(leads.status, "aguardando_atendimento"),
         eq(leads.origemWebhook, true),
         isNotNull(leads.corretorId),
-        // Nunca teve interação e foi recebido há mais de 30min
-        isNull(leads.ultimaInteracao),
         isNotNull(leads.timestampRecebimento),
-        lt(leads.timestampRecebimento, limite30min)
+        lt(leads.timestampRecebimento, limite30min),
+        // Qualquer status que NÃO seja em_atendimento (ou mais avançado)
+        // Transfere apenas aguardando_atendimento — status mais avançados são respeitados
+        eq(leads.status, "aguardando_atendimento")
       ))
       .limit(100);
 
