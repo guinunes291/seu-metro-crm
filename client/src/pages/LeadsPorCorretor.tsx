@@ -478,6 +478,7 @@ export default function LeadsPorCorretor() {
                             leadId={lead.id}
                             showProgress={true}
                             isCorretor={false}
+                            ultimaInteracao={lead.ultimaInteracao}
                           />
                         </TableCell>
                         <TableCell>

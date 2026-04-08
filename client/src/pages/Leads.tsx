@@ -813,6 +813,7 @@ export default function Leads() {
                               leadId={lead.id}
                               showProgress={true}
                               isCorretor={user?.role === 'corretor'}
+                              ultimaInteracao={lead.ultimaInteracao}
                             />
                           </div>
                         </div>
@@ -1135,6 +1136,7 @@ export default function Leads() {
                               leadId={lead.id}
                               showProgress={true}
                               isCorretor={user?.role === 'corretor'}
+                              ultimaInteracao={lead.ultimaInteracao}
                             />
                           </div>
                         </TableCell>

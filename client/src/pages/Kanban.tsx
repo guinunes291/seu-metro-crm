@@ -279,6 +279,7 @@ export default function Kanban() {
                                 leadId={lead.id}
                                 showProgress={true}
                                 isCorretor={user?.role === 'corretor'}
+                                ultimaInteracao={(lead as any).ultimaInteracao}
                               />
                             </div>
                           </div>
