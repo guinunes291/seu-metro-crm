@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,8 @@ import { trpc } from "@/lib/trpc";
 import { 
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
-  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus, FileText
+  CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus, FileText,
+  ArrowLeftRight
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";
@@ -199,6 +200,12 @@ export default function Dashboard() {
 
   // Query de métricas de distratos (filtrada pelo mesmo período do dashboard)
   const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(dateFilter, gestorQueryOpts);
+  // Painel de redistribuições de leads ADS
+  const [redistPeriodo, setRedistPeriodo] = useState<'hoje' | 'semana' | 'mes'>('hoje');
+  const { data: redistData } = trpc.logTransferencias.painel.useQuery(
+    { periodo: redistPeriodo },
+    { enabled: isGestor, staleTime: 2 * 60 * 1000, refetchInterval: 5 * 60 * 1000 }
+  );
   
   // ============================================================================
   // QUERIES PARA O DASHBOARD DO CORRETOR
@@ -1418,6 +1425,113 @@ export default function Dashboard() {
                     <div className="text-center py-8 text-muted-foreground">
                       <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>Nenhum lead encontrado no período selecionado</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Painel de Redistribuições de Leads ADS */}
+            <div className="mt-8">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowLeftRight className="h-5 w-5" />
+                        Redistribuições de Leads ADS
+                      </CardTitle>
+                      <CardDescription>Leads ADS redistribuídos automaticamente por SLA (30 min sem atendimento)</CardDescription>
+                    </div>
+                    <Select value={redistPeriodo} onValueChange={(v) => setRedistPeriodo(v as 'hoje' | 'semana' | 'mes')}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="hoje">Hoje</SelectItem>
+                        <SelectItem value="semana">Últimos 7 dias</SelectItem>
+                        <SelectItem value="mes">Últimos 30 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {redistData ? (
+                    <div className="space-y-6">
+                      {/* Cards de totais */}
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <div className="bg-muted/50 rounded-lg p-4 text-center">
+                          <p className="text-3xl font-bold">{redistData.total}</p>
+                          <p className="text-sm text-muted-foreground mt-1">Total redistribuídos</p>
+                        </div>
+                        <div className="bg-green-500/10 rounded-lg p-4 text-center">
+                          <p className="text-3xl font-bold text-green-600">{redistData.transferidos}</p>
+                          <p className="text-sm text-muted-foreground mt-1">Para outro corretor</p>
+                        </div>
+                        <div className="bg-orange-500/10 rounded-lg p-4 text-center">
+                          <p className="text-3xl font-bold text-orange-600">{redistData.paraEstoque}</p>
+                          <p className="text-sm text-muted-foreground mt-1">Para o estoque</p>
+                        </div>
+                      </div>
+
+                      {/* Tabela por corretor de origem */}
+                      {redistData.porCorretor.length > 0 ? (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Por Corretor de Origem (quem perdeu o lead)</h4>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Corretor</TableHead>
+                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead className="text-right">Redistribuídos</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {redistData.porCorretor.map((c) => (
+                                <TableRow key={c.id}>
+                                  <TableCell className="font-medium">{c.nome}</TableCell>
+                                  <TableCell className="text-right">{c.total}</TableCell>
+                                  <TableCell className="text-right">
+                                    <Badge variant={c.transferidos > 0 ? 'destructive' : 'secondary'}>
+                                      {c.transferidos}
+                                    </Badge>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <ArrowLeftRight className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm">Nenhuma redistribuição no período selecionado</p>
+                        </div>
+                      )}
+
+                      {/* Por motivo */}
+                      {redistData.porMotivo.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Por Motivo</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {redistData.porMotivo.map((m) => (
+                              <div key={m.motivo} className="flex items-center gap-2 bg-muted rounded-full px-3 py-1">
+                                <span className="text-sm">
+                                  {m.motivo === '30min_webhook_sem_atendimento' ? '30 min sem atender (ADS)'
+                                    : m.motivo === '10h_sem_atendimento' ? '10h sem atender'
+                                    : m.motivo === '2_dias_sem_interacao' ? '2 dias sem interação'
+                                    : m.motivo || 'Outro'}
+                                </span>
+                                <Badge variant="secondary" className="text-xs">{m.total}</Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ArrowLeftRight className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>Carregando dados de redistribuições...</p>
                     </div>
                   )}
                 </CardContent>

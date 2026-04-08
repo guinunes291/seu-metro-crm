@@ -6092,6 +6092,84 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       .query(async ({ input }) => {
         return await db.countLogTransferencias(input);
       }),
+
+    // Painel de redistribuições do dia para o gestor
+    painel: gestorProcedure
+      .input(z.object({
+        periodo: z.enum(['hoje', 'semana', 'mes']).default('hoje'),
+      }).optional())
+      .query(async ({ input }) => {
+        const { eq, and, isNotNull, sql } = await import('drizzle-orm');
+        const { logTransferencias } = await import('../drizzle/schema');
+        const { getDb } = await import('./db');
+        const db2 = await getDb();
+        if (!db2) return { total: 0, transferidos: 0, paraEstoque: 0, porCorretor: [], porMotivo: [] };
+
+        const periodo = input?.periodo || 'hoje';
+        const agora = new Date();
+        let dataInicio: Date;
+        if (periodo === 'hoje') {
+          dataInicio = new Date(agora);
+          dataInicio.setHours(0, 0, 0, 0);
+        } else if (periodo === 'semana') {
+          dataInicio = new Date(agora);
+          dataInicio.setDate(agora.getDate() - 7);
+        } else {
+          dataInicio = new Date(agora);
+          dataInicio.setDate(agora.getDate() - 30);
+        }
+
+        const [totais] = await db2
+          .select({
+            total: sql<number>`COUNT(*)`,
+            transferidos: sql<number>`SUM(CASE WHEN ${logTransferencias.statusFinal} = 'transferido' THEN 1 ELSE 0 END)`,
+            paraEstoque: sql<number>`SUM(CASE WHEN ${logTransferencias.statusFinal} = 'estoque' THEN 1 ELSE 0 END)`,
+          })
+          .from(logTransferencias)
+          .where(sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`);
+
+        const porCorretor = await db2
+          .select({
+            corretorOrigemId: logTransferencias.corretorOrigemId,
+            corretorOrigemNome: logTransferencias.corretorOrigemNome,
+            total: sql<number>`COUNT(*)`,
+            transferidos: sql<number>`SUM(CASE WHEN ${logTransferencias.statusFinal} = 'transferido' THEN 1 ELSE 0 END)`,
+          })
+          .from(logTransferencias)
+          .where(and(
+            sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`,
+            isNotNull(logTransferencias.corretorOrigemId)
+          ))
+          .groupBy(logTransferencias.corretorOrigemId, logTransferencias.corretorOrigemNome)
+          .orderBy(sql`COUNT(*) DESC`)
+          .limit(20);
+
+        const porMotivo = await db2
+          .select({
+            motivo: logTransferencias.motivo,
+            total: sql<number>`COUNT(*)`,
+          })
+          .from(logTransferencias)
+          .where(sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`)
+          .groupBy(logTransferencias.motivo)
+          .orderBy(sql`COUNT(*) DESC`);
+
+        return {
+          total: Number(totais?.total || 0),
+          transferidos: Number(totais?.transferidos || 0),
+          paraEstoque: Number(totais?.paraEstoque || 0),
+          porCorretor: porCorretor.map(c => ({
+            id: c.corretorOrigemId,
+            nome: c.corretorOrigemNome || 'Desconhecido',
+            total: Number(c.total),
+            transferidos: Number(c.transferidos),
+          })),
+          porMotivo: porMotivo.map(m => ({
+            motivo: m.motivo,
+            total: Number(m.total),
+          })),
+        };
+      }),
   }),
 
   // ============================================================================

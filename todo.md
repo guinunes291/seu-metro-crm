@@ -5337,3 +5337,10 @@
 - [x] Corrigir transferirLead: leads webhook usam getCorretoresParaRedistribuicao (sem limite de aguardando)
 - [x] Leads não-webhook continuam usando getCorretoresElegiveis (com regras normais)
 - [x] 21 testes passando
+
+## Feature: Painel de Redistribuições do Dia no Dashboard (08/04/2026)
+- [x] Criar procedure backend para buscar redistribuições do dia (logTransferencias)
+- [x] Exibir total de redistribuições do dia, por projeto e por corretor de origem
+- [x] Adicionar seção no Dashboard do gestor com tabela de redistribuições
+- [x] Incluir filtro de data (hoje/semana/mês)
+- [x] Corrigir job para salvar corretorOrigemNome quando lead vai para estoque

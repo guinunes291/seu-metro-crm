@@ -117,11 +117,22 @@ async function transferirLead(
     // Sem corretores disponíveis → estoque (nunca para perdido/lixeira)
     await colocarNoEstoque(db, lead.id, `Sem corretores disponíveis após SLA (${motivo})`);
 
+    // Buscar nome do corretor de origem para o log
+    let corretorOrigemNomeEstoque: string | null = null;
+    if (lead.corretorId) {
+      const origemRowsEstoque = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, lead.corretorId))
+        .limit(1);
+      corretorOrigemNomeEstoque = origemRowsEstoque[0]?.name || null;
+    }
+
     await db.insert(logTransferencias).values({
       leadId: lead.id,
       leadNome: lead.nome,
       corretorOrigemId: lead.corretorId || null,
-      corretorOrigemNome: null,
+      corretorOrigemNome: corretorOrigemNomeEstoque,
       corretorDestinoId: null,
       corretorDestinoNome: null,
       motivo,
@@ -135,13 +146,23 @@ async function transferirLead(
   // 6. Selecionar o primeiro elegível
   const novoCorretorId = novosElegiveisIds[0];
 
-  // 7. Buscar nome do novo corretor
+  // 7. Buscar nome do novo corretor e do corretor de origem
   const novoCorretorRows = await db
     .select({ id: users.id, name: users.name })
     .from(users)
     .where(eq(users.id, novoCorretorId))
     .limit(1);
   const novoCorretorNome = novoCorretorRows[0]?.name || "Desconhecido";
+
+  let corretorOrigemNome: string | null = null;
+  if (lead.corretorId) {
+    const origemRows = await db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, lead.corretorId))
+      .limit(1);
+    corretorOrigemNome = origemRows[0]?.name || null;
+  }
 
   // 8. Atualizar lead
   await db
@@ -168,7 +189,7 @@ async function transferirLead(
     leadId: lead.id,
     leadNome: lead.nome,
     corretorOrigemId: lead.corretorId || null,
-    corretorOrigemNome: null,
+    corretorOrigemNome: corretorOrigemNome,
     corretorDestinoId: novoCorretorId,
     corretorDestinoNome: novoCorretorNome,
     motivo,
