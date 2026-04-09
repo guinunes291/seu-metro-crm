@@ -246,12 +246,17 @@ export default function LeadsPorCorretor() {
                     <span>{corretor.emAtendimento} atendendo</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    <span className={corretor.aguardando >= 20 ? "text-red-600 font-semibold" : "text-yellow-600 font-medium"}>
+                      {corretor.aguardando} aguardando
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
                     <UserX className="h-4 w-4 text-red-600" />
                     <span>{corretor.perdidos} perdidos</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 col-span-2">
                     <span className="text-muted-foreground">
-                      Taxa: {corretor.taxaConversao}%
+                      Taxa de conversão: {corretor.taxaConversao}%
                     </span>
                   </div>
                 </div>

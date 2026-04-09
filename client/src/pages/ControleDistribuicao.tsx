@@ -490,7 +490,7 @@ export default function ControleDistribuicao() {
                             ? "text-red-600 font-semibold"
                             : "text-yellow-600 font-medium"
                         }>
-                          {(corretor as any).aguardandoLeads ?? (corretor.totalLeads - corretor.leadsTrabalhados)}
+                          {(corretor as any).aguardandoLeads ?? 0}
                         </span>
                       </TableCell>
                       <TableCell>

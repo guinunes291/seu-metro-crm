@@ -5374,3 +5374,8 @@
 - [x] Corrigir getCorretoresElegiveisParaDistribuicao: aguardando = COUNT(status='aguardando_atendimento'), não totalAtivos - emAtendimento
 - [x] isCorretorElegivel já estava correto (filtrava por aguardando_atendimento diretamente)
 - [x] getCorretorStatus já estava correto (filtrava por aguardando_atendimento diretamente)
+
+## Bug Fix: Contador de aguardando incorreto na tela Leads por Corretor (09/04/2026)
+- [x] Verificado: getEstatisticasPorCorretor já contava aguardando_atendimento diretamente
+- [x] Adicionado campo aguardando nos cards de estatísticas da tela LeadsPorCorretor.tsx (estava oculto)
+- [x] Corrigido fallback incorreto em ControleDistribuicao.tsx linha 493 (totalLeads - leadsTrabalhados → 0)
