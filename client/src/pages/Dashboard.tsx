@@ -1440,8 +1440,9 @@ export default function Dashboard() {
                       <CardTitle className="flex items-center gap-2">
                         <ArrowLeftRight className="h-5 w-5" />
                         Redistribuições de Leads ADS
+                        <span className="ml-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">Facebook</span>
                       </CardTitle>
-                      <CardDescription>Leads ADS redistribuídos automaticamente por SLA (30 min sem atendimento)</CardDescription>
+                      <CardDescription>Apenas leads de origem Facebook redistribuídos automaticamente por SLA (30 min sem atendimento)</CardDescription>
                     </div>
                     <Select value={redistPeriodo} onValueChange={(v) => setRedistPeriodo(v as 'hoje' | 'semana' | 'mes')}>
                       <SelectTrigger className="w-[140px]">

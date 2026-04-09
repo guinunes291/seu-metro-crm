@@ -5353,3 +5353,7 @@
 - [x] Fila geral sem corretores disponíveis → manter com corretor atual (SLA ignorado temporariamente)
 - [x] Fila foco sem corretores disponíveis → ir para o estoque (comportamento anterior mantido)
 - [x] colocarNoEstoque preserva tipoFila do lead (foco vai para estoque foco, geral para estoque normal)
+
+## Bug Fix: Painel de Redistribuições — filtrar apenas leads Facebook (09/04/2026)
+- [x] Corrigir procedure logTransferencias.painel para filtrar apenas leads com origem Facebook (JOIN com tabela leads)
+- [x] Atualizar subtítulo/label do painel no Dashboard para indicar "Leads ADS Facebook"

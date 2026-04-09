@@ -6100,7 +6100,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       }).optional())
       .query(async ({ input }) => {
         const { eq, and, isNotNull, sql } = await import('drizzle-orm');
-        const { logTransferencias } = await import('../drizzle/schema');
+        const { logTransferencias, leads } = await import('../drizzle/schema');
         const { getDb } = await import('./db');
         const db2 = await getDb();
         if (!db2) return { total: 0, transferidos: 0, paraEstoque: 0, porCorretor: [], porMotivo: [] };
@@ -6119,6 +6119,7 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
           dataInicio.setDate(agora.getDate() - 30);
         }
 
+        // Filtrar apenas leads com origem Facebook via JOIN
         const [totais] = await db2
           .select({
             total: sql<number>`COUNT(*)`,
@@ -6126,7 +6127,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
             paraEstoque: sql<number>`SUM(CASE WHEN ${logTransferencias.statusFinal} = 'estoque' THEN 1 ELSE 0 END)`,
           })
           .from(logTransferencias)
-          .where(sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`);
+          .innerJoin(leads, eq(logTransferencias.leadId, leads.id))
+          .where(and(
+            sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`,
+            eq(leads.origem, 'facebook')
+          ));
 
         const porCorretor = await db2
           .select({
@@ -6136,9 +6141,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
             transferidos: sql<number>`SUM(CASE WHEN ${logTransferencias.statusFinal} = 'transferido' THEN 1 ELSE 0 END)`,
           })
           .from(logTransferencias)
+          .innerJoin(leads, eq(logTransferencias.leadId, leads.id))
           .where(and(
             sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`,
-            isNotNull(logTransferencias.corretorOrigemId)
+            isNotNull(logTransferencias.corretorOrigemId),
+            eq(leads.origem, 'facebook')
           ))
           .groupBy(logTransferencias.corretorOrigemId, logTransferencias.corretorOrigemNome)
           .orderBy(sql`COUNT(*) DESC`)
@@ -6150,7 +6157,11 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
             total: sql<number>`COUNT(*)`,
           })
           .from(logTransferencias)
-          .where(sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`)
+          .innerJoin(leads, eq(logTransferencias.leadId, leads.id))
+          .where(and(
+            sql`${logTransferencias.dataTransferencia} >= ${dataInicio}`,
+            eq(leads.origem, 'facebook')
+          ))
           .groupBy(logTransferencias.motivo)
           .orderBy(sql`COUNT(*) DESC`);
 
