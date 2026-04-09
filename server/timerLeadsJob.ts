@@ -111,13 +111,9 @@ async function getProximoCorretorFilaGeralParaTimer(
     )
     .orderBy(filaDistribuicao.posicao);
 
-  for (const candidato of candidatos) {
-    const limite = candidato.limiteDiarioWebhook ?? 50;
-    const recebidosHoje = candidato.leadsRecebidosHoje ?? 0;
-
-    if (recebidosHoje < limite) {
-      return candidato.corretorId;
-    }
+  // Limite diário de webhook removido: retorna o primeiro corretor presente da fila
+  if (candidatos.length > 0) {
+    return candidatos[0].corretorId;
   }
 
   return null;

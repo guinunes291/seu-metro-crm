@@ -2757,20 +2757,13 @@ export async function getProximoCorretorFila(): Promise<number | null> {
     .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
     .orderBy(filaDistribuicao.posicao);
   
-  // Encontrar o primeiro corretor disponível
+  // Encontrar o primeiro corretor disponível (limite diário de webhook removido)
   for (const item of fila) {
     // Verificar se está ativo na roleta
     if (!item.ativo) continue;
     
     // Verificar se está presente
     if (item.corretorStatus !== 'presente') continue;
-    
-    // Contar leads recebidos via webhook hoje (função já usa fuso de SP)
-    const leadsWebhookHoje = await countLeadsWebhookRecebidosHoje(item.corretorId);
-    
-    // Verificar se não atingiu o limite diário de webhook
-    const limiteWebhook = item.limiteDiarioWebhook || 10;
-    if (leadsWebhookHoje >= limiteWebhook) continue;
     
     return item.corretorId;
   }

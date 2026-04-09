@@ -53,16 +53,7 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   if (!corretor.length || corretor[0].status !== "presente") {
     return false;
   }
-  // Verificar limite diário: se já atingiu o limite hoje, não é elegível
-  const limiteDiario = corretor[0].limiteDiarioLeads ?? 50;
-  const inicioDiaUTC = getInicioDiaUTC();
-  const [{ leadsHoje }] = await db
-    .select({ leadsHoje: sql<number>`COUNT(*)` })
-    .from(distributionLog)
-    .where(and(eq(distributionLog.corretorId, corretorId), sql`${distributionLog.createdAt} >= ${inicioDiaUTC}`));
-  if (Number(leadsHoje) >= limiteDiario) {
-    return false;
-  }
+  // Limite diário removido: corretores presentes recebem leads sem restrição de volume diário
   // Buscar apenas leads ATIVOS do corretor (não na lixeira)
   const leadsAtivos = await db
     .select()
@@ -131,16 +122,7 @@ export async function getCorretorStatus(corretorId: number): Promise<CorretorSta
     if (corretor[0].status !== "presente") {
       motivoBloqueio = "Ausente";
     } else {
-      // Verificar limite diário
-      const limiteDiario = corretor[0].limiteDiarioLeads ?? 50;
-      const inicioDiaUTC = getInicioDiaUTC();
-      const [{ leadsHoje }] = await db
-        .select({ leadsHoje: sql<number>`COUNT(*)` })
-        .from(distributionLog)
-        .where(and(eq(distributionLog.corretorId, corretorId), sql`${distributionLog.createdAt} >= ${inicioDiaUTC}`));
-      if (Number(leadsHoje) >= limiteDiario) {
-        motivoBloqueio = `Limite diário atingido (${Number(leadsHoje)}/${limiteDiario})`;
-      } else if (aguardandoLeads >= MAXIMO_LEADS_AGUARDANDO) {
+      if (aguardandoLeads >= MAXIMO_LEADS_AGUARDANDO) {
         motivoBloqueio = `${aguardandoLeads} leads aguardando (máx ${MAXIMO_LEADS_AGUARDANDO})`;
       } else {
         motivoBloqueio = "Outro";
@@ -688,10 +670,7 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
     const totalAtivos = Number(row.total_ativos) || 0;
     const emAtendimento = Number(row.em_atendimento) || 0;
 
-    // Verificar limite diário
-    if (leadsRecebidosHoje >= limiteDiario) {
-      continue;
-    }
+    // Limite diário removido: corretores presentes recebem leads sem restrição de volume diário
 
     // Primeiro recebimento: menos de 40 leads ativos → elegível
     if (totalAtivos < MINIMO_LEADS_GARANTIDO) {

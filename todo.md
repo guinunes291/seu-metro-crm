@@ -5357,3 +5357,11 @@
 ## Bug Fix: Painel de Redistribuições — filtrar apenas leads Facebook (09/04/2026)
 - [x] Corrigir procedure logTransferencias.painel para filtrar apenas leads com origem Facebook (JOIN com tabela leads)
 - [x] Atualizar subtítulo/label do painel no Dashboard para indicar "Leads ADS Facebook"
+
+## Bug Fix: Remover limite diário de leads para transferência e distribuição (09/04/2026)
+- [x] Localizar todas as verificações de limite diário em distribution.ts, transferenciaJob.ts e timerLeadsJob.ts
+- [x] Remover verificação de limite diário em isCorretorElegivel() no distribution.ts
+- [x] Remover verificação de limite diário em getCorretoresElegiveisParaDistribuicao() no distribution.ts
+- [x] Remover verificação de limite diário em getProximoCorretorFilaGeralParaTimer() no timerLeadsJob.ts
+- [x] Remover verificação de limite diário em getProximoCorretorFila() no db.ts (webhook de entrada)
+- [x] Corretores presentes agora recebem leads sem restrição de volume diário
