@@ -1,6 +1,6 @@
 import { getDb } from "./db";
-import { leads, users, leadEstoque, distributionLog, logTransferencias } from "../drizzle/schema";
-import { and, eq, lt, isNotNull, or, isNull } from "drizzle-orm";
+import { leads, users, leadEstoque, distributionLog, logTransferencias, filaDistribuicao, configuracaoProjetoFoco } from "../drizzle/schema";
+import { and, eq, lt, isNotNull, or, isNull, inArray, ne, sql } from "drizzle-orm";
 import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
 import { getCorretoresElegiveis, getCorretoresParaRedistribuicao } from "./distribution";
 
@@ -15,6 +15,8 @@ import { getCorretoresElegiveis, getCorretoresParaRedistribuicao } from "./distr
  * 5. Leads de origem `captacao_corretor` → IMUNES (nunca transferir)
  * 6. Quando não há corretores disponíveis → ir para o estoque (NUNCA para perdido/lixeira)
  * 7. Novo corretor deve ser alguém que NUNCA trabalhou o lead antes
+ * 8. FILA FOCO → redistribuir apenas entre corretores da fila foco
+ *    FILA GERAL → redistribuir apenas entre corretores da fila geral
  *
  * Frequência: a cada 30 segundos
  */
@@ -35,9 +37,110 @@ async function getCorretoresQueJaTrabalharamLead(db: any, leadId: number): Promi
 }
 
 /**
+ * Busca IDs de corretores da FILA FOCO que estão presentes.
+ * Usa round-robin baseado na configuração do projeto foco.
+ * Exclui o corretor atual (para não redistribuir para o mesmo).
+ */
+async function getCorretoresFilaFoco(
+  excluirCorretorId?: number | null
+): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const configs = await db
+    .select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+
+  if (configs.length === 0) return [];
+  const config = configs[0];
+  if (!config.ativo || !config.corretoresIds) return [];
+
+  const corretoresIds = config.corretoresIds as number[];
+  if (corretoresIds.length === 0) return [];
+
+  // Buscar corretores da fila foco que estão presentes
+  const candidatos = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(
+      and(
+        inArray(users.id, corretoresIds),
+        eq(users.status, "presente"),
+        excluirCorretorId ? ne(users.id, excluirCorretorId) : sql`1=1`
+      )
+    );
+
+  if (candidatos.length === 0) return [];
+
+  // Retornar IDs na ordem round-robin a partir da posição atual
+  const posicaoAtual = config.posicaoAtual || 0;
+  const resultado: number[] = [];
+  for (let i = 0; i < corretoresIds.length; i++) {
+    const idx = (posicaoAtual + i) % corretoresIds.length;
+    const corretorId = corretoresIds[idx];
+    if (candidatos.find((c: any) => c.id === corretorId)) {
+      resultado.push(corretorId);
+    }
+  }
+  return resultado;
+}
+
+/**
+ * Busca IDs de corretores da FILA GERAL (filaDistribuicao) que estão presentes,
+ * excluindo o corretor atual e corretores da fila foco.
+ */
+async function getCorretoresFilaGeral(
+  excluirCorretorId?: number | null
+): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Buscar IDs dos corretores da fila foco para excluí-los
+  const configs = await db
+    .select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+  const corretoresFocoIds: number[] =
+    configs.length > 0 && configs[0].ativo && configs[0].corretoresIds
+      ? (configs[0].corretoresIds as number[])
+      : [];
+
+  // Buscar corretores da fila geral (presentes, ativos, não são da fila foco)
+  const candidatos = await db
+    .select({
+      corretorId: filaDistribuicao.corretorId,
+      posicao: filaDistribuicao.posicao,
+    })
+    .from(filaDistribuicao)
+    .leftJoin(users, eq(filaDistribuicao.corretorId, users.id))
+    .where(
+      and(
+        eq(filaDistribuicao.ativo, true),
+        eq(users.status, "presente"),
+        eq(users.role, "corretor"),
+        excluirCorretorId ? ne(filaDistribuicao.corretorId, excluirCorretorId) : sql`1=1`
+      )
+    )
+    .orderBy(filaDistribuicao.posicao);
+
+  // Filtrar: excluir corretores da fila foco
+  const candidatosFiltrados = candidatos.filter(
+    (c: any) => !corretoresFocoIds.includes(c.corretorId)
+  );
+
+  return candidatosFiltrados.map((c: any) => c.corretorId);
+}
+
+/**
  * Coloca um lead no estoque para redistribuição futura
  */
-async function colocarNoEstoque(db: any, leadId: number, motivo: string): Promise<void> {
+async function colocarNoEstoque(
+  db: any,
+  leadId: number,
+  motivo: string,
+  tipoFilaLead?: string
+): Promise<void> {
   // Verificar se já está no estoque
   const jaNoEstoque = await db
     .select({ id: leadEstoque.id })
@@ -62,18 +165,22 @@ async function colocarNoEstoque(db: any, leadId: number, motivo: string): Promis
     })
     .where(eq(leads.id, leadId));
 
+  // Preservar o tipo de fila do lead no estoque
+  const tipoFilaEstoque: "normal" | "foco" = tipoFilaLead === "foco" ? "foco" : "normal";
+
   await db.insert(leadEstoque).values({
     leadId,
-    tipoFila: "normal",
+    tipoFila: tipoFilaEstoque,
     motivoEstoque: motivo,
     tentativasDistribuicao: 0,
   });
 
-  console.log(`[Transferência Job] Lead ${leadId} movido para o estoque: ${motivo}`);
+  console.log(`[Transferência Job] Lead ${leadId} movido para o estoque (fila ${tipoFilaEstoque}): ${motivo}`);
 }
 
 /**
- * Transfere um lead para um novo corretor que nunca trabalhou o lead
+ * Transfere um lead para um novo corretor que nunca trabalhou o lead.
+ * Respeita a fila de origem do lead (foco ou geral).
  */
 async function transferirLead(
   db: any,
@@ -94,17 +201,49 @@ async function transferirLead(
   // 3. Buscar corretores que já trabalharam o lead
   const jaTrabalharamIds = await getCorretoresQueJaTrabalharamLead(db, lead.id);
 
-  // 4. Buscar corretores elegíveis
-  // Para leads webhook expirados: usar todos os corretores PRESENTES (sem limite de aguardando)
-  // Para outros casos: usar a lógica normal de elegibilidade
+  // 4. Buscar corretores elegíveis — RESPEITANDO A FILA DE ORIGEM DO LEAD
+  // Leads da fila FOCO  → redistribuir apenas entre corretores da fila foco
+  // Leads da fila GERAL → redistribuir apenas entre corretores da fila geral
+  const tipoFila = lead.tipoFilaOrigem || "geral";
   let elegiveisIds: number[];
-  if (motivo === "30min_webhook_sem_atendimento") {
-    // Redistribuição urgente: qualquer corretor presente pode receber
-    elegiveisIds = await getCorretoresParaRedistribuicao();
+
+  if (tipoFila === "foco") {
+    // Fila foco: usar corretores configurados no projeto foco
+    elegiveisIds = await getCorretoresFilaFoco(lead.corretorId);
+    console.log(
+      `[Transferência Job] Lead ${lead.id} (fila foco): ${elegiveisIds.length} corretores foco disponíveis`
+    );
+  } else if (motivo === "30min_webhook_sem_atendimento") {
+    // Fila geral, redistribuição urgente: corretores da fila geral presentes
+    elegiveisIds = await getCorretoresFilaGeral(lead.corretorId);
+    // Fallback: se não há corretores na fila geral, usar todos os presentes não-foco
+    if (elegiveisIds.length === 0) {
+      const todos = await getCorretoresParaRedistribuicao();
+      const configs = await db.select().from(configuracaoProjetoFoco).limit(1);
+      const focoIds: number[] =
+        configs.length > 0 && configs[0].ativo && configs[0].corretoresIds
+          ? (configs[0].corretoresIds as number[])
+          : [];
+      elegiveisIds = todos.filter((id: number) => !focoIds.includes(id));
+    }
+    console.log(
+      `[Transferência Job] Lead ${lead.id} (fila geral, 30min): ${elegiveisIds.length} corretores geral disponíveis`
+    );
   } else {
-    elegiveisIds = await getCorretoresElegiveis(
+    // Fila geral, SLA normal: usar elegibilidade padrão mas filtrar por fila geral
+    const todosElegiveis = await getCorretoresElegiveis(
       lead.projectId || undefined,
       lead.origem || undefined
+    );
+    // Buscar IDs da fila foco para excluir
+    const configs = await db.select().from(configuracaoProjetoFoco).limit(1);
+    const focoIds: number[] =
+      configs.length > 0 && configs[0].ativo && configs[0].corretoresIds
+        ? (configs[0].corretoresIds as number[])
+        : [];
+    elegiveisIds = todosElegiveis.filter((id: number) => !focoIds.includes(id));
+    console.log(
+      `[Transferência Job] Lead ${lead.id} (fila geral, SLA): ${elegiveisIds.length} corretores geral elegíveis (excluídos ${focoIds.length} da fila foco)`
     );
   }
 
@@ -114,8 +253,17 @@ async function transferirLead(
   );
 
   if (novosElegiveisIds.length === 0) {
-    // Sem corretores disponíveis → estoque (nunca para perdido/lixeira)
-    await colocarNoEstoque(db, lead.id, `Sem corretores disponíveis após SLA (${motivo})`);
+    // Sem corretores disponíveis na fila correta:
+    // - Fila GERAL: manter com o corretor atual (Opção C) — não redistribuir para fila foco
+    // - Fila FOCO: ir para o estoque (sem fallback para fila geral)
+    if (tipoFila !== "foco") {
+      console.log(
+        `[Transferência Job] Lead ${lead.id} (fila geral): sem corretores geral disponíveis — mantendo com corretor atual (SLA ignorado temporariamente)`
+      );
+      return "imune";
+    }
+    // Fila foco sem corretores disponíveis → estoque
+    await colocarNoEstoque(db, lead.id, `Sem corretores disponíveis após SLA (${motivo})`, tipoFila);
 
     // Buscar nome do corretor de origem para o log
     let corretorOrigemNomeEstoque: string | null = null;
@@ -198,7 +346,7 @@ async function transferirLead(
   });
 
   console.log(
-    `[Transferência Job] Lead ${lead.id} (${lead.nome}) transferido de corretor ${lead.corretorId} para ${novoCorretorId} (${novoCorretorNome}) — motivo: ${motivo}`
+    `[Transferência Job] Lead ${lead.id} (${lead.nome}) [fila ${tipoFila}] transferido de corretor ${lead.corretorId} para ${novoCorretorId} (${novoCorretorNome}) — motivo: ${motivo}`
   );
 
   return "transferido";

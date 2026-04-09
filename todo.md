@@ -5344,3 +5344,12 @@
 - [x] Adicionar seção no Dashboard do gestor com tabela de redistribuições
 - [x] Incluir filtro de data (hoje/semana/mês)
 - [x] Corrigir job para salvar corretorOrigemNome quando lead vai para estoque
+
+## Bug Fix: Redistribuição respeitando filas foco/geral (09/04/2026)
+- [x] Criar getCorretoresFilaFoco() no transferenciaJob — usa round-robin da configuracaoProjetoFoco
+- [x] Criar getCorretoresFilaGeral() no transferenciaJob — usa filaDistribuicao excluindo corretores foco
+- [x] Leads tipoFilaOrigem='foco' → redistribuir apenas entre corretores da fila foco
+- [x] Leads tipoFilaOrigem='geral' → redistribuir apenas entre corretores da fila geral
+- [x] Fila geral sem corretores disponíveis → manter com corretor atual (SLA ignorado temporariamente)
+- [x] Fila foco sem corretores disponíveis → ir para o estoque (comportamento anterior mantido)
+- [x] colocarNoEstoque preserva tipoFila do lead (foco vai para estoque foco, geral para estoque normal)
