@@ -5365,3 +5365,7 @@
 - [x] Remover verificação de limite diário em getProximoCorretorFilaGeralParaTimer() no timerLeadsJob.ts
 - [x] Remover verificação de limite diário em getProximoCorretorFila() no db.ts (webhook de entrada)
 - [x] Corretores presentes agora recebem leads sem restrição de volume diário
+
+## Melhoria: Remover campos de limite diário da tela de configuração de corretores (09/04/2026)
+- [x] Substituir página ControleLimites por painel de volume diário (sem campos de edição de limite)
+- [x] Remover exibição de Máx/dia na página ProjetoFoco.tsx

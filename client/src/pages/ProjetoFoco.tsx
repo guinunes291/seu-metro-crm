@@ -315,10 +315,6 @@ export default function ProjetoFoco() {
                       </div>
                       
                       <div className="flex items-center gap-3">
-                        <div className="text-sm text-muted-foreground">
-                          Máx/dia: <span className="font-medium">{corretor.limiteDiarioWebhook || 10}</span>
-                        </div>
-                        
                         {corretor.status === "presente" ? (
                           <span className="text-xs bg-green-500/10 text-green-500 px-3 py-1 rounded-full font-medium">
                             Presente
