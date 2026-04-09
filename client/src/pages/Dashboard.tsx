@@ -1094,8 +1094,8 @@ export default function Dashboard() {
               <PerformanceSemanal />
             </div>
 
-            {/* Tabelas de ranking */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Tabelas de ranking - Linha 1: Leads, Agendamentos, Visitas */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-4">
               {/* Leads por Corretor */}
               <Card>
                 <CardHeader>
@@ -1107,14 +1107,14 @@ export default function Dashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Leads</TableHead>
+                          <TableHead className="text-right w-16">Leads</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {leadsPorCorretor.slice(0, 5).map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.totalLeads}</TableCell>
+                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
+                            <TableCell className="text-right w-16">{item.totalLeads}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1136,14 +1136,14 @@ export default function Dashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Agend.</TableHead>
+                          <TableHead className="text-right w-16">Agend.</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {agendamentosPorCorretor.slice(0, 5).map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.agendados}</TableCell>
+                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
+                            <TableCell className="text-right w-16">{item.agendados}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1165,14 +1165,14 @@ export default function Dashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Visitas</TableHead>
+                          <TableHead className="text-right w-16">Visitas</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {visitasPorCorretor.slice(0, 5).map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right">{item.visitas}</TableCell>
+                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
+                            <TableCell className="text-right w-16">{item.visitas}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -1182,7 +1182,10 @@ export default function Dashboard() {
                   )}
                 </CardContent>
               </Card>
+            </div>
 
+            {/* Tabelas de ranking - Linha 2: Vendas, Pastas */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               {/* Vendas por Corretor */}
               <Card>
                 <CardHeader>
@@ -1200,7 +1203,7 @@ export default function Dashboard() {
                       <TableBody>
                         {vendasPorCorretor.slice(0, 5).map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="font-medium truncate max-w-[200px]">{item.nome}</TableCell>
                             <TableCell className="text-right">
                               {item.vendas}
                               <span className="text-xs text-muted-foreground ml-1">
@@ -1228,14 +1231,14 @@ export default function Dashboard() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Pastas</TableHead>
+                          <TableHead className="text-right w-16">Pastas</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {pastasPorCorretor.slice(0, 5).map((item) => (
                           <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.nome}</TableCell>
-                            <TableCell className="text-right font-semibold">{item.pastas}</TableCell>
+                            <TableCell className="font-medium truncate max-w-[200px]">{item.nome}</TableCell>
+                            <TableCell className="text-right w-16 font-semibold">{item.pastas}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

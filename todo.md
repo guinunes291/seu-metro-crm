@@ -5384,3 +5384,6 @@
 - [x] Criar função getPastasPorCorretor no db.ts (conta transições para analise_credito via leadStatusTransitions)
 - [x] Criar procedure dashboard.pastasPorCorretor no routers.ts
 - [x] Adicionar card "Pastas (Análise de Crédito)" no painel de rankings do Dashboard
+
+## Bug Fix: Scroll horizontal nos cards de ranking do Dashboard (09/04/2026)
+- [x] Reorganizado em 2 linhas: Leads/Agendamentos/Visitas (3 colunas) + Vendas/Pastas (2 colunas) — sem overflow horizontal
