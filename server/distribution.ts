@@ -632,30 +632,23 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   fimDiaSP.setHours(23, 59, 59, 999);
   const fimDiaUTC = new Date(fimDiaSP.getTime() - offsetSP * 60 * 1000);
 
-  // Query otimizada: usa leads ATIVOS (aguardando_atendimento + em_atendimento, naLixeira=0)
-  // para não bloquear corretores com histórico acumulado de leads antigos
+  // Query otimizada: conta aguardando_atendimento diretamente (não totalAtivos - emAtendimento)
+  // para evitar que leads em_atendimento inflem o contador de aguardando
   const resultado = await db.execute(sql`
     SELECT 
       u.id,
       u.limiteDiarioLeads,
       COALESCE(ativos_agg.total_ativos, 0) as total_ativos,
-      COALESCE(ativos_agg.em_atendimento, 0) as em_atendimento,
-      COALESCE(dist_agg.leads_recebidos_hoje, 0) as leads_recebidos_hoje
+      COALESCE(ativos_agg.aguardando, 0) as aguardando
     FROM users u
     LEFT JOIN (
       SELECT corretorId,
         COUNT(*) as total_ativos,
-        SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento
+        SUM(CASE WHEN status = 'aguardando_atendimento' THEN 1 ELSE 0 END) as aguardando
       FROM leads
       WHERE status IN ('aguardando_atendimento', 'em_atendimento') AND naLixeira = 0
       GROUP BY corretorId
     ) ativos_agg ON ativos_agg.corretorId = u.id
-    LEFT JOIN (
-      SELECT corretorId, COUNT(*) as leads_recebidos_hoje
-      FROM distribution_log
-      WHERE createdAt >= ${inicioDiaUTC} AND createdAt <= ${fimDiaUTC}
-      GROUP BY corretorId
-    ) dist_agg ON dist_agg.corretorId = u.id
     WHERE u.role = 'corretor' AND u.status = 'presente'
   `);
 
@@ -665,12 +658,8 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
 
   for (const row of rows) {
     const corretorId = Number(row.id);
-    const limiteDiario = Number(row.limiteDiarioLeads) || 50;
-    const leadsRecebidosHoje = Number(row.leads_recebidos_hoje) || 0;
     const totalAtivos = Number(row.total_ativos) || 0;
-    const emAtendimento = Number(row.em_atendimento) || 0;
-
-    // Limite diário removido: corretores presentes recebem leads sem restrição de volume diário
+    const aguardando = Number(row.aguardando) || 0; // apenas aguardando_atendimento
 
     // Primeiro recebimento: menos de 40 leads ativos → elegível
     if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
@@ -679,7 +668,6 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
     }
 
     // Já tem 40+ leads ativos: elegível se tem menos de MAXIMO_LEADS_AGUARDANDO leads aguardando
-    const aguardando = totalAtivos - emAtendimento;
     if (aguardando < MAXIMO_LEADS_AGUARDANDO) {
       corretoresElegiveis.push(corretorId);
     }

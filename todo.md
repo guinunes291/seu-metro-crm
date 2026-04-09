@@ -5369,3 +5369,8 @@
 ## Melhoria: Remover campos de limite diário da tela de configuração de corretores (09/04/2026)
 - [x] Substituir página ControleLimites por painel de volume diário (sem campos de edição de limite)
 - [x] Remover exibição de Máx/dia na página ProjetoFoco.tsx
+
+## Bug Fix: Cálculo incorreto de leads aguardando na elegibilidade do corretor (09/04/2026)
+- [x] Corrigir getCorretoresElegiveisParaDistribuicao: aguardando = COUNT(status='aguardando_atendimento'), não totalAtivos - emAtendimento
+- [x] isCorretorElegivel já estava correto (filtrava por aguardando_atendimento diretamente)
+- [x] getCorretorStatus já estava correto (filtrava por aguardando_atendimento diretamente)
