@@ -1097,28 +1097,30 @@ export default function Dashboard() {
             {/* Tabelas de ranking - Linha 1: Leads, Agendamentos, Visitas */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3 mb-4">
               {/* Leads por Corretor */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base">Leads por Corretor</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {leadsPorCorretor && leadsPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right w-16">Leads</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {leadsPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
-                            <TableCell className="text-right w-16">{item.totalLeads}</TableCell>
+                    <div className="overflow-y-auto max-h-64">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          <TableRow>
+                            <TableHead className="pl-6">Corretor</TableHead>
+                            <TableHead className="text-right w-16 pr-6">Leads</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {leadsPorCorretor.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium truncate max-w-[140px] pl-6">{item.nome}</TableCell>
+                              <TableCell className="text-right w-16 pr-6">{item.totalLeads}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1126,28 +1128,30 @@ export default function Dashboard() {
               </Card>
 
               {/* Agendamentos por Corretor */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base">Agendamentos</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {agendamentosPorCorretor && agendamentosPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right w-16">Agend.</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {agendamentosPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
-                            <TableCell className="text-right w-16">{item.agendados}</TableCell>
+                    <div className="overflow-y-auto max-h-64">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          <TableRow>
+                            <TableHead className="pl-6">Corretor</TableHead>
+                            <TableHead className="text-right w-16 pr-6">Agend.</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {agendamentosPorCorretor.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium truncate max-w-[140px] pl-6">{item.nome}</TableCell>
+                              <TableCell className="text-right w-16 pr-6">{item.agendados}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1155,28 +1159,30 @@ export default function Dashboard() {
               </Card>
 
               {/* Visitas por Corretor */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base">Visitas Realizadas</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {visitasPorCorretor && visitasPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right w-16">Visitas</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {visitasPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium truncate max-w-[140px]">{item.nome}</TableCell>
-                            <TableCell className="text-right w-16">{item.visitas}</TableCell>
+                    <div className="overflow-y-auto max-h-64">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          <TableRow>
+                            <TableHead className="pl-6">Corretor</TableHead>
+                            <TableHead className="text-right w-16 pr-6">Visitas</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {visitasPorCorretor.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium truncate max-w-[140px] pl-6">{item.nome}</TableCell>
+                              <TableCell className="text-right w-16 pr-6">{item.visitas}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1187,33 +1193,35 @@ export default function Dashboard() {
             {/* Tabelas de ranking - Linha 2: Vendas, Pastas */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
               {/* Vendas por Corretor */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base">Vendas / VGV</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {vendasPorCorretor && vendasPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right">Vendas</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {vendasPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium truncate max-w-[200px]">{item.nome}</TableCell>
-                            <TableCell className="text-right">
-                              {item.vendas}
-                              <span className="text-xs text-muted-foreground ml-1">
-                                ({formatCurrency(item.vgv)})
-                              </span>
-                            </TableCell>
+                    <div className="overflow-y-auto max-h-64">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          <TableRow>
+                            <TableHead className="pl-6">Corretor</TableHead>
+                            <TableHead className="text-right pr-6">Vendas</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {vendasPorCorretor.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium truncate max-w-[200px] pl-6">{item.nome}</TableCell>
+                              <TableCell className="text-right pr-6">
+                                {item.vendas}
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  ({formatCurrency(item.vgv)})
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}
@@ -1221,28 +1229,30 @@ export default function Dashboard() {
               </Card>
 
               {/* Pastas por Corretor */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base">Pastas (Análise de Crédito)</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden p-0">
                   {pastasPorCorretor && pastasPorCorretor.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Corretor</TableHead>
-                          <TableHead className="text-right w-16">Pastas</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pastasPorCorretor.slice(0, 5).map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium truncate max-w-[200px]">{item.nome}</TableCell>
-                            <TableCell className="text-right w-16 font-semibold">{item.pastas}</TableCell>
+                    <div className="overflow-y-auto max-h-64">
+                      <Table>
+                        <TableHeader className="sticky top-0 bg-card z-10">
+                          <TableRow>
+                            <TableHead className="pl-6">Corretor</TableHead>
+                            <TableHead className="text-right w-16 pr-6">Pastas</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {pastasPorCorretor.map((item) => (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium truncate max-w-[200px] pl-6">{item.nome}</TableCell>
+                              <TableCell className="text-right w-16 pr-6 font-semibold">{item.pastas}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">Sem dados</p>
                   )}

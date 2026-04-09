@@ -5387,3 +5387,6 @@
 
 ## Bug Fix: Scroll horizontal nos cards de ranking do Dashboard (09/04/2026)
 - [x] Reorganizado em 2 linhas: Leads/Agendamentos/Visitas (3 colunas) + Vendas/Pastas (2 colunas) — sem overflow horizontal
+
+## Melhoria: Scroll vertical nos cards de ranking do Dashboard (09/04/2026)
+- [x] Exibir todos os corretores (sem limite) com scroll vertical (max-h-64) e cabeçalho fixo nos 5 cards de ranking
