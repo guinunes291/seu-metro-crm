@@ -5379,3 +5379,8 @@
 - [x] Verificado: getEstatisticasPorCorretor já contava aguardando_atendimento diretamente
 - [x] Adicionado campo aguardando nos cards de estatísticas da tela LeadsPorCorretor.tsx (estava oculto)
 - [x] Corrigido fallback incorreto em ControleDistribuicao.tsx linha 493 (totalLeads - leadsTrabalhados → 0)
+
+## Feature: Card "Pastas por Corretor" no Dashboard (09/04/2026)
+- [x] Criar função getPastasPorCorretor no db.ts (conta transições para analise_credito via leadStatusTransitions)
+- [x] Criar procedure dashboard.pastasPorCorretor no routers.ts
+- [x] Adicionar card "Pastas (Análise de Crédito)" no painel de rankings do Dashboard

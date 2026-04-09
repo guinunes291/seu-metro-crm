@@ -1886,7 +1886,24 @@ export const appRouter = router({
         };
         return await db.getVendasPorCorretor(filtros);
       }),
-    
+
+    pastasPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await db.getPastasPorCorretor(filtros);
+      }),
+
     // Métricas do funil baseadas em transições de status
     metricasFunil: gestorProcedure
       .input(z.object({

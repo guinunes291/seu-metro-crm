@@ -2002,6 +2002,57 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
   return result.filter(c => c.status === 'presente').sort((a, b) => b.visitas - a.visitas);
 }
 
+export async function getPastasPorCorretor(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const corretoresConditions: any[] = [];
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
+  }
+
+  const corretores = await db.select({
+    id: users.id,
+    nome: users.name,
+    status: users.status,
+  })
+    .from(users)
+    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
+
+  // Contar transições para analise_credito por corretor no período
+  const conditions: any[] = [
+    eq(leadStatusTransitions.statusNovo, 'analise_credito'),
+  ];
+  if (filtros?.dataInicio) {
+    conditions.push(gte(leadStatusTransitions.createdAt, filtros.dataInicio));
+  }
+  if (filtros?.dataFim) {
+    conditions.push(lte(leadStatusTransitions.createdAt, filtros.dataFim));
+  }
+  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
+    conditions.push(inArray(leadStatusTransitions.corretorId, filtros.corretoresIds));
+  }
+
+  const pastasCounts = await db.select({
+    corretorId: leadStatusTransitions.corretorId,
+    count: sql<number>`count(*)`
+  })
+    .from(leadStatusTransitions)
+    .where(and(...conditions))
+    .groupBy(leadStatusTransitions.corretorId);
+
+  const countsMap = new Map(pastasCounts.map(pc => [pc.corretorId, Number(pc.count)]));
+
+  const result = corretores.map(corretor => ({
+    id: corretor.id,
+    nome: corretor.nome || 'Sem nome',
+    status: corretor.status,
+    pastas: countsMap.get(corretor.id) || 0,
+  }));
+
+  return result.filter(c => c.pastas > 0).sort((a, b) => b.pastas - a.pastas);
+}
+
 export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];

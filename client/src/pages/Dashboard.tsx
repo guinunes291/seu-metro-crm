@@ -173,6 +173,7 @@ export default function Dashboard() {
   const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(dateFilter, gestorQueryOpts);
   const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
   const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+  const { data: pastasPorCorretor } = trpc.dashboard.pastasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
 
   // Queries para gráficos do gestor
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
@@ -1206,6 +1207,35 @@ export default function Dashboard() {
                                 ({formatCurrency(item.vgv)})
                               </span>
                             </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">Sem dados</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Pastas por Corretor */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Pastas (Análise de Crédito)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {pastasPorCorretor && pastasPorCorretor.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Corretor</TableHead>
+                          <TableHead className="text-right">Pastas</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pastasPorCorretor.slice(0, 5).map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.nome}</TableCell>
+                            <TableCell className="text-right font-semibold">{item.pastas}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
