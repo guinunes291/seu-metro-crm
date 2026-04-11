@@ -7,6 +7,7 @@ import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 
 import * as sheetsImport from "./sheetsImport";
+import * as analisesCentral from "./analisesCentral";
 import { listSheetTabs, validateSheetAccess, extractSpreadsheetId } from "./googleSheets";
 import * as presenca from "./presenca";
 import * as sheetsSync from "./googleSheetsSync";
@@ -7260,6 +7261,113 @@ Limite: máximo ${input.maxImagens} imagens mais relevantes.
       const result = await sincronizarDRE();
       return result;
     }),
+  }),
+
+  // ============================================================================
+  // CENTRAL DE ANÁLISES — NOVO MÓDULO CONSOLIDADO
+  // ============================================================================
+  centralAnalises: router({
+    // Visão Geral: KPIs + Alertas
+    visaoGeral: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getVisaoGeralKPIs(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          input.mes,
+          input.ano,
+          corretoresIds
+        );
+      }),
+
+    // Comparativo de Equipes
+    comparativoEquipes: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getComparativoEquipes(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          corretoresIds
+        );
+      }),
+
+    // Funil com Gargalos
+    funilGargalos: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getFunilComGargalos(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          corretoresIds
+        );
+      }),
+
+    // Metas com Projeção
+    metasProgresso: gestorProcedure
+      .input(z.object({
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getMetasProgresso(
+          input.mes,
+          input.ano,
+          corretoresIds
+        );
+      }),
+
+    // Evolução Temporal
+    evolucaoTemporal: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+        agrupamento: z.enum(['dia', 'semana', 'mes']).default('dia'),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getEvolucaoTemporal(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          corretoresIds,
+          input.agrupamento
+        );
+      }),
+
+    // Origens com Conversão
+    origensConversao: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await analisesCentral.getOrigensComConversao(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          corretoresIds
+        );
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

@@ -5396,3 +5396,20 @@
 - [x] Redesenhar Relatorios.tsx com KPIs rápidos, funil visual, tabela de produção por corretor
 - [x] Manter relatório de Leads Facebook ADS Perdidos por Timer
 - [x] Corrigir normalização de campos do dashboard.metrics
+
+## Redesign: Central de Análises (Relatórios)
+- [x] Criar módulo backend analisesCentral.ts com 6 queries consolidadas
+- [x] Adicionar centralAnalises router no routers.ts com 6 procedures
+- [x] Reescrever completamente a página Relatorios.tsx como Central de Análises
+- [x] Implementar Painel Executivo com 6 KPIs (Leads, Agendamentos, Visitas, Contratos, VGV, Tx. Conversão)
+- [x] Implementar alertas inteligentes (taxa de conversão baixa, corretores sem agendamentos)
+- [x] Implementar aba Produtividade com tabela de funil completo por corretor
+- [x] Implementar aba Equipes com cards de equipe e comparativo
+- [x] Implementar aba Funil com barras de gargalo e taxas de conversão entre etapas
+- [x] Implementar aba Metas com semáforo, projeção e ritmo necessário
+- [x] Implementar aba Evolução temporal (dia/semana/mês)
+- [x] Implementar aba Origens com volume, conversão e VGV por canal
+- [x] Manter aba Facebook ADS com dados de timer/redistribuição
+- [x] Filtro de período global (Mês Atual, Último Mês, Últimos 3 Meses, Todo o Período)
+- [x] Hierarquia de acesso respeitada (admin → superintendente → gestor → corretor)
+- [x] Escrever testes unitários para analisesCentral.ts (9 testes passando)
