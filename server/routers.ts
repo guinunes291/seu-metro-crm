@@ -1773,6 +1773,20 @@ export const appRouter = router({
         return await calcularConversaoPorCorretor(periodo, corretoresIds);
       }),
 
+    // Relatório de produção por corretor (funil completo)
+    producaoPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
+        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        return await db.getRelatorioProducaoCorretores(dataInicio, dataFim, corretoresIds);
+      }),
+
     // Leads Facebook ADS recebidos e perdidos por timer (15 min) por corretor
     leadsTimerPorCorretor: gestorProcedure
       .input(z.object({

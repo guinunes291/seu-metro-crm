@@ -2120,6 +2120,113 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
 
 
 // ============================================================================
+// RELATÓRIO DE PRODUÇÃO POR CORRETOR (FUNIL COMPLETO)
+// ============================================================================
+export interface RelatorioProducaoCorretor {
+  id: number;
+  nome: string;
+  fotoUrl: string | null;
+  status: string | null;
+  leads: number;
+  agendamentos: number;
+  visitas: number;
+  analises: number;
+  contratos: number;
+  vgv: number;
+  txAgend: number;
+  txVisita: number;
+  txAnalise: number;
+  txContrato: number;
+}
+
+export async function getRelatorioProducaoCorretores(
+  dataInicio?: Date,
+  dataFim?: Date,
+  corretoresIds?: number[] | null
+): Promise<RelatorioProducaoCorretor[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const corretoresConditions: any[] = [sql`${users.role} IN ('corretor', 'user', 'gestor', 'admin')`];
+  if (corretoresIds && corretoresIds.length > 0) {
+    corretoresConditions.push(inArray(users.id, corretoresIds));
+  }
+  const corretoresList = await db.select({
+    id: users.id,
+    nome: users.name,
+    fotoUrl: users.fotoUrl,
+    status: users.status,
+  }).from(users).where(and(...corretoresConditions));
+
+  if (corretoresList.length === 0) return [];
+  const ids = corretoresList.map(c => c.id);
+
+  // Leads por corretor
+  const leadsConditions: any[] = [inArray(leads.corretorId, ids)];
+  if (dataInicio) leadsConditions.push(gte(leads.createdAt, dataInicio));
+  if (dataFim) leadsConditions.push(lte(leads.createdAt, dataFim));
+  const leadsData = await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`count(*)`
+  }).from(leads).where(and(...leadsConditions)).groupBy(leads.corretorId);
+  const leadsMap = new Map(leadsData.map(r => [r.corretorId, Number(r.count)]));
+
+  // Transições por corretor
+  const transConditions: any[] = [
+    inArray(leadStatusTransitions.corretorId, ids),
+    sql`${leadStatusTransitions.statusNovo} IN ('agendado','visita_realizada','analise_credito')`
+  ];
+  if (dataInicio) transConditions.push(gte(leadStatusTransitions.createdAt, dataInicio));
+  if (dataFim) transConditions.push(lte(leadStatusTransitions.createdAt, dataFim));
+  const transData = await db.select({
+    corretorId: leadStatusTransitions.corretorId,
+    statusNovo: leadStatusTransitions.statusNovo,
+    count: sql<number>`count(*)`
+  }).from(leadStatusTransitions).where(and(...transConditions))
+    .groupBy(leadStatusTransitions.corretorId, leadStatusTransitions.statusNovo);
+
+  // Contratos por corretor
+  const contratosConditions: any[] = [
+    inArray(contratos.corretorId, ids),
+    eq(contratos.distrato, false)
+  ];
+  if (dataInicio) contratosConditions.push(gte(contratos.createdAt, dataInicio));
+  if (dataFim) contratosConditions.push(lte(contratos.createdAt, dataFim));
+  const contratosData = await db.select({
+    corretorId: contratos.corretorId,
+    count: sql<number>`count(*)`,
+    vgv: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`
+  }).from(contratos).where(and(...contratosConditions)).groupBy(contratos.corretorId);
+  const contratosMap = new Map(contratosData.map(r => [r.corretorId, { count: Number(r.count), vgv: Number(r.vgv) }]));
+
+  const result: RelatorioProducaoCorretor[] = corretoresList.map(corretor => {
+    const leadsCount = leadsMap.get(corretor.id) || 0;
+    const agendCount = Number(transData.find(t => t.corretorId === corretor.id && t.statusNovo === 'agendado')?.count || 0);
+    const visitaCount = Number(transData.find(t => t.corretorId === corretor.id && t.statusNovo === 'visita_realizada')?.count || 0);
+    const analiseCount = Number(transData.find(t => t.corretorId === corretor.id && t.statusNovo === 'analise_credito')?.count || 0);
+    const contratoData = contratosMap.get(corretor.id) || { count: 0, vgv: 0 };
+    return {
+      id: corretor.id,
+      nome: corretor.nome || 'Sem nome',
+      fotoUrl: corretor.fotoUrl,
+      status: corretor.status,
+      leads: leadsCount,
+      agendamentos: agendCount,
+      visitas: visitaCount,
+      analises: analiseCount,
+      contratos: contratoData.count,
+      vgv: contratoData.vgv,
+      txAgend: leadsCount > 0 ? Math.round((agendCount / leadsCount) * 100) : 0,
+      txVisita: agendCount > 0 ? Math.round((visitaCount / agendCount) * 100) : 0,
+      txAnalise: visitaCount > 0 ? Math.round((analiseCount / visitaCount) * 100) : 0,
+      txContrato: analiseCount > 0 ? Math.round((contratoData.count / analiseCount) * 100) : 0,
+    };
+  });
+
+  return result.sort((a, b) => b.leads - a.leads);
+}
+
+// ============================================================================
 // MÉTRICAS HISTÓRICAS PARA GRÁFICOS
 // ============================================================================
 

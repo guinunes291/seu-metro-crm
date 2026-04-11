@@ -5390,3 +5390,9 @@
 
 ## Melhoria: Scroll vertical nos cards de ranking do Dashboard (09/04/2026)
 - [x] Exibir todos os corretores (sem limite) com scroll vertical (max-h-64) e cabeçalho fixo nos 5 cards de ranking
+
+## Feature: Redesenho completo da página de Relatórios (11/04/2026)
+- [x] Criar procedure backend getRelatorioProducaoCorretores com funil completo por corretor
+- [x] Redesenhar Relatorios.tsx com KPIs rápidos, funil visual, tabela de produção por corretor
+- [x] Manter relatório de Leads Facebook ADS Perdidos por Timer
+- [x] Corrigir normalização de campos do dashboard.metrics
