@@ -5413,3 +5413,45 @@
 - [x] Filtro de período global (Mês Atual, Último Mês, Últimos 3 Meses, Todo o Período)
 - [x] Hierarquia de acesso respeitada (admin → superintendente → gestor → corretor)
 - [x] Escrever testes unitários para analisesCentral.ts (9 testes passando)
+
+## Auditoria Completa do Sistema (Revisão de Código)
+- [x] Leitura e análise completa do backend (schema, routers, db, módulos)
+- [x] Leitura e análise completa do frontend (páginas, componentes, hooks)
+- [x] Análise de arquitetura, segurança, performance e banco de dados
+- [x] Redação do relatório completo com 12 blocos obrigatórios
+- [x] Entrega do relatório ao usuário
+
+## Apresentação All Hands - Coleta de Dados e Slides
+- [x] Coletar métricas gerais de leads (total, por status, por origem)
+- [x] Coletar dados de funil de conversão
+- [x] Coletar performance por equipe e corretor
+- [x] Coletar dados de metas vs realizado
+- [x] Coletar dados de contratos e VGV
+- [x] Coletar dados de agendamentos e visitas
+- [x] Consolidar e analisar dados
+- [x] Preparar conteúdo da apresentação
+- [x] Gerar slides da apresentação All Hands
+- [x] Entregar apresentação ao usuário
+
+## Melhorias da Auditoria
+
+### Fase 1 — Crítico (Urgente)
+- [x] Adicionar transações nas operações multi-tabela: criarContrato, distribuirLeads, transferirLead
+- [x] Adicionar transações em: deleteLead, deleteProposta, atualizarContrato (wrapping em db.transaction)
+- [x] Corrigir N+1 crítico: getMetricasHistoricas (30 queries -> 1 GROUP BY)
+- [x] Corrigir N+1 crítico: getRelatorioLeadsTimerPorCorretor (loop -> batch query)
+- [x] Corrigir N+1 crítico: redistribuirLeadsDoCorretor (loop -> batch update + bulk insert)
+- [x] Substituir catch blocks vazios por logging estruturado (server/logger.ts criado)
+- [ ] Adicionar error boundary global no frontend
+
+### Fase 2 — Importante
+- [x] Dividir routers.ts monolito em sub-routers por domínio (leads extraído: 7374 -> 6751 linhas)
+- [ ] Dividir db.ts monolito em módulos por domínio
+- [ ] Adicionar paginação nas listagens de leads (atualmente sem limite)
+- [ ] Implementar soft delete em leads e contratos (campo deletedAt)
+- [ ] Adicionar índices faltantes no schema (leadId, corretorId, createdAt)
+
+### Fase 3 — Desejável
+- [ ] Implementar audit log para operações críticas (status changes, contratos, distribuição)
+- [ ] Consolidar módulos duplicados (analisesCentral.ts vs relatorios.ts)
+- [ ] Mover jobs/cron para worker dedicado

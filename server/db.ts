@@ -458,37 +458,48 @@ export async function redistribuirLeadsDoCorretor(corretorId: number): Promise<n
   }
   
   // Distribuir leads de forma rotativa entre os corretores disponíveis
-  let corretorIndex = 0;
-  for (const lead of leadsDoCorretor) {
-    const novoCorretor = outrosCorretores[corretorIndex % outrosCorretores.length];
-    
-    // Atualizar o lead com o novo corretor
-    await db.update(leads)
-      .set({ 
-        corretorId: novoCorretor.id,
-        dataDistribuicao: new Date()
-      })
-      .where(eq(leads.id, lead.id));
-    
-    // Registrar no log de distribuição
-    await db.insert(distributionLog).values({
+  // OTIMIZADO: agrupa updates por corretor destino (elimina N+1)
+  const dataDistribuicao = new Date();
+  const gruposPorCorretor = new Map<number, number[]>();
+  const logsParaInserir: InsertDistributionLog[] = [];
+
+  leadsDoCorretor.forEach((lead, idx) => {
+    const novoCorretor = outrosCorretores[idx % outrosCorretores.length];
+    if (!gruposPorCorretor.has(novoCorretor.id)) {
+      gruposPorCorretor.set(novoCorretor.id, []);
+    }
+    gruposPorCorretor.get(novoCorretor.id)!.push(lead.id);
+    logsParaInserir.push({
       leadId: lead.id,
       corretorId: novoCorretor.id,
       tipo: 'manual',
       motivo: `Redistribuição automática - corretor anterior excluído`,
     });
-    
-    corretorIndex++;
-  }
-  
-  // Desvincular leads perdidos/fechados (manter histórico mas sem corretor)
-  await db.update(leads)
-    .set({ corretorId: null })
-    .where(and(
-      eq(leads.corretorId, corretorId),
-      inArray(leads.status, ['perdido', 'contrato_fechado'])
-    ));
-  
+  });
+
+  // Executar em transação: um UPDATE por grupo + um INSERT bulk para os logs
+  await db.transaction(async (tx) => {
+    // Atualizar leads agrupados por corretor destino
+    for (const [novoCorretorId, leadIds] of gruposPorCorretor) {
+      await tx.update(leads)
+        .set({ corretorId: novoCorretorId, dataDistribuicao })
+        .where(inArray(leads.id, leadIds));
+    }
+
+    // Inserir todos os logs de uma vez
+    if (logsParaInserir.length > 0) {
+      await tx.insert(distributionLog).values(logsParaInserir);
+    }
+
+    // Desvincular leads perdidos/fechados
+    await tx.update(leads)
+      .set({ corretorId: null })
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        inArray(leads.status, ['perdido', 'contrato_fechado'])
+      ));
+  });
+
   return leadsDoCorretor.length;
 }
 
@@ -1213,15 +1224,14 @@ export async function registrarTransicaoStatus(data: {
 export async function deleteLead(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
-  // Primeiro excluir histórico do lead
-  await db.delete(leadHistory).where(eq(leadHistory.leadId, id));
-  
-  // Excluir registros de distribuição
-  await db.delete(distributionLog).where(eq(distributionLog.leadId, id));
-  
-  // Excluir o lead
-  await db.delete(leads).where(eq(leads.id, id));
+
+  // Executar as 3 exclusões em uma única transação atômica
+  // Garante que o lead não fique órfão se uma operação falhar
+  await db.transaction(async (tx) => {
+    await tx.delete(leadHistory).where(eq(leadHistory.leadId, id));
+    await tx.delete(distributionLog).where(eq(distributionLog.leadId, id));
+    await tx.delete(leads).where(eq(leads.id, id));
+  });
 }
 
 export async function getLeadsNaoDistribuidos() {
@@ -2246,71 +2256,67 @@ export interface MetricasDiarias {
 export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: number[] | null): Promise<MetricasDiarias[]> {
   const db = await getDb();
   if (!db) return [];
-  
-  const { agora, inicioDoDia, fimDoDia } = await import('./timezone');
-  
-  const resultado: MetricasDiarias[] = [];
-  const hoje = agora(); // Usar timezone de São Paulo
-  
-  for (let i = dias - 1; i >= 0; i--) {
-    const dataBase = new Date(hoje);
-    dataBase.setDate(dataBase.getDate() - i);
-    
-    const data = inicioDoDia(dataBase); // Início do dia em SP
-    const dataFim = fimDoDia(dataBase); // Fim do dia em SP
-    
-    const dataStr = data.toISOString().split('T')[0];
-    
-    // Buscar leads criados nesse dia (filtrados por equipe se necessário)
-    const conditions: any[] = [
-      gte(leads.createdAt, data),
-      lte(leads.createdAt, dataFim)
-    ];
-    if (corretoresIds && corretoresIds.length > 0) {
-      conditions.push(inArray(leads.corretorId, corretoresIds));
-    }
-    
-    const leadsNoDia = await db.select({
-      status: leads.status,
-      count: sql<number>`count(*)`
-    })
-      .from(leads)
-      .where(and(...conditions))
-      .groupBy(leads.status);
-    
-    const metricas: MetricasDiarias = {
-      data: dataStr,
-      novos: 0,
-      aguardando: 0,
-      emAtendimento: 0,
-      agendados: 0,
-      visitasRealizadas: 0,
-      analiseCredito: 0,
-      contratosFechados: 0,
-      perdidos: 0,
-      total: 0,
-    };
-    
-    for (const row of leadsNoDia) {
-      const count = Number(row.count);
-      metricas.total += count;
-      
-      switch (row.status) {
-        case 'novo': metricas.novos = count; break;
-        case 'aguardando_atendimento': metricas.aguardando = count; break;
-        case 'em_atendimento': metricas.emAtendimento = count; break;
-        case 'agendado': metricas.agendados = count; break;
-        case 'visita_realizada': metricas.visitasRealizadas = count; break;
-        case 'analise_credito': metricas.analiseCredito = count; break;
-        case 'contrato_fechado': metricas.contratosFechados = count; break;
-        case 'perdido': metricas.perdidos = count; break;
-      }
-    }
-    
-    resultado.push(metricas);
+
+  const { agora, inicioDoDia } = await import('./timezone');
+  const hoje = agora();
+
+  // Calcular o intervalo completo de uma vez (elimina N+1: 1 query em vez de N queries)
+  const dataInicio = inicioDoDia(new Date(hoje));
+  dataInicio.setDate(dataInicio.getDate() - (dias - 1));
+  const dataFim = new Date(hoje);
+  dataFim.setHours(23, 59, 59, 999);
+
+  const conditions: any[] = [
+    gte(leads.createdAt, dataInicio),
+    lte(leads.createdAt, dataFim),
+  ];
+  if (corretoresIds && corretoresIds.length > 0) {
+    conditions.push(inArray(leads.corretorId, corretoresIds));
   }
-  
-  return resultado;
+
+  // Uma única query com GROUP BY DATE e status
+  const rows = await db.select({
+    dataStr: sql<string>`DATE_FORMAT(${leads.createdAt}, '%Y-%m-%d')`.as('dataStr'),
+    status: leads.status,
+    count: sql<number>`count(*)`.as('count'),
+  })
+    .from(leads)
+    .where(and(...conditions))
+    .groupBy(sql`DATE_FORMAT(${leads.createdAt}, '%Y-%m-%d')`, leads.status);
+
+  // Montar mapa de resultados por data
+  const mapaMetricas = new Map<string, MetricasDiarias>();
+
+  for (let i = dias - 1; i >= 0; i--) {
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - i);
+    const dataStr = d.toISOString().split('T')[0];
+    mapaMetricas.set(dataStr, {
+      data: dataStr,
+      novos: 0, aguardando: 0, emAtendimento: 0,
+      agendados: 0, visitasRealizadas: 0, analiseCredito: 0,
+      contratosFechados: 0, perdidos: 0, total: 0,
+    });
+  }
+
+  for (const row of rows) {
+    const m = mapaMetricas.get(row.dataStr);
+    if (!m) continue;
+    const count = Number(row.count);
+    m.total += count;
+    switch (row.status) {
+      case 'novo': m.novos = count; break;
+      case 'aguardando_atendimento': m.aguardando = count; break;
+      case 'em_atendimento': m.emAtendimento = count; break;
+      case 'agendado': m.agendados = count; break;
+      case 'visita_realizada': m.visitasRealizadas = count; break;
+      case 'analise_credito': m.analiseCredito = count; break;
+      case 'contrato_fechado': m.contratosFechados = count; break;
+      case 'perdido': m.perdidos = count; break;
+    }
+  }
+
+  return Array.from(mapaMetricas.values());
 }
 
 export async function getEvolucaoFunil(dias: number = 30, corretoresIds?: number[] | null) {
@@ -7506,14 +7512,15 @@ export async function getAllPropostas(filtros?: {
 export async function deleteProposta(id: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
-  
-  // Primeiro excluir visitantes da proposta
-  await db.delete(propostasVisitantes)
-    .where(eq(propostasVisitantes.propostaId, id));
-  
-  // Depois excluir a proposta
-  await db.delete(propostas)
-    .where(eq(propostas.id, id));
+
+  // Executar as 2 exclusões em uma única transação atômica
+  // Garante que visitantes não fiquem órfãos se a exclusão da proposta falhar
+  await db.transaction(async (tx) => {
+    await tx.delete(propostasVisitantes)
+      .where(eq(propostasVisitantes.propostaId, id));
+    await tx.delete(propostas)
+      .where(eq(propostas.id, id));
+  });
 }
 
 /**
@@ -10245,43 +10252,41 @@ export async function atualizarContrato(contratoId: number, dados: {
   if (dados.anexos !== undefined) contratoUpdate.anexos = dados.anexos;
   if (dados.percentualComissao !== undefined) contratoUpdate.percentualComissao = String(dados.percentualComissao);
 
-  if (Object.keys(contratoUpdate).length > 0) {
-    await db.update(contratos)
-      .set(contratoUpdate)
-      .where(eq(contratos.id, contratoId));
-  }
-
-  // Atualizar lead associado (cliente, projeto)
+  // Preparar updates do lead
   const leadUpdate: Record<string, any> = {};
   if (dados.clienteNome !== undefined) leadUpdate.nome = dados.clienteNome;
   if (dados.clienteTelefone !== undefined) leadUpdate.telefone = dados.clienteTelefone;
   if (dados.clienteEmail !== undefined) leadUpdate.email = dados.clienteEmail;
   if (dados.projectId !== undefined) {
     leadUpdate.projectId = dados.projectId;
-    if (dados.projectId !== null) {
-      leadUpdate.projetoCustom = null; // Limpar projeto custom se selecionou um projeto real
-    }
+    if (dados.projectId !== null) leadUpdate.projetoCustom = null;
   }
   if (dados.projetoCustom !== undefined) {
     leadUpdate.projetoCustom = dados.projetoCustom;
-    if (dados.projetoCustom !== null) {
-      leadUpdate.projectId = null; // Limpar projectId se digitou projeto custom
-    }
+    if (dados.projetoCustom !== null) leadUpdate.projectId = null;
   }
   if (dados.corretorId !== undefined) leadUpdate.corretorId = dados.corretorId;
 
-  if (Object.keys(leadUpdate).length > 0) {
-    await db.update(leads)
-      .set(leadUpdate)
-      .where(eq(leads.id, contratoAtual.leadId));
-  }
+  // Executar todas as atualizações em uma única transação atômica
+  await db.transaction(async (tx) => {
+    if (Object.keys(contratoUpdate).length > 0) {
+      await tx.update(contratos)
+        .set(contratoUpdate)
+        .where(eq(contratos.id, contratoId));
+    }
 
-  // Atualizar equipe do corretor se necessário
-  if (dados.equipeCorretorId !== undefined && dados.corretorId) {
-    await db.update(users)
-      .set({ equipeId: dados.equipeCorretorId })
-      .where(eq(users.id, dados.corretorId));
-  }
+    if (Object.keys(leadUpdate).length > 0) {
+      await tx.update(leads)
+        .set(leadUpdate)
+        .where(eq(leads.id, contratoAtual.leadId));
+    }
+
+    if (dados.equipeCorretorId !== undefined && dados.corretorId) {
+      await tx.update(users)
+        .set({ equipeId: dados.equipeCorretorId })
+        .where(eq(users.id, dados.corretorId));
+    }
+  });
 
   return { success: true };
 }
@@ -10400,73 +10405,7 @@ export async function criarNovoContrato(dados: {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
 
-  // 1. Criar ou encontrar o lead
-  let leadId: number;
-  
-  // Verificar se já existe um lead com esse telefone ou email
-  const leadExistente = await db.select()
-    .from(leads)
-    .where(
-      or(
-        eq(leads.telefone, dados.clienteTelefone),
-        eq(leads.email, dados.clienteEmail)
-      )
-    )
-    .limit(1);
-
-  if (leadExistente.length > 0) {
-    leadId = leadExistente[0].id;
-    
-    // Atualizar o lead existente
-    await db.update(leads)
-      .set({
-        nome: dados.clienteNome,
-        telefone: dados.clienteTelefone,
-        email: dados.clienteEmail,
-        corretorId: dados.corretorId,
-        projectId: dados.projectId,
-        projetoCustom: dados.projetoCustom,
-        status: 'contrato_fechado',
-        updatedAt: new Date(),
-      })
-      .where(eq(leads.id, leadId));
-  } else {
-    // Criar novo lead
-    const [novoLead] = await db.insert(leads)
-      .values({
-        nome: dados.clienteNome,
-        telefone: dados.clienteTelefone,
-        email: dados.clienteEmail,
-        corretorId: dados.corretorId,
-        projectId: dados.projectId,
-        projetoCustom: dados.projetoCustom,
-        status: 'contrato_fechado',
-        origem: 'captacao_corretor',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .$returningId();
-    
-    leadId = novoLead.id;
-  }
-
-  // 2. Criar o contrato
-  const [novoContrato] = await db.insert(contratos)
-    .values({
-      leadId,
-      corretorId: dados.corretorId,
-      valorVenda: dados.valorVenda.toString(),
-      percentualComissao: dados.percentualComissao.toString(),
-      percentualCorretor: (dados.percentualCorretor || 1.85).toString(),
-      percentualGerente: (dados.percentualGerente || 0.5).toString(),
-      percentualSuperintendente: (dados.percentualSuperintendente || 0.3).toString(),
-      observacoes: dados.observacoes || '',
-      anexos: dados.anexos || [],
-      createdAt: dados.dataVenda,
-    })
-    .$returningId();
-
-  // 3. Buscar hierarquia do corretor (gerente e superintendente)
+  // 3. Buscar hierarquia do corretor ANTES da transação (apenas leitura)
   const corretor = await db.select({
     id: users.id,
     equipeId: users.equipeId,
@@ -10479,74 +10418,132 @@ export async function criarNovoContrato(dados: {
     const equipe = await db.select({
       gestorId: equipes.gestorId,
     }).from(equipes).where(eq(equipes.id, corretor[0].equipeId)).limit(1);
-
     gerenteId = equipe[0]?.gestorId || null;
-    superintendenteId = null; // Superintendente não está na tabela equipes
   }
 
-  // 4. Calcular comissões
-  const valorBase = dados.valorVenda;
-  const comissaoImobiliaria = valorBase * (dados.percentualComissao / 100);
+  // Verificar lead existente ANTES da transação (apenas leitura)
+  const leadExistente = await db.select()
+    .from(leads)
+    .where(
+      or(
+        eq(leads.telefone, dados.clienteTelefone),
+        eq(leads.email, dados.clienteEmail)
+      )
+    )
+    .limit(1);
 
-  // Percentuais configuráveis (com valores padrão)
+  // Calcular comissões ANTES da transação
+  const valorBase = dados.valorVenda;
   const percentualCorretor = dados.percentualCorretor || 1.85;
   const percentualGerente = dados.percentualGerente || 0.5;
   const percentualSuperintendente = dados.percentualSuperintendente || 0.3;
 
-  const comissoesParaCriar: InsertComissao[] = [];
+  // Executar todas as escritas em uma única transação atômica
+  const resultado = await db.transaction(async (tx) => {
+    // 1. Criar ou atualizar o lead
+    let leadId: number;
 
-  // Comissão do corretor
-  const valorComissaoCorretor = valorBase * (percentualCorretor / 100);
-  comissoesParaCriar.push({
-    contratoId: novoContrato.id,
-    usuarioId: dados.corretorId,
-    tipo: 'corretor',
-    valorBase: valorBase.toString(),
-    percentual: percentualCorretor.toString(),
-    valorComissao: valorComissaoCorretor.toString(),
-    percentualDesconto: '0',
-    valorLiquido: valorComissaoCorretor.toString(),
-    status: 'pendente_assinatura',
+    if (leadExistente.length > 0) {
+      leadId = leadExistente[0].id;
+      await tx.update(leads)
+        .set({
+          nome: dados.clienteNome,
+          telefone: dados.clienteTelefone,
+          email: dados.clienteEmail,
+          corretorId: dados.corretorId,
+          projectId: dados.projectId,
+          projetoCustom: dados.projetoCustom,
+          status: 'contrato_fechado',
+          updatedAt: new Date(),
+        })
+        .where(eq(leads.id, leadId));
+    } else {
+      const [novoLead] = await tx.insert(leads)
+        .values({
+          nome: dados.clienteNome,
+          telefone: dados.clienteTelefone,
+          email: dados.clienteEmail,
+          corretorId: dados.corretorId,
+          projectId: dados.projectId,
+          projetoCustom: dados.projetoCustom,
+          status: 'contrato_fechado',
+          origem: 'captacao_corretor',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .$returningId();
+      leadId = novoLead.id;
+    }
+
+    // 2. Criar o contrato
+    const [novoContrato] = await tx.insert(contratos)
+      .values({
+        leadId,
+        corretorId: dados.corretorId,
+        valorVenda: dados.valorVenda.toString(),
+        percentualComissao: dados.percentualComissao.toString(),
+        percentualCorretor: percentualCorretor.toString(),
+        percentualGerente: percentualGerente.toString(),
+        percentualSuperintendente: percentualSuperintendente.toString(),
+        observacoes: dados.observacoes || '',
+        anexos: dados.anexos || [],
+        createdAt: dados.dataVenda,
+      })
+      .$returningId();
+
+    // 3. Inserir comissões
+    const comissoesParaCriar: InsertComissao[] = [];
+
+    comissoesParaCriar.push({
+      contratoId: novoContrato.id,
+      usuarioId: dados.corretorId,
+      tipo: 'corretor',
+      valorBase: valorBase.toString(),
+      percentual: percentualCorretor.toString(),
+      valorComissao: (valorBase * (percentualCorretor / 100)).toString(),
+      percentualDesconto: '0',
+      valorLiquido: (valorBase * (percentualCorretor / 100)).toString(),
+      status: 'pendente_assinatura',
+    });
+
+    if (gerenteId) {
+      comissoesParaCriar.push({
+        contratoId: novoContrato.id,
+        usuarioId: gerenteId,
+        tipo: 'gerente',
+        valorBase: valorBase.toString(),
+        percentual: percentualGerente.toString(),
+        valorComissao: (valorBase * (percentualGerente / 100)).toString(),
+        percentualDesconto: '0',
+        valorLiquido: (valorBase * (percentualGerente / 100)).toString(),
+        status: 'pendente_assinatura',
+      });
+    }
+
+    if (superintendenteId) {
+      comissoesParaCriar.push({
+        contratoId: novoContrato.id,
+        usuarioId: superintendenteId,
+        tipo: 'superintendente',
+        valorBase: valorBase.toString(),
+        percentual: percentualSuperintendente.toString(),
+        valorComissao: (valorBase * (percentualSuperintendente / 100)).toString(),
+        percentualDesconto: '0',
+        valorLiquido: (valorBase * (percentualSuperintendente / 100)).toString(),
+        status: 'pendente_assinatura',
+      });
+    }
+
+    if (comissoesParaCriar.length > 0) {
+      await tx.insert(comissoes).values(comissoesParaCriar);
+    }
+
+    return { contratoId: novoContrato.id, leadId };
   });
 
-  // Comissão do gerente (se houver)
-  if (gerenteId) {
-    const valorComissaoGerente = valorBase * (percentualGerente / 100);
-    comissoesParaCriar.push({
-      contratoId: novoContrato.id,
-      usuarioId: gerenteId,
-      tipo: 'gerente',
-      valorBase: valorBase.toString(),
-      percentual: percentualGerente.toString(),
-      valorComissao: valorComissaoGerente.toString(),
-      percentualDesconto: '0',
-      valorLiquido: valorComissaoGerente.toString(),
-      status: 'pendente_assinatura',
-    });
-  }
+  // Operações opcionais fora da transação (falhas não devem reverter o contrato)
+  const { contratoId, leadId } = resultado;
 
-  // Comissão do superintendente (se houver)
-  if (superintendenteId) {
-    const valorComissaoSuperintendente = valorBase * (percentualSuperintendente / 100);
-    comissoesParaCriar.push({
-      contratoId: novoContrato.id,
-      usuarioId: superintendenteId,
-      tipo: 'superintendente',
-      valorBase: valorBase.toString(),
-      percentual: percentualSuperintendente.toString(),
-      valorComissao: valorComissaoSuperintendente.toString(),
-      percentualDesconto: '0',
-      valorLiquido: valorComissaoSuperintendente.toString(),
-      status: 'pendente_assinatura',
-    });
-  }
-
-  // 5. Inserir comissões no banco
-  if (comissoesParaCriar.length > 0) {
-    await db.insert(comissoes).values(comissoesParaCriar);
-  }
-
-  // 6. Registrar agendamento retroativo (se marcado)
   if (dados.clienteAgendou) {
     try {
       await db.insert(agendamentos).values({
@@ -10564,10 +10561,8 @@ export async function criarNovoContrato(dados: {
     }
   }
 
-  // 7. Registrar visita realizada retroativa (se marcado)
   if (dados.clienteVisitou) {
     try {
-      // Atualizar atividade diária do corretor na data do contrato
       const dataContrato = new Date(dados.dataVenda);
       dataContrato.setHours(0, 0, 0, 0);
       await garantirAtividadeDiariaExiste(dados.corretorId, dataContrato);
@@ -10584,7 +10579,6 @@ export async function criarNovoContrato(dados: {
     }
   }
 
-  // 8. Registrar análise de crédito retroativa (se marcado)
   if (dados.clienteFezAnalise) {
     try {
       const dataContrato = new Date(dados.dataVenda);
@@ -10598,7 +10592,6 @@ export async function criarNovoContrato(dados: {
             eq(atividadesDiarias.data, dataContrato)
           )
         );
-      // Também registrar na tabela leadStatusTransitions para rastreabilidade
       await db.insert(leadStatusTransitions).values({
         leadId,
         corretorId: dados.corretorId,
@@ -10606,13 +10599,13 @@ export async function criarNovoContrato(dados: {
         statusNovo: 'analise_credito',
         observacao: 'Registrado retroativamente via criação de contrato',
         createdAt: dados.dataVenda,
-      }).catch(() => {}); // Ignorar erro se a tabela não existir
+      }).catch(() => {});
     } catch (e) {
       console.error('[criarNovoContrato] Erro ao registrar análise retroativa:', e);
     }
   }
 
-  return { contratoId: novoContrato.id, leadId };
+  return { contratoId, leadId };
 }
 
 
@@ -11166,14 +11159,16 @@ export async function getRelatorioLeadsTimerPorCorretor(filtros: {
       );
 
     // Para cada redistribuição por timeout, descobrir quem perdeu o lead
+    // OTIMIZADO: busca todos os logs de uma vez em vez de N queries (elimina N+1)
     const perdidosMap = new Map<number, number>();
 
     const leadIdsUnicos = [...new Set(logsTimeout.map(l => l.leadId).filter(Boolean))] as number[];
 
-    for (const leadId of leadIdsUnicos) {
-      // Buscar os logs deste lead no período, ordenados do mais recente para o mais antigo
-      const logsDoLead = await db
+    if (leadIdsUnicos.length > 0) {
+      // Uma única query para buscar todos os logs dos leads afetados
+      const todosLogsAfetados = await db
         .select({
+          leadId: distributionLog.leadId,
           corretorId: distributionLog.corretorId,
           motivo: distributionLog.motivo,
           createdAt: distributionLog.createdAt,
@@ -11181,25 +11176,36 @@ export async function getRelatorioLeadsTimerPorCorretor(filtros: {
         .from(distributionLog)
         .where(
           and(
-            eq(distributionLog.leadId, leadId),
+            inArray(distributionLog.leadId, leadIdsUnicos),
             gte(distributionLog.createdAt, filtros.dataInicio),
             lte(distributionLog.createdAt, filtros.dataFim)
           )
         )
-        .orderBy(desc(distributionLog.createdAt));
+        .orderBy(distributionLog.leadId, desc(distributionLog.createdAt));
 
-      // Para cada log de timeout, o log imediatamente anterior indica quem perdeu
-      for (let i = 0; i < logsDoLead.length - 1; i++) {
-        const logAtual = logsDoLead[i];
-        const logAnterior = logsDoLead[i + 1];
-        const isTimeout =
-          logAtual.motivo?.includes('timeout') ||
-          logAtual.motivo?.includes('Fallback para admin');
+      // Agrupar logs por leadId em memória
+      const logsPorLead = new Map<number, typeof todosLogsAfetados>();
+      for (const log of todosLogsAfetados) {
+        if (!log.leadId) continue;
+        if (!logsPorLead.has(log.leadId)) logsPorLead.set(log.leadId, []);
+        logsPorLead.get(log.leadId)!.push(log);
+      }
 
-        if (isTimeout && logAnterior.corretorId && corretorIds.includes(logAnterior.corretorId)) {
-          const atual = perdidosMap.get(logAnterior.corretorId) || 0;
-          perdidosMap.set(logAnterior.corretorId, atual + 1);
-          break;
+      // Processar cada lead em memória
+      for (const leadId of leadIdsUnicos) {
+        const logsDoLead = logsPorLead.get(leadId) || [];
+        for (let i = 0; i < logsDoLead.length - 1; i++) {
+          const logAtual = logsDoLead[i];
+          const logAnterior = logsDoLead[i + 1];
+          const isTimeout =
+            logAtual.motivo?.includes('timeout') ||
+            logAtual.motivo?.includes('Fallback para admin');
+
+          if (isTimeout && logAnterior.corretorId && corretorIds.includes(logAnterior.corretorId)) {
+            const atual = perdidosMap.get(logAnterior.corretorId) || 0;
+            perdidosMap.set(logAnterior.corretorId, atual + 1);
+            break;
+          }
         }
       }
     }

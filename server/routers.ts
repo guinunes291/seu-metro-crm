@@ -20,6 +20,7 @@ import { comissoesRouter } from "./routers/comissoes";
 import { templatesRouter } from "./routers/templates";
 import { iaRouter } from "./routers/ia";
 import { carteiraAtivaRouter } from "./routers/carteiraAtiva";
+import { leadsRouter } from "./routers/leads";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -314,633 +315,10 @@ export const appRouter = router({
   }),
 
   // ============================================================================
-  // LEADS
+  // LEADS (extraído para server/routers/leads.ts)
   // ============================================================================
   
-  leads: router({
-    list: protectedProcedure
-      .input(z.object({
-        page: z.number().optional().default(1),
-        limit: z.number().optional().default(50),
-        searchTerm: z.string().optional(),
-        status: z.string().optional(),
-        projectId: z.number().optional(),
-        origem: z.string().optional(),
-        corretorId: z.number().optional(),
-        dataInicio: z.string().optional(),
-        dataFim: z.string().optional(),
-      }).optional())
-      .query(async ({ ctx, input }) => {
-        const page = input?.page || 1;
-        const limit = input?.limit || 50;
-        const searchTerm = input?.searchTerm;
-        const status = input?.status;
-        const projectId = input?.projectId;
-        const origem = input?.origem;
-        const corretorId = input?.corretorId;
-        const dataInicio = input?.dataInicio;
-        const dataFim = input?.dataFim;
-        
-        // Obter IDs dos corretores para filtro baseado no role
-        const { getCorretoresIdsParaFiltro } = await import('./equipes');
-        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
-        // Admin vê todos os leads (corretoresIds = null)
-        // Gestor vê apenas leads da sua equipe (corretoresIds = IDs dos membros)
-        // Corretor vê apenas seus leads (corretoresIds = [seu ID])
-        return await db.getAllLeads({ 
-          page, 
-          limit, 
-          searchTerm, 
-          status, 
-          projectId, 
-          origem, 
-          corretorId: corretorId || (corretoresIds?.length === 1 ? corretoresIds[0] : undefined),
-          corretoresIds,
-          dataInicio, 
-          dataFim 
-        });
-      }),
-    
-    getById: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ input, ctx }) => {
-        const lead = await db.getLeadById(input.id);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Corretor só pode ver seus próprios leads
-        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
-        }
-        
-        return lead;
-      }),
-    
-    // Buscar novos leads via webhook para notificação em tempo real
-    getNewWebhookLeads: protectedProcedure
-      .input(z.object({
-        since: z.string(), // ISO timestamp
-      }))
-      .query(async ({ input, ctx }) => {
-        // Corretor só pode ver seus próprios leads
-        const corretorId = ctx.user.role === 'corretor' ? ctx.user.id : undefined;
-        if (!corretorId) return [];
-        
-        return await db.getNewWebhookLeadsSince(corretorId, new Date(input.since));
-      }),
-
-    // Métricas diárias do corretor: leads Facebook recebidos e perdidos por timeout
-    metricasDiarias: corretorProcedure
-      .query(async ({ ctx }) => {
-        // Apenas corretores veem suas próprias métricas
-        const corretorId = ctx.user.role === 'corretor' ? ctx.user.id : null;
-        if (!corretorId) return { recebidosHoje: 0, perdidosPorTimeout: 0 };
-        return await db.getMetricasDiariasCorretor(corretorId);
-      }),
-
-    
-    create: gestorProcedure
-      .input(z.object({
-        idPrincipal: z.string().optional(),
-        nome: z.string(),
-        email: z.string().email().optional(),
-        telefone: z.string(),
-        origem: z.string().optional(),
-        projectId: z.number().optional(),
-        corretorId: z.number().optional(),
-        status: z.enum([
-          "novo",
-          "aguardando_atendimento",
-          "em_atendimento",
-          "agendado",
-          "visita_realizada",
-          "analise_credito",
-          "contrato_fechado",
-          "perdido"
-        ]).default("novo"),
-        observacoes: z.string().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.createLead(input);
-      }),
-    
-    // Corretor pode criar lead vinculado a si mesmo
-    createByCorretor: corretorProcedure
-      .input(z.object({
-        nome: z.string(),
-        email: z.string().email().optional(),
-        telefone: z.string(),
-        origem: z.enum([
-          "facebook",
-          "google_sheets",
-          "site",
-          "indicacao",
-          "captacao_corretor",
-          "whatsapp",
-          "telefone",
-          "plantao",
-          "agendamento_self_service",
-          "chatbot",
-          "outro"
-        ]).default("captacao_corretor"),
-        projectId: z.number().optional(),
-        observacoes: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        return await db.createLead({
-          ...input,
-          corretorId: ctx.user.id, // Vincula ao corretor logado
-          status: "em_atendimento", // Já começa em atendimento
-        });
-      }),
-    
-    update: corretorProcedure
-      .input(z.object({
-        id: z.number(),
-        data: z.object({
-          nome: z.string().optional(),
-          email: z.string().email().optional(),
-          telefone: z.string().optional(),
-          origem: z.string().optional(),
-          projectId: z.number().optional(),
-          status: z.enum([
-            "novo",
-            "aguardando_atendimento",
-            "em_atendimento",
-            "agendado",
-            "visita_realizada",
-            "analise_credito",
-            "contrato_fechado",
-            "perdido"
-          ]).optional(),
-          observacoes: z.string().optional(),
-          motivoPerdido: z.string().optional(),
-          proximoFollowup: z.date().optional(),
-          ultimoContato: z.date().optional(),
-        })
-      }))
-      .mutation(async ({ input, ctx }) => {
-
-        const lead = await db.getLeadById(input.id);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Corretor só pode atualizar seus próprios leads
-        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
-        }
-        
-        // Registrar atividade automaticamente se o status mudou
-        if (input.data.status && input.data.status !== lead.status && lead.corretorId) {
-          await db.registrarAtividadePorStatus(
-            lead.corretorId,
-            lead.status,
-            input.data.status,
-            undefined // valorVenda não existe no schema
-          );
-        }
-        
-        // Se o status mudou para "em_atendimento", criar follow-up automático para amanhã
-        if (input.data.status === 'em_atendimento' && lead.status !== 'em_atendimento') {
-          await db.criarFollowUpParaLead(input.id, lead.corretorId || ctx.user.id);
-        }
-        
-        // Se o status mudou para qualquer coisa diferente de "aguardando_atendimento",
-        // desativar o timer automaticamente (o lead foi atendido)
-        if (input.data.status && input.data.status !== 'aguardando_atendimento' && lead.timerAtivo) {
-          input.data = { ...input.data, timerAtivo: false };
-        }
-        
-        // Se o status mudou para qualquer outro que não seja "em_atendimento", cancelar follow-ups pendentes
-        if (input.data.status && input.data.status !== 'em_atendimento' && lead.status === 'em_atendimento') {
-          await db.cancelarFollowUpsPendentes(input.id);
-        }
-        
-        // Se o status for "perdido", tentar transferir para outro corretor
-        if (input.data.status === 'perdido') {
-          console.log(`[updateLead] Lead ${input.id} marcado como perdido. Status anterior: ${lead.status}, Corretor: ${lead.corretorId}`);
-          
-          // Adicionar corretor atual à lista de quem já tentou
-          const corretoresQueTentaram = lead.corretoresQueTentaram ? JSON.parse(lead.corretoresQueTentaram) : [];
-          if (lead.corretorId && !corretoresQueTentaram.includes(lead.corretorId)) {
-            corretoresQueTentaram.push(lead.corretorId);
-          }
-          console.log(`[updateLead] Corretores que já tentaram: ${JSON.stringify(corretoresQueTentaram)}`);
-          
-          // Buscar próximo corretor disponível (presente e que não tentou ainda)
-          const proximoCorretor = await db.getProximoCorretorDisponivel(corretoresQueTentaram);
-          console.log(`[updateLead] Próximo corretor encontrado: ${proximoCorretor ? proximoCorretor.name : 'nenhum'}`);
-          
-          if (proximoCorretor) {
-            // Cancelar follow-ups pendentes do corretor atual antes de transferir
-            if (lead.corretorId) {
-              await db.cancelarFollowUpsPorTransferencia(input.id, lead.corretorId);
-            }
-            
-            // Transferir para próximo corretor
-            await db.updateLead(input.id, {
-              ...input.data,
-              status: 'aguardando_atendimento', // Volta para aguardando
-              corretorId: proximoCorretor.id,
-              corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
-            });
-            
-            // Registrar transferência no histórico
-            await db.createLeadHistory({
-              leadId: input.id,
-              corretorId: lead.corretorId || ctx.user.id,
-              tipo: 'outro',
-              resultado: 'outro',
-              observacoes: `Lead transferido automaticamente para ${proximoCorretor.name} após ser marcado como perdido`,
-            });
-            
-            return { success: true, transferred: true, newCorretor: proximoCorretor.name };
-          } else {
-            // Todos os corretores já tentaram, mover para lixeira
-            await db.updateLead(input.id, {
-              ...input.data,
-              naLixeira: true,
-              dataMovidoLixeira: new Date(),
-              corretorAnteriorId: lead.corretorId,
-              corretorId: null,
-              corretoresQueTentaram: JSON.stringify(corretoresQueTentaram),
-            });
-            return { success: true, movedToTrash: true };
-          }
-        }
-        
-        await db.updateLead(input.id, input.data);
-        return { success: true };
-      }),
-    
-    getHistory: corretorProcedure
-      .input(z.object({ leadId: z.number() }))
-      .query(async ({ input, ctx }) => {
-        const lead = await db.getLeadById(input.leadId);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Corretor só pode ver histórico dos seus leads
-        if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
-          throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
-        }
-        
-        return await db.getLeadHistory(input.leadId);
-      }),
-    
-    addInteraction: corretorProcedure
-      .input(z.object({
-        leadId: z.number(),
-        tipo: z.enum(["ligacao", "whatsapp", "email", "sms", "visita", "outro"]),
-        resultado: z.enum([
-          "contato_realizado",
-          "nao_atendeu",
-          "agendamento",
-          "visita_realizada",
-          "proposta_enviada",
-          "recusou",
-          "outro"
-        ]),
-        observacoes: z.string().optional(),
-        statusAnterior: z.string().optional(),
-        statusNovo: z.string().optional(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-
-        const lead = await db.getLeadById(input.leadId);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Corretores só podem interagir com leads que lhes pertencem
-        // Não permitir auto-atribuição silenciosa de lead sem dono
-        if (ctx.user.role === 'corretor') {
-          if (!lead.corretorId) {
-            throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead ainda não foi atribuído. Aguarde a distribuição automática ou solicite ao gestor.' });
-          }
-          if (lead.corretorId !== ctx.user.id) {
-            throw new TRPCError({ code: 'FORBIDDEN', message: 'Este lead pertence a outro corretor. Você não pode interagir com ele.' });
-          }
-        }
-        
-        // Usar o corretorId do lead (dono) para que a pontuação vá para o corretor correto
-        const corretorParaInteracao = lead.corretorId || ctx.user.id;
-        
-        // SEMPRE registrar no histórico do lead (lead_history) para que apareça na aba Histórico
-        // Isso garante que tipo de contato, resultado e observações fiquem registrados
-        await db.createLeadHistory({
-          leadId: input.leadId,
-          corretorId: corretorParaInteracao,
-          tipo: input.tipo,
-          resultado: input.resultado,
-          observacoes: input.observacoes,
-          statusAnterior: input.statusAnterior,
-          statusNovo: input.statusNovo,
-        });
-        
-        // Também registrar na tabela interacoes para métricas (apenas ligação e whatsapp)
-        if (input.tipo === 'ligacao' || input.tipo === 'whatsapp') {
-          try {
-            await db.createInteracao({
-              leadId: input.leadId,
-              corretorId: corretorParaInteracao,
-              tipo: input.tipo as 'ligacao' | 'whatsapp',
-              observacoes: input.observacoes || '',
-            });
-          } catch (e) {
-            // Não falhar se a tabela interacoes tiver problema de schema
-            console.warn('[addInteraction] Erro ao salvar em interacoes:', e);
-          }
-        }
-        
-        // Atualizar último contato e última interação do lead
-        await db.updateLead(input.leadId, {
-          ultimoContato: new Date(),
-          ultimaInteracao: new Date(),
-        });
-        
-        return { success: true };
-      }),
-    
-    // Transferir lead para outro corretor (gestores e corretores)
-    transferir: protectedProcedure
-      .input(z.object({
-        leadId: z.number(),
-        novoCorretorId: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const lead = await db.getLeadById(input.leadId);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Verificar se novo corretor/gestor existe
-        const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
-        }
-        
-        const corretorAnteriorId = lead.corretorId;
-        const agora = new Date();
-        
-        // Cancelar follow-ups pendentes do corretor anterior antes de transferir
-        if (corretorAnteriorId) {
-          await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
-        }
-        
-        // Atualizar lead com novo corretor, status e ativar timer de 15 min
-        await db.updateLead(input.leadId, {
-          corretorId: input.novoCorretorId,
-          status: 'aguardando_atendimento',
-          timerAtivo: true,
-          timestampRecebimento: agora,
-          corretorAnteriorId: corretorAnteriorId ?? undefined,
-        });
-        
-        // Criar follow-up automático para amanhã
-        await db.criarFollowUpsAutomaticos();
-        
-        // Registrar no histórico
-        await db.createLeadHistory({
-          leadId: input.leadId,
-          corretorId: ctx.user.id,
-          tipo: 'outro',
-          resultado: 'outro',
-          observacoes: `Lead transferido para ${novoCorretor.name}${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
-        });
-        
-        return { success: true, novoCorretor: novoCorretor.name };
-      }),
-    
-    // Reatribuir lead mantendo status atual (sem voltar para aguardando_atendimento)
-    reatribuir: protectedProcedure
-      .input(z.object({
-        leadId: z.number(),
-        novoCorretorId: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        const lead = await db.getLeadById(input.leadId);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Verificar se novo corretor/gestor existe
-        const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
-        }
-        
-        const corretorAnteriorId = lead.corretorId;
-        const statusAtual = lead.status;
-        
-        // Cancelar follow-ups pendentes do corretor anterior antes de reatribuir
-        if (corretorAnteriorId) {
-          await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
-        }
-        
-        // Atualizar lead com novo corretor MANTENDO o status atual
-        await db.updateLead(input.leadId, {
-          corretorId: input.novoCorretorId,
-          // NÃO altera o status
-        });
-        
-        // Registrar no histórico
-        await db.createLeadHistory({
-          leadId: input.leadId,
-          corretorId: ctx.user.id,
-          tipo: 'outro',
-          resultado: 'outro',
-          observacoes: `Lead reatribuído para ${novoCorretor.name} (status mantido: ${statusAtual})${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
-        });
-        
-        return { success: true, novoCorretor: novoCorretor.name, statusMantido: statusAtual };
-      }),
-    
-    // Transferir múltiplos leads em lote (apenas gestores)
-    transferirEmLote: gestorProcedure
-      .input(z.object({
-        leadIds: z.array(z.number()),
-        novoCorretorId: z.number(),
-      }))
-      .mutation(async ({ input, ctx }) => {
-        if (input.leadIds.length === 0) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Nenhum lead selecionado' });
-        }
-        
-        // Verificar se novo corretor/gestor existe
-        const novoCorretor = await db.getUserById(input.novoCorretorId);
-        if (!novoCorretor || (novoCorretor.role !== 'corretor' && novoCorretor.role !== 'gestor')) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
-        }
-        
-        let transferidos = 0;
-        let erros = 0;
-        
-        // Transferir cada lead
-        for (const leadId of input.leadIds) {
-          try {
-            const lead = await db.getLeadById(leadId);
-            if (!lead) {
-              erros++;
-              continue;
-            }
-            
-            const corretorAnteriorId = lead.corretorId;
-            const agora = Date.now();
-            
-            // Cancelar follow-ups pendentes do corretor anterior antes de transferir
-            if (corretorAnteriorId) {
-              await db.cancelarFollowUpsPorTransferencia(leadId, corretorAnteriorId);
-            }
-            
-            // Atualizar lead com novo corretor, status e ativar timer de 15 min
-            await db.updateLead(leadId, {
-              corretorId: input.novoCorretorId,
-              status: 'aguardando_atendimento',
-              timerAtivo: true,
-              timestampRecebimento: new Date(),
-              corretorAnteriorId: corretorAnteriorId ?? undefined,
-            });
-            
-            // Registrar no histórico
-            await db.createLeadHistory({
-              leadId,
-              corretorId: ctx.user.id,
-              tipo: 'outro',
-              resultado: 'outro',
-              observacoes: `Lead transferido em lote para ${novoCorretor.name}${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
-            });
-            
-            transferidos++;
-          } catch (error) {
-            console.error(`Erro ao transferir lead ${leadId}:`, error);
-            erros++;
-          }
-        }
-        
-        // Criar follow-ups automáticos para todos os leads transferidos
-        await db.criarFollowUpsAutomaticos();
-        
-        return { 
-          success: true, 
-          transferidos, 
-          erros,
-          novoCorretor: novoCorretor.name 
-        };
-      }),
-    
-    // Atribuir corretor manualmente (apenas gestores)
-    atribuirCorretor: gestorProcedure
-      .input(z.object({
-        leadId: z.number(),
-        corretorId: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        const lead = await db.getLeadById(input.leadId);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        // Verificar se corretor/gestor existe
-        const corretor = await db.getUserById(input.corretorId);
-        if (!corretor || (corretor.role !== 'corretor' && corretor.role !== 'gestor')) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Corretor/Gestor não encontrado' });
-        }
-        
-        const novoStatus = lead.status === 'novo' ? 'aguardando_atendimento' : lead.status;
-        const deveAtivarTimer = novoStatus === 'aguardando_atendimento';
-        
-        // Atualizar lead com novo corretor e ativar timer se status for aguardando_atendimento
-        await db.updateLead(input.leadId, {
-          corretorId: input.corretorId,
-          status: novoStatus,
-          ...(deveAtivarTimer ? { timerAtivo: true, timestampRecebimento: new Date() } : {}),
-        });
-        
-        // Criar follow-up automático para amanhã
-        await db.criarFollowUpsAutomaticos();
-        
-        // Registrar no histórico
-        await db.createLeadHistory({
-          leadId: input.leadId,
-          corretorId: input.corretorId,
-          tipo: 'outro',
-          resultado: 'outro',
-          observacoes: `Lead atribuído manualmente pelo gestor`,
-        });
-        
-        return { success: true, corretor: corretor.name };
-      }),
-    
-    // Excluir lead (apenas gestores)
-    delete: gestorProcedure
-      .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const lead = await db.getLeadById(input.id);
-        
-        if (!lead) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
-        }
-        
-        await db.deleteLead(input.id);
-        return { success: true };
-      }),
-    
-    // Excluir múltiplos leads (apenas gestores)
-    deleteMany: gestorProcedure
-      .input(z.object({ ids: z.array(z.number()) }))
-      .mutation(async ({ input }) => {
-        let deleted = 0;
-        for (const id of input.ids) {
-          try {
-            await db.deleteLead(id);
-            deleted++;
-          } catch (e) {
-            // Ignorar erros individuais
-          }
-        }
-        return { success: true, deleted };
-      }),
-    
-    // Listar leads na lixeira (apenas gestores)
-    getLixeira: gestorProcedure
-      .input(z.object({
-        page: z.number().default(1),
-        limit: z.number().default(50),
-      }).optional())
-      .query(async ({ input }) => {
-        return await db.getLeadsNaLixeira(input?.page || 1, input?.limit || 50);
-      }),
-    
-    // Contar leads na lixeira
-    countLixeira: gestorProcedure
-      .query(async () => {
-        return await db.countLeadsNaLixeira();
-      }),
-    
-    // Exportar leads em CSV (apenas admin real - superintendente não pode exportar)
-    exportCSV: adminExportProcedure
-      .input(z.object({
-        status: z.string().optional(),
-        corretorId: z.number().optional(),
-        projectId: z.number().optional(),
-        naLixeira: z.boolean().optional(),
-      }).optional())
-      .query(async ({ input }) => {
-        return await db.getLeadsParaExportar(input);
-      }),
-  }),
+  leads: leadsRouter,
 
   // ============================================================================
   // CORRETORES
@@ -1050,8 +428,8 @@ export const appRouter = router({
             corretorNome: input.name,
             corretorEmail: input.email,
             dataIngresso: new Date(),
-          }).catch(() => {});
-        }).catch(() => {});
+          }).catch((err: unknown) => console.error('[Notion] Erro ao criar onboarding corretor:', err));
+        }).catch((err: unknown) => console.error('[Notion] Erro ao importar notionService:', err));
         
         return resultado;
       }),
@@ -1998,8 +1376,8 @@ export const appRouter = router({
         });
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
-          runDreSync('edição de contrato').catch(() => {});
-        }).catch(() => {});
+          runDreSync('edição de contrato').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após editar contrato:', err));
+        }).catch((err: unknown) => console.error('[DRE Sync] Erro ao importar dreSyncJob:', err));
         return resultado;
       }),
     
@@ -2034,7 +1412,7 @@ export const appRouter = router({
           runDreSync('novo contrato').catch(err => 
             console.error('[DRE Sync] Erro ao sincronizar após criar contrato:', err)
           );
-        }).catch(() => {});
+        }).catch((err: unknown) => console.error('[DRE Sync] Erro ao importar dreSyncJob (criar contrato):', err));
         return resultado;
       }),
     
@@ -2084,8 +1462,8 @@ export const appRouter = router({
         });
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
-          runDreSync('distrato registrado').catch(() => {});
-        }).catch(() => {});
+          runDreSync('distrato registrado').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após registrar distrato:', err));
+        }).catch((err: unknown) => console.error('[DRE Sync] Erro ao importar dreSyncJob:', err));
         return resultado;
       }),
     
@@ -2096,8 +1474,8 @@ export const appRouter = router({
         const resultado = await db.desfazerDistrato(input.contratoId);
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
-          runDreSync('distrato desfeito').catch(() => {});
-        }).catch(() => {});
+          runDreSync('distrato desfeito').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após desfazer distrato:', err));
+        }).catch((err: unknown) => console.error('[DRE Sync] Erro ao importar dreSyncJob:', err));
         return resultado;
       }),
     
@@ -3743,8 +3121,8 @@ export const appRouter = router({
             corretorNome: ctx.user.name || ctx.user.email || "Corretor",
             dataVisita: dataAgendamentoParsed,
             leadId: input.leadId,
-          }).catch(() => {});
-        }).catch(() => {});
+          }).catch((err: unknown) => console.error('[Notion] Erro ao criar tarefa de visita agendada:', err));
+        }).catch((err: unknown) => console.error('[Notion] Erro ao importar notionService:', err));
         
         return agendamento;
       }),
@@ -4064,8 +3442,8 @@ export const appRouter = router({
             projeto: (lead as any).projetoCustom || undefined,
             valorVenda: input.valorVenda,
             leadId: input.leadId,
-          }).catch(() => {});
-        }).catch(() => {});
+          }).catch((err: unknown) => console.error('[Notion] Erro ao criar tarefa de contrato fechado:', err));
+        }).catch((err: unknown) => console.error('[Notion] Erro ao importar notionService:', err));
 
         return { success: true, contratoId: contrato.id };
       }),
@@ -4221,8 +3599,8 @@ export const appRouter = router({
             corretorNome: ctx.user.name || ctx.user.email || "Corretor",
             leadId: input.leadId,
             projeto: (lead as any).projetoCustom || undefined,
-          }).catch(() => {});
-        }).catch(() => {});
+          }).catch((err: unknown) => console.error('[Notion] Erro ao criar tarefa de análise de crédito:', err));
+        }).catch((err: unknown) => console.error('[Notion] Erro ao importar notionService:', err));
 
         return { success: true, analiseId: analise.id };
       }),
