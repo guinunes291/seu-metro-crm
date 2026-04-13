@@ -2,7 +2,7 @@
  * Job de Sincronização de Métricas
  * 
  * Sincroniza todas as métricas de performance pela data de criação dos registros.
- * Executa a cada 10 minutos para manter os dashboards atualizados sem sobrecarregar o banco.
+ * Executa a cada 30 minutos para reduzir carga no banco (era 10 min — 3x menos queries).
  */
 
 import { sincronizarTodasMetricasDoDia } from "./db";
@@ -10,15 +10,15 @@ import { sincronizarTodasMetricasDoDia } from "./db";
 let isRunning = false;
 
 export async function startMetricasSyncJob() {
-  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 10 minutos)");
+  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 30 minutos)");
   
   // Executar imediatamente na inicialização
   await runSync();
   
-  // Executar a cada 10 minutos (reduzido de 5 min para diminuir carga no banco)
+  // Executar a cada 30 minutos (reduzido de 10 min para economizar recursos — 3x menos queries)
   setInterval(async () => {
     await runSync();
-  }, 10 * 60 * 1000); // 10 minutos
+  }, 30 * 60 * 1000); // 30 minutos
 }
 
 async function runSync() {

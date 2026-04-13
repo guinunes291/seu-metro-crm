@@ -68,13 +68,13 @@ export function agendarDistribuicaoAutomatica() {
     executarDistribuicaoAutomatica().catch(console.error);
   }, 60000);
 
-  // Distribuição: a cada 5 minutos
+  // Distribuição: a cada 10 minutos (reduzido de 5min para economizar recursos)
   setInterval(() => {
     console.log("[Job] Executando distribuição automática agendada...");
     executarDistribuicaoAutomatica().catch(console.error);
-  }, 300000);
+  }, 10 * 60 * 1000);
 
-  console.log("[Job] Distribuição automática agendada para executar a cada 5 minutos");
+  console.log("[Job] Distribuição automática agendada para executar a cada 10 minutos");
   
   // Timer de leads: primeira execução após 90 segundos
   setTimeout(() => {
@@ -82,11 +82,11 @@ export function agendarDistribuicaoAutomatica() {
     executarTimerLeads().catch(console.error);
   }, 90000);
 
-  // Timer de leads: a cada 2 minutos (era 30 segundos — reduziu 4x a carga)
+  // Timer de leads: a cada 5 minutos (era 2 minutos — reduz 2.5x a carga)
   setInterval(() => {
     executarTimerLeads().catch(console.error);
-  }, 120000);
+  }, 5 * 60 * 1000);
   
-  console.log("[Job] Verificação de timer de leads agendada para executar a cada 2 minutos");
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 5 minutos");
   
 }

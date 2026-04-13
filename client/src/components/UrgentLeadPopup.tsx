@@ -34,11 +34,12 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
   
   const utils = trpc.useUtils();
 
-  // Verificar se o lead ainda pertence ao corretor logado (polling a cada 5s)
+  // Verificar se o lead ainda pertence ao corretor logado (polling a cada 30s)
+  // Reduzido de 5s para 30s — o transferenciaJob roda a cada 2min, 30s é suficiente para detectar transferência
   const { data: leadAtual, isError: leadError } = trpc.leads.getById.useQuery(
     { id: lead.id },
     {
-      refetchInterval: 5000,
+      refetchInterval: 30000,
       retry: false,
       refetchOnWindowFocus: false,
     }

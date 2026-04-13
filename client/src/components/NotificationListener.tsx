@@ -53,12 +53,13 @@ export default function NotificationListener() {
     }
   }, [user]);
 
-  // Query para buscar novas notificações (polling a cada 15 segundos)
+  // Query para buscar novas notificações (polling a cada 60 segundos)
+  // Reduzido de 15s para 60s — notificações não precisam de polling agressivo
   const { data: newNotifications } = trpc.notifications.getNewSince.useQuery(
     { since: lastCheck },
     {
       enabled: !!user,
-      refetchInterval: 15000,
+      refetchInterval: 60000,
       refetchIntervalInBackground: false,
       refetchOnWindowFocus: false,
     }

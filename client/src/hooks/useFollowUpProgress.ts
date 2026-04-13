@@ -25,7 +25,7 @@ export function useFollowUpProgress() {
     undefined,
     {
       enabled: shouldFetchProgress,
-      refetchInterval: 10000,
+      refetchInterval: 60000, // Reduzido de 10s para 60s — progresso de follow-up não muda com alta frequência
     }
   );
   

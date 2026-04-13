@@ -565,7 +565,11 @@ export const distributionLog = mysqlTable("distribution_log", {
   distribuidoPorId: int("distribuidoPorId"),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  leadIdx: index("dist_log_lead_idx").on(table.leadId),
+  corretorIdx: index("dist_log_corretor_idx").on(table.corretorId),
+  createdAtIdx: index("dist_log_created_at_idx").on(table.createdAt),
+}));
 
 export type DistributionLog = typeof distributionLog.$inferSelect;
 export type InsertDistributionLog = typeof distributionLog.$inferInsert;
@@ -645,7 +649,12 @@ export const notifications = mysqlTable("notifications", {
   lidaEm: timestamp("lidaEm"),
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({
+  userIdx: index("notification_user_idx").on(table.userId),
+  lidaIdx: index("notification_lida_idx").on(table.lida),
+  createdAtIdx: index("notification_created_at_idx").on(table.createdAt),
+  userLidaIdx: index("notification_user_lida_idx").on(table.userId, table.lida),
+}));
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;

@@ -53,7 +53,7 @@ export function useWebhookLeadNotification() {
     { since },
     {
       enabled: shouldNotify,
-      refetchInterval: shouldNotify ? 8000 : false, // 8s (reduzido de 5s para menor carga no servidor)
+      refetchInterval: shouldNotify ? 20000 : false, // 20s (reduzido de 8s — economiza 2.5x requests)
       refetchIntervalInBackground: false, // Não pollar em background para economizar recursos
       refetchOnWindowFocus: false,
     }

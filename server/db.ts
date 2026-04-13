@@ -1,5 +1,6 @@
 import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull, ne } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import { 
   InsertUser, users, 
   projects, InsertProject, Project,
@@ -89,11 +90,22 @@ async function syncLeadToGoogleSheets(lead: Lead) {
 }
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _pool: ReturnType<typeof mysql.createPool> | null = null;
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      // Pool com limite explícito de conexões para reduzir custo de Cloud
+      _pool = mysql.createPool({
+        uri: process.env.DATABASE_URL,
+        connectionLimit: 5,       // máx 5 conexões simultâneas (padrão era 10)
+        waitForConnections: true, // fila em vez de erro quando o pool está cheio
+        queueLimit: 0,            // sem limite de fila
+        idleTimeout: 60000,       // libera conexões ociosas após 60s
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 0,
+      });
+      _db = drizzle(_pool);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -1238,9 +1250,11 @@ export async function getLeadsNaoDistribuidos() {
   const db = await getDb();
   if (!db) return [];
   
+  // LIMIT 500 para evitar full table scan com 31k+ leads
   return await db.select().from(leads)
     .where(eq(leads.status, "novo"))
-    .orderBy(leads.createdAt);
+    .orderBy(leads.createdAt)
+    .limit(500);
 }
 
 export async function getLeadsPendentesFollowup() {
@@ -1248,6 +1262,7 @@ export async function getLeadsPendentesFollowup() {
   if (!db) return [];
   
   const now = new Date();
+  // LIMIT 1000 para evitar full table scan com 31k+ leads
   return await db.select().from(leads)
     .where(
       and(
@@ -1255,7 +1270,8 @@ export async function getLeadsPendentesFollowup() {
         inArray(leads.status, ["aguardando_atendimento", "em_atendimento", "agendado"])
       )
     )
-    .orderBy(leads.proximoFollowup);
+    .orderBy(leads.proximoFollowup)
+    .limit(1000);
 }
 
 // ============================================================================

@@ -233,8 +233,9 @@ export default function DashboardLayout({
 // Componente para badge de notificações
 function NotificationBadge() {
   const { data: count } = trpc.notifications.unreadCount.useQuery(undefined, {
-    refetchInterval: 15000, // Sincronizado com o NotificationListener (15s)
+    refetchInterval: 60 * 1000, // Reduzido de 15s para 60s — sincronizado com NotificationListener
     refetchOnWindowFocus: false,
+    staleTime: 30 * 1000,
   });
   
   if (!count || count === 0) return null;
@@ -298,10 +299,11 @@ function DashboardContent({
     setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
-  // Buscar status do corretor
+  // Buscar status do corretor (polling a cada 2 min — reduzido de 30s para economizar recursos)
   const { data: corretorStatus } = trpc.corretores.meuStatus.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 30000,
+    refetchInterval: 2 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
   // Função para tocar som ao mudar status — reutiliza AudioContext singleton para evitar memory leak

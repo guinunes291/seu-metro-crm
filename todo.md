@@ -5455,3 +5455,14 @@
 - [ ] Implementar audit log para operações críticas (status changes, contratos, distribuição)
 - [ ] Consolidar módulos duplicados (analisesCentral.ts vs relatorios.ts)
 - [ ] Mover jobs/cron para worker dedicado
+
+## Otimização de Recursos Cloud
+
+- [ ] Diagnosticar jobs em background e suas frequências
+- [ ] Reduzir frequência dos jobs de transferência e backup
+- [ ] Otimizar pool de conexões do banco de dados
+- [ ] Adicionar índices faltantes nas queries mais frequentes
+- [ ] Adicionar limites (LIMIT) nas queries sem paginação
+- [ ] Reduzir polling/refetch intervals no frontend
+- [ ] Implementar cache para queries de dashboard/analytics
+- [ ] Revisar e consolidar jobs duplicados

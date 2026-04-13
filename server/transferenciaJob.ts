@@ -484,18 +484,18 @@ export async function verificarTransferenciasAutomaticas() {
  * Agenda o job de transferência para rodar a cada 30 segundos
  */
 export function agendarTransferenciaAutomatica() {
-  const INTERVALO_MS = 30 * 1000; // 30 segundos
+  const INTERVALO_MS = 2 * 60 * 1000; // 2 minutos (reduzido de 30s para diminuir carga no banco)
 
-  // Primeira execução após 30 segundos (para o servidor inicializar)
+  // Primeira execução após 60 segundos (para o servidor inicializar)
   setTimeout(async () => {
     console.log("[Transferência Job] Iniciando primeira verificação...");
     await verificarTransferenciasAutomaticas().catch(console.error);
 
-    // Executar a cada 30 segundos
+    // Executar a cada 2 minutos
     setInterval(async () => {
       await verificarTransferenciasAutomaticas().catch(console.error);
     }, INTERVALO_MS);
-  }, 30000);
+  }, 60000);
 
-  console.log("[Transferência Job] Agendado para rodar a cada 30 segundos");
+  console.log("[Transferência Job] Agendado para rodar a cada 2 minutos (reduzido de 30s)");
 }

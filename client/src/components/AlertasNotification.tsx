@@ -19,7 +19,7 @@ export function AlertasNotification() {
   const { data: alertas, refetch } = trpc.alertas.meus.useQuery(
     { apenasNaoLidos: true },
     {
-      refetchInterval: 10000, // Atualiza a cada 10 segundos (reduzido de 5s)
+      refetchInterval: 45 * 1000, // Reduzido de 10s para 45s — economiza ~4x requests
       refetchOnWindowFocus: false, // IMPORTANTE: desabilitar para evitar disparos ao navegar
     }
   );

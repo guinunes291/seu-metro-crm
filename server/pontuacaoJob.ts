@@ -2,17 +2,17 @@ import { getDb } from './db.ts';
 import { atividadesDiarias } from '../drizzle/schema.ts';
 import { sql } from 'drizzle-orm';
 
-// Job que recalcula pontuação de todas as atividades a cada 15 minutos (reduzido de 5 min)
+// Job que recalcula pontuação de todas as atividades a cada 60 minutos (reduzido de 15 min para economizar recursos)
 export async function iniciarJobPontuacao() {
   console.log('[Pontuação Job] Iniciando job de recálculo de pontuação...');
   
   // Executar imediatamente ao iniciar
   await recalcularPontuacaoTodasAtividades();
   
-  // Executar a cada 15 minutos (reduzido de 5 min para diminuir carga no banco)
+  // Executar a cada 60 minutos (reduzido de 15 min — 4x menos queries)
   setInterval(async () => {
     await recalcularPontuacaoTodasAtividades();
-  }, 15 * 60 * 1000);
+  }, 60 * 60 * 1000);
 }
 
 async function recalcularPontuacaoTodasAtividades() {

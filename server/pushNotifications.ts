@@ -4,14 +4,11 @@
  */
 
 import webpush from 'web-push';
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
 import { pushSubscriptions } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
+import { getDb } from './db';
 
-// Criar conexão com o banco
-const connection = mysql.createPool(process.env.DATABASE_URL!);
-const db = drizzle(connection);
+// Usa o singleton compartilhado de conexão (evita criar um pool separado)
 
 // Configurar VAPID keys (geradas uma única vez)
 // Para gerar novas keys: npx web-push generate-vapid-keys
@@ -35,6 +32,9 @@ export async function saveSubscription(
   if (!subscription.endpoint || !subscription.keys) {
     throw new Error('Subscription inválida');
   }
+
+  const db = await getDb();
+  if (!db) throw new Error('Database não disponível');
 
   // Verificar se já existe uma subscription para este endpoint
   const existing = await db
@@ -68,6 +68,8 @@ export async function saveSubscription(
  * Remover subscription do usuário
  */
 export async function removeSubscription(endpoint: string) {
+  const db = await getDb();
+  if (!db) return;
   await db
     .delete(pushSubscriptions)
     .where(eq(pushSubscriptions.endpoint, endpoint));
@@ -89,6 +91,9 @@ export async function sendPushNotification(
     actions?: Array<{ action: string; title: string }>;
   }
 ) {
+  const db = await getDb();
+  if (!db) return { sent: 0, failed: 0 };
+
   // Buscar todas as subscriptions do usuário
   const subscriptions = await db
     .select()
@@ -117,10 +122,13 @@ export async function sendPushNotification(
         );
 
         // Atualizar lastUsedAt
-        await db
-          .update(pushSubscriptions)
-          .set({ lastUsedAt: new Date() })
-          .where(eq(pushSubscriptions.id, sub.id));
+        const dbInner = await getDb();
+        if (dbInner) {
+          await dbInner
+            .update(pushSubscriptions)
+            .set({ lastUsedAt: new Date() })
+            .where(eq(pushSubscriptions.id, sub.id));
+        }
 
         return { success: true };
       } catch (error: any) {
