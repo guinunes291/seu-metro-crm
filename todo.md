@@ -5466,3 +5466,10 @@
 - [ ] Reduzir polling/refetch intervals no frontend
 - [ ] Implementar cache para queries de dashboard/analytics
 - [ ] Revisar e consolidar jobs duplicados
+
+## Fase 1 Auditoria — Pendências (Iniciado em 13/04/2026)
+
+- [ ] Corrigir N+1 em verificarConquistasCorretor (~250 queries → batch)
+- [ ] Corrigir N+1 em getEquipesComparativo
+- [ ] Corrigir N+1 em getFunilConversaoGeral
+- [ ] Adicionar transação em registrarTentativaFollowUp

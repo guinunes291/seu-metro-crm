@@ -307,74 +307,105 @@ export async function getComparativoEquipes(
     corretoresPorEquipe.get(c.equipeId)!.push(c.id);
   }
 
-  const resultado: EquipeComparativo[] = [];
-
-  for (const equipe of equipesResult) {
-    const membrosIds = corretoresPorEquipe.get(equipe.id) || [];
-    
-    // Incluir gestor se não estiver na lista
+  // Coletar todos os membros IDs para batch queries
+  const equipesComMembros = equipesResult.map(equipe => {
+    const membrosIds = [...(corretoresPorEquipe.get(equipe.id) || [])];
     if (equipe.gestorId && !membrosIds.includes(equipe.gestorId)) {
       membrosIds.push(equipe.gestorId);
     }
-    
-    if (membrosIds.length === 0) continue;
-
-    // Se temos filtro de corretores, verificar se algum membro está no filtro
+    return { equipe, membrosIds };
+  }).filter(({ membrosIds, equipe }) => {
+    if (membrosIds.length === 0) return false;
     if (corretoresIds && corretoresIds.length > 0) {
-      const membrosNoFiltro = membrosIds.filter(id => corretoresIds.includes(id));
-      if (membrosNoFiltro.length === 0) continue;
+      return membrosIds.some(id => corretoresIds.includes(id));
     }
+    return true;
+  });
 
-    // Leads
-    const leadsCount = await db.select({
-      count: sql<number>`COUNT(*)`,
-    }).from(leads).where(and(
-      inArray(leads.corretorId, membrosIds),
-      gte(leads.createdAt, dataInicio),
-      lte(leads.createdAt, dataFim),
-    ));
+  if (equipesComMembros.length === 0) return [];
 
-    // Transições
-    const transResult = await db.select({
-      statusNovo: leadStatusTransitions.statusNovo,
-      count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`,
-    }).from(leadStatusTransitions).where(and(
-      inArray(leadStatusTransitions.corretorId, membrosIds),
-      gte(leadStatusTransitions.createdAt, dataInicio),
-      lte(leadStatusTransitions.createdAt, dataFim),
-    )).groupBy(leadStatusTransitions.statusNovo);
+  // Todos os membros de todas as equipes para batch queries
+  const todosMembrosIds = [...new Set(equipesComMembros.flatMap(e => e.membrosIds))];
 
-    const transMapEquipe = new Map<string, number>();
-    for (const row of transResult) {
-      transMapEquipe.set(row.statusNovo, Number(row.count));
-    }
+  // BATCH QUERY 1: Leads por corretorId no período
+  const leadsCountBatch = todosMembrosIds.length > 0 ? await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`COUNT(*)`,
+  }).from(leads).where(and(
+    inArray(leads.corretorId, todosMembrosIds),
+    gte(leads.createdAt, dataInicio),
+    lte(leads.createdAt, dataFim),
+  )).groupBy(leads.corretorId) : [];
+  const leadsMap = new Map<number, number>();
+  for (const row of leadsCountBatch) {
+    leadsMap.set(row.corretorId!, Number(row.count));
+  }
 
-    // Contratos e VGV
-    const contratosResult = await db.select({
-      count: sql<number>`COUNT(*)`,
-      vgv: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
-    }).from(contratos).where(and(
-      inArray(contratos.corretorId, membrosIds),
-      eq(contratos.distrato, false),
-      gte(contratos.createdAt, dataInicio),
-      lte(contratos.createdAt, dataFim),
-    ));
+  // BATCH QUERY 2: Transições por corretorId e statusNovo
+  const transBatch = todosMembrosIds.length > 0 ? await db.select({
+    corretorId: leadStatusTransitions.corretorId,
+    statusNovo: leadStatusTransitions.statusNovo,
+    count: sql<number>`COUNT(DISTINCT ${leadStatusTransitions.leadId})`,
+  }).from(leadStatusTransitions).where(and(
+    inArray(leadStatusTransitions.corretorId, todosMembrosIds),
+    gte(leadStatusTransitions.createdAt, dataInicio),
+    lte(leadStatusTransitions.createdAt, dataFim),
+  )).groupBy(leadStatusTransitions.corretorId, leadStatusTransitions.statusNovo) : [];
+  // Map: corretorId -> statusNovo -> count
+  const transMap = new Map<number, Map<string, number>>();
+  for (const row of transBatch) {
+    if (!row.corretorId) continue;
+    if (!transMap.has(row.corretorId)) transMap.set(row.corretorId, new Map());
+    transMap.get(row.corretorId)!.set(row.statusNovo, Number(row.count));
+  }
 
-    // Metas da equipe (somar metas individuais dos membros)
-    const mesAtual = dataInicio.getMonth() + 1;
-    const anoAtual = dataInicio.getFullYear();
-    const metasEquipe = await db.select({
-      metaVGV: sql<number>`COALESCE(SUM(${metas.metaVGV}), 0)`,
-    }).from(metas).where(and(
-      inArray(metas.corretorId, membrosIds),
-      eq(metas.mes, mesAtual),
-      eq(metas.ano, anoAtual),
-    ));
+  // BATCH QUERY 3: Contratos e VGV por corretorId
+  const contratosBatch = todosMembrosIds.length > 0 ? await db.select({
+    corretorId: contratos.corretorId,
+    count: sql<number>`COUNT(*)`,
+    vgv: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
+  }).from(contratos).where(and(
+    inArray(contratos.corretorId, todosMembrosIds),
+    eq(contratos.distrato, false),
+    gte(contratos.createdAt, dataInicio),
+    lte(contratos.createdAt, dataFim),
+  )).groupBy(contratos.corretorId) : [];
+  const contratosMap = new Map<number, { count: number; vgv: number }>();
+  for (const row of contratosBatch) {
+    if (!row.corretorId) continue;
+    contratosMap.set(row.corretorId, { count: Number(row.count), vgv: Number(row.vgv) });
+  }
 
-    const totalLeads = Number(leadsCount[0]?.count || 0);
-    const contratosCountEquipe = Number(contratosResult[0]?.count || 0);
-    const vgvEquipe = Number(contratosResult[0]?.vgv || 0);
-    const metaVGVEquipe = Number(metasEquipe[0]?.metaVGV || 0);
+  // BATCH QUERY 4: Metas por corretorId
+  const mesAtual = dataInicio.getMonth() + 1;
+  const anoAtual = dataInicio.getFullYear();
+  const metasBatch = todosMembrosIds.length > 0 ? await db.select({
+    corretorId: metas.corretorId,
+    metaVGV: metas.metaVGV,
+  }).from(metas).where(and(
+    inArray(metas.corretorId, todosMembrosIds),
+    eq(metas.mes, mesAtual),
+    eq(metas.ano, anoAtual),
+  )) : [];
+  const metasMap = new Map<number, number>();
+  for (const row of metasBatch) {
+    if (!row.corretorId) continue;
+    metasMap.set(row.corretorId, Number(row.metaVGV || 0));
+  }
+
+  // Agregar resultados por equipe
+  const resultado: EquipeComparativo[] = [];
+  for (const { equipe, membrosIds } of equipesComMembros) {
+    const membrosEfetivos = corretoresIds && corretoresIds.length > 0
+      ? membrosIds.filter(id => corretoresIds.includes(id))
+      : membrosIds;
+
+    const totalLeads = membrosEfetivos.reduce((acc, id) => acc + (leadsMap.get(id) || 0), 0);
+    const agendamentos = membrosEfetivos.reduce((acc, id) => acc + (transMap.get(id)?.get('agendado') || 0), 0);
+    const visitas = membrosEfetivos.reduce((acc, id) => acc + (transMap.get(id)?.get('visita_realizada') || 0), 0);
+    const contratosCountEquipe = membrosEfetivos.reduce((acc, id) => acc + (contratosMap.get(id)?.count || 0), 0);
+    const vgvEquipe = membrosEfetivos.reduce((acc, id) => acc + (contratosMap.get(id)?.vgv || 0), 0);
+    const metaVGVEquipe = membrosEfetivos.reduce((acc, id) => acc + (metasMap.get(id) || 0), 0);
 
     resultado.push({
       equipeId: equipe.id,
@@ -382,8 +413,8 @@ export async function getComparativoEquipes(
       gestorNome: gestorMap.get(equipe.gestorId!) || 'Sem gestor',
       cor: equipe.cor || '#3b82f6',
       totalLeads,
-      agendamentos: transMapEquipe.get('agendado') || 0,
-      visitas: transMapEquipe.get('visita_realizada') || 0,
+      agendamentos,
+      visitas,
       contratosCount: contratosCountEquipe,
       vgv: vgvEquipe,
       metaVGV: metaVGVEquipe,

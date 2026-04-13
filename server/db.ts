@@ -4004,32 +4004,14 @@ export async function registrarTentativaFollowUp(
   const lead = leadData[0];
   
   if (resultado === "respondeu") {
-    // Cliente respondeu - marcar follow-up atual como concluído
-    await db.update(followUps)
-      .set({
-        status: "concluido",
-        resultado: "respondeu",
-        observacao,
-        dataRegistro: agora,
-        updatedAt: agora
-      })
-      .where(eq(followUps.id, followUpId));
-    
-    // Atualizar ultimaInteracao do lead
-    await db.update(leads)
-      .set({
-        ultimaInteracao: agora,
-        updatedAt: agora
-      })
-      .where(eq(leads.id, atual.leadId));
-    
-    // Criar novo follow-up para amanhã às 09:00 (se lead ainda estiver em atendimento)
-    if (lead.status === "em_atendimento") {
-      const { proximoDiaAs9h } = await import('./timezone');
-      const proximoFollowUp = proximoDiaAs9h();
-      
-      // Verificar se já existe follow-up pendente para este lead na mesma data
-      const existente = await db.select()
+    // Importar timezone antes da transação para evitar import dinâmico dentro de tx
+    const { proximoDiaAs9h } = await import('./timezone');
+    const proximoFollowUp = lead.status === "em_atendimento" ? proximoDiaAs9h() : null;
+
+    // Verificar se já existe follow-up pendente (antes da transação para não bloquear)
+    let existente: typeof followUps.$inferSelect | null = null;
+    if (proximoFollowUp) {
+      const existenteResult = await db.select()
         .from(followUps)
         .where(and(
           eq(followUps.leadId, atual.leadId),
@@ -4038,21 +4020,44 @@ export async function registrarTentativaFollowUp(
           sql`DATE(${followUps.dataFollowUp}) = DATE(${proximoFollowUp})`
         ))
         .limit(1);
-      
-      if (!existente[0]) {
-        await db.insert(followUps).values({
+      existente = existenteResult[0] || null;
+    }
+
+    // Transação atômica: atualizar follow-up + lead + inserir próximo follow-up
+    await db.transaction(async (tx) => {
+      // 1. Marcar follow-up atual como concluuído
+      await tx.update(followUps)
+        .set({
+          status: "concluido",
+          resultado: "respondeu",
+          observacao,
+          dataRegistro: agora,
+          updatedAt: agora
+        })
+        .where(eq(followUps.id, followUpId));
+
+      // 2. Atualizar ultimaInteracao do lead
+      await tx.update(leads)
+        .set({
+          ultimaInteracao: agora,
+          updatedAt: agora
+        })
+        .where(eq(leads.id, atual.leadId));
+
+      // 3. Criar novo follow-up se necessário
+      if (proximoFollowUp && !existente) {
+        await tx.insert(followUps).values({
           leadId: atual.leadId,
           corretorId: atual.corretorId,
           dataFollowUp: proximoFollowUp,
           status: "pendente"
         });
-        
         console.log(`[registrarTentativaFollowUp] Novo follow-up criado para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}`);
-      } else {
+      } else if (proximoFollowUp && existente) {
         console.log(`[registrarTentativaFollowUp] Follow-up já existe para lead ${atual.leadId} em ${proximoFollowUp.toISOString()}, pulando criação`);
       }
-    }
-    
+    });
+
     return { 
       status: "respondeu", 
       mensagem: "Cliente respondeu! Novo follow-up criado para amanhã às 09:00."
@@ -4060,25 +4065,28 @@ export async function registrarTentativaFollowUp(
   }
   
   // resultado === "nao_atendeu" ou "outro"
-  // Cliente não respondeu - marcar follow-up como concluído SEM criar novo follow-up
-  await db.update(followUps)
-    .set({
-      status: "concluido",
-      resultado: "nao_respondeu",
-      observacao,
-      dataRegistro: agora,
-      updatedAt: agora
-    })
-    .where(eq(followUps.id, followUpId));
-  
-  // Atualizar ultimaInteracao do lead (para contagem de 2 dias sem interação)
-  await db.update(leads)
-    .set({
-      ultimaInteracao: agora,
-      updatedAt: agora
-    })
-    .where(eq(leads.id, atual.leadId));
-  
+  // Transação atômica: atualizar follow-up + lead
+  await db.transaction(async (tx) => {
+    // 1. Marcar follow-up como concluuído SEM criar novo follow-up
+    await tx.update(followUps)
+      .set({
+        status: "concluido",
+        resultado: "nao_respondeu",
+        observacao,
+        dataRegistro: agora,
+        updatedAt: agora
+      })
+      .where(eq(followUps.id, followUpId));
+
+    // 2. Atualizar ultimaInteracao do lead (para contagem de 2 dias sem interação)
+    await tx.update(leads)
+      .set({
+        ultimaInteracao: agora,
+        updatedAt: agora
+      })
+      .where(eq(leads.id, atual.leadId));
+  });
+
   return { 
     status: "nao_respondeu", 
     mensagem: "Registrado. Lead volta para sua base sem follow-up agendado."

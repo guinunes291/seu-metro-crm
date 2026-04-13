@@ -1,7 +1,7 @@
 import { getDb } from "./db";
 import * as schema from "../drizzle/schema";
 import { users, conquistas, atividadesDiarias, leads } from "../drizzle/schema";
-import { eq, and, gte, sql, count } from "drizzle-orm";
+import { eq, and, gte, lte, sql, count, inArray } from "drizzle-orm";
 import { CONQUISTAS, type Conquista } from "../shared/conquistas";
 import { notifyOwner } from "./_core/notification";
 
@@ -263,7 +263,7 @@ export async function verificarConquistasCorretor(corretorId: number): Promise<{
   return { novasConquistas, progressos };
 }
 
-// Função para verificar conquistas de todos os corretores
+// Função para verificar conquistas de todos os corretores (versão batch otimizada)
 export async function verificarConquistasTodosCorretores(): Promise<{
   corretorId: number;
   corretorNome: string;
@@ -274,31 +274,148 @@ export async function verificarConquistasTodosCorretores(): Promise<{
     return [];
   }
   
-  // Buscar todos os corretores ativos (role = 'corretor' ou 'user')
-  const corretores = await db.select().from(users).where(
+  // BATCH QUERY 1: Buscar todos os corretores ativos
+  const corretores = await db.select({
+    id: users.id,
+    name: users.name,
+    fotoUrl: users.fotoUrl,
+  }).from(users).where(
     sql`${users.role} IN ('corretor', 'user', 'gestor')`
   );
 
+  if (corretores.length === 0) return [];
+
+  const corretorIds = corretores.map(c => c.id);
+
+  // BATCH QUERY 2: Atividades agregadas de todos os corretores de uma vez
+  const atividadesBatch = await db.select({
+    corretorId: atividadesDiarias.corretorId,
+    ligacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.ligacoesRealizadas}), 0)`,
+    whatsapp: sql<number>`COALESCE(SUM(${atividadesDiarias.whatsappEnviados}), 0)`,
+    agendamentos: sql<number>`COALESCE(SUM(${atividadesDiarias.agendamentosConfirmados}), 0)`,
+    visitas: sql<number>`COALESCE(SUM(${atividadesDiarias.visitasRealizadas}), 0)`,
+    documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.documentacoesRecolhidas}), 0)`,
+    diasAtivos: sql<number>`COUNT(DISTINCT DATE(${atividadesDiarias.data}))`,
+  }).from(atividadesDiarias)
+    .where(inArray(atividadesDiarias.corretorId, corretorIds))
+    .groupBy(atividadesDiarias.corretorId);
+  const atividadesMap = new Map(atividadesBatch.map(a => [a.corretorId, a]));
+
+  // BATCH QUERY 3: Vendas (leads com status Contrato Fechado) por corretor
+  const vendasBatch = await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`COUNT(*)`,
+  }).from(leads)
+    .where(and(
+      inArray(leads.corretorId, corretorIds),
+      eq(leads.status, "Contrato Fechado")
+    ))
+    .groupBy(leads.corretorId);
+  const vendasMap = new Map(vendasBatch.map(v => [v.corretorId, Number(v.count)]));
+
+  // BATCH QUERY 4: Total de leads recebidos por corretor
+  const leadsBatch = await db.select({
+    corretorId: leads.corretorId,
+    count: sql<number>`COUNT(*)`,
+  }).from(leads)
+    .where(inArray(leads.corretorId, corretorIds))
+    .groupBy(leads.corretorId);
+  const leadsMap = new Map(leadsBatch.map(l => [l.corretorId, Number(l.count)]));
+
+  // BATCH QUERY 5: Conquistas já desbloqueadas de todos os corretores
+  const conquistasDesbloqueadas = await db.select({
+    corretorId: conquistas.corretorId,
+    tipoConquistaId: conquistas.tipoConquistaId,
+  }).from(conquistas)
+    .where(inArray(conquistas.corretorId, corretorIds));
+  // Map: corretorId -> Set<tipoConquistaId>
+  const conquistasMap = new Map<number, Set<number>>();
+  for (const c of conquistasDesbloqueadas) {
+    if (!conquistasMap.has(c.corretorId)) conquistasMap.set(c.corretorId, new Set());
+    conquistasMap.get(c.corretorId)!.add(c.tipoConquistaId);
+  }
+
+  // BATCH QUERY 6: Última data de atividade por corretor (para streak)
+  const ultimasAtividades = await db.select({
+    corretorId: atividadesDiarias.corretorId,
+    ultimaData: sql<string>`MAX(DATE(${atividadesDiarias.data}))`,
+  }).from(atividadesDiarias)
+    .where(inArray(atividadesDiarias.corretorId, corretorIds))
+    .groupBy(atividadesDiarias.corretorId);
+  const ultimaAtividadeMap = new Map(ultimasAtividades.map(u => [u.corretorId, u.ultimaData]));
+
+  // Processar cada corretor com os dados já carregados (sem queries adicionais)
   const resultados: {
     corretorId: number;
     corretorNome: string;
     novasConquistas: Conquista[];
   }[] = [];
 
+  // Coletar todos os inserts necessários para batch insert
+  const novosRegistros: { corretorId: number; tipoConquistaId: number; valor: number; observacao: string }[] = [];
+
   for (const corretor of corretores) {
-    const { novasConquistas } = await verificarConquistasCorretor(corretor.id);
-    
+    const ativ = atividadesMap.get(corretor.id);
+    const idsDesbloqueadas = conquistasMap.get(corretor.id) || new Set<number>();
+    const ultimaData = ultimaAtividadeMap.get(corretor.id);
+
+    // Calcular streak simples (se teve atividade hoje ou ontem = 1, senão 0)
+    let streakAtual = 0;
+    if (ultimaData) {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const ultima = new Date(ultimaData);
+      ultima.setHours(0, 0, 0, 0);
+      const diffDias = Math.floor((hoje.getTime() - ultima.getTime()) / (1000 * 60 * 60 * 24));
+      streakAtual = diffDias <= 1 ? 1 : 0;
+    }
+
+    const stats: EstatisticasCorretor = {
+      corretorId: corretor.id,
+      corretorNome: corretor.name || 'Corretor',
+      ligacoes: Number(ativ?.ligacoes || 0),
+      whatsapp: Number(ativ?.whatsapp || 0),
+      agendamentos: Number(ativ?.agendamentos || 0),
+      visitas: Number(ativ?.visitas || 0),
+      documentacoes: Number(ativ?.documentacoes || 0),
+      vendas: vendasMap.get(corretor.id) || 0,
+      vgvTotal: 0,
+      diasAtivos: Number(ativ?.diasAtivos || 0),
+      streakAtual,
+      leadsRecebidos: leadsMap.get(corretor.id) || 0,
+      fotoUrl: corretor.fotoUrl || null,
+    };
+
+    const novasConquistas: Conquista[] = [];
+    for (const conquista of CONQUISTAS) {
+      if (idsDesbloqueadas.has(conquista.id)) continue;
+      if (verificarConquistaAtingida(conquista, stats)) {
+        novasConquistas.push(conquista);
+        novosRegistros.push({
+          corretorId: corretor.id,
+          tipoConquistaId: conquista.id,
+          valor: conquista.pontos,
+          observacao: conquista.nome,
+        });
+      }
+    }
+
     if (novasConquistas.length > 0) {
       resultados.push({
         corretorId: corretor.id,
-        corretorNome: corretor.name || "Corretor",
-        novasConquistas
+        corretorNome: corretor.name || 'Corretor',
+        novasConquistas,
       });
-
-      // Notificar sobre novas conquistas
-      const conquistasNomes = novasConquistas.map(c => c.nome).join(", ");
+      const conquistasNomes = novasConquistas.map(c => c.nome).join(', ');
       console.log(`[Conquistas] ${corretor.name} desbloqueou: ${conquistasNomes}`);
     }
+  }
+
+  // BATCH INSERT: Inserir todas as novas conquistas de uma vez
+  if (novosRegistros.length > 0) {
+    await db.insert(conquistas).values(novosRegistros).onDuplicateKeyUpdate({
+      set: { observacao: sql`VALUES(${conquistas.observacao})` }
+    });
   }
 
   return resultados;
