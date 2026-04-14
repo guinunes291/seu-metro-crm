@@ -481,15 +481,15 @@ export default function RankingTV() {
   
   // Queries
   const { data: rankingDia, refetch: refetchDia } = trpc.ranking.dia.useQuery(undefined, {
-    refetchInterval: 30000,
+    refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 30s — ranking TV não precisa atualizar a cada 30s)
   });
   
   const { data: rankingSemanal, refetch: refetchSemanal } = trpc.ranking.semanal.useQuery(undefined, {
-    refetchInterval: 60000,
+    refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 60s)
   });
   
   const { data: rankingMensal, refetch: refetchMensal } = trpc.ranking.mensal.useQuery(undefined, {
-    refetchInterval: 60000,
+    refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 60s)
   });
   
   // Detectar mudança de líder e vendas

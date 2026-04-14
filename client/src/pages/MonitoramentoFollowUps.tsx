@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function MonitoramentoFollowUps() {
   const { data: progressos, isLoading } = trpc.progressoFollowUps.listarProgressoEquipe.useQuery(undefined, {
-    refetchInterval: 30000, // Atualiza a cada 30 segundos (reduzido de 10s para menor carga)
+    refetchInterval: 5 * 60 * 1000, // Atualiza a cada 5 minutos (reduzido de 30s — 10x menos queries)
   });
 
   const formatarHorario = (data: string | null) => {

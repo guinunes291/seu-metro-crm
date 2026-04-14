@@ -45,5 +45,5 @@ export function iniciarJobLimpezaLinks(): void {
     } catch (error) {
       console.error("[Links Cleanup Job] Erro ao limpar links expirados:", error);
     }
-  }, 10 * 60 * 1000); // 10 minutos
+  }, 60 * 60 * 1000); // 1 hora (reduzido de 10min — links expirados não precisam ser limpos com urgência)
 }

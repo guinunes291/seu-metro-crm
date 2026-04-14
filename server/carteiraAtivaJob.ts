@@ -198,11 +198,11 @@ export function iniciarCarteiraAtivaJob() {
   processarLeadsExpirados();
   notificarExpiracaoIminente();
 
-  // Verificar expiração a cada 30 minutos
+  // Verificar expiração a cada 1 hora (reduzido de 30min — expirações de carteira ativa não são urgentes ao segundo)
   setInterval(async () => {
     await processarLeadsExpirados();
     await notificarExpiracaoIminente();
-  }, 30 * 60 * 1000);
+  }, 60 * 60 * 1000);
 
   // Lembrete de tarefas: verificar a cada 1 hora
   setInterval(async () => {

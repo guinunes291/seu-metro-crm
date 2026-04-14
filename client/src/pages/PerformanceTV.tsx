@@ -622,7 +622,7 @@ export default function PerformanceTV() {
   });
   
   useEffect(() => {
-    const interval = setInterval(() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }, 30000);
+    const interval = setInterval(() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }, 5 * 60 * 1000); // 5 minutos (reduzido de 30s — TV de performance não precisa atualizar a cada 30s)
     return () => clearInterval(interval);
   }, [refetchVGV, refetchPeriodo, refetchDashboard, refetchEvolucao]);
   

@@ -59,9 +59,9 @@ export default function NotificationListener() {
     { since: lastCheck },
     {
       enabled: !!user,
-      refetchInterval: 60000,
+      refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 60s — notificações não precisam de polling agressivo)
       refetchIntervalInBackground: false,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     }
   );
 

@@ -48,12 +48,12 @@ export function startBISyncJob() {
     executarSincronizacao();
   }, 5 * 60 * 1000);
 
-  // Executar sincronização a cada 1 hora
+  // Executar sincronização a cada 4 horas (reduzido de 1h para economizar 4x queries no banco)
   syncInterval = setInterval(() => {
     executarSincronizacao();
-  }, 60 * 60 * 1000); // 1 hora em ms
+  }, 4 * 60 * 60 * 1000); // 4 horas em ms
 
-  console.log("[BI Sync Job] Job de sincronização BI iniciado (intervalo: 1 hora)");
+  console.log("[BI Sync Job] Job de sincronização BI iniciado (intervalo: 4 horas)");
 }
 
 /**

@@ -629,10 +629,10 @@ export default function CarteiraAtiva() {
   const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   const [ordenacao, setOrdenacao] = useState<"urgencia" | "semContato" | "naCarteira" | "expiracao">("urgencia");
   const { data: carteira, isLoading, refetch } = trpc.carteiraAtiva.listar.useQuery(undefined, {
-    refetchInterval: 60000, // Atualizar a cada minuto
+    refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 60s — carteira ativa muda lentamente)
   });
   const { data: tarefasHoje } = trpc.carteiraAtiva.tarefasHoje.useQuery(undefined, {
-    refetchInterval: 60000,
+    refetchInterval: 5 * 60 * 1000, // 5 minutos
   });
   const totalItens = carteira?.length ?? 0;
   const itensExpirados = carteira?.filter((i) => i.expirado).length ?? 0;

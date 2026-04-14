@@ -13,7 +13,7 @@ import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
 
 const LAST_DRE_SYNC_KEY = "last_dre_sync_date";
 
-const SYNC_INTERVAL_MS = 60 * 60 * 1000; // 1 hora
+const SYNC_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 horas (reduzido de 1h para economizar 4x queries no banco)
 
 let isRunning = false;
 let jobInterval: ReturnType<typeof setInterval> | null = null;
@@ -87,7 +87,7 @@ export async function startDreSyncJob(): Promise<void> {
 
   // Executar a cada 1 hora
   jobInterval = setInterval(() => runDreSync("horário agendado"), SYNC_INTERVAL_MS);
-  console.log("[DRE Sync Job] Job inicializado (execução a cada 1 hora)");
+  console.log("[DRE Sync Job] Job inicializado (execução a cada 4 horas)");
 }
 
 /**

@@ -11,10 +11,10 @@ export async function iniciarJobSincronizacaoAgendamentos() {
   // Executar imediatamente na inicialização
   await sincronizarAgendamentos();
   
-  // Depois executar a cada 5 minutos
+  // Depois executar a cada 30 minutos (reduzido de 5min — agendamentos não mudam com alta frequência)
   setInterval(async () => {
     await sincronizarAgendamentos();
-  }, 5 * 60 * 1000); // 5 minutos
+  }, 30 * 60 * 1000); // 30 minutos
 }
 
 async function sincronizarAgendamentos() {

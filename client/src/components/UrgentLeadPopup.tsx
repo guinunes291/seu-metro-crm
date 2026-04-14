@@ -39,9 +39,9 @@ export function UrgentLeadPopup({ lead, onClose }: UrgentLeadPopupProps) {
   const { data: leadAtual, isError: leadError } = trpc.leads.getById.useQuery(
     { id: lead.id },
     {
-      refetchInterval: 30000,
+      refetchInterval: 2 * 60 * 1000, // 2 minutos (reduzido de 30s — popup urgente pode verificar com menor frequência)
       retry: false,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
     }
   );
 

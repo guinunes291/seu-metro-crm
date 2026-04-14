@@ -141,9 +141,9 @@ export default function Leads() {
     dataFim: dataFimFilter || undefined,
   }, {
     keepPreviousData: true, // Evita tela branca durante re-fetch
-    refetchInterval: 30000, // Atualiza automaticamente a cada 30 segundos
+    refetchInterval: 5 * 60 * 1000, // Atualiza a cada 5 minutos (reduzido de 30s — 10x menos queries)
     refetchOnMount: 'always', // Sempre busca dados frescos ao montar
-    refetchOnWindowFocus: false, // Desabilitado para reduzir requisições (o polling de 30s já garante dados frescos)
+    refetchOnWindowFocus: true, // Reativado: atualiza ao focar a janela (substitui o polling agressivo)
   });
   const leads = leadsData?.leads || [];
   const totalPages = leadsData?.totalPages || 1;
