@@ -1,101 +1,53 @@
 /**
- * Job de Sincronização Automática com a Planilha DRE
+ * Sincronização com a Planilha DRE — APENAS MANUAL
  *
- * Executa a cada hora para sincronizar todos os contratos do CRM
- * com a aba "Lançamentos" da planilha DRE do Google Sheets.
+ * O job automático foi desativado por decisão do usuário para reduzir custos de Cloud.
+ * A sincronização é acionada manualmente via procedure admin no painel.
  *
- * Também executa imediatamente após criar/editar/distratar um contrato.
+ * Também executa automaticamente após criar/editar/distratar um contrato (event-driven).
  *
  * Planilha DRE: https://docs.google.com/spreadsheets/d/10GeJ8Zba4kFUJa2HwvUVu09BDkGuKCQGrpBDaLVlr38
  */
 import { sincronizarDRE } from "./dreSync";
-import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
-
-const LAST_DRE_SYNC_KEY = "last_dre_sync_date";
-
-const SYNC_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 horas (reduzido de 1h para economizar 4x queries no banco)
 
 let isRunning = false;
-let jobInterval: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Retorna o timestamp da última sincronização (em ms) ou 0 se nunca executou
+ * Executa a sincronização com a planilha DRE (chamada manual ou event-driven)
  */
-function getLastSyncTime(): number {
-  try {
-    if (existsSync(LAST_DRE_SYNC_FILE)) {
-      return parseInt(readFileSync(LAST_DRE_SYNC_FILE, "utf-8").trim(), 10) || 0;
-    }
-  } catch {}
-  return 0;
-}
-
-/**
- * Salva o timestamp da sincronização atual
- */
-function saveLastSyncTime(): void {
-  try {
-    writeFileSync(LAST_DRE_SYNC_FILE, String(Date.now()), "utf-8");
-  } catch {}
-}
-
-/**
- * Executa a sincronização com a planilha DRE
- */
-export async function runDreSync(reason: string = "horário"): Promise<void> {
+export async function runDreSync(reason: string = "manual"): Promise<void> {
   if (isRunning) {
-    console.log("[DRE Sync Job] Sincronização já em execução, pulando...");
+    console.log("[DRE Sync] Sincronização já em execução, pulando...");
     return;
   }
   isRunning = true;
-  console.log(`[DRE Sync Job] Iniciando sincronização ${reason}...`);
+  console.log(`[DRE Sync] Iniciando sincronização ${reason}...`);
   try {
     const result = await sincronizarDRE();
     if (result.success) {
-      saveLastSyncTime();
       console.log(
-        `[DRE Sync Job] ✅ Sincronização concluída! ${result.totalContratos} contratos ativos, ${result.totalDistratados} distratados exportados para planilha DRE`
+        `[DRE Sync] ✅ Concluída! ${result.totalContratos} contratos ativos, ${result.totalDistratados} distratados exportados para planilha DRE`
       );
     } else {
-      console.error(`[DRE Sync Job] ❌ Falha: ${result.error}`);
+      console.error(`[DRE Sync] ❌ Falha: ${result.error}`);
     }
   } catch (err: any) {
-    console.error("[DRE Sync Job] Erro:", err.message);
+    console.error("[DRE Sync] Erro:", err.message);
   } finally {
     isRunning = false;
   }
 }
 
 /**
- * Inicia o job de sincronização horária com a planilha DRE
+ * Stub mantido para compatibilidade — não inicia nenhum job automático
  */
 export async function startDreSyncJob(): Promise<void> {
-  console.log("[DRE Sync Job] Inicializando job de sincronização com planilha DRE...");
-
-  const lastSync = getLastSyncTime();
-  const timeSinceLast = Date.now() - lastSync;
-
-  if (timeSinceLast > SYNC_INTERVAL_MS || lastSync === 0) {
-    const minutesAgo = lastSync === 0 ? "nunca" : `${Math.round(timeSinceLast / 60000)} min atrás`;
-    console.log(`[DRE Sync Job] Última sincronização: ${minutesAgo}. Executando em 30s...`);
-    // Executar após 30s para não sobrecarregar na inicialização
-    setTimeout(() => runDreSync("imediato (inicialização)"), 30_000);
-  } else {
-    const nextIn = Math.round((SYNC_INTERVAL_MS - timeSinceLast) / 60000);
-    console.log(`[DRE Sync Job] Próxima sincronização em ~${nextIn} minutos`);
-  }
-
-  // Executar a cada 1 hora
-  jobInterval = setInterval(() => runDreSync("horário agendado"), SYNC_INTERVAL_MS);
-  console.log("[DRE Sync Job] Job inicializado (execução a cada 4 horas)");
+  console.log("[DRE Sync] Job automático DESATIVADO — sincronização apenas manual ou event-driven.");
 }
 
 /**
- * Para o job (útil para testes)
+ * Stub mantido para compatibilidade
  */
 export function stopDreSyncJob(): void {
-  if (jobInterval) {
-    clearInterval(jobInterval);
-    jobInterval = null;
-  }
+  // noop
 }

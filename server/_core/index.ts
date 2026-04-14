@@ -117,13 +117,7 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de conquistas:", err);
     });
     
-    // Inicializar job de limpeza de links expirados
-    import("../linksCleanupJob").then(({ iniciarJobLimpezaLinks }) => {
-      iniciarJobLimpezaLinks();
-      console.log("[Job] Limpeza automática de links expirados inicializada (a cada 1 minuto)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de limpeza de links:", err);
-    });
+    // [DESATIVADO] Job de limpeza de links expirados removido para reduzir custos de Cloud
     
     // Inicializar job de limpeza de follow-ups órfãos
     import("../followupCleanupJob").then(({ agendarLimpezaFollowUps }) => {
@@ -157,29 +151,16 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de backup S3:", err);
     });
     
-    // Inicializar job de backup para Google Sheets (horário)
+    // Inicializar job de backup para Google Sheets (diário)
     import("../sheetsBackupJob").then(({ startSheetsBackupJob }) => {
       startSheetsBackupJob();
-      console.log("[Job] Backup Google Sheets inicializado (a cada 1 hora)");
+      console.log("[Job] Backup Google Sheets inicializado (diário a cada 24 horas)");
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de backup Google Sheets:", err);
     });
     
-    // Inicializar job de sincronização DRE (contratos → planilha DRE do Google Sheets)
-    import("../dreSyncJob").then(({ startDreSyncJob }) => {
-      startDreSyncJob();
-      console.log("[Job] Sincronização DRE inicializada (a cada 1 hora)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de sincronização DRE:", err);
-    });
-    
-    // Inicializar job de sincronização BI (Google Sheets para Power BI/Looker Studio)
-    import("../biSyncJob").then(({ startBISyncJob }) => {
-      startBISyncJob();
-      console.log("[Job] Sincronização BI inicializada (a cada 1 hora)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job de sincronização BI:", err);
-    });
+    // [DESATIVADO] DRE Sync — apenas manual (acionado via procedure admin)
+    // [DESATIVADO] BI Sync — excluído por decisão do usuário para reduzir custos
     
     // Inicializar job de recálculo de pontuação
     import("../pontuacaoJob").then(({ iniciarJobPontuacao }) => {
@@ -201,21 +182,8 @@ async function startServer() {
     // Motivo: Requisição do usuário - importação apenas manual
     // Importação manual disponível em: Sistema → Importação de Leads
 
-    // Inicializar job de automações Notion (relatório semanal + alertas)
-    import("../notionJob").then(({ startNotionJob }) => {
-      startNotionJob();
-      console.log("[Job] Automações Notion inicializadas (relatório semanal toda segunda às 7h)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job Notion:", err);
-    });
-
-    // Inicializar job da Carteira Ativa (expiração + lembretes de tarefas)
-    import("../carteiraAtivaJob").then(({ iniciarCarteiraAtivaJob }) => {
-      iniciarCarteiraAtivaJob();
-      console.log("[Job] Carteira Ativa inicializada (verifica expiração a cada 30min)");
-    }).catch(err => {
-      console.error("[Job] Erro ao inicializar job Carteira Ativa:", err);
-    });
+    // [DESATIVADO] Notion Job — removido por decisão do usuário para reduzir custos
+    // [DESATIVADO] Carteira Ativa Job — expiração e lembretes removidos por decisão do usuário
   });
 }
 

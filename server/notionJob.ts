@@ -125,24 +125,8 @@ async function executarAlertaInatividade(): Promise<void> {
 // ============================================================
 
 export function startNotionJob(): void {
-  // Verificar a cada 30 minutos se é hora de executar
-  setInterval(async () => {
-    const { hora, diaSemana } = horaAtualBrasilia();
-    const hoje = new Date().toISOString().split("T")[0];
-
-    // Relatório semanal: toda segunda-feira entre 7h e 7h29
-    if (diaSemana === 1 && hora === 7 && ultimaDataRelatorio !== hoje) {
-      ultimaDataRelatorio = hoje;
-      await executarRelatorioSemanal();
-    }
-
-    // Alerta de inatividade: todo dia às 9h
-    if (hora === 9 && ultimaDataAlerta !== hoje) {
-      await executarAlertaInatividade();
-    }
-  }, 30 * 60 * 1000); // a cada 30 minutos
-
-  console.log("[Notion] Job de automações Notion inicializado (verifica a cada 30 minutos)");
+  console.log("[Notion] Job automático DESATIVADO por decisão do usuário para reduzir custos de Cloud.");
+  console.log("[Notion] Relatório semanal e alertas de inatividade podem ser acionados manualmente via procedure admin.");
 }
 
 // Exportar funções para uso manual via procedure

@@ -13,7 +13,7 @@ import { getSystemConfig, setSystemConfig } from "./systemConfigDb";
 
 const LAST_SHEETS_BACKUP_KEY = "last_sheets_backup_date";
 
-const BACKUP_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 horas (reduzido de 1h para economizar 6x queries no banco)
+const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 horas (backup diário — economiza 24x queries vs backup horário original)
 
 let isRunning = false;
 let jobInterval: ReturnType<typeof setInterval> | null = null;
@@ -77,7 +77,7 @@ export async function startSheetsBackupJob(): Promise<void> {
   const timeSinceLast = Date.now() - lastBackup;
 
   if (timeSinceLast > BACKUP_INTERVAL_MS || lastBackup === 0) {
-    // Último backup foi há mais de 6 horas (ou nunca executou) — executar após 20s
+    // Último backup foi há mais de 24 horas (ou nunca executou) — executar após 20s
     const minutesAgo = lastBackup === 0 ? "nunca" : `${Math.round(timeSinceLast / 60000)} min atrás`;
     console.log(`[Sheets Backup Job] Último backup: ${minutesAgo}. Executando em 20s...`);
     setTimeout(() => runSheetsBackup("imediato (inicialização)"), 20_000);
@@ -86,10 +86,10 @@ export async function startSheetsBackupJob(): Promise<void> {
     console.log(`[Sheets Backup Job] Próximo backup em ~${nextIn} minutos`);
   }
 
-  // Executar a cada 6 horas
+  // Executar a cada 24 horas
   jobInterval = setInterval(() => runSheetsBackup("horário agendado"), BACKUP_INTERVAL_MS);
 
-  console.log("[Sheets Backup Job] Job inicializado (execução a cada 6 horas)");
+  console.log("[Sheets Backup Job] Job inicializado (execução diária a cada 24 horas)");
 }
 
 /**

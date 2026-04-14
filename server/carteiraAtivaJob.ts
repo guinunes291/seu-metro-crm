@@ -192,25 +192,6 @@ async function lembretesTarefasDoDia() {
 // ─── Inicialização do Job ─────────────────────────────────────────────────────
 
 export function iniciarCarteiraAtivaJob() {
-  console.log("[CarteiraAtiva] Job iniciado");
-
-  // Executar imediatamente ao iniciar
-  processarLeadsExpirados();
-  notificarExpiracaoIminente();
-
-  // Verificar expiração a cada 1 hora (reduzido de 30min — expirações de carteira ativa não são urgentes ao segundo)
-  setInterval(async () => {
-    await processarLeadsExpirados();
-    await notificarExpiracaoIminente();
-  }, 60 * 60 * 1000);
-
-  // Lembrete de tarefas: verificar a cada 1 hora
-  setInterval(async () => {
-    const agr = agora();
-    const hora = agr.getHours();
-    // Executar apenas entre 8h e 10h SP (janela de lembrete matinal)
-    if (hora >= 8 && hora <= 10) {
-      await lembretesTarefasDoDia();
-    }
-  }, 60 * 60 * 1000);
+  console.log("[CarteiraAtiva] Job automático DESATIVADO por decisão do usuário para reduzir custos de Cloud.");
+  console.log("[CarteiraAtiva] Expiração e lembretes de tarefas foram removidos. Funcionalidades manuais continuam disponíveis.");
 }
