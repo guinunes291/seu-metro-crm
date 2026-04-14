@@ -298,3 +298,7 @@ export const contratosAnalisesRouter = router({
       }),
   }),
 });
+
+// Exports individuais para montagem direta no appRouter (mantendo os paths originais)
+export const contratosRouter = contratosAnalisesRouter._def.record.contratos;
+export const analisesRouter = contratosAnalisesRouter._def.record.analises;

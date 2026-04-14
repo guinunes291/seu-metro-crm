@@ -238,3 +238,6 @@ export const equipesRouter = router({
     }),
   }),
 });
+
+// Export individual para montagem direta no appRouter (mantendo o path original)
+export const equipesSubRouter = equipesRouter._def.record.equipes;

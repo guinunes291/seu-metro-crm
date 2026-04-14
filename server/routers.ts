@@ -21,9 +21,9 @@ import { templatesRouter } from "./routers/templates";
 import { iaRouter } from "./routers/ia";
 import { carteiraAtivaRouter } from "./routers/carteiraAtiva";
 import { leadsRouter } from "./routers/leads";
-import { agendamentosVisitasRouter } from "./routers/agendamentosVisitas";
-import { contratosAnalisesRouter } from "./routers/contratosAnalises";
-import { equipesRouter } from "./routers/equipes";
+import { agendamentosRouter, visitasRouter, agendamentosGestorRouter } from "./routers/agendamentosVisitas";
+import { contratosRouter, analisesRouter } from "./routers/contratosAnalises";
+import { equipesSubRouter } from "./routers/equipes";
 import { invokeLLM } from "./_core/llm";
 import { enviarConfirmacaoAgendamento, isEvolutionApiConfigured } from "./evolutionApi";
 import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao } from "./zapierWebhook";
@@ -326,20 +326,20 @@ export const appRouter = router({
   // ============================================================================
   // AGENDAMENTOS, VISITAS E AGENDAMENTOS GESTOR (extraído para server/routers/agendamentosVisitas.ts)
   // ============================================================================
-  agendamentos: agendamentosVisitasRouter._def.procedures.agendamentos,
-  visitas: agendamentosVisitasRouter._def.procedures.visitas,
-  agendamentosGestor: agendamentosVisitasRouter._def.procedures.agendamentosGestor,
+  agendamentos: agendamentosRouter,
+  visitas: visitasRouter,
+  agendamentosGestor: agendamentosGestorRouter,
 
   // ============================================================================
   // CONTRATOS E ANÁLISES DE CRÉDITO (extraído para server/routers/contratosAnalises.ts)
   // ============================================================================
-  contratos: contratosAnalisesRouter._def.procedures.contratos,
-  analises: contratosAnalisesRouter._def.procedures.analises,
+  contratos: contratosRouter,
+  analises: analisesRouter,
 
   // ============================================================================
   // EQUIPES (extraído para server/routers/equipes.ts)
   // ============================================================================
-  equipes: equipesRouter._def.procedures.equipes,
+  equipes: equipesSubRouter,
 
   // ============================================================================
   // CORRETORES

@@ -472,3 +472,8 @@ export const agendamentosVisitasRouter = router({
       }),
   }),
 });
+
+// Exports individuais para montagem direta no appRouter (mantendo os paths originais)
+export const agendamentosRouter = agendamentosVisitasRouter._def.record.agendamentos;
+export const visitasRouter = agendamentosVisitasRouter._def.record.visitas;
+export const agendamentosGestorRouter = agendamentosVisitasRouter._def.record.agendamentosGestor;
