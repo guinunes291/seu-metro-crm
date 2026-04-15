@@ -10,15 +10,15 @@ import { sincronizarTodasMetricasDoDia } from "./db";
 let isRunning = false;
 
 export async function startMetricasSyncJob() {
-  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 30 minutos)");
+  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 4 horas)");
   
   // Executar imediatamente na inicialização
   await runSync();
   
-  // Executar a cada 30 minutos (reduzido de 10 min para economizar recursos — 3x menos queries)
+  // Executar a cada 4 horas (reduzido para economizar recursos)
   setInterval(async () => {
     await runSync();
-  }, 30 * 60 * 1000); // 30 minutos
+  }, 4 * 60 * 60 * 1000); // 4 horas
 }
 
 async function runSync() {

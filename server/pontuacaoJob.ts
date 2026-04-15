@@ -9,10 +9,10 @@ export async function iniciarJobPontuacao() {
   // Executar imediatamente ao iniciar
   await recalcularPontuacaoTodasAtividades();
   
-  // Executar a cada 60 minutos (reduzido de 15 min — 4x menos queries)
+  // Executar a cada 6 horas (reduzido para economizar recursos)
   setInterval(async () => {
     await recalcularPontuacaoTodasAtividades();
-  }, 60 * 60 * 1000);
+  }, 6 * 60 * 60 * 1000);
 }
 
 async function recalcularPontuacaoTodasAtividades() {

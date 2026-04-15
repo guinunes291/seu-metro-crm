@@ -459,12 +459,12 @@ export function iniciarJobConquistas(): void {
   // Executar imediatamente na primeira vez
   jobVerificacaoConquistas();
 
-  // Executar a cada 30 minutos (reduzido de 5 min para diminuir carga no banco)
+  // Executar a cada 4 horas (reduzido para diminuir carga no banco)
   conquistasInterval = setInterval(() => {
     jobVerificacaoConquistas();
-  }, 30 * 60 * 1000); // 30 minutos
+  }, 4 * 60 * 60 * 1000); // 4 horas
 
-  console.log("[Conquistas Job] Job de verificação automática iniciado (intervalo: 30 minutos)");
+  console.log("[Conquistas Job] Job de verificação automática iniciado (intervalo: 4 horas)");
 }
 
 export function pararJobConquistas(): void {
