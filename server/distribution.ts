@@ -3,9 +3,15 @@ import { users, leads, conversionStats, distributionLog, leadEstoque } from "../
 import { eq, and, sql, isNull } from "drizzle-orm";
 
 // Configurações de distribuição
-const MINIMO_LEADS_GARANTIDO = 40; // Lote inicial garantido no primeiro recebimento
-const MAXIMO_LEADS_AGUARDANDO = 20; // Máximo de leads aguardando para receber mais (após o lote inicial)
-const LEADS_POR_RODADA_ESTOQUE = 20; // Leads distribuídos para cada corretor elegível por rodada
+// Regra: corretor elegível quando ≥ 90% dos seus leads têm status != aguardando_atendimento
+// Ou seja: máximo 10% dos leads podem estar aguardando
+const PERCENTUAL_MINIMO_TRABALHADOS = 0.9; // 90% dos leads devem estar fora de aguardando
+const LEADS_POR_RODADA = 30; // Leads enviados por rodada para cada corretor elegível
+// Aliases para compatibilidade com código legado
+const MINIMO_LEADS_GARANTIDO = LEADS_POR_RODADA;
+const MAXIMO_LEADS_AGUARDANDO = 20;
+const LIMITE_AGUARDANDO = 20;
+const LEADS_POR_RODADA_ESTOQUE = LEADS_POR_RODADA;
 
 interface CorretorStatus {
   id: number;
@@ -34,10 +40,8 @@ function getInicioDiaUTC(): Date {
 
 /**
  * Verifica se um corretor está elegível para receber novos leads
- * Regras:
- * 1. Status deve ser "presente"
- * 2. Se tem menos de MINIMO_LEADS_GARANTIDO (40) leads ativos totais → elegível (lote inicial)
- * 3. Se já tem 40+ leads ativos → elegível apenas se tem menos de MAXIMO_LEADS_AGUARDANDO (20) aguardando
+ * Regra: status "presente" + 90%+ dos leads com status != aguardando_atendimento
+ * (ou seja, no máximo 10% dos leads podem estar aguardando)
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -51,33 +55,26 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   if (!corretor.length || corretor[0].status !== "presente") {
     return false;
   }
-  // Contar leads ativos (aguardando + em_atendimento, não na lixeira)
-  const [{ totalAtivos }] = await db
-    .select({ totalAtivos: sql<number>`COUNT(*)` })
+  // Contar total de leads ativos (não na lixeira) e quantos estão aguardando
+  const [{ total, aguardando }] = await db
+    .select({
+      total: sql<number>`COUNT(*)`,
+      aguardando: sql<number>`SUM(CASE WHEN ${leads.status} = 'aguardando_atendimento' THEN 1 ELSE 0 END)`,
+    })
     .from(leads)
     .where(
       and(
         eq(leads.corretorId, corretorId),
-        eq(leads.naLixeira, false),
-        sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
+        eq(leads.naLixeira, false)
       )
     );
-  // Primeiro recebimento: se tem menos de 40 leads ativos, é elegível (lote inicial garantido)
-  if (Number(totalAtivos) < MINIMO_LEADS_GARANTIDO) {
-    return true;
-  }
-  // Já tem 40+ leads ativos: elegível apenas se tem menos de 20 aguardando
-  const [{ aguardando }] = await db
-    .select({ aguardando: sql<number>`COUNT(*)` })
-    .from(leads)
-    .where(
-      and(
-        eq(leads.corretorId, corretorId),
-        eq(leads.naLixeira, false),
-        eq(leads.status, "aguardando_atendimento")
-      )
-    );
-  return Number(aguardando) < MAXIMO_LEADS_AGUARDANDO;
+  const totalNum = Number(total) || 0;
+  const aguardandoNum = Number(aguardando) || 0;
+  // Se não tem leads, é elegível (receberá o primeiro lote)
+  if (totalNum === 0) return true;
+  // Elegível se pelo menos 90% dos leads estão com status != aguardando_atendimento
+  const percentualTrabalhados = (totalNum - aguardandoNum) / totalNum;
+  return percentualTrabalhados >= PERCENTUAL_MINIMO_TRABALHADOS;
 }
 
 /**
@@ -124,11 +121,8 @@ export async function getCorretorStatus(corretorId: number): Promise<CorretorSta
     if (corretor[0].status !== "presente") {
       motivoBloqueio = "Ausente";
     } else {
-      if (aguardandoLeads >= MAXIMO_LEADS_AGUARDANDO) {
-        motivoBloqueio = `${aguardandoLeads} leads aguardando (máx ${MAXIMO_LEADS_AGUARDANDO})`;
-      } else {
-        motivoBloqueio = "Outro";
-      }
+      const pct = totalLeads > 0 ? Math.round(((totalLeads - aguardandoLeads) / totalLeads) * 100) : 0;
+      motivoBloqueio = `${pct}% trabalhados (mín. 90% — ${aguardandoLeads} aguardando de ${totalLeads})`;
     }
   }
 
@@ -634,23 +628,21 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
   fimDiaSP.setHours(23, 59, 59, 999);
   const fimDiaUTC = new Date(fimDiaSP.getTime() - offsetSP * 60 * 1000);
 
-  // Query otimizada: conta aguardando_atendimento diretamente (não totalAtivos - emAtendimento)
-  // para evitar que leads em_atendimento inflem o contador de aguardando
+  // Query otimizada: conta total de leads e aguardando por corretor presente
   const resultado = await db.execute(sql`
     SELECT 
       u.id,
-      u.limiteDiarioLeads,
-      COALESCE(ativos_agg.total_ativos, 0) as total_ativos,
-      COALESCE(ativos_agg.aguardando, 0) as aguardando
+      COALESCE(agg.total, 0) as total,
+      COALESCE(agg.aguardando, 0) as aguardando
     FROM users u
     LEFT JOIN (
       SELECT corretorId,
-        COUNT(*) as total_ativos,
+        COUNT(*) as total,
         SUM(CASE WHEN status = 'aguardando_atendimento' THEN 1 ELSE 0 END) as aguardando
       FROM leads
-      WHERE status IN ('aguardando_atendimento', 'em_atendimento') AND naLixeira = 0
+      WHERE naLixeira = 0
       GROUP BY corretorId
-    ) ativos_agg ON ativos_agg.corretorId = u.id
+    ) agg ON agg.corretorId = u.id
     WHERE u.role = 'corretor' AND u.status = 'presente'
   `);
 
@@ -660,17 +652,18 @@ async function getCorretoresElegiveisParaDistribuicao(): Promise<number[]> {
 
   for (const row of rows) {
     const corretorId = Number(row.id);
-    const totalAtivos = Number(row.total_ativos) || 0;
-    const aguardando = Number(row.aguardando) || 0; // apenas aguardando_atendimento
+    const total = Number(row.total) || 0;
+    const aguardando = Number(row.aguardando) || 0;
 
-    // Primeiro recebimento: menos de 40 leads ativos → elegível
-    if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
+    // Sem leads: elegível (receberá primeiro lote)
+    if (total === 0) {
       corretoresElegiveis.push(corretorId);
       continue;
     }
 
-    // Já tem 40+ leads ativos: elegível se tem menos de MAXIMO_LEADS_AGUARDANDO leads aguardando
-    if (aguardando < MAXIMO_LEADS_AGUARDANDO) {
+    // Elegível se 90%+ dos leads têm status != aguardando_atendimento
+    const percentualTrabalhados = (total - aguardando) / total;
+    if (percentualTrabalhados >= PERCENTUAL_MINIMO_TRABALHADOS) {
       corretoresElegiveis.push(corretorId);
     }
   }
@@ -728,8 +721,8 @@ export async function distribuirLeadsDoEstoque(): Promise<{
     return { distribuidos: 0, erros: 0, mensagens: ["Nenhum corretor elegível disponível"] };
   }
 
-  // Total de leads a buscar = 20 por corretor elegível
-  const totalParaBuscar = corretoresElegiveis.length * LEADS_POR_RODADA_ESTOQUE;
+  // Total de leads a buscar = 30 por corretor elegível
+  const totalParaBuscar = corretoresElegiveis.length * LEADS_POR_RODADA;
 
   // Buscar leads aguardando no estoque (ordenar por mais antigo primeiro, sem limite artificial)
   const leadsEmEstoque = await db
@@ -743,7 +736,7 @@ export async function distribuirLeadsDoEstoque(): Promise<{
     return { distribuidos: 0, erros: 0, mensagens: ["Nenhum lead em estoque"] };
   }
 
-  mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque para ${corretoresElegiveis.length} corretores elegíveis (${LEADS_POR_RODADA_ESTOQUE} leads/corretor)...`);
+  mensagens.push(`Processando ${leadsEmEstoque.length} leads do estoque para ${corretoresElegiveis.length} corretores elegíveis (${LEADS_POR_RODADA} leads/corretor)...`);
 
   // Rastrear quantos leads cada corretor recebeu nesta rodada
   const leadsRecebidosPorCorretor = new Map<number, number>();
@@ -756,7 +749,7 @@ export async function distribuirLeadsDoEstoque(): Promise<{
       // Avançar para o próximo corretor que ainda não atingiu o limite desta rodada
       let tentativas = 0;
       while (
-        (leadsRecebidosPorCorretor.get(corretoresElegiveis[corretorIndex % corretoresElegiveis.length]) ?? 0) >= LEADS_POR_RODADA_ESTOQUE &&
+        (leadsRecebidosPorCorretor.get(corretoresElegiveis[corretorIndex % corretoresElegiveis.length]) ?? 0) >= LEADS_POR_RODADA &&
         tentativas < corretoresElegiveis.length
       ) {
         corretorIndex++;
@@ -765,7 +758,7 @@ export async function distribuirLeadsDoEstoque(): Promise<{
 
       // Se todos atingiram o limite desta rodada, parar
       if (tentativas >= corretoresElegiveis.length) {
-        mensagens.push(`Todos os ${corretoresElegiveis.length} corretores atingiram o limite de ${LEADS_POR_RODADA_ESTOQUE} leads nesta rodada`);
+        mensagens.push(`Todos os ${corretoresElegiveis.length} corretores atingiram o limite de ${LEADS_POR_RODADA} leads nesta rodada`);
         break;
       }
 
