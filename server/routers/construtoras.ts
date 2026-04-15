@@ -26,8 +26,8 @@ export const construtorasRouter = router({
         apenasAtivas: z.boolean().optional().default(true),
       }))
       .query(async ({ input }) => {
-        const { construtoras } = await import('../drizzle/schema');
-        const { db } = await import('../db');
+        const { construtoras } = await import('../../drizzle/schema');
+        const { db } = await import('../../server/db');
         const { eq } = await import('drizzle-orm');
         
         let query = db.select().from(construtoras);
@@ -43,8 +43,8 @@ export const construtorasRouter = router({
     // Listar construtoras com projetos (para filtro)
     listWithProjects: publicProcedure
       .query(async () => {
-        const { construtoras, projects } = await import('../drizzle/schema');
-        const { getDb } = await import('../db');
+        const { construtoras, projects } = await import('../../drizzle/schema');
+        const { getDb } = await import('../../server/db');
         const { eq, isNotNull, sql } = await import('drizzle-orm');
         
         const db = await getDb();
@@ -74,8 +74,8 @@ export const construtorasRouter = router({
         logoUrl: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { construtoras } = await import('../drizzle/schema');
-        const { db } = await import('../db');
+        const { construtoras } = await import('../../drizzle/schema');
+        const { db } = await import('../../server/db');
         
         const [result] = await db.insert(construtoras).values({
           nome: input.nome,
@@ -95,8 +95,8 @@ export const construtorasRouter = router({
         ativo: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { construtoras } = await import('../drizzle/schema');
-        const { db } = await import('../db');
+        const { construtoras } = await import('../../drizzle/schema');
+        const { db } = await import('../../server/db');
         const { eq } = await import('drizzle-orm');
         
         const { id, ...data } = input;
