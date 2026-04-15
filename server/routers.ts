@@ -977,6 +977,60 @@ export const appRouter = router({
         const { distribuirLeadsDoEstoque } = await import("./distribution");
         return await distribuirLeadsDoEstoque();
       }),
+    // Migrar leads em excesso (>20 aguardando) para o estoque global
+    migrarLeadsExcessoParaEstoque: gestorProcedure
+      .mutation(async () => {
+        const { leads: leadsTable, users: usersTable, leadEstoque: leadEstoqueTable } = await import("../drizzle/schema");
+        const { getDb } = await import("./db");
+        const { eq, and } = await import("drizzle-orm");
+        const db2 = await getDb();
+        if (!db2) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB indisponível" });
+        // Buscar todos os corretores
+        const corretores = await db2
+          .select({ id: usersTable.id, name: usersTable.name })
+          .from(usersTable)
+          .where(eq(usersTable.role, "corretor"));
+        let totalMigrados = 0;
+        const detalhes: { corretor: string; migrados: number }[] = [];
+        for (const corretor of corretores) {
+          // Buscar leads aguardando_atendimento do corretor (mais antigos primeiro)
+          const leadsAguardando = await db2
+            .select({ id: leadsTable.id, tipoFilaOrigem: leadsTable.tipoFilaOrigem })
+            .from(leadsTable)
+            .where(
+              and(
+                eq(leadsTable.corretorId, corretor.id),
+                eq(leadsTable.status, "aguardando_atendimento"),
+                eq(leadsTable.naLixeira, false)
+              )
+            )
+            .orderBy(leadsTable.createdAt); // mantém os 20 mais antigos
+          if (leadsAguardando.length <= 20) continue;
+          // Mover os excedentes (além dos 20 primeiros) para o estoque
+          const leadsParaMigrar = leadsAguardando.slice(20);
+          for (const lead of leadsParaMigrar) {
+            const jaNoEstoque = await db2
+              .select({ id: leadEstoqueTable.id })
+              .from(leadEstoqueTable)
+              .where(and(eq(leadEstoqueTable.leadId, lead.id), eq(leadEstoqueTable.status, "aguardando")))
+              .limit(1);
+            if (jaNoEstoque.length > 0) continue;
+            await db2.update(leadsTable).set({ corretorId: null, updatedAt: new Date() }).where(eq(leadsTable.id, lead.id));
+            const tipoFila: "normal" | "foco" = lead.tipoFilaOrigem === "foco" ? "foco" : "normal";
+            await db2.insert(leadEstoqueTable).values({
+              leadId: lead.id,
+              tipoFila,
+              motivoEstoque: `Migração manual: excesso de leads aguardando (${leadsAguardando.length} > 20)`,
+              tentativasDistribuicao: 0,
+            });
+            totalMigrados++;
+          }
+          if (leadsParaMigrar.length > 0) {
+            detalhes.push({ corretor: corretor.name, migrados: leadsParaMigrar.length });
+          }
+        }
+        return { totalMigrados, detalhes };
+      }),
 
     // Verificar se um corretor está elegível
     verificarElegibilidade: gestorProcedure

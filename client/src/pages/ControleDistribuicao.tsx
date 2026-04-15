@@ -197,6 +197,24 @@ export default function ControleDistribuicao() {
     },
   });
 
+  // Mutation para migrar leads em excesso para o estoque
+  const migrarLeadsExcesso = trpc.distribution.migrarLeadsExcessoParaEstoque.useMutation({
+    onSuccess: (data) => {
+      setResultado({
+        tipo: "sucesso",
+        mensagem: `✅ Migração concluída! ${data.totalMigrados} leads movidos para o estoque.${data.detalhes.length > 0 ? ' Corretores afetados: ' + data.detalhes.map((d: any) => `${d.corretor} (${d.migrados})`).join(', ') + '.' : ''}`,
+      });
+      refetch();
+      refetchEstoque();
+    },
+    onError: (error) => {
+      setResultado({
+        tipo: "erro",
+        mensagem: `❌ Erro na migração: ${error.message}`,
+      });
+    },
+  });
+
   // Mutation para distribuir estoque
   const distribuirEstoque = trpc.distribution.distribuirEstoque.useMutation({
     onSuccess: (data) => {
@@ -244,23 +262,45 @@ export default function ControleDistribuicao() {
             Gerencie a distribuição automática de leads para corretores
           </p>
         </div>
-        <Button
-          onClick={handleDistribuir}
-          disabled={distribuirTodos.isPending || corretoresElegiveis.length === 0}
-          size="lg"
-        >
-          {distribuirTodos.isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Distribuindo...
-            </>
-          ) : (
-            <>
-              <Play className="mr-2 h-4 w-4" />
-              Distribuir Agora
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => migrarLeadsExcesso.mutate()}
+            disabled={migrarLeadsExcesso.isPending}
+            size="lg"
+            variant="outline"
+            className="border-red-500 text-red-600 hover:bg-red-50"
+            title="Move leads de corretores com mais de 20 aguardando para o estoque global"
+          >
+            {migrarLeadsExcesso.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Migrando...
+              </>
+            ) : (
+              <>
+                <Package className="mr-2 h-4 w-4" />
+                Mover Excesso para Estoque
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleDistribuir}
+            disabled={distribuirTodos.isPending || corretoresElegiveis.length === 0}
+            size="lg"
+          >
+            {distribuirTodos.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Distribuindo...
+              </>
+            ) : (
+              <>
+                <Play className="mr-2 h-4 w-4" />
+                Distribuir Agora
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Feedback de resultado */}

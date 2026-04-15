@@ -2,7 +2,7 @@ import { getDb } from "./db";
 import { leads, users, leadEstoque, distributionLog, logTransferencias, filaDistribuicao, configuracaoProjetoFoco } from "../drizzle/schema";
 import { and, eq, lt, isNotNull, or, isNull, inArray, ne, sql } from "drizzle-orm";
 import { isLeadProtegidoCarteira } from "./routers/carteiraAtiva";
-import { getCorretoresElegiveis, getCorretoresParaRedistribuicao } from "./distribution";
+import { getCorretoresElegiveis, getCorretoresParaRedistribuicao, distribuirLeadsDoEstoque } from "./distribution";
 
 /**
  * Job de transferência automática de leads sem interação
@@ -470,6 +470,16 @@ export async function verificarTransferenciasAutomaticas() {
       console.log(
         `[Transferência Job] Ciclo: ${transferidos} transferidos, ${noEstoque} para estoque, ${imunes} imunes, ${erros} erros`
       );
+    }
+
+    // ── Distribuir leads do estoque para corretores elegíveis ──
+    try {
+      const resultadoEstoque = await distribuirLeadsDoEstoque();
+      if (resultadoEstoque.distribuidos > 0) {
+        console.log(`[Transferência Job] Estoque: ${resultadoEstoque.distribuidos} leads distribuídos do estoque para corretores elegíveis`);
+      }
+    } catch (estoqueError) {
+      console.error("[Transferência Job] Erro ao distribuir estoque:", estoqueError);
     }
 
   } catch (error) {

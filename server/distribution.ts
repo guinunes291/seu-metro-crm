@@ -2,9 +2,9 @@ import { getDb, notifyLeadDistribuido, countLeadsRecebidosHoje } from "./db";
 import { users, leads, conversionStats, distributionLog, leadEstoque } from "../drizzle/schema";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
-// Configurações de distribuição (baseado no AppScript)
-const MINIMO_LEADS_GARANTIDO = 40; // Carga inicial mínima por corretor (primeiro recebimento)
-const MAXIMO_LEADS_AGUARDANDO = 20; // Máximo de leads em aguardando_atendimento para receber mais
+// Configurações de distribuição
+const MINIMO_LEADS_GARANTIDO = 40; // Lote inicial garantido no primeiro recebimento
+const MAXIMO_LEADS_AGUARDANDO = 20; // Máximo de leads aguardando para receber mais (após o lote inicial)
 const LEADS_POR_RODADA_ESTOQUE = 20; // Leads distribuídos para cada corretor elegível por rodada
 
 interface CorretorStatus {
@@ -36,10 +36,8 @@ function getInicioDiaUTC(): Date {
  * Verifica se um corretor está elegível para receber novos leads
  * Regras:
  * 1. Status deve ser "presente"
- * 2. Não atingiu o limite diário de leads
- * 3. Tem menos de MINIMO_LEADS_GARANTIDO leads ativos (primeiro lote garantido)
- *    OU tem menos de MAXIMO_LEADS_AGUARDANDO leads em aguardando_atendimento
- *    (i.e., já abriu/contatou a maioria dos leads que recebeu)
+ * 2. Se tem menos de MINIMO_LEADS_GARANTIDO (40) leads ativos totais → elegível (lote inicial)
+ * 3. Se já tem 40+ leads ativos → elegível apenas se tem menos de MAXIMO_LEADS_AGUARDANDO (20) aguardando
  */
 export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   const db = await getDb();
@@ -53,10 +51,9 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
   if (!corretor.length || corretor[0].status !== "presente") {
     return false;
   }
-  // Limite diário removido: corretores presentes recebem leads sem restrição de volume diário
-  // Buscar apenas leads ATIVOS do corretor (não na lixeira)
-  const leadsAtivos = await db
-    .select()
+  // Contar leads ativos (aguardando + em_atendimento, não na lixeira)
+  const [{ totalAtivos }] = await db
+    .select({ totalAtivos: sql<number>`COUNT(*)` })
     .from(leads)
     .where(
       and(
@@ -65,17 +62,22 @@ export async function isCorretorElegivel(corretorId: number): Promise<boolean> {
         sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`
       )
     );
-  const totalAtivos = leadsAtivos.length;
   // Primeiro recebimento: se tem menos de 40 leads ativos, é elegível (lote inicial garantido)
-  if (totalAtivos < MINIMO_LEADS_GARANTIDO) {
+  if (Number(totalAtivos) < MINIMO_LEADS_GARANTIDO) {
     return true;
   }
-  // Já tem 40+ leads ativos: elegível apenas se tem capacidade disponível
-  // (menos de MAXIMO_LEADS_AGUARDANDO leads ainda não contactados)
-  const aguardando = leadsAtivos.filter(
-    (lead) => lead.status === "aguardando_atendimento"
-  ).length;
-  return aguardando < MAXIMO_LEADS_AGUARDANDO;
+  // Já tem 40+ leads ativos: elegível apenas se tem menos de 20 aguardando
+  const [{ aguardando }] = await db
+    .select({ aguardando: sql<number>`COUNT(*)` })
+    .from(leads)
+    .where(
+      and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.naLixeira, false),
+        eq(leads.status, "aguardando_atendimento")
+      )
+    );
+  return Number(aguardando) < MAXIMO_LEADS_AGUARDANDO;
 }
 
 /**
