@@ -321,6 +321,9 @@ export const leads = mysqlTable("leads", {
   // Identificação de leads via webhook (para notificação urgente)
   origemWebhook: boolean("origemWebhook").default(false).notNull(), // true se veio via webhook
   
+  // Transferência manual pelo admin: lead fica fixo no corretor, não volta ao estoque
+  transferidoManualmentePorAdmin: boolean("transferidoManualmentePorAdmin").default(false).notNull(),
+  
   // Fila de origem do lead (para redistribuição correta no timer)
   tipoFilaOrigem: mysqlEnum("tipoFilaOrigem", ["geral", "foco"]).default("geral"), // Fila pela qual o lead foi distribuído
   

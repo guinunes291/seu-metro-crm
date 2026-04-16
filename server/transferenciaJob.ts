@@ -170,6 +170,9 @@ async function transferirLead(
   // Imunidade: captacao_corretor
   if (lead.origem === "captacao_corretor") return "imune";
 
+  // Imunidade: transferido manualmente pelo admin (fica fixo no corretor)
+  if (lead.transferidoManualmentePorAdmin) return "imune";
+
   // Imunidade: Carteira Ativa
   const protegido = await isLeadProtegidoCarteira(lead.id);
   if (protegido) return "imune";
@@ -268,13 +271,14 @@ export async function verificarTransferenciasAutomaticas() {
     limite5dias.setDate(limite5dias.getDate() - DIAS_SEM_FOLLOWUP);
 
     // Buscar leads ativos com corretor atribuído que não tiveram follow-up/registro nos últimos 5 dias
-    // A condição: ultimaInteracao < 5 dias atrás OU ultimaInteracao é null e lead foi criado há mais de 5 dias
+    // Excluir leads transferidos manualmente pelo admin (ficam fixos no corretor)
     const leadsParaTransferir = await db
       .select()
       .from(leads)
       .where(and(
         isNotNull(leads.corretorId),
         sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`,
+        eq(leads.transferidoManualmentePorAdmin, false),
         sql`(
           (${leads.ultimaInteracao} IS NOT NULL AND ${leads.ultimaInteracao} < ${limite5dias})
           OR

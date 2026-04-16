@@ -470,7 +470,8 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
       .where(
         sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
             AND ${leads.status} IN ('novo', 'aguardando_atendimento')
-            AND ${leads.naLixeira} = 0`
+            AND ${leads.naLixeira} = 0
+            AND ${leads.transferidoManualmentePorAdmin} = 0`
       )
       .orderBy(leads.criadoEm)
       .limit(limiteBusca);
@@ -482,7 +483,8 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
         and(
           isNull(leads.corretorId),
           sql`${leads.status} IN ('novo', 'aguardando_atendimento')`,
-          eq(leads.naLixeira, false)
+          eq(leads.naLixeira, false),
+          eq(leads.transferidoManualmentePorAdmin, false)
         )
       )
       .orderBy(leads.criadoEm)

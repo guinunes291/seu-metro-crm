@@ -4399,13 +4399,16 @@ export const appRouter = router({
         const dbHelpers = await import('./db');
         await dbHelpers.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
         
-        // Atualizar lead
+        // Atualizar lead - marcar como transferido manualmente pelo admin
+        // para que não volte ao estoque automaticamente
+        const isAdminTransfer = ctx.user.role === 'admin';
         await db
           .update(leads)
           .set({ 
             corretorId: input.novoCorretorId,
             dataDistribuicao: new Date(),
             timestampRecebimento: new Date(),
+            ...(isAdminTransfer ? { transferidoManualmentePorAdmin: true } : {}),
           })
           .where(eq(leads.id, input.leadId));
         
