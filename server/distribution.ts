@@ -455,15 +455,25 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
   // Status: aguardando_atendimento ou sem status definido
   let leadsParaDistribuir;
 
+  // Limite: buscar apenas o suficiente para distribuir 30 leads por corretor elegível
+  const corretoresElegiveis = await getCorretoresElegiveisParaDistribuicao();
+  if (corretoresElegiveis.length === 0) {
+    console.log("[Distribuição] Nenhum corretor elegível disponivel");
+    return { success: 0, failed: 0, details: [] };
+  }
+  const limiteBusca = corretoresElegiveis.length * LEADS_POR_RODADA;
+
   if (gestorIds.length > 0) {
     leadsParaDistribuir = await db
       .select()
       .from(leads)
       .where(
         sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
-            AND ${leads.status} IN ('novo', 'aguardando_atendimento')`
+            AND ${leads.status} IN ('novo', 'aguardando_atendimento')
+            AND ${leads.naLixeira} = 0`
       )
-      ;
+      .orderBy(leads.criadoEm)
+      .limit(limiteBusca);
   } else {
     leadsParaDistribuir = await db
       .select()
@@ -471,9 +481,12 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
       .where(
         and(
           isNull(leads.corretorId),
-          sql`${leads.status} IN ('novo', 'aguardando_atendimento')`
+          sql`${leads.status} IN ('novo', 'aguardando_atendimento')`,
+          eq(leads.naLixeira, false)
         )
-      );
+      )
+      .orderBy(leads.criadoEm)
+      .limit(limiteBusca);
   }
 
   if (leadsParaDistribuir.length === 0) {
@@ -527,10 +540,26 @@ async function distribuirLeadsEmLoteParaElegiveis(
   }
 
   // Distribuir leads em round-robin entre corretores elegíveis
+  // Limite: LEADS_POR_RODADA (30) leads por corretor por rodada
+  const leadsRecebidosPorCorretor = new Map<number, number>();
+  for (const id of corretoresElegiveis) leadsRecebidosPorCorretor.set(id, 0);
   let corretorIndex = 0;
 
   for (const leadId of leadIds) {
-    const corretorId = corretoresElegiveis[corretorIndex];
+    // Avançar para o próximo corretor que ainda não atingiu o limite
+    let tentativas = 0;
+    while (
+      (leadsRecebidosPorCorretor.get(corretoresElegiveis[corretorIndex % corretoresElegiveis.length]) ?? 0) >= LEADS_POR_RODADA &&
+      tentativas < corretoresElegiveis.length
+    ) {
+      corretorIndex++;
+      tentativas++;
+    }
+    // Se todos atingiram o limite desta rodada, parar
+    if (tentativas >= corretoresElegiveis.length) break;
+
+    const corretorId = corretoresElegiveis[corretorIndex % corretoresElegiveis.length];
+    corretorIndex++;
 
     try {
       // Buscar dados do lead
@@ -589,9 +618,7 @@ async function distribuirLeadsEmLoteParaElegiveis(
         corretorId,
       });
       results.success++;
-
-      // Avançar para o próximo corretor (round-robin)
-      corretorIndex = (corretorIndex + 1) % corretoresElegiveis.length;
+      leadsRecebidosPorCorretor.set(corretorId, (leadsRecebidosPorCorretor.get(corretorId) ?? 0) + 1);
     } catch (error) {
       results.details.push({
         leadId,

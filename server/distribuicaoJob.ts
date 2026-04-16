@@ -18,18 +18,15 @@ export async function executarDistribuicaoAutomatica() {
   console.log("[Job] Iniciando distribuição automática periódica...");
   
   try {
-    // 1. Distribuir leads do estoque primeiro
-    const estoqueResultado = await distribuirLeadsDoEstoque();
-    console.log(`[Job] Estoque: ${estoqueResultado.distribuidos} distribuídos, ${estoqueResultado.erros} erros`);
-    
-    // 2. Distribuir leads não distribuídos do gestor
+    // Distribuir leads da carteira do admin (estoque) para corretores elegíveis
+    // A função busca leads com corretorId = admin e distribui 30 por corretor elegível
     const resultado = await distribuirTodosLeadsNaoDistribuidos();
     
     console.log(`[Job] Distribuição concluída: ${resultado.success} distribuídos, ${resultado.failed} erros`);
     
     return {
       ...resultado,
-      estoque: estoqueResultado
+      estoque: { distribuidos: resultado.success, erros: resultado.failed, mensagens: [] }
     };
   } catch (error) {
     console.error("[Job] Erro na distribuição automática:", error);
