@@ -994,6 +994,7 @@ export const appRouter = router({
         const detalhes: { corretor: string; migrados: number }[] = [];
         for (const corretor of corretores) {
           // Buscar leads aguardando_atendimento do corretor (mais antigos primeiro)
+          // Excluir leads transferidos manualmente pelo admin (ficam fixos no corretor)
           const leadsAguardando = await db2
             .select({ id: leadsTable.id, tipoFilaOrigem: leadsTable.tipoFilaOrigem })
             .from(leadsTable)
@@ -1001,7 +1002,8 @@ export const appRouter = router({
               and(
                 eq(leadsTable.corretorId, corretor.id),
                 eq(leadsTable.status, "aguardando_atendimento"),
-                eq(leadsTable.naLixeira, false)
+                eq(leadsTable.naLixeira, false),
+                eq(leadsTable.transferidoManualmentePorAdmin, false)
               )
             )
             .orderBy(leadsTable.createdAt); // mantém os 20 mais antigos

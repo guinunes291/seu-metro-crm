@@ -424,12 +424,13 @@ export async function redistribuirLeadsDoCorretor(corretorId: number): Promise<n
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Buscar todos os leads do corretor (exceto perdidos e contratos fechados)
+  // Buscar todos os leads do corretor (exceto perdidos, contratos fechados e atribuídos manualmente pelo admin)
   const leadsDoCorretor = await db.select()
     .from(leads)
     .where(and(
       eq(leads.corretorId, corretorId),
-      notInArray(leads.status, ['perdido', 'contrato_fechado'])
+      notInArray(leads.status, ['perdido', 'contrato_fechado']),
+      eq(leads.transferidoManualmentePorAdmin, false)
     ));
   
   if (leadsDoCorretor.length === 0) {

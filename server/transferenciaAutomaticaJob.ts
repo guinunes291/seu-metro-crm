@@ -30,6 +30,7 @@ export async function verificarTransferenciasAutomaticas() {
     console.log(`[Transferência Automática] Verificando leads sem interação desde ${dataLimite.toISOString()}...`);
 
     // Buscar leads elegíveis para transferência
+    // Excluir leads transferidos manualmente pelo admin (ficam fixos no corretor)
     const leadsParaTransferir = await db
       .select()
       .from(leads)
@@ -38,7 +39,8 @@ export async function verificarTransferenciasAutomaticas() {
           eq(leads.status, "em_atendimento"),
           lt(leads.ultimaInteracao, dataLimite),
           ne(leads.origem, "captacao_corretor"), // Exceção: não transferir leads de captação própria
-          eq(leads.naLixeira, false) // Não processar leads na lixeira
+          eq(leads.naLixeira, false), // Não processar leads na lixeira
+          eq(leads.transferidoManualmentePorAdmin, false) // Não redistribuir leads atribuídos manualmente pelo admin
         )
       );
 
