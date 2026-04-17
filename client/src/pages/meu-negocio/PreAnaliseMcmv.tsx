@@ -102,17 +102,59 @@ const MCMV = {
   ],
 };
 
-// Calcula taxa mensal interpolada pela posição da renda dentro da faixa
-function getTaxaMensal(faixa: typeof MCMV.faixas[0], renda: number): number {
-  const range = faixa.rendaMax - faixa.rendaMin;
-  if (range <= 0) return faixa.taxaAnualMin / 12;
-  const posicao = Math.min(1, Math.max(0, (renda - faixa.rendaMin) / range));
-  const taxaAnual = faixa.taxaAnualMin + posicao * (faixa.taxaAnualMax - faixa.taxaAnualMin);
-  return taxaAnual / 12;
+// Sub-faixas de taxa com os limites exatos da tabela Caixa (mai/2025)
+// Ajustados para os novos limites de renda vigentes (22/04/2026)
+const SUBFAIXAS_TAXA = [
+  { rendaMax: 2160,   taxaAnual: 0.0425 }, // F1 baixa (até R$2.160)
+  { rendaMax: 2850,   taxaAnual: 0.0475 }, // F1 média (R$2.160,01 a R$2.850)
+  { rendaMax: 3500,   taxaAnual: 0.0500 }, // F1 alta + início F2 (R$2.850,01 a R$3.500)
+  { rendaMax: 4000,   taxaAnual: 0.0550 }, // F2 média (R$3.500,01 a R$4.000)
+  { rendaMax: 5000,   taxaAnual: 0.0650 }, // F2 alta (R$4.000,01 a R$5.000)
+  { rendaMax: 9600,   taxaAnual: 0.0766 }, // F3/HIS2 (R$5.000,01 a R$9.600)
+  { rendaMax: 13000,  taxaAnual: 0.1000 }, // F4/HMP Classe Média (R$9.600,01 a R$13.000)
+  { rendaMax: 999999, taxaAnual: 0.1149 }, // SBPE (acima de R$13.000)
+];
+
+// Tabela real de subsídio F1 (sem dependentes) — extraída da tabela Caixa mai/2025
+// Pontos: [renda, subsidio] — interpolados linearmente entre os pontos
+const TABELA_SUBSIDIO_F1: [number, number][] = [
+  [1500, 16500], [1600, 16500], [1700, 16500], [1800, 15827],
+  [1900, 14136], [2000, 12558], [2100, 11091], [2160, 10263],
+  [2200, 9805],  [2300, 8547],  [2400, 7392],  [2500, 6337],
+  [2600, 5381],  [2700, 4520],  [2800, 3753],  [2850, 3403],
+  [2900, 3135],  [3000, 2537],  [3100, 2025],  [3200, 1598],
+  // Novos pontos F1 (R$3.200,01 a R$3.500 — antes era F2 na tabela antiga)
+  // Subsídio abaixo de R$1.500 → Caixa não libera → retorna 0
+  [3300, 0], [3500, 0],
+];
+
+function getTaxaAnual(renda: number): number {
+  return SUBFAIXAS_TAXA.find(s => renda <= s.rendaMax)?.taxaAnual ?? 0.1149;
+}
+
+function getTaxaMensal(renda: number): number {
+  return getTaxaAnual(renda) / 12;
 }
 
 function getFaixa(renda: number) {
   return MCMV.faixas.find((f) => renda <= f.rendaMax) ?? null;
+}
+
+// Interpola o subsídio real da tabela Caixa para F1
+function getSubsidioF1(renda: number): number {
+  const tabela = TABELA_SUBSIDIO_F1;
+  if (renda <= tabela[0][0]) return tabela[0][1];
+  if (renda >= tabela[tabela.length - 1][0]) return 0;
+  for (let i = 0; i < tabela.length - 1; i++) {
+    const [r1, s1] = tabela[i];
+    const [r2, s2] = tabela[i + 1];
+    if (renda >= r1 && renda <= r2) {
+      const t = (renda - r1) / (r2 - r1);
+      const subsidio = s1 + t * (s2 - s1);
+      return subsidio < 1500 ? 0 : Math.round(subsidio);
+    }
+  }
+  return 0;
 }
 
 // Calcula parcela PRICE dado o valor financiado
@@ -130,24 +172,7 @@ function calcularFinanciavelPorRenda(renda: number, prazoMeses: number, taxaMens
   const i = taxaMensal;
   const n = prazoMeses;
   if (i === 0) return parcelaMax * n;
-  // PV = PMT × [(1 - (1+i)^-n) / i]
   return parcelaMax * ((1 - Math.pow(1 + i, -n)) / i);
-}
-
-// Calcula subsídio real baseado na lógica da Caixa
-// Subsídio = VGV - financiável - FGTS (o que falta para fechar)
-// Se subsídio < R$1.500 → Caixa não libera → retorna 0
-function calcularSubsidioReal(
-  faixa: typeof MCMV.faixas[0],
-  vgv: number,
-  financiavel: number,
-  fgts: number
-): number {
-  if (!faixa.temSubsidio) return 0;
-  const subsidioNecessario = vgv - financiavel - fgts;
-  if (subsidioNecessario < 1500) return 0; // Caixa não libera abaixo de R$1.500
-  // Limita ao teto legal da faixa
-  return Math.min(faixa.subsidioMaxReal, Math.max(0, subsidioNecessario));
 }
 
 function fmt(v: number) {
@@ -200,28 +225,28 @@ export default function PreAnaliseMcmv() {
       return { faixa: null, impedimentos, viavel: false };
     }
 
-    // LÓGICA REAL DA CAIXA:
-    // 1. Calcular taxa mensal interpolada pela renda dentro da faixa
-    const taxaMensal = getTaxaMensal(faixa, rendaNum);
+    // LÓGICA REAL DA CAIXA (baseada na tabela oficial mai/2025 + simulações aprovadas):
+    // 1. Taxa mensal pela sub-faixa exata da tabela
+    const taxaMensal = getTaxaMensal(rendaNum);
+    const taxaAnualReal = getTaxaAnual(rendaNum);
     // 2. Calcular máximo financiável pela renda (parcela = 30% da renda)
     const financiavelPorRenda = calcularFinanciavelPorRenda(rendaNum, prazoNum, taxaMensal);
-    // 3. Cota máxima = 80% do VGV (entrada mínima = 20%)
-    const cotaMaxima = vgv * 0.80;
+    // 3. Cap de financiamento por faixa (teto do imóvel SP)
+    const cotaMaxima = Math.min(financiavelPorRenda, faixa.tetoSP * 0.90); // Caixa financia até 90% do VGV
     // 4. Financiável real = menor entre o que cabe na renda e a cota máxima
     const valorFinanciavelBruto = Math.min(financiavelPorRenda, cotaMaxima);
-    // 5. Subsídio = o que falta para fechar (VGV - financiável - FGTS)
-    const subsidio = calcularSubsidioReal(faixa, vgv, valorFinanciavelBruto, fgtsNum);
-    // 6. Financiável final (após subsídio)
-    const valorFinanciavel = Math.max(0, vgv - subsidio - fgtsNum);
-    // Garante que não ultrapasse a cota máxima
-    const valorFinanciavelFinal = Math.min(valorFinanciavel, cotaMaxima);
+    // 5. Subsídio real da tabela Caixa (apenas F1, interpolado)
+    const subsidio = faixa.temSubsidio ? getSubsidioF1(rendaNum) : 0;
+    // 6. Financiável final = VGV - subsídio - FGTS (o que o cliente precisa financiar)
+    const valorFinanciavelIdeal = Math.max(0, vgv - subsidio - fgtsNum);
+    // Garante que não ultrapasse o que a renda suporta
+    const valorFinanciavelFinal = Math.min(valorFinanciavelIdeal, valorFinanciavelBruto);
     // 7. Parcela real com o valor financiável final
     const parcela = calcularParcela(valorFinanciavelFinal, prazoNum, taxaMensal);
     const comprometimento = rendaNum > 0 ? parcela / rendaNum : 0;
     const dentroLimite = comprometimento <= 0.30;
-    // 8. Entrada necessária
+    // 8. Entrada necessária = VGV - financiável - subsídio - FGTS
     const entradaNecessaria = Math.max(0, vgv - valorFinanciavelFinal - subsidio - fgtsNum);
-
     // Alertas
     const alertas: string[] = [];
     if (tipoVinculo === "MEI" || tipoVinculo === "Autônomo") {
@@ -237,7 +262,7 @@ export default function PreAnaliseMcmv() {
     return {
       faixa,
       taxaMensal,
-      taxaAnualPct: taxaMensal * 12 * 100,
+      taxaAnualPct: getTaxaAnual(rendaNum) * 100,
       subsidio,
       valorFinanciavel: valorFinanciavelFinal,
       financiavelPorRenda,
