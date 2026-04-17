@@ -100,6 +100,7 @@ const menuGroups = [
       { icon: LayoutDashboard, label: "Meu Dashboard", path: "/meu-negocio/dashboard", roles: ["corretor"] },
       { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup", roles: ["corretor"] },
       { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise", roles: ["corretor"] },
+      { icon: TrendingUp, label: "Minha Evolução", path: "/meu-negocio/evolucao", roles: ["corretor"] },
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
     ],
   },

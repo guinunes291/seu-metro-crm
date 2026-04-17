@@ -64,6 +64,7 @@ import CarteiraAtiva from "@/pages/CarteiraAtiva";
 import MeuDashboard from "@/pages/meu-negocio/MeuDashboard";
 import MeuFollowUp from "@/pages/meu-negocio/MeuFollowUp";
 import PreAnaliseMcmv from "@/pages/meu-negocio/PreAnaliseMcmv";
+import MinhaEvolucao from "@/pages/meu-negocio/MinhaEvolucao";
 import { AlertasNotification } from "./components/AlertasNotification";
 import { CorretorNotifications } from "./components/CorretorNotifications";
 
@@ -128,6 +129,7 @@ function Router() {
       <Route path="/meu-negocio/dashboard" component={MeuDashboard} />
       <Route path="/meu-negocio/followup" component={MeuFollowUp} />
       <Route path="/meu-negocio/pre-analise" component={PreAnaliseMcmv} />
+      <Route path="/meu-negocio/evolucao" component={MinhaEvolucao} />
 
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />

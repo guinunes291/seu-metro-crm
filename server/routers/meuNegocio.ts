@@ -1,7 +1,7 @@
 import { protectedProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { meuNegocioParametros, preAnalisesMcmv, leads, followUps } from "../../drizzle/schema";
+import { meuNegocioParametros, preAnalisesMcmv, leads, followUps, agendamentos, visitas, contratos } from "../../drizzle/schema";
 import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
 
 // ============================================================================
@@ -403,4 +403,82 @@ export const meuNegocioRouter = router({
         ));
       return { ok: true };
     }),
+
+  // --------------------------------------------------------------------------
+  // EVOLUÇÃO MENSAL (últimos 6 meses)
+  // --------------------------------------------------------------------------
+
+  getEvolucaoMensal: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const MESES_PT = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const now = new Date();
+
+    const [params] = await db
+      .select()
+      .from(meuNegocioParametros)
+      .where(eq(meuNegocioParametros.corretorId, ctx.user.id))
+      .limit(1);
+
+    const ticketMedio = Number(params?.ticketMedio ?? 275000);
+    const comissaoPct = Number(params?.comissaoPct ?? 0.017);
+
+    const meses = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const inicio = new Date(d.getFullYear(), d.getMonth(), 1);
+      const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const [leadsRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(leads)
+        .where(and(
+          eq(leads.corretorId, ctx.user.id),
+          gte(leads.createdAt, inicio),
+          lte(leads.createdAt, fim),
+        ));
+
+      const [agendRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(agendamentos)
+        .where(and(
+          eq(agendamentos.corretorId, ctx.user.id),
+          gte(agendamentos.createdAt, inicio),
+          lte(agendamentos.createdAt, fim),
+        ));
+
+      const [visitaRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(visitas)
+        .where(and(
+          eq(visitas.corretorId, ctx.user.id),
+          gte(visitas.createdAt, inicio),
+          lte(visitas.createdAt, fim),
+        ));
+
+      const [vendasRow] = await db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(contratos)
+        .where(and(
+          eq(contratos.corretorId, ctx.user.id),
+          gte(contratos.createdAt, inicio),
+          lte(contratos.createdAt, fim),
+          eq(contratos.distrato, false),
+        ));
+
+      const vendasCount = Number(vendasRow?.count ?? 0);
+
+      meses.push({
+        mes: MESES_PT[d.getMonth()],
+        mesNum: d.getMonth() + 1,
+        ano: d.getFullYear(),
+        leadsRecebidos: Number(leadsRow?.count ?? 0),
+        agendamentos: Number(agendRow?.count ?? 0),
+        visitas: Number(visitaRow?.count ?? 0),
+        vendas: vendasCount,
+        receita: vendasCount * ticketMedio * comissaoPct,
+      });
+    }
+
+    return meses;
+  }),
 });
