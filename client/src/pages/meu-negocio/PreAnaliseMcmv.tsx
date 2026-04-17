@@ -228,19 +228,19 @@ export default function PreAnaliseMcmv() {
     // LÓGICA REAL DA CAIXA (baseada na tabela oficial mai/2025 + simulações aprovadas):
     // 1. Taxa mensal pela sub-faixa exata da tabela
     const taxaMensal = getTaxaMensal(rendaNum);
-    const taxaAnualReal = getTaxaAnual(rendaNum);
     // 2. Calcular máximo financiável pela renda (parcela = 30% da renda)
     const financiavelPorRenda = calcularFinanciavelPorRenda(rendaNum, prazoNum, taxaMensal);
-    // 3. Cap de financiamento por faixa (teto do imóvel SP)
-    const cotaMaxima = Math.min(financiavelPorRenda, faixa.tetoSP * 0.90); // Caixa financia até 90% do VGV
-    // 4. Financiável real = menor entre o que cabe na renda e a cota máxima
-    const valorFinanciavelBruto = Math.min(financiavelPorRenda, cotaMaxima);
-    // 5. Subsídio real da tabela Caixa (apenas F1, interpolado)
+    // 3. Limite de 80% do VGV (regra da Caixa: financia no máximo 80% do valor do imóvel)
+    const limiteOitentaPct = vgv * 0.80;
+    // 4. Subsídio real da tabela Caixa (apenas F1, interpolado)
     const subsidio = faixa.temSubsidio ? getSubsidioF1(rendaNum) : 0;
-    // 6. Financiável final = VGV - subsídio - FGTS (o que o cliente precisa financiar)
+    // 5. Financiável ideal = VGV - subsídio - FGTS (o que o cliente precisa financiar)
     const valorFinanciavelIdeal = Math.max(0, vgv - subsidio - fgtsNum);
-    // Garante que não ultrapasse o que a renda suporta
-    const valorFinanciavelFinal = Math.min(valorFinanciavelIdeal, valorFinanciavelBruto);
+    // 6. Financiável final = menor entre:
+    //    a) o que a renda suporta (PRICE inverso com 30% da renda)
+    //    b) 80% do VGV (limite da Caixa)
+    //    c) o que precisa ser financiado (VGV - subsídio - FGTS)
+    const valorFinanciavelFinal = Math.min(valorFinanciavelIdeal, financiavelPorRenda, limiteOitentaPct);
     // 7. Parcela real com o valor financiável final
     const parcela = calcularParcela(valorFinanciavelFinal, prazoNum, taxaMensal);
     const comprometimento = rendaNum > 0 ? parcela / rendaNum : 0;
