@@ -74,19 +74,29 @@ export const meuNegocioRouter = router({
   salvarParametros: protectedProcedure
     .input(z.object({
       ticketMedio: z.number().positive(),
-      comissaoPct: z.number().min(0).max(1),
+      comissaoPct: z.number().min(0).max(100),
       metaReceitaMes: z.number().positive(),
-      taxaLeadAgendamento: z.number().min(0).max(1),
-      taxaAgendamentoVisita: z.number().min(0).max(1),
-      taxaVisitaProposta: z.number().min(0).max(1),
-      taxaPropostaVenda: z.number().min(0).max(1),
+      taxaLeadAgendamento: z.number().min(0).max(100),
+      taxaAgendamentoVisita: z.number().min(0).max(100),
+      taxaVisitaProposta: z.number().min(0).max(100),
+      taxaPropostaVenda: z.number().min(0).max(100),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
+      // Converter percentuais de 0-100 para 0-1 antes de salvar
+      const toDecimal = (v: number) => v > 1 ? v / 100 : v;
+      const data = {
+        ...input,
+        comissaoPct: toDecimal(input.comissaoPct),
+        taxaLeadAgendamento: toDecimal(input.taxaLeadAgendamento),
+        taxaAgendamentoVisita: toDecimal(input.taxaAgendamentoVisita),
+        taxaVisitaProposta: toDecimal(input.taxaVisitaProposta),
+        taxaPropostaVenda: toDecimal(input.taxaPropostaVenda),
+      };
       await db
         .insert(meuNegocioParametros)
-        .values({ corretorId: ctx.user.id, ...input })
-        .onDuplicateKeyUpdate({ set: input });
+        .values({ corretorId: ctx.user.id, ...data })
+        .onDuplicateKeyUpdate({ set: data });
       return { ok: true };
     }),
 
