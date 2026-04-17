@@ -12,7 +12,7 @@ import { trpc } from "@/lib/trpc";
 
 import {
   Calculator, Save, AlertTriangle, CheckCircle2, XCircle,
-  Info, ChevronDown, ChevronUp, History, Trash2
+  Info, ChevronDown, ChevronUp, History, Trash2, ExternalLink
 } from "lucide-react";
 
 // ============================================================================
@@ -353,6 +353,27 @@ export default function PreAnaliseMcmv() {
           <p className="text-sm text-muted-foreground">Calculadora em tempo real — valores vigentes desde 22/04/2026</p>
         </div>
       </div>
+
+      {/* Card Simulador Oficial Caixa */}
+      <a
+        href="https://www8.caixa.gov.br/siopiinternet-web/simulaOperacaoInternet.do?method=inicializarCasoUso"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between rounded-lg border-2 border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700 p-4 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-600 rounded-lg flex-shrink-0">
+            <Calculator className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <div className="font-semibold text-blue-800 dark:text-blue-300 text-sm">Simulador Oficial da Caixa</div>
+            <div className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+              Para uma simulação mais precisa, acesse o simulador oficial da CAIXA Econômica Federal
+            </div>
+          </div>
+        </div>
+        <ExternalLink className="h-5 w-5 text-blue-500 flex-shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+      </a>
 
       {/* Tabela de faixas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
