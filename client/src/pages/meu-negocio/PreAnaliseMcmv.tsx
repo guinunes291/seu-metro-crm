@@ -194,6 +194,7 @@ export default function PreAnaliseMcmv() {
   const [nomeCliente, setNomeCliente] = useState("");
   const [renda, setRenda] = useState("");
   const [tipoVinculo, setTipoVinculo] = useState("CLT");
+  const [idade, setIdade] = useState("");
   const [fgts, setFgts] = useState("");
   const [valorImovel, setValorImovel] = useState("");
   const [prazo, setPrazo] = useState("420");
@@ -202,12 +203,28 @@ export default function PreAnaliseMcmv() {
   const [possuiImovelNome, setPossuiImovelNome] = useState(false);
   const [showHistorico, setShowHistorico] = useState(false);
 
+  // Prazo máximo pela idade: 80 anos e 6 meses (966 meses) - idade em meses
+  const prazoMaximoPorIdade = useMemo(() => {
+    const idadeNum = parseInt(idade) || 0;
+    if (!idadeNum) return 420; // sem idade informada, usa máximo padrão
+    const idadeMeses = idadeNum * 12;
+    const limiteTotal = 80 * 12 + 6; // 966 meses
+    const prazoMax = limiteTotal - idadeMeses;
+    return Math.max(60, Math.min(prazoMax, 420)); // mínimo 60 meses, máximo 420
+  }, [idade]);
+
+  // Ajusta prazo selecionado se exceder o máximo por idade
+  const prazoEfetivo = useMemo(() => {
+    const prazoSelecionado = parseInt(prazo) || 420;
+    return Math.min(prazoSelecionado, prazoMaximoPorIdade);
+  }, [prazo, prazoMaximoPorIdade]);
+
   // Cálculo em tempo real
   const resultado = useMemo(() => {
     const rendaNum = parseFloat(renda.replace(/\D/g, "")) || 0;
     const vgv = parseFloat(valorImovel.replace(/\D/g, "")) || 0;
     const fgtsNum = parseFloat(fgts.replace(/\D/g, "")) || 0;
-    const prazoNum = parseInt(prazo) || 420;
+    const prazoNum = prazoEfetivo;
 
     if (!rendaNum || !vgv) return null;
 
@@ -417,18 +434,43 @@ export default function PreAnaliseMcmv() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Prazo de financiamento</Label>
-            <Select value={prazo} onValueChange={setPrazo}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="420">420 meses (35 anos)</SelectItem>
-                <SelectItem value="360">360 meses (30 anos)</SelectItem>
-                <SelectItem value="300">300 meses (25 anos)</SelectItem>
-                <SelectItem value="240">240 meses (20 anos)</SelectItem>
-                <SelectItem value="180">180 meses (15 anos)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Idade do cliente (anos)</Label>
+              <Input
+                type="number"
+                placeholder="Ex: 35"
+                min={18}
+                max={80}
+                value={idade}
+                onChange={(e) => setIdade(e.target.value)}
+              />
+              {idade && parseInt(idade) > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Prazo máx: <span className={prazoMaximoPorIdade < 420 ? "text-amber-600 font-semibold" : ""}>{prazoMaximoPorIdade} meses ({Math.floor(prazoMaximoPorIdade / 12)} anos)</span>
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Prazo desejado</Label>
+              <Select value={prazo} onValueChange={setPrazo}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="420">420 meses (35 anos)</SelectItem>
+                  <SelectItem value="360">360 meses (30 anos)</SelectItem>
+                  <SelectItem value="300">300 meses (25 anos)</SelectItem>
+                  <SelectItem value="240">240 meses (20 anos)</SelectItem>
+                  <SelectItem value="180">180 meses (15 anos)</SelectItem>
+                  <SelectItem value="120">120 meses (10 anos)</SelectItem>
+                  <SelectItem value="60">60 meses (5 anos)</SelectItem>
+                </SelectContent>
+              </Select>
+              {prazoEfetivo < parseInt(prazo) && (
+                <p className="text-xs text-amber-600 font-semibold">
+                  ⚠ Reduzido para {prazoEfetivo} meses pela idade
+                </p>
+              )}
+            </div>
           </div>
 
           <Separator />
