@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -142,23 +143,23 @@ export default function MeuFollowUp() {
   const { data: leads, refetch } = trpc.meuNegocio.getLeadsFollowUp.useQuery();
   const registrarMutation = trpc.meuNegocio.registrarFollowUp.useMutation({
     onSuccess: () => {
-      toast({ title: "Follow-up registrado!" });
+      toast.success("Follow-up registrado!");
       setRegistrandoId(null);
       setObservacao("");
       setRespondeu(null);
       refetch();
     },
-    onError: (e) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e) => toast.error("Erro", { description: e.message }),
   });
 
   function copiarScript(script: string) {
     navigator.clipboard.writeText(script);
-    toast({ title: "Script copiado!", description: "Cole no WhatsApp ou use como roteiro." });
+    toast.success("Script copiado!", { description: "Cole no WhatsApp ou use como roteiro." });
   }
 
   function handleRegistrar(leadId: number) {
     if (respondeu === null) {
-      toast({ title: "Informe se o cliente respondeu", variant: "destructive" });
+      toast.error("Informe se o cliente respondeu");
       return;
     }
     registrarMutation.mutate({ leadId, respondeu, observacao });
@@ -167,7 +168,8 @@ export default function MeuFollowUp() {
   const hoje = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <DashboardLayout>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -336,5 +338,6 @@ export default function MeuFollowUp() {
         </div>
       )}
     </div>
+    </DashboardLayout>
   );
 }

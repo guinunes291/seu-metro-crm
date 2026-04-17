@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState, useEffect, useMemo } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -169,19 +170,19 @@ export default function PreAnaliseMcmv() {
 
   const salvarMutation = trpc.meuNegocio.salvarPreAnalise.useMutation({
     onSuccess: () => {
-      toast({ title: "Pré-análise salva!", description: `Análise de ${nomeCliente} salva no histórico.` });
+      toast.success("Pré-análise salva!", { description: `Análise de ${nomeCliente} salva no histórico.` });
       refetchHistorico();
     },
-    onError: (e) => toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
+    onError: (e) => toast.error("Erro ao salvar", { description: e.message }),
   });
 
   const deletarMutation = trpc.meuNegocio.deletarPreAnalise.useMutation({
-    onSuccess: () => { toast({ title: "Análise removida" }); refetchHistorico(); },
+    onSuccess: () => { toast.success("Análise removida"); refetchHistorico(); },
   });
 
   function handleSalvar() {
-    if (!nomeCliente.trim()) { toast({ title: "Informe o nome do cliente", variant: "destructive" }); return; }
-    if (!resultado) { toast({ title: "Preencha renda e valor do imóvel", variant: "destructive" }); return; }
+    if (!nomeCliente.trim()) { toast.error("Informe o nome do cliente"); return; }
+    if (!resultado) { toast.error("Preencha renda e valor do imóvel"); return; }
     salvarMutation.mutate({
       nomeCliente: nomeCliente.trim(),
       rendaFamiliar: parseFloat(renda.replace(/\D/g, "")) || 0,
@@ -208,7 +209,8 @@ export default function PreAnaliseMcmv() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <DashboardLayout>
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -504,5 +506,6 @@ export default function PreAnaliseMcmv() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 }

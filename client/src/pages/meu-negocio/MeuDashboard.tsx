@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,11 +83,11 @@ export default function MeuDashboard() {
   const { data: params, refetch: refetchParams } = trpc.meuNegocio.getParametros.useQuery();
   const salvarParams = trpc.meuNegocio.salvarParametros.useMutation({
     onSuccess: () => {
-      toast({ title: "Parâmetros salvos!" });
+      toast.success("Parâmetros salvos!");
       setEditando(false);
       refetchParams();
     },
-    onError: (e) => toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" }),
+    onError: (e) => toast.error("Erro ao salvar", { description: e.message }),
   });
 
   // Resultados do mês atual
@@ -167,7 +168,8 @@ export default function MeuDashboard() {
   }, []);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <DashboardLayout>
+    <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -349,5 +351,6 @@ export default function MeuDashboard() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 }
