@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
@@ -110,6 +111,7 @@ export default function MinhaEvolucao() {
   }));
 
   return (
+    <DashboardLayout>
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -332,5 +334,6 @@ export default function MinhaEvolucao() {
         </CardContent>
       </Card>
     </div>
+    </DashboardLayout>
   );
 }
