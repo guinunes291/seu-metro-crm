@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
-import { useToast } from "@/hooks/use-toast";
+
 import {
   Calculator, Save, AlertTriangle, CheckCircle2, XCircle,
   Info, ChevronDown, ChevronUp, History, Trash2
@@ -92,7 +93,7 @@ function fmtPct(v: number) {
 // ============================================================================
 
 export default function PreAnaliseMcmv() {
-  const { toast } = useToast();
+  
 
   // Inputs
   const [nomeCliente, setNomeCliente] = useState("");

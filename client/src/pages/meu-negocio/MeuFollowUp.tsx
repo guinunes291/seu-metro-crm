@@ -1,9 +1,10 @@
+import { toast } from "sonner";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
-import { useToast } from "@/hooks/use-toast";
+
 import {
   Phone, MessageSquare, CheckCircle2, XCircle, Clock,
   ChevronDown, ChevronUp, Copy, User, Calendar, AlertCircle
@@ -132,7 +133,7 @@ Qualquer documento adicional que solicitarem, pode me enviar que encaminho para 
 // ============================================================================
 
 export default function MeuFollowUp() {
-  const { toast } = useToast();
+  
   const [expandido, setExpandido] = useState<number | null>(null);
   const [registrandoId, setRegistrandoId] = useState<number | null>(null);
   const [observacao, setObservacao] = useState("");

@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { trpc } from "@/lib/trpc";
-import { useToast } from "@/hooks/use-toast";
+
 import {
   Target, TrendingUp, AlertCircle, CheckCircle2, Edit3, Save,
   Users, Calendar, Home, FileText, DollarSign, Zap, Clock,
@@ -74,7 +75,7 @@ function calcularReverso(params: {
 // ============================================================================
 
 export default function MeuDashboard() {
-  const { toast } = useToast();
+  
   const [editando, setEditando] = useState(false);
 
   // Parâmetros do corretor
