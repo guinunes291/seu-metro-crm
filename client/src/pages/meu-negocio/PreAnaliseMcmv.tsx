@@ -19,66 +19,135 @@ import {
 // CONSTANTES MCMV — Vigentes desde 22/04/2026
 // ============================================================================
 
+// ============================================================================
+// REGRAS REAIS BASEADAS NAS SIMULAÇÕES APROVADAS DA CAIXA (abr/2026)
+// Fonte: Portal de Negócios da Habitação + casos reais aprovados
+//
+// LÓGICA REAL DA CAIXA:
+// 1. Parcela máxima = renda × 30% (comprometimento máximo)
+// 2. Financiável = valor que cabe na parcela (PRICE inverso)
+// 3. Subsídio = VGV - financiável - FGTS (o que "falta" para fechar)
+// 4. Subsídio efetivo = 0 se calculado < R$ 1.500 (Caixa não libera abaixo disso)
+// 5. Entrada = VGV - financiável - subsídio - FGTS
+//
+// TAXAS OBSERVADAS NOS CASOS REAIS:
+// F1 (renda ~R$2.440): 4,50% a.a. → 0,375% a.m.
+// F1 (renda ~R$3.200): 5,00% a.a. → 0,417% a.m.
+// F2 (renda ~R$3.700): 5,00-5,50% a.a.
+// F3 (renda ~R$7.875): 8,16% a.a. → 0,680% a.m.
+// Classe Média (SBPE): 10,00% a.a. → 0,833% a.m.
+//
+// SUBSÍDIOS REAIS:
+// F1 baixa renda: até ~R$8.255 (decrescente com a renda)
+// F1 teto (R$3.200): ~R$1.784 (muito baixo)
+// F2: praticamente ZERO (R$647-R$1.440 — abaixo do mínimo liberado)
+// F3 e Classe Média: ZERO
+// ============================================================================
+
 const MCMV = {
   faixas: [
     {
       id: "F1",
       label: "Faixa 1",
+      rendaMin: 0,
       rendaMax: 3200,
       tetoSP: 275000,
-      subsidioMax: 55000,
-      subsidioFator: 0.25, // MIN(55000, VGV × 25%)
-      taxaMensal: 0.0035,
+      // Taxa varia dentro da faixa: 4,5% a.a. (renda baixa) até 5,0% a.a. (teto)
+      // Usamos interpolação linear entre rendaMin e rendaMax
+      taxaAnualMin: 0.045, // 4,5% a.a. para renda mínima
+      taxaAnualMax: 0.050, // 5,0% a.a. para renda no teto
+      // Subsídio máximo real observado: ~R$8.255 para renda ~R$2.440
+      // Decresce linearmente até ~R$1.784 no teto (R$3.200)
+      // Abaixo de R$1.500 → Caixa não libera (desconsiderar)
+      subsidioMaxReal: 55000, // teto legal, mas na prática muito menor
       cor: "#16a34a",
+      temSubsidio: true,
     },
     {
       id: "F2",
       label: "Faixa 2",
+      rendaMin: 3200.01,
       rendaMax: 5000,
       tetoSP: 275000,
-      subsidioMax: 35000,
-      subsidioFator: 0.15, // MIN(35000, VGV × 15%)
-      taxaMensal: 0.0050,
+      taxaAnualMin: 0.050, // 5,0% a.a.
+      taxaAnualMax: 0.055, // 5,5% a.a.
+      subsidioMaxReal: 0, // Na prática ZERO — casos reais: R$647 e R$1.440 (abaixo do mínimo)
       cor: "#2563eb",
+      temSubsidio: false, // F2 não tem subsídio efetivo na prática
     },
     {
       id: "F3",
       label: "Faixa 3",
+      rendaMin: 5000.01,
       rendaMax: 9600,
       tetoSP: 400000,
-      subsidioMax: 15000,
-      subsidioFator: 0.05, // MIN(15000, VGV × 5%)
-      taxaMensal: 0.0063,
+      taxaAnualMin: 0.0816, // 8,16% a.a. (caso real Nathanael/Álvaro)
+      taxaAnualMax: 0.0816,
+      subsidioMaxReal: 0, // ZERO subsídio
       cor: "#7c3aed",
+      temSubsidio: false,
     },
     {
       id: "CM",
       label: "Classe Média",
+      rendaMin: 9600.01,
       rendaMax: 13000,
       tetoSP: 600000,
-      subsidioMax: 0,
-      subsidioFator: 0,
-      taxaMensal: 0.0085,
+      taxaAnualMin: 0.10, // 10,0% a.a. (SBPE)
+      taxaAnualMax: 0.10,
+      subsidioMaxReal: 0, // ZERO subsídio
       cor: "#d97706",
+      temSubsidio: false,
     },
   ],
 };
+
+// Calcula taxa mensal interpolada pela posição da renda dentro da faixa
+function getTaxaMensal(faixa: typeof MCMV.faixas[0], renda: number): number {
+  const range = faixa.rendaMax - faixa.rendaMin;
+  if (range <= 0) return faixa.taxaAnualMin / 12;
+  const posicao = Math.min(1, Math.max(0, (renda - faixa.rendaMin) / range));
+  const taxaAnual = faixa.taxaAnualMin + posicao * (faixa.taxaAnualMax - faixa.taxaAnualMin);
+  return taxaAnual / 12;
+}
 
 function getFaixa(renda: number) {
   return MCMV.faixas.find((f) => renda <= f.rendaMax) ?? null;
 }
 
-function calcularSubsidio(faixa: typeof MCMV.faixas[0], vgv: number): number {
-  if (faixa.subsidioMax === 0) return 0;
-  return Math.min(faixa.subsidioMax, vgv * faixa.subsidioFator);
-}
-
+// Calcula parcela PRICE dado o valor financiado
 function calcularParcela(valorFinanciavel: number, prazoMeses: number, taxaMensal: number): number {
   if (valorFinanciavel <= 0 || prazoMeses <= 0) return 0;
-  // Sistema PRICE
   const i = taxaMensal;
   const n = prazoMeses;
   return (valorFinanciavel * i * Math.pow(1 + i, n)) / (Math.pow(1 + i, n) - 1);
+}
+
+// Calcula o valor máximo financiável dado a parcela máxima (PRICE inverso)
+// Parcela máxima = renda × 30%
+function calcularFinanciavelPorRenda(renda: number, prazoMeses: number, taxaMensal: number): number {
+  const parcelaMax = renda * 0.30;
+  const i = taxaMensal;
+  const n = prazoMeses;
+  if (i === 0) return parcelaMax * n;
+  // PV = PMT × [(1 - (1+i)^-n) / i]
+  return parcelaMax * ((1 - Math.pow(1 + i, -n)) / i);
+}
+
+// Calcula subsídio real baseado na lógica da Caixa
+// Subsídio = VGV - financiável - FGTS (o que falta para fechar)
+// Se subsídio < R$1.500 → Caixa não libera → retorna 0
+function calcularSubsidioReal(
+  faixa: typeof MCMV.faixas[0],
+  vgv: number,
+  financiavel: number,
+  fgts: number
+): number {
+  if (!faixa.temSubsidio) return 0;
+  const subsidioNecessario = vgv - financiavel - fgts;
+  if (subsidioNecessario < 1500) return 0; // Caixa não libera abaixo de R$1.500
+  // Limita ao teto legal da faixa
+  return Math.min(faixa.subsidioMaxReal, Math.max(0, subsidioNecessario));
 }
 
 function fmt(v: number) {
@@ -131,11 +200,27 @@ export default function PreAnaliseMcmv() {
       return { faixa: null, impedimentos, viavel: false };
     }
 
-    const subsidio = calcularSubsidio(faixa, vgv);
+    // LÓGICA REAL DA CAIXA:
+    // 1. Calcular taxa mensal interpolada pela renda dentro da faixa
+    const taxaMensal = getTaxaMensal(faixa, rendaNum);
+    // 2. Calcular máximo financiável pela renda (parcela = 30% da renda)
+    const financiavelPorRenda = calcularFinanciavelPorRenda(rendaNum, prazoNum, taxaMensal);
+    // 3. Cota máxima = 80% do VGV (entrada mínima = 20%)
+    const cotaMaxima = vgv * 0.80;
+    // 4. Financiável real = menor entre o que cabe na renda e a cota máxima
+    const valorFinanciavelBruto = Math.min(financiavelPorRenda, cotaMaxima);
+    // 5. Subsídio = o que falta para fechar (VGV - financiável - FGTS)
+    const subsidio = calcularSubsidioReal(faixa, vgv, valorFinanciavelBruto, fgtsNum);
+    // 6. Financiável final (após subsídio)
     const valorFinanciavel = Math.max(0, vgv - subsidio - fgtsNum);
-    const parcela = calcularParcela(valorFinanciavel, prazoNum, faixa.taxaMensal);
+    // Garante que não ultrapasse a cota máxima
+    const valorFinanciavelFinal = Math.min(valorFinanciavel, cotaMaxima);
+    // 7. Parcela real com o valor financiável final
+    const parcela = calcularParcela(valorFinanciavelFinal, prazoNum, taxaMensal);
     const comprometimento = rendaNum > 0 ? parcela / rendaNum : 0;
     const dentroLimite = comprometimento <= 0.30;
+    // 8. Entrada necessária
+    const entradaNecessaria = Math.max(0, vgv - valorFinanciavelFinal - subsidio - fgtsNum);
 
     // Alertas
     const alertas: string[] = [];
@@ -151,9 +236,14 @@ export default function PreAnaliseMcmv() {
 
     return {
       faixa,
+      taxaMensal,
+      taxaAnualPct: taxaMensal * 12 * 100,
       subsidio,
-      valorFinanciavel,
+      valorFinanciavel: valorFinanciavelFinal,
+      financiavelPorRenda,
+      entradaNecessaria,
       parcela,
+      parcelaMaxima: rendaNum * 0.30,
       comprometimento,
       dentroLimite,
       impedimentos,
@@ -235,8 +325,10 @@ export default function PreAnaliseMcmv() {
               {f.id === "F1" ? `até ${fmt(f.rendaMax)}` : `até ${fmt(f.rendaMax)}`}
             </div>
             <div className="text-xs font-medium mt-1">Teto SP: {fmt(f.tetoSP)}</div>
-            {f.subsidioMax > 0 && (
-              <div className="text-xs text-muted-foreground">Subsídio: até {fmt(f.subsidioMax)}</div>
+            {f.temSubsidio ? (
+              <div className="text-xs text-green-600 font-medium">Com subsídio</div>
+            ) : (
+              <div className="text-xs text-muted-foreground">Sem subsídio</div>
             )}
           </div>
         ))}
@@ -361,7 +453,7 @@ export default function PreAnaliseMcmv() {
                     </span>
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    Taxa: {fmtPct(resultado.faixa.taxaMensal)} a.m. · Teto SP: {fmt(resultado.faixa.tetoSP)}
+                    Taxa: {resultado.taxaAnualPct?.toFixed(2)}% a.a. · Teto SP: {fmt(resultado.faixa.tetoSP)}
                   </div>
                 </div>
               ) : (
@@ -377,16 +469,18 @@ export default function PreAnaliseMcmv() {
               {resultado.faixa && (
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "Subsídio estimado", value: fmt(resultado.subsidio ?? 0), highlight: (resultado.subsidio ?? 0) > 0 },
-                    { label: "FGTS utilizado", value: fmt(parseFloat(fgts.replace(/\D/g, "")) || 0), highlight: false },
-                    { label: "Valor financiável", value: fmt(resultado.valorFinanciavel ?? 0), highlight: false },
-                    { label: "1ª parcela (PRICE)", value: fmt(resultado.parcela ?? 0), highlight: false },
+                    { label: "Subsídio estimado", value: fmt(resultado.subsidio ?? 0), highlight: (resultado.subsidio ?? 0) > 1500, sub: resultado.faixa.temSubsidio ? "" : "F2/F3/CM: sem subsídio" },
+                    { label: "FGTS utilizado", value: fmt(parseFloat(fgts.replace(/\D/g, "")) || 0), highlight: false, sub: "" },
+                    { label: "Valor financiável", value: fmt(resultado.valorFinanciavel ?? 0), highlight: false, sub: "máx 80% do imóvel" },
+                    { label: "1ª parcela (PRICE)", value: fmt(resultado.parcela ?? 0), highlight: false, sub: `máx ${fmt(resultado.parcelaMaxima ?? 0)} (30% renda)` },
+                    { label: "Entrada necessária", value: fmt(resultado.entradaNecessaria ?? 0), highlight: false, sub: "entrada + FGTS" },
                   ].map((card) => (
                     <div key={card.label} className="rounded-lg border p-3">
                       <div className="text-xs text-muted-foreground">{card.label}</div>
                       <div className={`text-lg font-bold mt-1 ${card.highlight ? "text-green-600" : ""}`}>
                         {card.value}
                       </div>
+                      {card.sub && <div className="text-xs text-muted-foreground mt-0.5">{card.sub}</div>}
                     </div>
                   ))}
                 </div>
