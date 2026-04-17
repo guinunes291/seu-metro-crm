@@ -461,7 +461,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
     console.log("[Distribuição] Nenhum corretor elegível disponivel");
     return { success: 0, failed: 0, details: [] };
   }
-  const limiteBusca = corretoresElegiveis.length * LEADS_POR_RODADA;
+  const limiteBusca = Math.floor(corretoresElegiveis.length * LEADS_POR_RODADA);
 
   if (gestorIds.length > 0) {
     leadsParaDistribuir = await db
@@ -751,7 +751,7 @@ export async function distribuirLeadsDoEstoque(): Promise<{
   }
 
   // Total de leads a buscar = 30 por corretor elegível
-  const totalParaBuscar = corretoresElegiveis.length * LEADS_POR_RODADA;
+  const totalParaBuscar = Math.floor(corretoresElegiveis.length * LEADS_POR_RODADA);
 
   // Buscar leads aguardando no estoque (ordenar por mais antigo primeiro, sem limite artificial)
   const leadsEmEstoque = await db

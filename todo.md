@@ -5473,3 +5473,16 @@
 - [ ] Corrigir N+1 em getEquipesComparativo
 - [ ] Corrigir N+1 em getFunilConversaoGeral
 - [ ] Adicionar transação em registrarTentativaFollowUp
+
+## Módulo Meu Negócio (Fase 1 MVP)
+
+- [ ] Criar constante centralizada MCMV_FAIXAS com valores atualizados (22/04/2026)
+- [ ] Atualizar valores MCMV em todos os lugares do sistema
+- [ ] Schema: tabela meu_negocio_parametros (parâmetros pessoais do corretor)
+- [ ] Schema: tabela meu_negocio_followups (follow-ups do módulo Meu Negócio)
+- [ ] Backend: procedures para parâmetros pessoais, dashboard, alertas e follow-up
+- [ ] Página: Pré-Análise MCMV (calculadora em tempo real, valores atualizados)
+- [ ] Página: Meu Dashboard (Bloco 3 resultados do mês + Bloco 4 alertas do dia)
+- [ ] Página: Follow-up (agenda com roteiros pré-carregados)
+- [ ] Navegação: menu "Meu Negócio" com submenus no DashboardLayout
+- [ ] Roteamento: /meu-negocio, /meu-negocio/pre-analise, /meu-negocio/followup

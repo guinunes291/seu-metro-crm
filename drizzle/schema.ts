@@ -2348,3 +2348,67 @@ export const carteiraTarefas = mysqlTable("carteira_tarefas", {
 }));
 export type CarteiraTarefa = typeof carteiraTarefas.$inferSelect;
 export type InsertCarteiraTarefa = typeof carteiraTarefas.$inferInsert;
+
+// ============================================================================
+// MÓDULO MEU NEGÓCIO — PARÂMETROS PESSOAIS DO CORRETOR
+// ============================================================================
+/**
+ * Parâmetros pessoais do corretor para cálculo reverso de meta.
+ * Cada corretor configura uma vez e atualiza conforme evolui.
+ */
+export const meuNegocioParametros = mysqlTable("meu_negocio_parametros", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull().unique(),
+  // Parâmetros financeiros
+  ticketMedio: decimal("ticketMedio", { precision: 12, scale: 2 }).default("275000.00").notNull(),
+  comissaoPct: decimal("comissaoPct", { precision: 5, scale: 4 }).default("0.0170").notNull(), // 1.70%
+  metaReceitaMes: decimal("metaReceitaMes", { precision: 12, scale: 2 }).default("10000.00").notNull(),
+  // Taxas de conversão do funil
+  taxaLeadAgendamento: decimal("taxaLeadAgendamento", { precision: 5, scale: 4 }).default("0.30").notNull(), // 30%
+  taxaAgendamentoVisita: decimal("taxaAgendamentoVisita", { precision: 5, scale: 4 }).default("0.70").notNull(), // 70%
+  taxaVisitaProposta: decimal("taxaVisitaProposta", { precision: 5, scale: 4 }).default("0.50").notNull(), // 50%
+  taxaPropostaVenda: decimal("taxaPropostaVenda", { precision: 5, scale: 4 }).default("0.40").notNull(), // 40%
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  parametrosCorretorIdx: index("mn_parametros_corretor_idx").on(table.corretorId),
+}));
+export type MeuNegocioParametros = typeof meuNegocioParametros.$inferSelect;
+export type InsertMeuNegocioParametros = typeof meuNegocioParametros.$inferInsert;
+
+// ============================================================================
+// MÓDULO MEU NEGÓCIO — PRÉ-ANÁLISES MCMV SALVAS
+// ============================================================================
+/**
+ * Pré-análises MCMV salvas pelo corretor durante atendimento.
+ * Vinculadas opcionalmente a um lead.
+ */
+export const preAnalisesMcmv = mysqlTable("pre_analises_mcmv", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull(),
+  leadId: int("leadId"),
+  // Dados de entrada
+  nomeCliente: varchar("nomeCliente", { length: 255 }).notNull(),
+  rendaFamiliar: decimal("rendaFamiliar", { precision: 12, scale: 2 }).notNull(),
+  tipoVinculo: varchar("tipoVinculo", { length: 50 }).default("CLT").notNull(),
+  saldoFgts: decimal("saldoFgts", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  valorImovel: decimal("valorImovel", { precision: 12, scale: 2 }).notNull(),
+  prazoMeses: int("prazoMeses").default(420).notNull(),
+  possuiRestricao: boolean("possuiRestricao").default(false).notNull(),
+  jaBeneficiarioMcmv: boolean("jaBeneficiarioMcmv").default(false).notNull(),
+  possuiImovelNome: boolean("possuiImovelNome").default(false).notNull(),
+  municipio: varchar("municipio", { length: 100 }).default("São Paulo").notNull(),
+  // Resultados calculados (snapshot)
+  faixaMcmv: varchar("faixaMcmv", { length: 20 }),
+  subsidioEstimado: decimal("subsidioEstimado", { precision: 12, scale: 2 }),
+  valorFinanciavel: decimal("valorFinanciavel", { precision: 12, scale: 2 }),
+  parcelaEstimada: decimal("parcelaEstimada", { precision: 12, scale: 2 }),
+  comprometimentoPct: decimal("comprometimentoPct", { precision: 5, scale: 4 }),
+  dentroLimite30pct: boolean("dentroLimite30pct"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  preAnaliseCorretorIdx: index("pre_analise_corretor_idx").on(table.corretorId),
+  preAnaliseLeadIdx: index("pre_analise_lead_idx").on(table.leadId),
+}));
+export type PreAnaliseMcmv = typeof preAnalisesMcmv.$inferSelect;
+export type InsertPreAnaliseMcmv = typeof preAnalisesMcmv.$inferInsert;

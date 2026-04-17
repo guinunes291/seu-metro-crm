@@ -37,7 +37,7 @@ import {
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
-  Shield
+  Shield, Briefcase, Calculator, Phone, DollarSign
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -89,6 +89,18 @@ const menuGroups = [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
       { icon: Import, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin", "superintendente"] },
       { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos", roles: ["gestor", "admin", "superintendente"] },
+    ],
+  },
+  {
+    id: "meu-negocio",
+    label: "Meu Negócio",
+    icon: Briefcase,
+    roles: ["corretor"],
+    items: [
+      { icon: LayoutDashboard, label: "Meu Dashboard", path: "/meu-negocio/dashboard", roles: ["corretor"] },
+      { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup", roles: ["corretor"] },
+      { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise", roles: ["corretor"] },
+      { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
     ],
   },
   {

@@ -65,10 +65,11 @@ Você domina e explica com clareza:
 
 4.1 Minha Casa Minha Vida (referência atual)
 • Atendimento urbano por renda mensal familiar:
-  • Faixa 1: até R$ 2.850
-  • Faixa 2: até R$ 4.700
-  • Faixa 3: até R$ 8.600
-  • Atendimento estendido: até R$ 12.000
+  • Faixa 1: até R$ 3.200 (teto SP: R$ 275k | subsídio até R$ 55k | juros ~0,35% a.m.)
+  • Faixa 2: R$ 3.200,01 a R$ 5.000 (teto SP: R$ 275k | subsídio até R$ 35k | juros ~0,50% a.m.)
+  • Faixa 3: R$ 5.000,01 a R$ 9.600 (teto SP: R$ 400k | subsídio até R$ 15k | juros ~0,63% a.m.)
+  • Classe Média: R$ 9.600,01 a R$ 13.000 (teto SP: R$ 600k | sem subsídio | juros ~0,85% a.m.)
+  • Atualização vigente desde 22/04/2026 (CCFGTS)
 • Diferença entre:
   • Programa habitacional
   • Financiamento

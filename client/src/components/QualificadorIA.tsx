@@ -57,6 +57,18 @@ interface QualificacaoResult {
 function mapFaixaRendaToValor(faixaRenda?: string | null): { renda_individual: string; renda_familiar: string } {
   if (!faixaRenda) return { renda_individual: "", renda_familiar: "" };
   const map: Record<string, string> = {
+    // Valores novos (22/04/2026)
+    ate_3200: "2500",
+    ate_5000: "4000",
+    ate_9600: "7000",
+    ate_13000: "11000",
+    acima_13000: "15000",
+    "Até R$ 3.200 (Faixa 1)": "2500",
+    "R$ 3.200 a R$ 5.000 (Faixa 2)": "4000",
+    "R$ 5.000 a R$ 9.600 (Faixa 3)": "7000",
+    "R$ 9.600 a R$ 13.000 (Classe Média)": "11000",
+    "Acima de R$ 13.000": "15000",
+    // Valores legados (compatibilidade)
     ate_2000: "1800",
     ate_4400: "3500",
     ate_8000: "6000",
@@ -107,14 +119,20 @@ function qualificarLead(f: FormData): QualificacaoResult {
     d1Status = "⚠️ Em aberto"; d1Desc = "Renda não informada. Verificar antes de avançar no funil.";
   } else if (renda < 2000) {
     d1Status = "🔴 Abaixo do perfil"; d1Desc = `${rendaStr}. Abaixo da faixa mínima MCMV. Verificar composição ou subsídio especial.`;
-  } else if (renda <= 4400) {
-    d1Status = "🟢 Faixa 1 MCMV"; d1Desc = `${rendaStr}. Enquadra Faixa 1 — maior subsídio disponível. ${f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo" ? "⚠️ Renda informal: exige documentação comprobatória." : ""}`;
+  } else if (renda <= 3200) {
+    d1Status = "🟢 Faixa 1 MCMV"; d1Desc = `${rendaStr}. Enquadra Faixa 1 — maior subsídio disponível (até R$ 55k). Teto SP: R$ 275k. ${f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo" ? "⚠️ Renda informal: exige documentação comprobatória." : ""}`;
     score.d1 = 2;
-  } else if (renda <= 8000) {
-    d1Status = "🟢 Faixa 2 MCMV"; d1Desc = `${rendaStr}. Enquadra Faixa 2. ${f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo" ? "⚠️ Autônomo/MEI: aprovação depende de IR declarado." : ""}`;
+  } else if (renda <= 5000) {
+    d1Status = "🟢 Faixa 2 MCMV"; d1Desc = `${rendaStr}. Enquadra Faixa 2 — subsídio até R$ 35k. Teto SP: R$ 275k. ${f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo" ? "⚠️ Autônomo/MEI: aprovação depende de IR declarado." : ""}`;
     score.d1 = 2;
+  } else if (renda <= 9600) {
+    d1Status = "🟢 Faixa 3 MCMV"; d1Desc = `${rendaStr}. Enquadra Faixa 3 — subsídio até R$ 15k. Teto SP: R$ 400k. ${f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo" ? "⚠️ Autônomo/MEI: aprovação depende de IR declarado." : ""}`;
+    score.d1 = 2;
+  } else if (renda <= 13000) {
+    d1Status = "🟡 Classe Média MCMV"; d1Desc = `${rendaStr}. Classe Média — sem subsídio, usa FGTS. Teto SP: R$ 600k.`;
+    score.d1 = 1;
   } else {
-    d1Status = "🟡 Acima do MCMV"; d1Desc = `${rendaStr}. Acima do teto MCMV. Avaliar lançamento convencional ou composição de renda.`;
+    d1Status = "🟡 Acima do MCMV"; d1Desc = `${rendaStr}. Acima do teto MCMV (R$ 13k). Avaliar lançamento convencional ou composição de renda.`;
     score.d1 = 1;
   }
   if (f.tipo_renda === "MEI" || f.tipo_renda === "Autônomo") score.d1 = Math.max(0, score.d1 - 1);

@@ -30,6 +30,7 @@ import { enviarWebhookZapier, criarPayloadAgendamento, gerarMensagemConfirmacao 
 import { analyticsRouter } from "./routers/analytics";
 import { construtorasRouter } from "./routers/construtoras";
 import { propostasRouter } from "./routers/propostas";
+import { meuNegocioRouter } from "./routers/meuNegocio";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -110,6 +111,7 @@ export const appRouter = router({
   templates: templatesRouter,
   ia: iaRouter,
   carteiraAtiva: carteiraAtivaRouter,
+  meuNegocio: meuNegocioRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -3815,11 +3817,11 @@ export const appRouter = router({
             '4': 'Zona Oeste', '5': 'Centro', '6': 'Indefinida'
           };
           updates.regiao = regioes[input.mensagem] || input.mensagem;
-          resposta = 'Qual é a sua faixa de renda familiar mensal?\n\n1. Até R$ 2.640\n2. R$ 2.640 a R$ 4.400\n3. R$ 4.400 a R$ 8.000\n4. Acima de R$ 8.000';
+          resposta = 'Qual é a sua faixa de renda familiar mensal?\n\n1. Até R$ 3.200 (Faixa 1)\n2. R$ 3.200 a R$ 5.000 (Faixa 2)\n3. R$ 5.000 a R$ 9.600 (Faixa 3)\n4. R$ 9.600 a R$ 13.000 (Classe Média)\n5. Acima de R$ 13.000';
         } else if (!conversa.rendaFamiliar) {
           const rendas: Record<string, string> = {
-            '1': 'Até R$ 2.640', '2': 'R$ 2.640 a R$ 4.400',
-            '3': 'R$ 4.400 a R$ 8.000', '4': 'Acima de R$ 8.000'
+            '1': 'Até R$ 3.200 (Faixa 1)', '2': 'R$ 3.200 a R$ 5.000 (Faixa 2)',
+            '3': 'R$ 5.000 a R$ 9.600 (Faixa 3)', '4': 'R$ 9.600 a R$ 13.000 (Classe Média)', '5': 'Acima de R$ 13.000'
           };
           updates.rendaFamiliar = rendas[input.mensagem] || input.mensagem;
           resposta = 'Você possui valor para entrada?\n\n1. Sim\n2. Não\n3. Estou juntando';
