@@ -40,7 +40,8 @@ export async function verificarTransferenciasAutomaticas() {
           lt(leads.ultimaInteracao, dataLimite),
           ne(leads.origem, "captacao_corretor"), // Exceção: não transferir leads de captação própria
           eq(leads.naLixeira, false), // Não processar leads na lixeira
-          eq(leads.transferidoManualmentePorAdmin, false) // Não redistribuir leads atribuídos manualmente pelo admin
+          eq(leads.transferidoManualmentePorAdmin, false), // Não redistribuir leads atribuídos manualmente pelo admin
+          sql`(${leads.timerAtivo} = 0 OR ${leads.timerAtivo} IS NULL)` // Não transferir leads com timer ativo
         )
       );
 

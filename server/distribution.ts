@@ -296,18 +296,13 @@ export async function distribuirLeadAutomatico(
     return { success: false, message: "Database não disponível" };
   }
 
-  // Buscar gestor ID fora da transação (não muda)
-  const gestores = await db
-    .select()
+  // Buscar IDs de todos os usuários não-corretores (admins, gestores, superintendentes)
+  const gestoresRows = await db
+    .select({ id: users.id })
     .from(users)
-    .where(eq(users.role, "admin"))
-    .limit(1);
+    .where(sql`${users.role} IN ('admin', 'gestor', 'superintendente')`);
 
-  if (!gestores.length) {
-    return { success: false, message: "Gestor não encontrado" };
-  }
-
-  const gestorId = gestores[0].id;
+  const gestorIds = new Set(gestoresRows.map((g) => g.id));
 
   // Usar transação com SELECT FOR UPDATE para evitar race condition
   try {
@@ -324,8 +319,8 @@ export async function distribuirLeadAutomatico(
 
       const leadData = leadLockedRows[0] as any;
 
-      // Verificar se o lead ainda pode ser distribuído (sem corretor OU com corretor gestor)
-      if (leadData.corretorId !== null && leadData.corretorId !== gestorId) {
+      // Verificar se o lead ainda pode ser distribuído (sem corretor OU com corretor gestor/admin)
+      if (leadData.corretorId !== null && !gestorIds.has(leadData.corretorId)) {
         throw new Error("Lead já foi distribuído para um corretor");
       }
 
@@ -443,11 +438,11 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
     return { success: 0, failed: 0, details: [] };
   }
 
-  // Buscar IDs dos gestores/admins
+  // Buscar IDs de todos os usuários não-corretores (admins, gestores, superintendentes)
   const gestores = await db
     .select({ id: users.id })
     .from(users)
-    .where(eq(users.role, "admin"));
+    .where(sql`${users.role} IN ('admin', 'gestor', 'superintendente')`);
 
   const gestorIds = gestores.map((g) => g.id);
 
@@ -471,9 +466,10 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
         sql`(${leads.corretorId} IS NULL OR ${leads.corretorId} IN (${sql.join(gestorIds.map(id => sql`${id}`), sql`, `)}))
             AND ${leads.status} IN ('novo', 'aguardando_atendimento')
             AND ${leads.naLixeira} = 0
-            AND ${leads.transferidoManualmentePorAdmin} = 0`
+            AND ${leads.transferidoManualmentePorAdmin} = 0
+            AND (${leads.timerAtivo} = 0 OR ${leads.timerAtivo} IS NULL)`
       )
-      .orderBy(leads.criadoEm)
+      .orderBy(leads.createdAt)
       .limit(limiteBusca);
   } else {
     leadsParaDistribuir = await db
@@ -487,7 +483,7 @@ export async function distribuirTodosLeadsNaoDistribuidos(): Promise<{
           eq(leads.transferidoManualmentePorAdmin, false)
         )
       )
-      .orderBy(leads.criadoEm)
+      .orderBy(leads.createdAt)
       .limit(limiteBusca);
   }
 

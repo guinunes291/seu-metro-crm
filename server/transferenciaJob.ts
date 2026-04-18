@@ -279,10 +279,15 @@ export async function verificarTransferenciasAutomaticas() {
         isNotNull(leads.corretorId),
         sql`${leads.status} IN ('aguardando_atendimento', 'em_atendimento')`,
         eq(leads.transferidoManualmentePorAdmin, false),
+        // Não transferir leads com timer ativo (ainda dentro do prazo de 30 minutos)
+        sql`(${leads.timerAtivo} = 0 OR ${leads.timerAtivo} IS NULL)`,
         sql`(
           (${leads.ultimaInteracao} IS NOT NULL AND ${leads.ultimaInteracao} < ${limite5dias})
           OR
-          (${leads.ultimaInteracao} IS NULL AND ${leads.createdAt} < ${limite5dias})
+          -- Para leads com ultimaInteracao NULL: usar dataDistribuicao como referência
+          -- Se dataDistribuicao também for NULL, usar createdAt
+          -- Mas só transferir se o lead já foi trabalhado antes (tem dataDistribuicao)
+          (${leads.ultimaInteracao} IS NULL AND ${leads.dataDistribuicao} IS NOT NULL AND ${leads.dataDistribuicao} < ${limite5dias})
         )`
       ))
       .limit(50); // processar até 50 por ciclo
