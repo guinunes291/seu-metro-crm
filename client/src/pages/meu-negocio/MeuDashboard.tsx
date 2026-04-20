@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
+import SmartMentorBanner, { useDashboardAlerts } from "@/components/SmartMentorBanner";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,6 +168,8 @@ export default function MeuDashboard() {
     return ultimoDia.getDate() - hoje.getDate();
   }, []);
 
+  const mentorAlerts = useDashboardAlerts(progresso);
+
   return (
     <DashboardLayout>
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
@@ -190,6 +193,9 @@ export default function MeuDashboard() {
           </Button>
         )}
       </div>
+
+      {/* Smart Mentor Banner */}
+      <SmartMentorBanner alerts={mentorAlerts} />
 
       {/* BLOCO 1 — Parâmetros (modo edição) */}
       {editando && (

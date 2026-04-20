@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import DashboardLayout from "@/components/DashboardLayout";
+import SmartMentorBanner, { useEvolucaoAlerts } from "@/components/SmartMentorBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart,
@@ -103,6 +104,14 @@ export default function MinhaEvolucao() {
       ]
     : [];
 
+  const tendencia = ultimo && penultimo ? {
+    leadsUltimo: ultimo.leadsRecebidos,
+    leadsAnterior: penultimo.leadsRecebidos,
+    vendasUltimo: ultimo.vendas,
+    vendasAnterior: penultimo.vendas,
+  } : null;
+  const evolucaoAlerts = useEvolucaoAlerts(tendencia);
+
   const dadosTaxa = dados.map((m) => ({
     mes: m.mes,
     "Lead → Agend.": calcTaxa(m.agendamentos, m.leadsRecebidos),
@@ -125,6 +134,9 @@ export default function MinhaEvolucao() {
           </p>
         </div>
       </div>
+
+      {/* Smart Mentor Banner */}
+      <SmartMentorBanner alerts={evolucaoAlerts} />
 
       {/* KPIs do mês atual */}
       {kpis.length > 0 && (

@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import SmartMentorBanner, { useFollowUpAlerts } from "@/components/SmartMentorBanner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -166,6 +167,7 @@ export default function MeuFollowUp() {
   }
 
   const hoje = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const followUpAlerts = useFollowUpAlerts(leads?.length ?? 0);
 
   return (
     <DashboardLayout>
@@ -185,6 +187,9 @@ export default function MeuFollowUp() {
           </Badge>
         )}
       </div>
+
+      {/* Smart Mentor Banner */}
+      <SmartMentorBanner alerts={followUpAlerts} />
 
       {/* Lista de leads */}
       {!leads || leads.length === 0 ? (
