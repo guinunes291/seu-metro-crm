@@ -101,6 +101,7 @@ const menuGroups = [
       { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup", roles: ["corretor"] },
       { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise", roles: ["corretor"] },
       { icon: TrendingUp, label: "Minha Evolução", path: "/meu-negocio/evolucao", roles: ["corretor"] },
+      { icon: BookOpen, label: "Como Avaliar", path: "/meu-negocio/como-avaliar", roles: ["corretor"] },
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
     ],
   },
