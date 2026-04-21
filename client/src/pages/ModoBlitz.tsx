@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Link } from "wouter";
 
-type BlocoAtivo = "follow_up" | "ligacoes";
+type BlocoAtivo = "follow_up" | "ligacoes" | "historico";
 
 // ============================================================================
 // SCRIPTS DINÂMICOS POR ESTÁGIO
@@ -230,6 +230,8 @@ function BlocoFocoLigacoes() {
   const [naoAtendimentos, setNaoAtendimentos] = useState(0);
   const [agendamentos, setAgendamentos] = useState(0);
   const [sessaoConcluida, setSessaoConcluida] = useState(false);
+  const sessaoIniciadaEm = useRef(new Date());
+  const salvarSessao = trpc.leads.salvarSessaoBlitz.useMutation();
 
   const { data: leads, isLoading, refetch } = trpc.leads.getLeadsParaBlitz.useQuery(
     { filtro, limit: 100 },
@@ -359,6 +361,25 @@ function BlocoFocoLigacoes() {
 
   // Resumo da sessão: ao encerrar manualmente ou quando todos foram processados
   if (sessaoConcluida || (!isLoading && leads && leads.length === 0 && processedCount > 0)) {
+    const encerradaEm = new Date();
+    const duracaoMin = Math.max(1, Math.floor((encerradaEm.getTime() - sessaoIniciadaEm.current.getTime()) / 60000));
+    const taxa = processedCount > 0 ? (atendimentos / processedCount) * 100 : 0;
+    const media = processedCount > 0 ? duracaoMin / processedCount : 0;
+    // Salvar sessão automaticamente (uma vez)
+    if (processedCount > 0 && !salvarSessao.isSuccess && !salvarSessao.isLoading) {
+      salvarSessao.mutate({
+        tipoBloco: 'ligacoes',
+        iniciadaEm: sessaoIniciadaEm.current,
+        encerradaEm,
+        duracaoMinutos: duracaoMin,
+        totalLeads: processedCount,
+        totalAtendimentos: atendimentos,
+        totalNaoAtendimentos: naoAtendimentos,
+        totalAgendamentos: agendamentos,
+        taxaAtendimentoPct: parseFloat(taxa.toFixed(2)),
+        mediaMinPorLead: parseFloat(media.toFixed(2)),
+      });
+    }
     return (
       <ResumoDaSessao
         processedCount={processedCount}
@@ -373,6 +394,7 @@ function BlocoFocoLigacoes() {
           setNaoAtendimentos(0);
           setAgendamentos(0);
           setCurrentIndex(0);
+          sessaoIniciadaEm.current = new Date();
           refetch();
         }}
       />
@@ -971,6 +993,114 @@ function BlocoFollowUp() {
 }
 
 // ============================================================================
+// BLOCO HISTÓRICO DE SESSÕES
+// ============================================================================
+function BlocoHistorico() {
+  const { user } = useAuth();
+  const { data: sessoes, isLoading } = trpc.leads.listarSessoesBlitz.useQuery(
+    { limite: 30 },
+    { enabled: !!user }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!sessoes || sessoes.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+        <h3 className="font-semibold text-lg mb-1">Nenhuma sessão registrada ainda</h3>
+        <p className="text-muted-foreground text-sm">Complete uma sessão Blitz para ver seu histórico aqui.</p>
+      </div>
+    );
+  }
+
+  const totalSessoes = sessoes.length;
+  const totalLigacoes = sessoes.reduce((s, r) => s + (r.totalLeads || 0), 0);
+  const totalAgendamentos = sessoes.reduce((s, r) => s + (r.totalAgendamentos || 0), 0);
+  const mediaAtendimento = sessoes.length > 0
+    ? (sessoes.reduce((s, r) => s + parseFloat(String(r.taxaAtendimentoPct || 0)), 0) / sessoes.length).toFixed(1)
+    : '0';
+
+  return (
+    <div className="space-y-4">
+      {/* Totalizadores */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-blue-50 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-blue-600">{totalSessoes}</div>
+          <div className="text-xs text-muted-foreground">Sessões realizadas</div>
+        </div>
+        <div className="bg-green-50 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-green-600">{totalLigacoes}</div>
+          <div className="text-xs text-muted-foreground">Leads processados</div>
+        </div>
+        <div className="bg-purple-50 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600">{totalAgendamentos}</div>
+          <div className="text-xs text-muted-foreground">Agendamentos</div>
+        </div>
+        <div className="bg-yellow-50 rounded-xl p-4 text-center">
+          <div className="text-2xl font-bold text-yellow-600">{mediaAtendimento}%</div>
+          <div className="text-xs text-muted-foreground">Taxa média de atendimento</div>
+        </div>
+      </div>
+
+      {/* Tabela de sessões */}
+      <Card className="overflow-hidden">
+        <div className="p-4 border-b">
+          <h3 className="font-semibold">Últimas {totalSessoes} sessões</h3>
+        </div>
+        <div className="divide-y">
+          {sessoes.map((s) => {
+            const data = new Date(s.iniciadaEm).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const hora = new Date(s.iniciadaEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const taxa = parseFloat(String(s.taxaAtendimentoPct || 0));
+            const taxaColor = taxa >= 50 ? 'text-green-600' : taxa >= 30 ? 'text-yellow-600' : 'text-red-600';
+            return (
+              <div key={s.id} className="p-4 flex items-center gap-4">
+                <div className="w-16 text-center">
+                  <div className="text-sm font-semibold">{data}</div>
+                  <div className="text-xs text-muted-foreground">{hora}</div>
+                </div>
+                <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Leads: </span>
+                    <span className="font-medium">{s.totalLeads}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Atenderam: </span>
+                    <span className="font-medium text-green-600">{s.totalAtendimentos}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Agendou: </span>
+                    <span className="font-medium text-purple-600">{s.totalAgendamentos}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Taxa: </span>
+                    <span className={cn('font-bold', taxaColor)}>{taxa.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="text-right text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Timer className="h-3 w-3" />
+                    {s.duracaoMinutos}min
+                  </div>
+                  <div>{parseFloat(String(s.mediaMinPorLead || 0)).toFixed(1)}min/lead</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================================================
 // PÁGINA PRINCIPAL
 // ============================================================================
 export default function ModoBlitz() {
@@ -993,6 +1123,14 @@ export default function ModoBlitz() {
       description: "Registre tentativas de contato dos leads pendentes de hoje",
       color: "text-blue-600",
       bg: "bg-blue-50 border-blue-200",
+    },
+    {
+      id: "historico" as BlocoAtivo,
+      icon: Trophy,
+      title: "Histórico de Sessões",
+      description: "Veja suas sessões anteriores, taxa de atendimento e evolução",
+      color: "text-yellow-600",
+      bg: "bg-yellow-50 border-yellow-200",
     },
   ];
 
@@ -1058,6 +1196,7 @@ export default function ModoBlitz() {
 
         {blocoAtivo === "ligacoes" && <BlocoFocoLigacoes />}
         {blocoAtivo === "follow_up" && <BlocoFollowUp />}
+        {blocoAtivo === "historico" && <BlocoHistorico />}
       </div>
     </DashboardLayout>
   );

@@ -614,4 +614,57 @@ export const leadsRouter = router({
       }
       return { success: true };
     }),
+
+  salvarSessaoBlitz: protectedProcedure
+    .input(z.object({
+      tipoBloco: z.enum(['ligacoes', 'follow_up']),
+      iniciadaEm: z.date(),
+      encerradaEm: z.date(),
+      duracaoMinutos: z.number().int().min(0),
+      totalLeads: z.number().int().min(0),
+      totalAtendimentos: z.number().int().min(0),
+      totalNaoAtendimentos: z.number().int().min(0),
+      totalAgendamentos: z.number().int().min(0),
+      taxaAtendimentoPct: z.number().min(0).max(100),
+      mediaMinPorLead: z.number().min(0),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { blitzSessoes } = await import('../../drizzle/schema.js');
+      const { db: drizzleDb } = await import('../_core/db.js');
+      await drizzleDb.insert(blitzSessoes).values({
+        corretorId: ctx.user.id,
+        tipoBloco: input.tipoBloco,
+        iniciadaEm: input.iniciadaEm,
+        encerradaEm: input.encerradaEm,
+        duracaoMinutos: input.duracaoMinutos,
+        totalLeads: input.totalLeads,
+        totalAtendimentos: input.totalAtendimentos,
+        totalNaoAtendimentos: input.totalNaoAtendimentos,
+        totalAgendamentos: input.totalAgendamentos,
+        taxaAtendimentoPct: String(input.taxaAtendimentoPct.toFixed(2)),
+        mediaMinPorLead: String(input.mediaMinPorLead.toFixed(2)),
+      });
+      return { success: true };
+    }),
+
+  listarSessoesBlitz: protectedProcedure
+    .input(z.object({
+      corretorId: z.number().optional(),
+      limite: z.number().int().min(1).max(100).default(30),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      const { blitzSessoes } = await import('../../drizzle/schema.js');
+      const { db: drizzleDb } = await import('../_core/db.js');
+      const { desc, eq } = await import('drizzle-orm');
+      const targetId = (input?.corretorId && ctx.user.role !== 'corretor')
+        ? input.corretorId
+        : ctx.user.id;
+      const rows = await drizzleDb
+        .select()
+        .from(blitzSessoes)
+        .where(eq(blitzSessoes.corretorId, targetId))
+        .orderBy(desc(blitzSessoes.iniciadaEm))
+        .limit(input?.limite ?? 30);
+      return rows;
+    }),
 });

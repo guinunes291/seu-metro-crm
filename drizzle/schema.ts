@@ -2412,3 +2412,27 @@ export const preAnalisesMcmv = mysqlTable("pre_analises_mcmv", {
 }));
 export type PreAnaliseMcmv = typeof preAnalisesMcmv.$inferSelect;
 export type InsertPreAnaliseMcmv = typeof preAnalisesMcmv.$inferInsert;
+
+// ============================================================================
+// BLITZ SESSÕES — Histórico de sessões do Modo Blitz
+// ============================================================================
+export const blitzSessoes = mysqlTable("blitz_sessoes", {
+  id: int("id").autoincrement().primaryKey(),
+  corretorId: int("corretorId").notNull(),
+  tipoBloco: varchar("tipoBloco", { length: 50 }).notNull().default("ligacoes"),
+  iniciadaEm: timestamp("iniciadaEm").notNull(),
+  encerradaEm: timestamp("encerradaEm").notNull(),
+  duracaoMinutos: int("duracaoMinutos").notNull().default(0),
+  totalLeads: int("totalLeads").notNull().default(0),
+  totalAtendimentos: int("totalAtendimentos").notNull().default(0),
+  totalNaoAtendimentos: int("totalNaoAtendimentos").notNull().default(0),
+  totalAgendamentos: int("totalAgendamentos").notNull().default(0),
+  taxaAtendimentoPct: decimal("taxaAtendimentoPct", { precision: 5, scale: 2 }).default("0.00"),
+  mediaMinPorLead: decimal("mediaMinPorLead", { precision: 6, scale: 2 }).default("0.00"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  blitzSessaoCorretorIdx: index("blitz_sessao_corretor_idx").on(table.corretorId),
+  blitzSessaoDataIdx: index("blitz_sessao_data_idx").on(table.iniciadaEm),
+}));
+export type BlitzSessao = typeof blitzSessoes.$inferSelect;
+export type InsertBlitzSessao = typeof blitzSessoes.$inferInsert;
