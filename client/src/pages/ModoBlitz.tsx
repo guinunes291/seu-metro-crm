@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progresimport {
+import { Progress } from "@/components/ui/progress";
+import {
   CheckCircle2,
   XCircle,
   ArrowRight,
@@ -33,9 +34,6 @@ import { Progress } from "@/components/ui/progresimport {
   Timer,
   TrendingUp,
   Star,
-} from "lucide-react";,
-  Timer,
-  Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,37 +48,37 @@ type BlocoAtivo = "follow_up" | "ligacoes";
 const SCRIPTS_POR_ESTAGIO: Record<string, { titulo: string; script: string; dica: string }> = {
   aguardando_atendimento: {
     titulo: "Primeiro Contato — Lead Novo",
-    script: `"Oi, [Nome]! Tudo bem? Aqui é [Seu Nome] da [Empresa]. Vi que você demonstrou interesse em conhecer nossos apartamentos do programa Minha Casa Minha Vida. Tenho algumas opções incríveis disponíveis! Você tem 2 minutinhos para eu te contar mais?"`,
+    script: `Oi, [Nome]! Tudo bem? Aqui é [Seu Nome] da [Empresa]. Vi que você demonstrou interesse em conhecer nossos apartamentos do programa Minha Casa Minha Vida. Tenho algumas opções incríveis disponíveis! Você tem 2 minutinhos para eu te contar mais?`,
     dica: "Ligue em até 5 minutos após o lead chegar — a chance de atendimento cai 80% após 1 hora.",
   },
   em_atendimento: {
     titulo: "Lead em Atendimento — Qualificação",
-    script: `"[Nome], para eu te mostrar a melhor opção, preciso entender melhor sua situação. Você tem FGTS disponível? Qual é sua renda familiar aproximada? E você está pensando em comprar para morar ou investir? Com essas informações consigo montar uma simulação personalizada pra você agora."`,
+    script: `[Nome], para eu te mostrar a melhor opção, preciso entender melhor sua situação. Você tem FGTS disponível? Qual é sua renda familiar aproximada? E você está pensando em comprar para morar ou investir? Com essas informações consigo montar uma simulação personalizada pra você agora.`,
     dica: "Foque em qualificar renda, FGTS e urgência. Sem essas 3 informações, não agende visita.",
   },
   agendado: {
     titulo: "Visita Agendada — Confirmação",
-    script: `"Oi [Nome]! Aqui é [Seu Nome]. Só passando para confirmar nossa visita [dia] às [hora] no [Empreendimento]. Você consegue comparecer? Precisa de alguma informação antes? Lembre de trazer RG e CPF para já aproveitarmos e fazer a simulação no local!"`,
+    script: `Oi [Nome]! Aqui é [Seu Nome]. Só passando para confirmar nossa visita [dia] às [hora] no [Empreendimento]. Você consegue comparecer? Precisa de alguma informação antes? Lembre de trazer RG e CPF para já aproveitarmos e fazer a simulação no local!`,
     dica: "Confirme no D-2 e no D-1. Visitas sem confirmação têm 60% de no-show.",
   },
   visita_realizada: {
     titulo: "Pós-Visita — Follow-up 24h",
-    script: `"Oi [Nome]! Tudo bem? Aqui é [Seu Nome]. O que você achou do apartamento? Ficou com alguma dúvida? Posso te enviar a simulação de financiamento personalizada agora para você ver como fica a parcela. Qual e-mail prefere receber?"`,
+    script: `Oi [Nome]! Tudo bem? Aqui é [Seu Nome]. O que você achou do apartamento? Ficou com alguma dúvida? Posso te enviar a simulação de financiamento personalizada agora para você ver como fica a parcela. Qual e-mail prefere receber?`,
     dica: "Entre em contato em até 24h após a visita. O interesse está no pico — não deixe esfriar.",
   },
   analise_credito: {
     titulo: "Análise de Crédito — Acompanhamento",
-    script: `"Oi [Nome]! Aqui é [Seu Nome]. Estou acompanhando sua análise de crédito e quero garantir que tudo corra bem. Você já reuniu os documentos que pedi? [RG, CPF, comprovante de renda, extrato do FGTS]. Posso te ajudar com algum deles?"`,
+    script: `Oi [Nome]! Aqui é [Seu Nome]. Estou acompanhando sua análise de crédito e quero garantir que tudo corra bem. Você já reuniu os documentos que pedi? RG, CPF, comprovante de renda, extrato do FGTS. Posso te ajudar com algum deles?`,
     dica: "Acompanhe cada documento. Análises paradas por falta de doc são as que mais caem.",
   },
   proposta_enviada: {
     titulo: "Proposta Enviada — Tirar Dúvidas",
-    script: `"Oi [Nome]! Você recebeu a proposta que enviei? Quero garantir que ficou tudo claro. Tem alguma dúvida sobre o valor da entrada, parcela ou documentação? Posso explicar cada detalhe agora mesmo."`,
+    script: `Oi [Nome]! Você recebeu a proposta que enviei? Quero garantir que ficou tudo claro. Tem alguma dúvida sobre o valor da entrada, parcela ou documentação? Posso explicar cada detalhe agora mesmo.`,
     dica: "Ligue em 48h após enviar a proposta. Silêncio não é rejeição — é dúvida não respondida.",
   },
   default: {
     titulo: "Script de Contato",
-    script: `"Oi [Nome]! Aqui é [Seu Nome]. Tudo bem? Estou entrando em contato sobre seu interesse em nossos imóveis. Você tem um momento para conversarmos?"`,
+    script: `Oi [Nome]! Aqui é [Seu Nome]. Tudo bem? Estou entrando em contato sobre seu interesse em nossos imóveis. Você tem um momento para conversarmos?`,
     dica: "Personalize a abordagem com o nome do cliente e o projeto de interesse sempre que possível.",
   },
 };
@@ -91,8 +89,9 @@ function ScriptDinamico({ status }: { status: string }) {
   const script = SCRIPTS_POR_ESTAGIO[status] || SCRIPTS_POR_ESTAGIO.default;
 
   const copiar = () => {
-    navigator.clipboard.writeText(script.script.replace(/"/g, ""));
+    navigator.clipboard.writeText(script.script);
     setCopiado(true);
+    toast.success("Script copiado!");
     setTimeout(() => setCopiado(false), 2000);
   };
 
@@ -162,7 +161,7 @@ function ResumoDaSessao({
     taxaAtendimento >= 50
       ? "Excelente sessão! Sua taxa de atendimento está acima da média."
       : agendamentos > 0
-      ? `Você agendou ${agendamentos} visita${agendamentos > 1 ? "s" : ""} nessa sessão. Continue!"
+      ? `Você agendou ${agendamentos} visita${agendamentos > 1 ? "s" : ""} nessa sessão. Continue!`
       : "Sessão concluída. Persista — o próximo atendimento pode ser a venda do mês!";
 
   return (
@@ -217,126 +216,6 @@ function ResumoDaSessao({
 }
 
 // ============================================================================
-// SCRIPTS DINÂMICOS POR ESTÁGIO
-// ============================================================================
-const SCRIPTS_POR_ESTAGIO: Record<string, { titulo: string; script: string; dica: string }> = {
-  aguardando_atendimento: {
-    titulo: "Primeiro Contato — Lead Novo",
-    script: `"Oi [NOME], tudo bem? Aqui é [SEU NOME] do Seu Metro Quadrado! Vi que você demonstrou interesse em [PROJETO/imóvel] — queria entender melhor o que você está buscando. Tem 2 minutinhos agora?"`,
-    dica: "Ligue em até 5 minutos após receber o lead. A taxa de conversão cai 80% após 30 minutos.",
-  },
-  em_atendimento: {
-    titulo: "Lead em Atendimento — Qualificação",
-    script: `"[NOME], queria dar continuidade à nossa conversa! Você chegou a pensar mais sobre o [PROJETO]? Posso te ajudar a simular o financiamento para você ver se cabe no seu bolso — leva só 5 minutos."`,
-    dica: "Foque em qualificar renda, FGTS e urgência. Pergunte: 'Você está buscando para morar ou investir?'",
-  },
-  agendado: {
-    titulo: "Visita Agendada — Confirmação",
-    script: `"Oi [NOME]! Tudo certo para nossa visita [DIA] às [HORA]? Queria confirmar para garantir que tudo esteja preparado para você. O endereço é [ENDEREÇO] — você consegue chegar tranquilo?"`,
-    dica: "Confirme no D-2 e no D-1. Envie o endereço no WhatsApp com link do Google Maps.",
-  },
-  visita_realizada: {
-    titulo: "Pós-Visita — Follow-up em 24h",
-    script: `"Oi [NOME]! O que você achou do [PROJETO]? Fiquei pensando na sua situação e acho que conseguimos encaixar muito bem no seu orçamento. Posso te mandar uma simulação personalizada agora?"`,
-    dica: "Entre em contato em até 24h após a visita. A proposta deve ser enviada enquanto a visita ainda está fresca na memória.",
-  },
-  analise_credito: {
-    titulo: "Análise de Crédito — Acompanhamento",
-    script: `"Oi [NOME]! Estou acompanhando sua análise de crédito — já temos algumas informações. Você tem um momento para conversarmos sobre os próximos passos do seu financiamento?"`,
-    dica: "Acompanhe cada documento. O cliente precisa sentir que você está do lado dele durante todo o processo.",
-  },
-  novo: {
-    titulo: "Lead Novo — Abordagem Inicial",
-    script: `"Oi [NOME], tudo bem? Aqui é [SEU NOME] do Seu Metro Quadrado! Você demonstrou interesse em imóveis na nossa plataforma. Posso te ajudar a encontrar a melhor opção para o seu perfil?"`,
-    dica: "Seja rápido e direto. Apresente-se, identifique o interesse e proponha um próximo passo concreto.",
-  },
-  default: {
-    titulo: "Script de Reativação",
-    script: `"Oi [NOME]! Aqui é [SEU NOME] do Seu Metro Quadrado. Temos novidades sobre [PROJETO] que podem te interessar — surgiu uma condição especial que acho que encaixa no que você estava buscando. Posso te contar?"`,
-    dica: "Use um novo ângulo a cada reativação: nova condição, nova unidade disponível, história de outro cliente.",
-  },
-};
-
-// ============================================================================
-// PAINEL DE RESUMO DA SESSÃO
-// ============================================================================
-function ResumoDaSessao({
-  processedCount,
-  startTime,
-  atendidos,
-  naoAtendidos,
-  agendados,
-  onReiniciar,
-}: {
-  processedCount: number;
-  startTime: number;
-  atendidos: number;
-  naoAtendidos: number;
-  agendados: number;
-  onReiniciar: () => void;
-}) {
-  const elapsedMin = Math.max(1, Math.floor((Date.now() - startTime) / 60000));
-  const avgTime = processedCount > 0 ? (elapsedMin / processedCount).toFixed(1) : "—";
-  const taxaAtendimento = processedCount > 0 ? Math.round((atendidos / processedCount) * 100) : 0;
-
-  const getMensagem = () => {
-    if (processedCount === 0) return "Nenhuma ligação registrada nesta sessão.";
-    if (taxaAtendimento >= 50) return `Excelente sessão! Taxa de atendimento de ${taxaAtendimento}% — acima da média do mercado.`;
-    if (taxaAtendimento >= 30) return `Boa sessão! ${atendidos} clientes atendidos. Continue ligando — a consistência é o segredo.`;
-    return `${processedCount} ligações feitas. Cada 'não atendeu' te aproxima do próximo 'sim'. Persista!`;
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="text-center py-6">
-        <div className="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-4">
-          <Trophy className="h-8 w-8 text-yellow-600" />
-        </div>
-        <h3 className="text-xl font-bold mb-1">Sessão Concluída!</h3>
-        <p className="text-sm text-muted-foreground">{getMensagem()}</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-primary">{processedCount}</div>
-          <div className="text-xs text-muted-foreground mt-1">Ligações registradas</div>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-blue-600">{elapsedMin}min</div>
-          <div className="text-xs text-muted-foreground mt-1">Tempo total</div>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-green-600">{atendidos}</div>
-          <div className="text-xs text-muted-foreground mt-1">Atendidos</div>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-purple-600">{agendados}</div>
-          <div className="text-xs text-muted-foreground mt-1">Agendamentos</div>
-        </Card>
-      </div>
-
-      <Card className="p-4 bg-muted/40">
-        <div className="flex items-center gap-3">
-          <Timer className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <div className="text-sm font-medium">Média por ligação: {avgTime} min</div>
-            <div className="text-xs text-muted-foreground">
-              Taxa de atendimento: {taxaAtendimento}%
-              {taxaAtendimento >= 40 ? " ✓ Acima da média" : " — Meta: 40%"}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      <Button className="w-full" onClick={onReiniciar}>
-        <RefreshCw className="h-4 w-4 mr-2" />
-        Iniciar Nova Sessão
-      </Button>
-    </div>
-  );
-}
-
-// ============================================================================
 // BLOCO FOCO EM LIGAÇÕES
 // ============================================================================
 function BlocoFocoLigacoes() {
@@ -351,16 +230,13 @@ function BlocoFocoLigacoes() {
   const [naoAtendimentos, setNaoAtendimentos] = useState(0);
   const [agendamentos, setAgendamentos] = useState(0);
   const [sessaoConcluida, setSessaoConcluida] = useState(false);
-  const [atendidos, setAtendidos] = useState(0);
-  const [naoAtendidos, setNaoAtendidos] = useState(0);
-  const [agendados, setAgendados] = useState(0);
-  const [sessaoConcluida, setSessaoConcluida] = useState(false);
-  const [showScript, setShowScript] = useState(false);
 
   const { data: leads, isLoading, refetch } = trpc.leads.getLeadsParaBlitz.useQuery(
     { filtro, limit: 100 },
     { enabled: !!user, refetchOnWindowFocus: false }
-  )  const registrarInteracao = trpc.leads.registrarInteracaoBlitz.useMutation({
+  );
+
+  const registrarInteracao = trpc.leads.registrarInteracaoBlitz.useMutation({
     onSuccess: (_, variables) => {
       setObservacoes("");
       setShowDetalhes(false);
@@ -369,11 +245,6 @@ function BlocoFocoLigacoes() {
       if (variables.resultado === "contato_realizado") setAtendimentos((p) => p + 1);
       if (variables.resultado === "nao_atendeu") setNaoAtendimentos((p) => p + 1);
       if (variables.resultado === "agendamento") setAgendamentos((p) => p + 1);
-    },
-    onError: (err) => toast.error(`Erro: ${err.message}`),
-  });tato_realizado") setAtendidos((p) => p + 1);
-      if (vars.resultado === "nao_atendeu") setNaoAtendidos((p) => p + 1);
-      if (vars.resultado === "agendamento") { setAtendidos((p) => p + 1); setAgendados((p) => p + 1); }
     },
     onError: (err) => toast.error(`Erro: ${err.message}`),
   });
@@ -456,10 +327,6 @@ function BlocoFocoLigacoes() {
           e.preventDefault();
           setShowDetalhes((v) => !v);
           break;
-        case "s":
-          e.preventDefault();
-          setShowScript((v) => !v);
-          break;
       }
     };
     window.addEventListener("keydown", handler);
@@ -490,24 +357,8 @@ function BlocoFocoLigacoes() {
     );
   }
 
-  if (!leads || leads.length === 0) {
-    if (processedCount > 0 || sessaoConcluida) {
-      return (
-        <ResumoDaSessao
-          processedCount={processedCount}
-          startTime={startTime}
-          atendidos={atendidos}
-          naoAtendidos={naoAtendidos}
-          agendados={agendados}
-          onReiniciar={() => {
-            setSessaoConcluida(false);
-            setProcessedCount(0);
-            setAtendidos(0);
-            setNaoAtendidos(0);
-            setAgendados(0);
-            setCurrentIndex(0);
-            refetch();
-            if (sessaoConcluida || (!isLoading && leads && leads.length === 0 && processedCount > 0)) {
+  // Resumo da sessão: ao encerrar manualmente ou quando todos foram processados
+  if (sessaoConcluida || (!isLoading && leads && leads.length === 0 && processedCount > 0)) {
     return (
       <ResumoDaSessao
         processedCount={processedCount}
@@ -544,26 +395,6 @@ function BlocoFocoLigacoes() {
         </Button>
       </div>
     );
-  }rificar se chegou ao final da lista
-  if (currentIndex >= totalLeads && processedCount > 0) {
-    return (
-      <ResumoDaSessao
-        processedCount={processedCount}
-        startTime={startTime}
-        atendidos={atendidos}
-        naoAtendidos={naoAtendidos}
-        agendados={agendados}
-        onReiniciar={() => {
-          setSessaoConcluida(false);
-          setProcessedCount(0);
-          setAtendidos(0);
-          setNaoAtendidos(0);
-          setAgendados(0);
-          setCurrentIndex(0);
-          refetch();
-        }}
-      />
-    );
   }
 
   const lead = currentLead!;
@@ -572,7 +403,6 @@ function BlocoFocoLigacoes() {
   const diasSemContato = lead.ultimoContato
     ? Math.floor((Date.now() - new Date(lead.ultimoContato).getTime()) / (1000 * 60 * 60 * 24))
     : null;
-  const scriptEstagio = SCRIPTS_POR_ESTAGIO[lead.status] || SCRIPTS_POR_ESTAGIO.default;
 
   return (
     <div className="space-y-4">
@@ -703,44 +533,6 @@ function BlocoFocoLigacoes() {
           </div>
         </div>
 
-        {/* Script dinâmico por estágio */}
-        <div className="px-6 py-3 bg-blue-50 border-t border-blue-100">
-          <button
-            className="flex items-center gap-2 text-sm font-medium text-blue-800 w-full text-left"
-            onClick={() => setShowScript((v) => !v)}
-          >
-            <BookOpen className="h-4 w-4" />
-            {scriptEstagio.titulo}
-            {showScript ? (
-              <ChevronUp className="h-3 w-3 ml-auto" />
-            ) : (
-              <ChevronDown className="h-3 w-3 ml-auto" />
-            )}
-            <kbd className="ml-1 text-xs bg-blue-100 px-1.5 py-0.5 rounded">S</kbd>
-          </button>
-          {showScript && (
-            <div className="mt-3 space-y-2">
-              <div className="relative bg-white rounded-lg p-3 border border-blue-200">
-                <p className="text-sm text-blue-900 italic leading-relaxed">{scriptEstagio.script}</p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(scriptEstagio.script.replace(/\[NOME\]/g, lead.nome || "cliente"));
-                    toast.success("Script copiado!");
-                  }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-blue-50"
-                  title="Copiar script"
-                >
-                  <Copy className="h-3.5 w-3.5 text-blue-400" />
-                </button>
-              </div>
-              <div className="flex items-start gap-2 text-xs text-blue-700">
-                <Star className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-yellow-500" />
-                <span>{scriptEstagio.dica}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
         {lead.observacoes && (
           <div className="px-6 py-3 bg-amber-50 border-t border-amber-100">
             <button
@@ -760,6 +552,7 @@ function BlocoFocoLigacoes() {
           </div>
         )}
 
+        {/* Script dinâmico por estágio */}
         <div className="px-6 py-3 border-t">
           <ScriptDinamico status={lead.status} />
         </div>
@@ -879,7 +672,7 @@ function BlocoFocoLigacoes() {
           }}
         >
           {currentIndex >= totalLeads - 1 ? "Encerrar sessão" : "Próximo"}
-          <kbd className="mr-2 text-xs bg-muted px-1.5 py-0.5 rounded">→</kbd>
+          <kbd className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">→</kbd>
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
       </div>
@@ -906,9 +699,6 @@ function BlocoFocoLigacoes() {
           </div>
           <div>
             <kbd className="px-1.5 py-0.5 bg-background rounded border">D</kbd> Ver obs.
-          </div>
-          <div>
-            <kbd className="px-1.5 py-0.5 bg-background rounded border">S</kbd> Ver script
           </div>
         </div>
       </Card>
