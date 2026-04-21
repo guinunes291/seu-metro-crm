@@ -11255,3 +11255,80 @@ export async function getRelatorioLeadsTimerPorCorretor(filtros: {
     return [];
   }
 }
+
+// ============================================================================
+// MODO BLITZ — FOCO EM LIGAÇÕES
+// ============================================================================
+
+export async function getLeadsParaBlitz(
+  corretorId: number,
+  options: {
+    filtro?: 'todos' | 'aguardando' | 'em_atendimento' | 'agendado' | 'follow_up_hoje';
+    projectId?: number;
+    limit?: number;
+  }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const limit = options.limit || 100;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const amanha = new Date(hoje);
+  amanha.setDate(amanha.getDate() + 1);
+
+  const conditions = [
+    eq(leads.corretorId, corretorId),
+    eq(leads.naLixeira, false),
+  ];
+
+  if (options.filtro === 'aguardando') {
+    conditions.push(eq(leads.status, 'aguardando_atendimento'));
+  } else if (options.filtro === 'em_atendimento') {
+    conditions.push(eq(leads.status, 'em_atendimento'));
+  } else if (options.filtro === 'agendado') {
+    conditions.push(eq(leads.status, 'agendado'));
+  } else if (options.filtro === 'follow_up_hoje') {
+    conditions.push(and(gte(leads.proximoFollowup, hoje), lt(leads.proximoFollowup, amanha))!);
+  } else {
+    conditions.push(notInArray(leads.status, ['contrato_fechado', 'perdido']));
+  }
+
+  if (options.projectId) {
+    conditions.push(eq(leads.projectId, options.projectId));
+  }
+
+  const result = await db
+    .select({
+      id: leads.id,
+      nome: leads.nome,
+      telefone: leads.telefone,
+      email: leads.email,
+      status: leads.status,
+      origem: leads.origem,
+      projectId: leads.projectId,
+      projetoNome: projects.nome,
+      projetoCustom: leads.projetoCustom,
+      faixaRenda: leads.faixaRenda,
+      finalidadeImovel: leads.finalidadeImovel,
+      prefereContatoPor: leads.prefereContatoPor,
+      observacoes: leads.observacoes,
+      diasFollowupConsecutivos: leads.diasFollowupConsecutivos,
+      ultimoContato: leads.ultimoContato,
+      proximoFollowup: leads.proximoFollowup,
+      timerAtivo: leads.timerAtivo,
+      createdAt: leads.createdAt,
+      campanha: leads.campanha,
+    })
+    .from(leads)
+    .leftJoin(projects, eq(leads.projectId, projects.id))
+    .where(and(...conditions))
+    .orderBy(
+      desc(leads.timerAtivo),
+      desc(sql`CASE WHEN ${leads.status} = 'aguardando_atendimento' THEN 1 ELSE 0 END`),
+      asc(leads.createdAt)
+    )
+    .limit(limit);
+
+  return result;
+}

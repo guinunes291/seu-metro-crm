@@ -569,4 +569,49 @@ export const leadsRouter = router({
     .query(async ({ input }) => {
       return await db.getLeadsParaExportar(input);
     }),
+
+  // ============================================================================
+  // MODO BLITZ — FOCO EM LIGAÇÕES
+  // ============================================================================
+  getLeadsParaBlitz: corretorProcedure
+    .input(z.object({
+      filtro: z.enum(['todos', 'aguardando', 'em_atendimento', 'agendado', 'follow_up_hoje']).default('todos'),
+      projectId: z.number().optional(),
+      limit: z.number().min(1).max(200).default(100),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      return await db.getLeadsParaBlitz(ctx.user.id, input || {});
+    }),
+
+  registrarInteracaoBlitz: corretorProcedure
+    .input(z.object({
+      leadId: z.number(),
+      tipo: z.enum(['ligacao', 'whatsapp', 'email', 'sms', 'outro']),
+      resultado: z.enum(['contato_realizado', 'nao_atendeu', 'agendamento', 'visita_realizada', 'proposta_enviada', 'recusou', 'outro']),
+      observacoes: z.string().optional(),
+      novoStatus: z.enum(['novo', 'aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido']).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const lead = await db.getLeadById(input.leadId);
+      if (!lead) throw new TRPCError({ code: 'NOT_FOUND', message: 'Lead não encontrado' });
+      if (ctx.user.role === 'corretor' && lead.corretorId !== ctx.user.id) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
+      }
+      await db.createLeadHistory({
+        leadId: input.leadId,
+        corretorId: ctx.user.id,
+        tipo: input.tipo,
+        resultado: input.resultado,
+        observacoes: input.observacoes,
+        statusAnterior: lead.status,
+        statusNovo: input.novoStatus || lead.status,
+      });
+      if (input.novoStatus && input.novoStatus !== lead.status) {
+        await db.updateLead(input.leadId, { status: input.novoStatus });
+        if (input.novoStatus === 'em_atendimento' && lead.status !== 'em_atendimento') {
+          await db.criarFollowUpParaLead(input.leadId, ctx.user.id);
+        }
+      }
+      return { success: true };
+    }),
 });
