@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../_core/trpc';
 import * as db from '../db';
+import { blitzSessoes } from '../../drizzle/schema';
+import { desc, eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
 // ============================================================================
@@ -629,8 +631,8 @@ export const leadsRouter = router({
       mediaMinPorLead: z.number().min(0),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { blitzSessoes } = await import('../../drizzle/schema.js');
-      const { db: drizzleDb } = await import('../_core/db.js');
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB indisponível' });
       await drizzleDb.insert(blitzSessoes).values({
         corretorId: ctx.user.id,
         tipoBloco: input.tipoBloco,
@@ -653,9 +655,8 @@ export const leadsRouter = router({
       limite: z.number().int().min(1).max(100).default(30),
     }).optional())
     .query(async ({ ctx, input }) => {
-      const { blitzSessoes } = await import('../../drizzle/schema.js');
-      const { db: drizzleDb } = await import('../_core/db.js');
-      const { desc, eq } = await import('drizzle-orm');
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB indisponível' });
       const targetId = (input?.corretorId && ctx.user.role !== 'corretor')
         ? input.corretorId
         : ctx.user.id;
