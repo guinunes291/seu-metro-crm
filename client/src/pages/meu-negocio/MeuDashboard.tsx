@@ -12,8 +12,9 @@ import { trpc } from "@/lib/trpc";
 import {
   Target, TrendingUp, AlertCircle, CheckCircle2, Edit3, Save,
   Users, Calendar, Home, FileText, DollarSign, Zap, Clock,
-  ChevronRight, ArrowUp, ArrowDown, Minus
+  ChevronRight, ArrowUp, ArrowDown, Minus, ArrowRight
 } from "lucide-react";
+import { Link } from "wouter";
 
 // ============================================================================
 // HELPERS
@@ -70,6 +71,64 @@ function calcularReverso(params: {
     leadsNecessariosMes,
     leadsNecessariosDia,
   };
+}
+
+// ============================================================================
+// CARD MODO FOCO
+// ============================================================================
+
+function FocoCard() {
+  const { data: foco } = trpc.meuNegocio.getFocoDoDia.useQuery(undefined, {
+    refetchInterval: 60_000,
+  });
+
+  const urgentes = foco ? (
+    (foco.leadsTimerAtivo?.length ?? 0) +
+    (foco.leadsAguardando?.length ?? 0) +
+    (foco.visitasHoje?.length ?? 0) +
+    (foco.propostasAguardando?.length ?? 0)
+  ) : 0;
+
+  const itens = [
+    { label: "Timer ativo", count: foco?.leadsTimerAtivo?.length ?? 0, color: "text-red-600", bg: "bg-red-50 dark:bg-red-900/20" },
+    { label: "Aguardando", count: foco?.leadsAguardando?.length ?? 0, color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-900/20" },
+    { label: "Visitas hoje", count: foco?.visitasHoje?.length ?? 0, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-900/20" },
+    { label: "Propostas", count: foco?.propostasAguardando?.length ?? 0, color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-900/20" },
+  ];
+
+  return (
+    <Link href="/meu-negocio/foco">
+      <div className="rounded-lg border-2 border-yellow-300 dark:border-yellow-700 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-4 cursor-pointer hover:border-yellow-400 hover:shadow-md transition-all">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-yellow-400 dark:bg-yellow-600 rounded-lg">
+              <Zap className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="font-bold text-base">Modo Foco do Dia</h2>
+              <p className="text-xs text-muted-foreground">Suas prioridades agora</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {urgentes > 0 && (
+              <Badge className="bg-red-500 hover:bg-red-500 text-white font-bold text-sm px-2.5">
+                {urgentes} urgente{urgentes !== 1 ? "s" : ""}
+              </Badge>
+            )}
+            <ArrowRight className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {itens.map((item) => (
+            <div key={item.label} className={`rounded-lg ${item.bg} p-2 text-center`}>
+              <div className={`text-xl font-black ${item.color}`}>{item.count}</div>
+              <div className="text-xs text-muted-foreground">{item.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 // ============================================================================
@@ -196,6 +255,9 @@ export default function MeuDashboard() {
 
       {/* Smart Mentor Banner */}
       <SmartMentorBanner alerts={mentorAlerts} />
+
+      {/* Card Modo Foco */}
+      <FocoCard />
 
       {/* BLOCO 1 — Parâmetros (modo edição) */}
       {editando && (
