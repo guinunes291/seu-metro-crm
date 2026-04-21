@@ -79,6 +79,7 @@ const menuGroups = [
       { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor", roles: ["gestor", "admin", "superintendente"] },
       { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor", roles: ["admin", "superintendente"] },
       { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
+      { icon: Zap, label: "Modo Blitz", path: "/modo-blitz", roles: ["corretor"] },
     ],
   },
   {
