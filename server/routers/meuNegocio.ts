@@ -2,7 +2,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { meuNegocioParametros, preAnalisesMcmv, leads, followUps, agendamentos, visitas, contratos } from "../../drizzle/schema";
-import { eq, and, gte, lte, sql, desc } from "drizzle-orm";
+import { eq, and, gte, lte, sql, desc, or } from "drizzle-orm";
 
 // ============================================================================
 // HELPERS
@@ -480,5 +480,125 @@ export const meuNegocioRouter = router({
     }
 
     return meses;
+  }),
+
+  // --------------------------------------------------------------------------
+  // MODO FOCO DO DIA
+  // --------------------------------------------------------------------------
+  getFocoDoDia: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    const agora = new Date();
+    const inicio = inicioDeHoje();
+    const fim = fimDeHoje();
+
+    // 1. Leads com timer ativo (urgente — expirando em breve)
+    const leadsTimer = await db
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        status: leads.status,
+        origem: leads.origem,
+        timestampRecebimento: leads.timestampRecebimento,
+      })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, ctx.user.id),
+        eq(leads.timerAtivo, true),
+        eq(leads.status, "aguardando_atendimento"),
+      ))
+      .limit(10);
+
+    // 2. Leads aguardando atendimento sem timer (novos não contactados)
+    const leadsAguardando = await db
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        status: leads.status,
+        origem: leads.origem,
+        createdAt: leads.createdAt,
+      })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, ctx.user.id),
+        eq(leads.status, "aguardando_atendimento"),
+        eq(leads.timerAtivo, false),
+      ))
+      .orderBy(leads.createdAt)
+      .limit(10);
+
+    // 3. Agendamentos de hoje
+    const agendamentosHoje = await db
+      .select({
+        id: agendamentos.id,
+        leadId: agendamentos.leadId,
+        horaAgendamento: agendamentos.horaAgendamento,
+        status: agendamentos.status,
+        projetoCustom: agendamentos.projetoCustom,
+        dataAgendamento: agendamentos.dataAgendamento,
+        leadNome: leads.nome,
+        leadTelefone: leads.telefone,
+      })
+      .from(agendamentos)
+      .innerJoin(leads, eq(agendamentos.leadId, leads.id))
+      .where(and(
+        eq(agendamentos.corretorId, ctx.user.id),
+        gte(agendamentos.dataAgendamento, inicio),
+        lte(agendamentos.dataAgendamento, fim),
+        or(
+          eq(agendamentos.status, "pendente"),
+          eq(agendamentos.status, "confirmado"),
+        ),
+      ))
+      .orderBy(agendamentos.horaAgendamento)
+      .limit(10);
+
+    // 4. Propostas aguardando resposta (>48h)
+    const propostasAguardando = await db
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        status: leads.status,
+        updatedAt: leads.updatedAt,
+      })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, ctx.user.id),
+        eq(leads.status, "proposta_enviada"),
+        lte(leads.updatedAt, new Date(agora.getTime() - 48 * 60 * 60 * 1000)),
+      ))
+      .orderBy(leads.updatedAt)
+      .limit(5);
+
+    // 5. Análises de crédito paradas (>3 dias)
+    const analiseParada = await db
+      .select({
+        id: leads.id,
+        nome: leads.nome,
+        telefone: leads.telefone,
+        status: leads.status,
+        updatedAt: leads.updatedAt,
+      })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, ctx.user.id),
+        eq(leads.status, "analise_credito"),
+        lte(leads.updatedAt, new Date(agora.getTime() - 3 * 24 * 60 * 60 * 1000)),
+      ))
+      .orderBy(leads.updatedAt)
+      .limit(5);
+
+    return {
+      leadsTimer,
+      leadsAguardando,
+      agendamentosHoje,
+      propostasAguardando,
+      analiseParada,
+      totalUrgente: leadsTimer.length + leadsAguardando.length,
+      totalHoje: agendamentosHoje.length,
+      totalAtencao: propostasAguardando.length + analiseParada.length,
+    };
   }),
 });

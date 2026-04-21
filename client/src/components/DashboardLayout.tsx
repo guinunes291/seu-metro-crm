@@ -37,7 +37,7 @@ import {
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
-  Shield, Briefcase, Calculator, Phone, DollarSign
+  Shield, Briefcase, Calculator, Phone, DollarSign, Zap
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -101,6 +101,7 @@ const menuGroups = [
       { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup", roles: ["corretor"] },
       { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise", roles: ["corretor"] },
       { icon: TrendingUp, label: "Minha Evolução", path: "/meu-negocio/evolucao", roles: ["corretor"] },
+      { icon: Zap, label: "Modo Foco", path: "/meu-negocio/foco", roles: ["corretor"] },
       { icon: BookOpen, label: "Como Avaliar", path: "/meu-negocio/como-avaliar", roles: ["corretor"] },
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
     ],
