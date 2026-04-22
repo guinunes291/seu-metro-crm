@@ -4394,16 +4394,16 @@ export async function getRankingDia(data?: Date) {
     fimDia = _fdhj8();
   }
   
-  // Buscar TODOS os corretores ativos e fazer LEFT JOIN com atividades do dia
+  // Buscar TODOS os usuários com atividades (qualquer role: corretor, gestor, superintendente, admin)
   const todosCorretores = await db.select({
     corretorId: users.id,
     corretorNome: users.name,
     corretorFoto: users.fotoUrl,
   })
     .from(users)
-    .where(eq(users.role, 'corretor'));
+    .where(inArray(users.role, ['corretor', 'gestor', 'superintendente', 'admin']));
   
-  // Para cada corretor, buscar suas atividades do dia
+  // Para cada usuário, buscar suas atividades do dia
   const ranking = await Promise.all(todosCorretores.map(async (corretor) => {
     // Buscar atividades do corretor no dia (usando DATE para ignorar horário)
     const atividadesCorretor = await db.select()

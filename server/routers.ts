@@ -2686,6 +2686,13 @@ export const appRouter = router({
         
         return { success: true, notified: corretores.length };
       }),
+    
+    // Ressincronização manual de métricas (gestor/admin)
+    forceSyncMetricas: gestorProcedure
+      .mutation(async () => {
+        await db.sincronizarTodasMetricasDoDia();
+        return { success: true, message: 'Métricas ressincronizadas com sucesso' };
+      }),
   }),
 
   // ============================================================================

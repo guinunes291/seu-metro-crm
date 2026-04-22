@@ -7,7 +7,7 @@ import {
   Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
   CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus, FileText,
-  ArrowLeftRight
+  ArrowLeftRight, RefreshCw
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";
@@ -197,6 +197,14 @@ export default function Dashboard() {
 
   // Queries para tabelas de contratos fechados
   const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(dateFilter, gestorQueryOpts);
+  const forceSyncMutation = trpc.ranking.forceSyncMetricas.useMutation({
+    onSuccess: () => {
+      alert('Métricas ressincronizadas com sucesso!');
+    },
+    onError: () => {
+      alert('Erro ao ressincronizar métricas. Tente novamente.');
+    },
+  });
   const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(dateFilter, gestorQueryOpts);
 
   // Query de métricas de distratos (filtrada pelo mesmo período do dashboard)
@@ -641,6 +649,16 @@ export default function Dashboard() {
               </Popover>
             )}
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => forceSyncMutation.mutate()}
+            disabled={forceSyncMutation.isPending}
+            title="Forçar ressincronização das métricas do Ranking TV"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${forceSyncMutation.isPending ? 'animate-spin' : ''}`} />
+            {forceSyncMutation.isPending ? 'Sincronizando...' : 'Sincronizar Métricas'}
+          </Button>
         </div>
 
         {metricsLoading ? (

@@ -58,7 +58,8 @@ const statusLabels: Record<string, string> = {
   novo: "Novo",
   aguardando_atendimento: "Aguardando Atendimento",
   em_atendimento: "Em Atendimento",
-  // agendado e visita_realizada são automáticos (não selecionáveis manualmente)
+  agendado: "Agendado",
+  visita_realizada: "Visita Realizada",
   analise_credito: "Análise de Crédito",
   contrato_fechado: "Contrato Fechado",
   perdido: "Perdido",
