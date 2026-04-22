@@ -1924,7 +1924,8 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
     totalLeads: countsMap.get(corretor.id) || 0,
   }));
   
-  return result.filter(c => c.status === 'presente').sort((a, b) => b.totalLeads - a.totalLeads);
+  // Mostrar todos que têm leads no período (não filtrar por status de presença)
+  return result.filter(c => c.totalLeads > 0).sort((a, b) => b.totalLeads - a.totalLeads);
 }
 
 export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
@@ -1975,7 +1976,8 @@ export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
     agendados: countsMap.get(corretor.id) || 0,
   }));
   
-  return result.filter(c => c.status === 'presente').sort((a, b) => b.agendados - a.agendados);
+  // Mostrar todos que têm agendamentos no período (não filtrar por status de presença)
+  return result.filter(c => c.agendados > 0).sort((a, b) => b.agendados - a.agendados);
 }
 
 export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
@@ -2026,7 +2028,8 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
     visitas: countsMap.get(corretor.id) || 0,
   }));
   
-  return result.filter(c => c.status === 'presente').sort((a, b) => b.visitas - a.visitas);
+  // Mostrar todos que têm visitas no período (não filtrar por status de presença)
+  return result.filter(c => c.visitas > 0).sort((a, b) => b.visitas - a.visitas);
 }
 
 export async function getPastasPorCorretor(filtros?: DashboardFilters) {
