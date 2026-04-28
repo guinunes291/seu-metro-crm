@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull, ne } from "drizzle-orm";
+import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull, ne, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import { 
@@ -1510,6 +1510,7 @@ export interface FiltrosLeadsPorCorretor {
   projectId?: number;
   dataInicio?: string;
   dataFim?: string;
+  busca?: string; // Busca por nome, telefone ou email
   page?: number;
   pageSize?: number;
 }
@@ -1545,6 +1546,21 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
   
   if (filtros?.dataFim) {
     conditions.push(lte(leads.createdAt, new Date(filtros.dataFim)));
+  }
+  
+  if (filtros?.busca && filtros.busca.trim()) {
+    const termo = filtros.busca.trim();
+    const termoPhone = termo.replace(/\D/g, '');
+    if (termoPhone.length >= 4) {
+      // Busca por telefone (normalizado)
+      conditions.push(like(leads.telefone, `%${termoPhone}%`));
+    } else {
+      // Busca por nome ou email
+      conditions.push(or(
+        like(leads.nome, `%${termo}%`),
+        like(leads.email, `%${termo}%`)
+      ));
+    }
   }
   
   const page = filtros?.page || 1;

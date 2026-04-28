@@ -1062,6 +1062,7 @@ export const appRouter = router({
         projectId: z.number().optional(),
         dataInicio: z.string().optional(),
         dataFim: z.string().optional(),
+        busca: z.string().optional(),
         page: z.number().optional(),
         pageSize: z.number().optional(),
       }).optional())

@@ -20,7 +20,7 @@ import {
 import { Loader2, Users, UserCheck, UserX, Phone, Mail, Calendar, Filter, RefreshCw, Trash2, MessageCircle, Search } from "lucide-react";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "sonner";
 import { TimerLead } from "@/components/TimerLead";
@@ -73,6 +73,7 @@ export default function LeadsPorCorretor() {
       status,
       dataInicio: dataInicio || undefined,
       dataFim: dataFim || undefined,
+      busca: searchTerm || undefined,
       page: currentPage,
       pageSize,
     });
@@ -81,19 +82,13 @@ export default function LeadsPorCorretor() {
   const totalLeads = leadsData?.total || 0;
   const totalPages = leadsData?.totalPages || 1;
 
-  // Filtrar leads por termo de busca (nome, telefone, email)
-  const filteredLeads = leads.filter((lead) => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    const normalizedPhone = lead.telefone?.replace(/\D/g, '') || '';
-    const searchPhone = searchTerm.replace(/\D/g, '');
-    
-    return (
-      lead.nome?.toLowerCase().includes(search) ||
-      lead.email?.toLowerCase().includes(search) ||
-      normalizedPhone.includes(searchPhone)
-    );
-  });
+  // A busca é feita no backend — filteredLeads é alias de leads para compatibilidade
+  const filteredLeads = leads;
+
+  // Resetar para página 1 ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, corretorId, status, dataInicio, dataFim]);
 
   // Mutation para excluir múltiplos leads
   const deleteManyMutation = trpc.leads.deleteMany.useMutation({
