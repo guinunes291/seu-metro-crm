@@ -2095,52 +2095,56 @@ export async function getVisitasPorCorretor(filtros?: DashboardFilters) {
 export async function getPastasPorCorretor(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
-
-  const corretoresConditions: any[] = [];
-  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
-    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
-  }
-
-  const corretores = await db.select({
-    id: users.id,
-    nome: users.name,
-    status: users.status,
-  })
-    .from(users)
-    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
-
-  // Contar transições para analise_credito por corretor no período
-  const conditions: any[] = [
-    eq(leadStatusTransitions.statusNovo, 'analise_credito'),
-  ];
+  
+  // Contar pastas (analises_credito) por corretor no período
+  // Usa a mesma tabela que o card de totais do Dashboard para consistência
+  const conditions: any[] = [];
+  
   if (filtros?.dataInicio) {
-    conditions.push(gte(leadStatusTransitions.createdAt, filtros.dataInicio));
+    conditions.push(gte(analises_credito.createdAt, filtros.dataInicio));
   }
   if (filtros?.dataFim) {
-    conditions.push(lte(leadStatusTransitions.createdAt, filtros.dataFim));
+    conditions.push(lte(analises_credito.createdAt, filtros.dataFim));
   }
-  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
-    conditions.push(inArray(leadStatusTransitions.corretorId, filtros.corretoresIds));
+  
+  // Filtrar por equipe: usar corretorId da análise OU corretorId do lead
+  if (filtros?.corretoresIds !== undefined && filtros.corretoresIds !== null) {
+    if (filtros.corretoresIds.length === 0) {
+      return [];
+    }
+    // Incluir análises onde o corretorId da análise está na equipe
+    // OU onde o lead pertence a um corretor da equipe (para análises sem corretorId)
+    conditions.push(
+      or(
+        inArray(analises_credito.corretorId, filtros.corretoresIds),
+        and(
+          isNull(analises_credito.corretorId),
+          inArray(leads.corretorId, filtros.corretoresIds)
+        )
+      )
+    );
   }
-
+  
+  // Buscar contagem por corretor com JOIN para obter o nome
   const pastasCounts = await db.select({
-    corretorId: leadStatusTransitions.corretorId,
-    count: sql<number>`count(*)`
+    corretorId: sql<number>`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`,
+    corretorNome: sql<string>`MAX(${users.name})`,
+    count: sql<number>`COUNT(DISTINCT ${analises_credito.id})`
   })
-    .from(leadStatusTransitions)
-    .where(and(...conditions))
-    .groupBy(leadStatusTransitions.corretorId);
-
-  const countsMap = new Map(pastasCounts.map(pc => [pc.corretorId, Number(pc.count)]));
-
-  const result = corretores.map(corretor => ({
-    id: corretor.id,
-    nome: corretor.nome || 'Sem nome',
-    status: corretor.status,
-    pastas: countsMap.get(corretor.id) || 0,
-  }));
-
-  return result.filter(c => c.pastas > 0).sort((a, b) => b.pastas - a.pastas);
+    .from(analises_credito)
+    .leftJoin(leads, eq(analises_credito.leadId, leads.id))
+    .leftJoin(users, eq(sql`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(sql`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`);
+  
+  return pastasCounts
+    .filter(p => p.corretorId !== null && Number(p.count) > 0)
+    .map(p => ({
+      id: p.corretorId,
+      nome: p.corretorNome || 'Corretor Removido',
+      pastas: Number(p.count),
+    }))
+    .sort((a, b) => b.pastas - a.pastas);
 }
 
 export async function getVendasPorCorretor(filtros?: DashboardFilters) {
