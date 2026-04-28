@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2, FileCheck, FileText } from "lucide-react";
+import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2, FileCheck, FileText, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import LeadTimer from "@/components/LeadTimer";
 import { TimerLead } from "@/components/TimerLead";
 import { ModalRegistrarVisita } from "@/components/ModalRegistrarVisita";
@@ -91,12 +92,40 @@ export default function Kanban() {
   const [modalAnaliseOpen, setModalAnaliseOpen] = useState(false);
   const [leadAnaliseSelecionado, setLeadAnaliseSelecionado] = useState<Lead | null>(null);
 
+  // Estado de busca
+  const [searchTerm, setSearchTerm] = useState("");
+  const searchNormalized = searchTerm.trim().toLowerCase();
+
   // Agrupar leads por status usando as queries separadas
-  const leadsByStatus = visibleColumns.reduce((acc, column) => {
+  const allLeadsByStatus = visibleColumns.reduce((acc, column) => {
     const query = queriesByStatus[column.id];
     acc[column.id] = (query?.data?.leads || []) as Lead[];
     return acc;
   }, {} as Record<string, Lead[]>);
+
+  // Filtrar leads pela busca (frontend — dados já carregados)
+  const leadsByStatus = useMemo(() => {
+    if (!searchNormalized) return allLeadsByStatus;
+    const matchesSearch = (lead: Lead) => {
+      const phone = (lead.telefone || "").replace(/\D/g, "");
+      const searchPhone = searchNormalized.replace(/\D/g, "");
+      return (
+        (lead.nome || "").toLowerCase().includes(searchNormalized) ||
+        (phone && searchPhone.length >= 4 && phone.includes(searchPhone)) ||
+        ((lead as any).corretorNome || "").toLowerCase().includes(searchNormalized)
+      );
+    };
+    return visibleColumns.reduce((acc, column) => {
+      acc[column.id] = allLeadsByStatus[column.id].filter(matchesSearch);
+      return acc;
+    }, {} as Record<string, Lead[]>);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allLeadsByStatus, searchNormalized]);
+
+  const totalFound = useMemo(
+    () => Object.values(leadsByStatus).flat().length,
+    [leadsByStatus]
+  );
 
   // Handlers de drag and drop
   const handleDragStart = (e: React.DragEvent, lead: Lead) => {
@@ -176,12 +205,43 @@ export default function Kanban() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Kanban de Leads</h1>
-          <p className="text-muted-foreground mt-1">
-            Arraste os leads entre as colunas para atualizar o status
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Kanban de Leads</h1>
+            <p className="text-muted-foreground mt-1">
+              Arraste os leads entre as colunas para atualizar o status
+            </p>
+          </div>
+          {/* Campo de busca */}
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Buscar por nome, telefone ou corretor..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Limpar busca"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Resultado da busca */}
+        {searchNormalized && (
+          <div className="text-sm">
+            {totalFound === 0
+              ? <span className="text-destructive">Nenhum lead encontrado para "{searchTerm}"</span>
+              : <span className="text-muted-foreground"><strong className="text-foreground">{totalFound}</strong> lead(s) encontrado(s) para "{searchTerm}"</span>
+            }
+          </div>
+        )}
 
         {/* Kanban Board */}
         <div className="flex gap-4 overflow-x-auto pb-4">
