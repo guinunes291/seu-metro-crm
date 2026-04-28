@@ -1938,54 +1938,41 @@ export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  // Query 1: Buscar todos os usuários que podem ter vendas (filtrados por equipe se necessário)
-  // Incluir corretores, gestores e admins que tenham vendas
-  const corretoresConditions: any[] = [];
-  if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
-    corretoresConditions.push(inArray(users.id, filtros.corretoresIds));
-  }
+  // Contar leads RECEBIDOS por corretor no período usando distribution_log
+  // Regra: todo lead que passou pelo corretor (recebeu) deve ser contabilizado,
+  // independentemente de ter sido transferido depois ou do status atual do lead.
+  const conditions: any[] = [];
   
-  const corretores = await db.select({
-    id: users.id,
-    nome: users.name,
-    status: users.status,
-  })
-    .from(users)
-    .where(corretoresConditions.length > 0 ? and(...corretoresConditions) : undefined);
-  
-  // Query 2: Contar leads por corretor em uma única query com GROUP BY
-  const leadsConditions: any[] = [];
   if (filtros?.dataInicio) {
-    leadsConditions.push(gte(leads.createdAt, filtros.dataInicio));
+    conditions.push(gte(distributionLog.createdAt, filtros.dataInicio));
   }
   if (filtros?.dataFim) {
-    leadsConditions.push(lte(leads.createdAt, filtros.dataFim));
+    conditions.push(lte(distributionLog.createdAt, filtros.dataFim));
   }
   if (filtros?.corretoresIds && filtros.corretoresIds.length > 0) {
-    leadsConditions.push(inArray(leads.corretorId, filtros.corretoresIds));
+    conditions.push(inArray(distributionLog.corretorId, filtros.corretoresIds));
   }
   
+  // Contar leads distintos recebidos por corretor (COUNT DISTINCT para evitar duplicatas
+  // caso o mesmo lead seja redistribuído para o mesmo corretor mais de uma vez)
   const leadsCounts = await db.select({
-    corretorId: leads.corretorId,
-    count: sql<number>`count(*)`
+    corretorId: distributionLog.corretorId,
+    corretorNome: sql<string>`MAX(${users.name})`,
+    totalLeads: sql<number>`COUNT(DISTINCT ${distributionLog.leadId})`
   })
-    .from(leads)
-    .where(leadsConditions.length > 0 ? and(...leadsConditions) : undefined)
-    .groupBy(leads.corretorId);
+    .from(distributionLog)
+    .leftJoin(users, eq(distributionLog.corretorId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .groupBy(distributionLog.corretorId);
   
-  // Criar map de contagens para lookup O(1)
-  const countsMap = new Map(leadsCounts.map(lc => [lc.corretorId, Number(lc.count)]));
-  
-  // Combinar resultados
-  const result = corretores.map(corretor => ({
-    id: corretor.id,
-    nome: corretor.nome || 'Sem nome',
-    status: corretor.status,
-    totalLeads: countsMap.get(corretor.id) || 0,
-  }));
-  
-  // Mostrar todos que têm leads no período (não filtrar por status de presença)
-  return result.filter(c => c.totalLeads > 0).sort((a, b) => b.totalLeads - a.totalLeads);
+  return leadsCounts
+    .filter(c => Number(c.totalLeads) > 0)
+    .map(c => ({
+      id: c.corretorId,
+      nome: c.corretorNome || 'Corretor Removido',
+      totalLeads: Number(c.totalLeads),
+    }))
+    .sort((a, b) => b.totalLeads - a.totalLeads);
 }
 
 export async function getAgendamentosPorCorretor(filtros?: DashboardFilters) {
@@ -6713,31 +6700,42 @@ export async function getRelatorioLeadsCriados(
     leadsDetalhados: []
   };
 
-  // Construir condições de filtro
-  const conditions: any[] = [];
+  // Construir condições de filtro usando distribution_log
+  // Regra: contar todos os leads RECEBIDOS pelo corretor no período,
+  // independentemente de transferências posteriores
+  const distConditions: any[] = [];
   if (dataInicio) {
-    conditions.push(gte(leads.createdAt, dataInicio));
+    distConditions.push(gte(distributionLog.createdAt, dataInicio));
   }
   if (dataFim) {
-    conditions.push(lte(leads.createdAt, dataFim));
+    distConditions.push(lte(distributionLog.createdAt, dataFim));
   }
   if (corretoresIds && corretoresIds.length > 0) {
-    conditions.push(inArray(leads.corretorId, corretoresIds));
+    distConditions.push(inArray(distributionLog.corretorId, corretoresIds));
   }
-
-  // Buscar todos os leads com filtro de data
-  const leadsQuery = await db.select({
+  // Buscar leads recebidos via distribution_log com JOIN em leads para obter detalhes
+  // Usar DISTINCT por (corretorId, leadId) para evitar duplicatas de múltiplas distribuições
+  const leadsQueryRaw = await db.select({
     id: leads.id,
     nome: leads.nome,
     telefone: leads.telefone,
     origem: leads.origem,
     projectId: leads.projectId,
-    corretorId: leads.corretorId,
-    createdAt: leads.createdAt,
+    corretorId: distributionLog.corretorId,
+    createdAt: distributionLog.createdAt,
   })
-    .from(leads)
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(leads.createdAt));
+    .from(distributionLog)
+    .innerJoin(leads, eq(distributionLog.leadId, leads.id))
+    .where(distConditions.length > 0 ? and(...distConditions) : undefined)
+    .orderBy(desc(distributionLog.createdAt));
+  // Deduplicar: cada lead conta uma vez por corretor
+  const seenLeadCorretor = new Set<string>();
+  const leadsQuery = leadsQueryRaw.filter(l => {
+    const key = `${l.corretorId}-${l.id}`;
+    if (seenLeadCorretor.has(key)) return false;
+    seenLeadCorretor.add(key);
+    return true;
+  });;
 
   // Buscar corretores
   const corretoresQuery = await db.select({
