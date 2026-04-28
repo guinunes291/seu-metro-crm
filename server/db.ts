@@ -410,6 +410,50 @@ export async function deleteCorretor(id: number, redistribuirLeads: boolean = fa
   // Remover corretor da fila de distribuição
   await db.delete(filaDistribuicao).where(eq(filaDistribuicao.corretorId, id));
   
+  // ============================================================
+  // PRESERVAR REGISTROS HISTÓRICOS: desvincular corretorId antes
+  // de excluir o usuário (tabelas sem FK declarada no banco)
+  // Regra: registros históricos NUNCA devem ser apagados ao
+  // excluir um corretor. Apenas o vínculo é removido.
+  // ============================================================
+  
+  // Agendamentos: preservar histórico, apenas desvincular
+  await db.update(agendamentos)
+    .set({ corretorId: null as any })
+    .where(eq(agendamentos.corretorId, id));
+  
+  // Visitas: preservar histórico, apenas desvincular
+  await db.update(visitas)
+    .set({ corretorId: null as any })
+    .where(eq(visitas.corretorId, id));
+  
+  // Interações (ligações/whatsapp): preservar histórico
+  await db.update(interacoes)
+    .set({ corretorId: null as any })
+    .where(eq(interacoes.corretorId, id));
+  
+  // Documentações/Pastas: preservar histórico
+  await db.update(documentacoes)
+    .set({ corretorId: null as any })
+    .where(eq(documentacoes.corretorId, id));
+  
+  // Análises de crédito: preservar histórico
+  await db.update(analises_credito)
+    .set({ corretorId: null as any })
+    .where(eq(analises_credito.corretorId, id));
+  
+  // Contratos/Vendas: preservar histórico
+  await db.update(contratos)
+    .set({ corretorId: null as any })
+    .where(eq(contratos.corretorId, id));
+  
+  // Atividades diárias: preservar histórico
+  await db.update(atividadesDiarias)
+    .set({ corretorId: null as any })
+    .where(eq(atividadesDiarias.corretorId, id));
+  
+  console.log(`[DeleteCorretor] Registros históricos desvinculados do corretor ${id}`);
+  
   // Excluir o corretor
   await db.delete(users).where(eq(users.id, id));
   

@@ -1722,7 +1722,7 @@ export const historicoAtribuicoes = mysqlTable("historico_atribuicoes", {
   
   // Lead e corretor
   leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
-  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   
   // Data da atribuição
   dataAtribuicao: timestamp("dataAtribuicao").defaultNow().notNull(),
@@ -1759,7 +1759,7 @@ export const interacoes = mysqlTable("interacoes", {
   
   // Lead e corretor
   leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
-  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   
   // Tipo de interação
   tipo: mysqlEnum("tipo", ["ligacao", "whatsapp"]).notNull(),
@@ -1794,7 +1794,7 @@ export const documentacoes = mysqlTable("documentacoes", {
   
   // Lead e corretor
   leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
-  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   
   // Tipo de documentação
   tipo: varchar("tipo", { length: 100 }),
@@ -1824,7 +1824,7 @@ export const analises_credito = mysqlTable("analises_credito", {
   
   // Lead e corretor
   leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
-  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   
   // Status da análise
   status: mysqlEnum("status", ["enviada", "aprovada", "reprovada", "pendente"]).default("enviada").notNull(),
@@ -1854,7 +1854,7 @@ export const contratos = mysqlTable("contratos", {
   
   // Lead e corretor
   leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
-  corretorId: int("corretorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  corretorId: int("corretorId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   
   // Valor da venda (VGV)
   valorVenda: decimal("valorVenda", { precision: 15, scale: 2 }),
@@ -1907,7 +1907,7 @@ export const comissoes = mysqlTable("comissoes", {
   contratoId: int("contratoId").notNull().references(() => contratos.id, { onDelete: "cascade" }),
   
   // Beneficiário da comissão
-  usuarioId: int("usuarioId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  usuarioId: int("usuarioId").references(() => users.id, { onDelete: "set null" }), // Preservar histórico após exclusão do corretor
   tipo: mysqlEnum("tipo", ["corretor", "gerente", "superintendente"]).notNull(),
   
   // Valores
