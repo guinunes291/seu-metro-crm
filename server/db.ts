@@ -985,16 +985,22 @@ export async function getAllLeads(options?: {
     conditions.push(inArray(leads.corretorId, options.corretoresIds));
   }
   
-  // Busca por nome, telefone ou email
+  // Busca por nome, telefone ou email (COLLATE utf8mb4_general_ci ignora acentos, cedilha e case)
   if (options?.searchTerm) {
-    const searchLower = `%${options.searchTerm.toLowerCase()}%`;
-    conditions.push(
-      or(
-        sql`LOWER(${leads.nome}) LIKE ${searchLower}`,
-        sql`LOWER(${leads.telefone}) LIKE ${searchLower}`,
-        sql`LOWER(${leads.email}) LIKE ${searchLower}`
-      )
-    );
+    const termo = options.searchTerm.trim();
+    const termoPhone = termo.replace(/\D/g, '');
+    const searchPattern = `%${termo}%`;
+    if (termoPhone.length >= 4) {
+      conditions.push(sql`REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', '') LIKE ${`%${termoPhone}%`}`);
+    } else {
+      conditions.push(
+        or(
+          sql`${leads.nome} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`,
+          sql`${leads.telefone} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`,
+          sql`${leads.email} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`
+        )
+      );
+    }
   }
   
   // Filtro por status
@@ -1092,16 +1098,22 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
     eq(leads.naLixeira, false), // Excluir leads na lixeira
   ];
   
-  // Busca por nome, telefone ou email
+  // Busca por nome, telefone ou email (COLLATE utf8mb4_general_ci ignora acentos, cedilha e case)
   if (options?.searchTerm) {
-    const searchLower = `%${options.searchTerm.toLowerCase()}%`;
-    conditions.push(
-      or(
-        sql`LOWER(${leads.nome}) LIKE ${searchLower}`,
-        sql`${leads.telefone} LIKE ${searchLower}`,
-        sql`LOWER(${leads.email}) LIKE ${searchLower}`
-      )!
-    );
+    const termo = options.searchTerm.trim();
+    const termoPhone = termo.replace(/\D/g, '');
+    const searchPattern = `%${termo}%`;
+    if (termoPhone.length >= 4) {
+      conditions.push(sql`REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', '') LIKE ${`%${termoPhone}%`}`);
+    } else {
+      conditions.push(
+        or(
+          sql`${leads.nome} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`,
+          sql`${leads.telefone} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`,
+          sql`${leads.email} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`
+        )!
+      );
+    }
   }
   
   // Filtro por status
@@ -1595,14 +1607,15 @@ export async function getLeadsPorCorretorComFiltros(filtros?: FiltrosLeadsPorCor
   if (filtros?.busca && filtros.busca.trim()) {
     const termo = filtros.busca.trim();
     const termoPhone = termo.replace(/\D/g, '');
+    const searchPattern = `%${termo}%`;
     if (termoPhone.length >= 4) {
-      // Busca por telefone (normalizado)
-      conditions.push(like(leads.telefone, `%${termoPhone}%`));
+      // Busca por telefone (apenas dígitos, ignora formatação)
+      conditions.push(sql`REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', '') LIKE ${`%${termoPhone}%`}`);
     } else {
-      // Busca por nome ou email
+      // Busca por nome ou email com COLLATE para ignorar acentos e cedilha
       conditions.push(or(
-        like(leads.nome, `%${termo}%`),
-        like(leads.email, `%${termo}%`)
+        sql`${leads.nome} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`,
+        sql`${leads.email} COLLATE utf8mb4_general_ci LIKE ${searchPattern}`
       ));
     }
   }

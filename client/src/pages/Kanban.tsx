@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { normalizeSearch } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
 import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -94,7 +95,8 @@ export default function Kanban() {
 
   // Estado de busca
   const [searchTerm, setSearchTerm] = useState("");
-  const searchNormalized = searchTerm.trim().toLowerCase();
+  // Normaliza o termo de busca: remove acentos, cedilha, hífens, espaços
+  const searchNorm = normalizeSearch(searchTerm);
 
   // Agrupar leads por status usando as queries separadas
   const allLeadsByStatus = visibleColumns.reduce((acc, column) => {
@@ -103,24 +105,28 @@ export default function Kanban() {
     return acc;
   }, {} as Record<string, Lead[]>);
 
-  // Filtrar leads pela busca (frontend — dados já carregados)
+  // Filtrar leads pela busca normalizada (frontend — dados já carregados)
   const leadsByStatus = useMemo(() => {
-    if (!searchNormalized) return allLeadsByStatus;
+    if (!searchNorm) return allLeadsByStatus;
     const matchesSearch = (lead: Lead) => {
-      const phone = (lead.telefone || "").replace(/\D/g, "");
-      const searchPhone = searchNormalized.replace(/\D/g, "");
-      return (
-        (lead.nome || "").toLowerCase().includes(searchNormalized) ||
-        (phone && searchPhone.length >= 4 && phone.includes(searchPhone)) ||
-        ((lead as any).corretorNome || "").toLowerCase().includes(searchNormalized)
-      );
+      // Busca por nome normalizado
+      if (normalizeSearch(lead.nome).includes(searchNorm)) return true;
+      // Busca por telefone (apenas dígitos)
+      const phoneDigits = (lead.telefone || "").replace(/\D/g, "");
+      const searchDigits = searchNorm.replace(/\D/g, "");
+      if (searchDigits.length >= 4 && phoneDigits.includes(searchDigits)) return true;
+      // Busca por nome do corretor normalizado
+      if (normalizeSearch((lead as any).corretorNome).includes(searchNorm)) return true;
+      // Busca por e-mail normalizado
+      if (normalizeSearch(lead.email).includes(searchNorm)) return true;
+      return false;
     };
     return visibleColumns.reduce((acc, column) => {
       acc[column.id] = allLeadsByStatus[column.id].filter(matchesSearch);
       return acc;
     }, {} as Record<string, Lead[]>);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allLeadsByStatus, searchNormalized]);
+  }, [allLeadsByStatus, searchNorm]);
 
   const totalFound = useMemo(
     () => Object.values(leadsByStatus).flat().length,
