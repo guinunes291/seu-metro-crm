@@ -240,7 +240,7 @@ export default function Kanban() {
         </div>
 
         {/* Resultado da busca */}
-        {searchNormalized && (
+        {searchNorm && (
           <div className="text-sm">
             {totalFound === 0
               ? <span className="text-destructive">Nenhum lead encontrado para "{searchTerm}"</span>
