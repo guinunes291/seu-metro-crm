@@ -96,7 +96,7 @@ const menuGroups = [
     id: "meu-negocio",
     label: "Meu Negócio",
     icon: Briefcase,
-    roles: ["corretor"],
+    roles: ["corretor", "gestor", "admin", "superintendente"],
     items: [
       { icon: LayoutDashboard, label: "Meu Dashboard", path: "/meu-negocio/dashboard", roles: ["corretor"] },
       { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup", roles: ["corretor"] },
@@ -105,6 +105,7 @@ const menuGroups = [
       { icon: Zap, label: "Modo Foco", path: "/meu-negocio/foco", roles: ["corretor"] },
       { icon: BookOpen, label: "Como Avaliar", path: "/meu-negocio/como-avaliar", roles: ["corretor"] },
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
+      { icon: ClipboardList, label: "Relatório Diário", path: "/meu-negocio/relatorio-diario", roles: ["corretor", "gestor", "admin", "superintendente"] },
     ],
   },
   {

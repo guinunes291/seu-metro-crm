@@ -31,6 +31,7 @@ import { analyticsRouter } from "./routers/analytics";
 import { construtorasRouter } from "./routers/construtoras";
 import { propostasRouter } from "./routers/propostas";
 import { meuNegocioRouter } from "./routers/meuNegocio";
+import { relatorioDiarioRouter } from "./routers/relatorioDiario";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -112,6 +113,7 @@ export const appRouter = router({
   ia: iaRouter,
   carteiraAtiva: carteiraAtivaRouter,
   meuNegocio: meuNegocioRouter,
+  relatorioDiario: relatorioDiarioRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
