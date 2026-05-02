@@ -662,7 +662,7 @@ export default function PerformanceTV() {
       whatsappEnviados: Number(item.totalWhatsapp) || 0, whatsappRespondidos: 0,
       agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
       visitasRealizadas: Number(item.totalVisitas) || 0,
-      documentacoesRecolhidas: (Number(item.totalDocumentacoes) || 0) + (Number(item.totalAnalises) || 0),
+      analiseCreditoEnviadas: (Number(item.totalDocumentacoes) || 0),
       vendasFechadas: Number(item.totalContratos) || 0,
       posicao: index + 1,
     })) || []
@@ -679,7 +679,7 @@ export default function PerformanceTV() {
     totalWhatsapp: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.whatsappEnviados || 0), 0),
     totalAgendamentos: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.agendamentosConfirmados || 0), 0),
     totalVisitas: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.visitasRealizadas || 0), 0),
-    totalDocumentacoes: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.documentacoesRecolhidas || 0), 0),
+    totalDocumentacoes: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.analiseCreditoEnviadas || 0), 0),
     totalPontos: rankingProdutividade.reduce((acc: number, item: any) => acc + (item.pontuacaoTotal || 0), 0),
   }), [rankingProdutividade]);
   
@@ -987,7 +987,7 @@ export default function PerformanceTV() {
                           <td className="py-2 px-2 text-center text-green-300">{item.whatsappEnviados}</td>
                           <td className="py-2 px-2 text-center text-purple-300">{item.agendamentosConfirmados}</td>
                           <td className="py-2 px-2 text-center text-amber-300">{item.visitasRealizadas}</td>
-                          <td className="py-2 px-2 text-center text-cyan-300">{item.documentacoesRecolhidas}</td>
+                          <td className="py-2 px-2 text-center text-cyan-300">{item.analiseCreditoEnviadas}</td>
                           <td className="py-2 px-2 text-center">
                             {item.vendasFechadas > 0 ? (
                               <span className="inline-flex items-center gap-1 font-bold text-emerald-400">

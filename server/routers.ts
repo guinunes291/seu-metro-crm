@@ -2653,7 +2653,7 @@ export const appRouter = router({
           'ligacoesRealizadas', 'ligacoesAtendidas', 
           'whatsappEnviados', 'whatsappRespondidos',
           'agendamentosConfirmados', 'visitasRealizadas',
-          'propostasEnviadas', 'documentacoesRecolhidas',
+          'propostasEnviadas',
           'analiseCreditoEnviadas', 'contratosFechados'
         ]),
         quantidade: z.number().min(1).default(1),

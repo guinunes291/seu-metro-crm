@@ -36,7 +36,6 @@ async function recalcularPontuacaoTodasAtividades() {
         (COALESCE(whatsappEnviados, 0) * 1) +
         (COALESCE(agendamentosConfirmados, 0) * 25) +
         (COALESCE(visitasRealizadas, 0) * 40) +
-        (COALESCE(documentacoesRecolhidas, 0) * 60) +
         (COALESCE(analiseCreditoEnviadas, 0) * 60) +
         (COALESCE(contratosFechados, 0) * 150)
       )

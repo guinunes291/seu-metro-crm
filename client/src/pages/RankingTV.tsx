@@ -402,7 +402,7 @@ function EstatisticasDia({ ranking }: { ranking: any[] }) {
     whatsapp: acc.whatsapp + (curr.whatsappEnviados || 0),
     agendamentos: acc.agendamentos + (curr.agendamentosConfirmados || 0),
     visitas: acc.visitas + (curr.visitasRealizadas || 0),
-    documentacoes: acc.documentacoes + (curr.documentacoesRecolhidas || 0),
+    documentacoes: acc.documentacoes + (curr.analiseCreditoEnviadas || 0),
     contratos: acc.contratos + (curr.contratosFechados || 0),
     pontos: acc.pontos + (curr.pontuacaoTotal || 0),
     vgv: acc.vgv + (curr.vgvDia || 0),

@@ -134,7 +134,7 @@ async function garantirAtividadeDiariaExiste(corretorId: number, data: Date): Pr
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
       propostasEnviadas: 0,
-      documentacoesRecolhidas: 0,
+      analiseCreditoEnviadas: 0,
       analiseCreditoEnviadas: 0,
       contratosFechados: 0,
       vgvDia: 0,
@@ -299,7 +299,7 @@ export async function sincronizarDocumentacoesData(data: Date): Promise<void> {
     
     await db
       .update(atividadesDiarias)
-      .set({ documentacoesRecolhidas: d.total })
+      .set({ analiseCreditoEnviadas: d.total })
       .where(sql`${atividadesDiarias.corretorId} = ${d.corretorId} AND DATE(${atividadesDiarias.data}) = ${dataFormatada}`);
   }
 
@@ -397,7 +397,7 @@ export async function recalcularPontuacaoData(data: Date): Promise<void> {
       (atividade.whatsappEnviados * 1) +
       (atividade.agendamentosConfirmados * 25) +
       (atividade.visitasRealizadas * 40) +
-      (atividade.documentacoesRecolhidas * 50) +
+      (atividade.analiseCreditoEnviadas * 50) +
       (atividade.analiseCreditoEnviadas * 75) +
       (atividade.contratosFechados * 100);
 

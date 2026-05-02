@@ -524,7 +524,7 @@ export default function MetasDiarias() {
                             <FileText className="h-4 w-4 text-cyan-500" />
                             Documentações
                           </span>
-                          <span className="font-medium">{item.realizado.documentacoesRecolhidas}/{item.meta.metaDocumentacoes}</span>
+                          <span className="font-medium">{item.realizado.analiseCreditoEnviadas}/{item.meta.metaDocumentacoes}</span>
                         </div>
                         <Progress value={Math.min(item.progresso.documentacoes, 100)} className="h-2" />
                         <p className="text-xs text-muted-foreground text-right">{item.progresso.documentacoes}%</p>

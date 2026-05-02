@@ -938,7 +938,6 @@ export const atividadesDiarias = mysqlTable("atividades_diarias", {
   agendamentosConfirmados: int("agendamentosConfirmados").default(0).notNull(),
   visitasRealizadas: int("visitasRealizadas").default(0).notNull(),
   propostasEnviadas: int("propostasEnviadas").default(0).notNull(),
-  documentacoesRecolhidas: int("documentacoesRecolhidas").default(0).notNull(),
   analiseCreditoEnviadas: int("analiseCreditoEnviadas").default(0).notNull(),
   contratosFechados: int("contratosFechados").default(0).notNull(),
   

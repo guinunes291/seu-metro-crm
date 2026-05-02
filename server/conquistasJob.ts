@@ -39,7 +39,7 @@ async function calcularEstatisticasCorretor(corretorId: number): Promise<Estatis
       whatsapp: sql<number>`COALESCE(SUM(${atividadesDiarias.whatsappEnviados}), 0)`,
       agendamentos: sql<number>`COALESCE(SUM(${atividadesDiarias.agendamentosConfirmados}), 0)`,
       visitas: sql<number>`COALESCE(SUM(${atividadesDiarias.visitasRealizadas}), 0)`,
-      documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.documentacoesRecolhidas}), 0)`,
+      documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.analiseCreditoEnviadas}), 0)`,
     })
     .from(atividadesDiarias)
     .where(eq(atividadesDiarias.corretorId, corretorId));
@@ -294,7 +294,7 @@ export async function verificarConquistasTodosCorretores(): Promise<{
     whatsapp: sql<number>`COALESCE(SUM(${atividadesDiarias.whatsappEnviados}), 0)`,
     agendamentos: sql<number>`COALESCE(SUM(${atividadesDiarias.agendamentosConfirmados}), 0)`,
     visitas: sql<number>`COALESCE(SUM(${atividadesDiarias.visitasRealizadas}), 0)`,
-    documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.documentacoesRecolhidas}), 0)`,
+    documentacoes: sql<number>`COALESCE(SUM(${atividadesDiarias.analiseCreditoEnviadas}), 0)`,
     diasAtivos: sql<number>`COUNT(DISTINCT DATE(${atividadesDiarias.data}))`,
   }).from(atividadesDiarias)
     .where(inArray(atividadesDiarias.corretorId, corretorIds))

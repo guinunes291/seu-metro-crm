@@ -4398,7 +4398,7 @@ export async function incrementarAtividade(
   corretorId: number, 
   tipo: 'ligacoesRealizadas' | 'ligacoesAtendidas' | 'whatsappEnviados' | 'whatsappRespondidos' | 
         'agendamentosConfirmados' | 'visitasRealizadas' | 'propostasEnviadas' | 
-        'documentacoesRecolhidas' | 'analiseCreditoEnviadas' | 'contratosFechados',
+        'analiseCreditoEnviadas' | 'contratosFechados',
   quantidade: number = 1
 ) {
   const db = await getDb();
@@ -4489,7 +4489,6 @@ export async function getRankingDia(data?: Date) {
       agendamentosConfirmados: acc.agendamentosConfirmados + ativ.agendamentosConfirmados,
       visitasRealizadas: acc.visitasRealizadas + ativ.visitasRealizadas,
       propostasEnviadas: acc.propostasEnviadas + ativ.propostasEnviadas,
-      documentacoesRecolhidas: acc.documentacoesRecolhidas + ativ.documentacoesRecolhidas,
       analiseCreditoEnviadas: acc.analiseCreditoEnviadas + ativ.analiseCreditoEnviadas,
       contratosFechados: acc.contratosFechados + ativ.contratosFechados,
       vgvDia: acc.vgvDia + ativ.vgvDia,
@@ -4502,7 +4501,6 @@ export async function getRankingDia(data?: Date) {
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
       propostasEnviadas: 0,
-      documentacoesRecolhidas: 0,
       analiseCreditoEnviadas: 0,
       contratosFechados: 0,
       vgvDia: 0,
@@ -4574,7 +4572,7 @@ export async function getRankingPorPeriodo(dataInicio?: Date, dataFim?: Date, co
     totalWhatsapp: sql<number>`SUM(${atividadesDiarias.whatsappEnviados})`,
     totalAgendamentos: sql<number>`SUM(${atividadesDiarias.agendamentosConfirmados})`,
     totalVisitas: sql<number>`SUM(${atividadesDiarias.visitasRealizadas})`,
-    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.documentacoesRecolhidas})`,
+    totalDocumentacoes: sql<number>`SUM(${atividadesDiarias.analiseCreditoEnviadas})`,
     totalAnalises: sql<number>`SUM(${atividadesDiarias.analiseCreditoEnviadas})`,
     totalContratos: sql<number>`SUM(${atividadesDiarias.contratosFechados})`,
     totalVgv: sql<number>`SUM(${atividadesDiarias.vgvDia})`,
@@ -4624,7 +4622,7 @@ export async function getRankingSemanal() {
       totalLigacoes: acc.totalLigacoes + ativ.ligacoesRealizadas,
       totalAgendamentos: acc.totalAgendamentos + ativ.agendamentosConfirmados,
       totalVisitas: acc.totalVisitas + ativ.visitasRealizadas,
-      totalDocumentacoes: acc.totalDocumentacoes + ativ.documentacoesRecolhidas,
+      totalDocumentacoes: acc.totalDocumentacoes + ativ.analiseCreditoEnviadas,
       totalContratos: acc.totalContratos + ativ.contratosFechados,
       totalVgv: acc.totalVgv + ativ.vgvDia,
       totalPontos: acc.totalPontos + ativ.pontuacaoTotal,
@@ -4682,7 +4680,7 @@ export async function getRankingMensal() {
       totalLigacoes: acc.totalLigacoes + ativ.ligacoesRealizadas,
       totalAgendamentos: acc.totalAgendamentos + ativ.agendamentosConfirmados,
       totalVisitas: acc.totalVisitas + ativ.visitasRealizadas,
-      totalDocumentacoes: acc.totalDocumentacoes + ativ.documentacoesRecolhidas,
+      totalDocumentacoes: acc.totalDocumentacoes + ativ.analiseCreditoEnviadas,
       totalContratos: acc.totalContratos + ativ.contratosFechados,
       totalVgv: acc.totalVgv + ativ.vgvDia,
       totalPontos: acc.totalPontos + ativ.pontuacaoTotal,
@@ -4787,8 +4785,7 @@ export async function calcularPontuacaoDiaria(corretorId: number) {
   // Pontos por visitas realizadas
   pontuacao += atividade.visitasRealizadas * PONTOS.VISITA;
   
-  // Pontos por documentação/análise de crédito
-  pontuacao += atividade.documentacoesRecolhidas * PONTOS.DOCUMENTACAO;
+  // Pontos por análise de crédito
   pontuacao += atividade.analiseCreditoEnviadas * PONTOS.DOCUMENTACAO;
   
   // Pontos por vendas
@@ -4898,13 +4895,8 @@ export async function recalcularPontuacaoAtividade(atividadeId: number) {
   // Pontos por visitas realizadas
   pontuacao += (atividade.visitasRealizadas || 0) * PONTOS.VISITA;
   
-  // Pontos por documentação/análise de crédito (contabilizar apenas uma vez)
-  // documentacoesRecolhidas e analiseCreditoEnviadas são a mesma coisa, usar o maior valor
-  const docsOuAnalise = Math.max(
-    (atividade.documentacoesRecolhidas || 0),
-    (atividade.analiseCreditoEnviadas || 0)
-  );
-  pontuacao += docsOuAnalise * PONTOS.DOCUMENTACAO;
+  // Pontos por análise de crédito
+  pontuacao += (atividade.analiseCreditoEnviadas || 0) * PONTOS.DOCUMENTACAO;
   
   // Pontos por vendas
   pontuacao += (atividade.contratosFechados || 0) * PONTOS.VENDA;
@@ -5402,7 +5394,6 @@ export async function getProgressoMetasDiarias(corretorId?: number): Promise<any
       whatsappRespondidos: 0,
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
-      documentacoesRecolhidas: 0,
       vendasRealizadas: 0,
       pontuacaoTotal: 0,
     };
@@ -5413,7 +5404,7 @@ export async function getProgressoMetasDiarias(corretorId?: number): Promise<any
       whatsapp: meta?.metaWhatsapp ? Math.round((atividadeDia.whatsappEnviados / meta.metaWhatsapp) * 100) : 0,
       agendamentos: meta?.metaAgendamentos ? Math.round((atividadeDia.agendamentosConfirmados / meta.metaAgendamentos) * 100) : 0,
       visitas: meta?.metaVisitas ? Math.round((atividadeDia.visitasRealizadas / meta.metaVisitas) * 100) : 0,
-      documentacoes: meta?.metaDocumentacoes ? Math.round((atividadeDia.documentacoesRecolhidas / meta.metaDocumentacoes) * 100) : 0,
+      documentacoes: meta?.metaDocumentacoes ? Math.round((atividadeDia.analiseCreditoEnviadas / meta.metaDocumentacoes) * 100) : 0,
       vendas: meta?.metaVendas ? Math.round(((atividadeDia as any).vendasRealizadas || 0) / meta.metaVendas * 100) : 0,
     };
     
@@ -9046,7 +9037,6 @@ async function garantirAtividadeDiariaExiste(corretorId: number, data: Date) {
       whatsappRespondidos: 0,
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
-      documentacoesRecolhidas: 0,
       analisesCredito: 0,
       contratosFechados: 0,
       pontuacao: 0,
@@ -9226,7 +9216,7 @@ export async function sincronizarDocumentacoesDoDia() {
     await db
       .update(atividadesDiarias)
       .set({
-        documentacoesRecolhidas: doc.total,
+        analiseCreditoEnviadas: doc.total,
       })
       .where(
         and(
