@@ -662,7 +662,7 @@ export default function PerformanceTV() {
       whatsappEnviados: Number(item.totalWhatsapp) || 0, whatsappRespondidos: 0,
       agendamentosConfirmados: Number(item.totalAgendamentos) || 0,
       visitasRealizadas: Number(item.totalVisitas) || 0,
-      documentacoesRecolhidas: Number(item.totalDocumentacoes) || 0,
+      documentacoesRecolhidas: (Number(item.totalDocumentacoes) || 0) + (Number(item.totalAnalises) || 0),
       vendasFechadas: Number(item.totalContratos) || 0,
       posicao: index + 1,
     })) || []
