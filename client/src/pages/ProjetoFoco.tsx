@@ -36,6 +36,7 @@ export default function ProjetoFoco() {
   const [webhookNome, setWebhookNome] = useState("");
   const [webhookFonte, setWebhookFonte] = useState<"facebook" | "instagram" | "google" | "rdstation" | "outro">("facebook");
   const [webhookProjeto, setWebhookProjeto] = useState<number | undefined>();
+  const [webhookNotificacaoUrl, setWebhookNotificacaoUrl] = useState<string>("");
   
   // Queries
   const { data: config, isLoading: loadingConfig } = trpc.fila.getProjetoFoco.useQuery();
@@ -92,10 +93,23 @@ export default function ProjetoFoco() {
     },
   });
   
+  const saveWebhookNotificacao = trpc.fila.saveWebhookNotificacaoUrl.useMutation({
+    onSuccess: () => {
+      toast.success("URL do Zapier salva com sucesso!");
+      utils.fila.getProjetoFoco.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao salvar URL: ${error.message}`);
+    },
+  });
+  
   // Inicializar corretores selecionados quando config carregar
   useEffect(() => {
     if (config && config.corretoresIds) {
       setCorretoresSelecionados(config.corretoresIds);
+    }
+    if (config && config.webhookNotificacaoCorretor) {
+      setWebhookNotificacaoUrl(config.webhookNotificacaoCorretor);
     }
   }, [config]);
   
@@ -424,6 +438,58 @@ export default function ProjetoFoco() {
                 </div>
               ))
             )}
+          </CardContent>
+        </Card>
+        
+        {/* Notificação WhatsApp via Zapier */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-green-500" />
+              Notificação WhatsApp ao Corretor (Zapier)
+            </CardTitle>
+            <CardDescription>
+              Quando um lead for distribuído pela Fila Foco, o sistema envia automaticamente uma mensagem WhatsApp ao corretor via Zapier.
+              Configure abaixo a URL do webhook do seu Zap.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="zapier-url">URL do Webhook Zapier</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="zapier-url"
+                  type="url"
+                  placeholder="https://hooks.zapier.com/hooks/catch/..."
+                  value={webhookNotificacaoUrl}
+                  onChange={(e) => setWebhookNotificacaoUrl(e.target.value)}
+                  className="flex-1 font-mono text-sm"
+                />
+                <Button
+                  onClick={() => saveWebhookNotificacao.mutate({ webhookUrl: webhookNotificacaoUrl || null })}
+                  disabled={saveWebhookNotificacao.isPending}
+                >
+                  {saveWebhookNotificacao.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    "Salvar URL"
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O Zapier receberá os dados: <strong>nome do lead</strong>, <strong>projeto</strong>, <strong>origem</strong>, <strong>nome do corretor</strong> e <strong>telefone do corretor</strong> (para envio do WhatsApp).
+                O telefone do cliente <strong>não</strong> é enviado.
+              </p>
+              {config?.webhookNotificacaoCorretor && (
+                <div className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  URL configurada e ativa
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
         

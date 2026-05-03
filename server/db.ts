@@ -3391,6 +3391,10 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
   // Incrementar contador do webhook
   await incrementarLeadsWebhook(webhook.id);
   
+  // Buscar configuração da fila Foco (para obter URL do webhook de notificação WhatsApp)
+  const configFoco = await getConfiguracaoProjetoFoco();
+  const webhookNotificacaoUrl = configFoco?.webhookNotificacaoCorretor || undefined;
+
   // Distribuir APENAS para corretores da Fila Foco (SEM LIMITES)
   const corretorId = await getProximoCorretorFilaFoco();
   
@@ -3452,10 +3456,10 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
           console.error('[Webhook Foco] Erro ao enviar email:', emailError);
         }
         
-        // Enviar notificação via Zapier (WhatsApp) - se configurado
+        // Enviar notificação via Zapier (WhatsApp) - usando URL configurada na fila Foco
         try {
           const { notificarCorretorLeadWebhook } = await import('./zapierWebhook');
-          await notificarCorretorLeadWebhook({
+          const zapierResult = await notificarCorretorLeadWebhook({
             corretor: {
               id: corretor.id,
               nome: corretor.name,
@@ -3471,7 +3475,13 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
               origem: leadCriado.origem,
               projeto: projeto?.nome,
             },
+            webhookUrl: webhookNotificacaoUrl, // URL específica da fila Foco configurada pelo admin
           });
+          if (zapierResult.success) {
+            console.log('[Webhook Foco] Notificação WhatsApp enviada via Zapier para:', corretor.name);
+          } else {
+            console.log('[Webhook Foco] Zapier não configurado ou falhou:', zapierResult.error);
+          }
         } catch (zapierError) {
           console.error('[Webhook Foco] Erro ao notificar via Zapier:', zapierError);
         }
@@ -7818,6 +7828,34 @@ export async function setConfiguracaoProjetoFoco(
         ativo: true, // Ativar automaticamente ao salvar
         observacoes: observacoes || null,
       })
+      .where(eq(configuracaoProjetoFoco.id, configs[0].id));
+  }
+}
+
+/**
+ * Salva a URL do webhook de notificação WhatsApp (Zapier) da fila Foco
+ */
+export async function setWebhookNotificacaoCorretor(webhookUrl: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const configs = await db.select()
+    .from(configuracaoProjetoFoco)
+    .limit(1);
+  
+  if (configs.length === 0) {
+    // Criar configuração com a URL
+    await db.insert(configuracaoProjetoFoco).values({
+      projetoId: null,
+      corretoresIds: [] as any,
+      posicaoAtual: 0,
+      ativo: true,
+      webhookNotificacaoCorretor: webhookUrl,
+    });
+  } else {
+    // Atualizar URL na configuração existente
+    await db.update(configuracaoProjetoFoco)
+      .set({ webhookNotificacaoCorretor: webhookUrl })
       .where(eq(configuracaoProjetoFoco.id, configs[0].id));
   }
 }

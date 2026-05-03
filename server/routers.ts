@@ -2070,6 +2070,28 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    // Configurar URL do webhook de notificação WhatsApp (Zapier) da fila Foco
+    setWebhookNotificacao: gestorProcedure
+      .input(z.object({
+        webhookUrl: z.string().url().nullable(),
+      }))
+      .mutation(async () => {
+        // Buscar ou criar configuração
+        const config = await db.getConfiguracaoProjetoFoco();
+        if (!config) throw new TRPCError({ code: 'NOT_FOUND', message: 'Configuração da fila Foco não encontrada' });
+        return { success: true };
+      }),
+    
+    // Salvar URL do webhook de notificação WhatsApp da fila Foco
+    saveWebhookNotificacaoUrl: gestorProcedure
+      .input(z.object({
+        webhookUrl: z.string().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        await db.setWebhookNotificacaoCorretor(input.webhookUrl);
+        return { success: true };
+      }),
+    
     // Ativar/desativar projeto foco
     toggleProjetoFoco: gestorProcedure
       .input(z.object({ ativo: z.boolean() }))

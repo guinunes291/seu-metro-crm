@@ -1650,6 +1650,9 @@ export const configuracaoProjetoFoco = mysqlTable("configuracao_projeto_foco", {
   // Posição atual na fila foco (para round-robin)
   posicaoAtual: int("posicaoAtual").default(0).notNull(),
   
+  // URL do webhook do Zapier para notificação de WhatsApp ao corretor quando recebe lead
+  webhookNotificacaoCorretor: text("webhookNotificacaoCorretor"),
+  
   // Metadata
   ativo: boolean("ativo").default(true).notNull(),
   observacoes: text("observacoes"),

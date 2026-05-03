@@ -231,29 +231,40 @@ export function gerarMensagemConfirmacao(params: {
 export async function notificarCorretorLeadWebhook(params: {
   corretor: CorretorData;
   lead: LeadData;
+  webhookUrl?: string; // URL customizada (ex: da fila Foco) - sobrescreve a variável de ambiente
 }): Promise<{ success: boolean; error?: string }> {
-  const zapierUrl = process.env.ZAPIER_WEBHOOK_URL;
+  // Prioridade: URL customizada da fila > variável de ambiente global
+  const zapierUrl = params.webhookUrl || process.env.ZAPIER_WEBHOOK_URL;
   
   if (!zapierUrl) {
-    console.log('[Zapier] ZAPIER_WEBHOOK_URL não configurada - notificação ignorada');
+    console.log('[Zapier] Nenhuma URL de webhook configurada - notificação ignorada');
     return { success: false, error: 'URL não configurada' };
   }
 
+  // Montar payload sem o telefone do cliente (conforme regra de negócio)
+  const leadSemTelefone = {
+    ...params.lead,
+    telefone: undefined, // Não enviar telefone do cliente ao corretor via WhatsApp
+  };
+
   const payload: WebhookPayload = {
-    evento: 'lead_criado',
+    evento: 'lead_distribuido_foco',
     timestamp: new Date().toISOString(),
-    lead: params.lead,
+    lead: leadSemTelefone,
     corretor: params.corretor,
     metadata: {
-      tipo: 'notificacao_corretor',
+      tipo: 'notificacao_corretor_whatsapp',
       origem_webhook: true,
+      fila: params.webhookUrl ? 'foco' : 'geral',
     },
   };
 
-  console.log('[Zapier] Notificando corretor sobre novo lead:', {
+  console.log('[Zapier] Notificando corretor sobre novo lead (fila foco):', {
     corretor: params.corretor.nome,
+    telefone_corretor: params.corretor.telefone,
     lead: params.lead.nome,
     origem: params.lead.origem,
+    webhook_url: zapierUrl.substring(0, 50) + '...',
   });
 
   return await enviarWebhookZapier(zapierUrl, payload);
