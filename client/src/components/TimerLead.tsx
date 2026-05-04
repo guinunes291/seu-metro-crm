@@ -24,10 +24,10 @@ interface TimerLeadProps {
   ultimaInteracao?: Date | string | null;
 }
 
-/** Tempo total do timer em milissegundos (30 minutos) */
-const TIMER_TOTAL_MS = 30 * 60 * 1000;
-/** Limite de urgência para notificação do navegador (3 minutos) */
-const LIMITE_URGENCIA_MS = 3 * 60 * 1000;
+/** Tempo total do timer em milissegundos (5 minutos) */
+const TIMER_TOTAL_MS = 5 * 60 * 1000;
+/** Limite de urgência para notificação do navegador (1 minuto) */
+const LIMITE_URGENCIA_MS = 1 * 60 * 1000;
 
 /** Verifica se a origem é de um lead Facebook ADS (webhook) */
 function isLeadFacebookADS(origem?: string | null): boolean {
@@ -38,7 +38,7 @@ function isLeadFacebookADS(origem?: string | null): boolean {
 
 /**
  * Componente que exibe um cronômetro regressivo para leads Facebook ADS.
- * Regra: lead ADS chegou → 30 min a partir de timestampRecebimento → se não entrou em
+ * Regra: lead ADS chegou → 5 min a partir de timestampRecebimento → se não entrou em
  * "em_atendimento", o job de backend transfere automaticamente.
  * O timer visual reflete esse prazo contando desde timestampRecebimento.
  */
@@ -110,7 +110,7 @@ export function TimerLead({
   const percentualRestante = Math.max(0, (tempoRestante / TIMER_TOTAL_MS) * 100);
 
   const isUrgente = tempoRestante < LIMITE_URGENCIA_MS;
-  const isAtencao = tempoRestante < 7 * 60 * 1000;
+  const isAtencao = tempoRestante < 2 * 60 * 1000;
 
   const getCorTimer = () => {
     if (expirado) return "text-red-700 bg-red-100 border-red-300";
@@ -153,7 +153,7 @@ export function TimerLead({
             : `${minutos.toString().padStart(2, "0")}:${segundos.toString().padStart(2, "0")}`}
         </span>
         {!expirado && (
-          <span className="opacity-60 font-normal">/ 30:00</span>
+          <span className="opacity-60 font-normal">/ 05:00</span>
         )}
       </div>
 
