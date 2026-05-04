@@ -965,6 +965,7 @@ export async function getAllLeads(options?: {
   origem?: string;
   corretorId?: number;
   corretoresIds?: number[] | null; // Filtro por equipe
+  temperatura?: 'quente' | 'morno' | 'frio'; // Fase 2
   dataInicio?: string;
   dataFim?: string;
 }) {
@@ -1023,6 +1024,11 @@ export async function getAllLeads(options?: {
     conditions.push(eq(leads.corretorId, options.corretorId));
   }
   
+  // Filtro por temperatura — Fase 2
+  if (options?.temperatura) {
+    conditions.push(eq(leads.temperatura, options.temperatura));
+  }
+
   // Filtro por data
   if (options?.dataInicio) {
     conditions.push(gte(leads.createdAt, new Date(options.dataInicio)));
@@ -6150,7 +6156,7 @@ export async function getAgendamentosLead(leadId: number): Promise<Agendamento[]
  */
 export async function updateAgendamentoStatus(
   id: number,
-  status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado',
+  status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado' | 'nao_compareceu', // Fase 2
   corretorId?: number
 ): Promise<boolean> {
   const db = await getDb();
@@ -6179,6 +6185,20 @@ export async function updateAgendamentoStatus(
       });
     }
   }
+  
+  return true;
+}
+
+/**
+ * Fase 2: Registrar não comparecimento de agendamento
+ */
+export async function updateAgendamentoNaoCompareceu(id: number, naoCompareceu: boolean): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  await db.update(agendamentos)
+    .set({ naoCompareceu, updatedAt: new Date() })
+    .where(eq(agendamentos.id, id));
   
   return true;
 }

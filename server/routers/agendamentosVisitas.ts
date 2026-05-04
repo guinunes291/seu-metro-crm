@@ -172,7 +172,7 @@ export const agendamentosVisitasRouter = router({
     updateStatus: corretorProcedure
       .input(z.object({
         id: z.number(),
-        status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado']),
+        status: z.enum(['pendente', 'confirmado', 'realizado', 'cancelado', 'reagendado', 'nao_compareceu']), // Fase 2
       }))
       .mutation(async ({ ctx, input }) => {
         // Buscar agendamento para obter leadId
@@ -198,6 +198,11 @@ export const agendamentosVisitasRouter = router({
               observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
             });
           }
+        }
+        
+        // Fase 2: Se não compareceu, registrar no campo naoCompareceu
+        if (input.status === 'nao_compareceu') {
+          await db.updateAgendamentoNaoCompareceu(input.id, true);
         }
         
         return resultado;
