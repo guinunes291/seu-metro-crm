@@ -9,9 +9,9 @@ import { getUserById, getProjectById } from "./db";
 const ADMIN_GUILHERME_ID = 7722800;
 
 /**
- * Tempo máximo em "Aguardando Atendimento" antes de redistribuir: 30 minutos
+ * Tempo máximo em "Aguardando Atendimento" antes de redistribuir: 5 minutos
  */
-const TIMER_MINUTOS = 30;
+const TIMER_MINUTOS = 5;
 
 /**
  * Busca o próximo corretor apto na FILA FOCO.
@@ -120,7 +120,7 @@ async function getProximoCorretorFilaGeralParaTimer(
 }
 
 /**
- * Job que verifica leads com timer ativo que ultrapassaram 30 minutos sem serem trabalhados.
+ * Job que verifica leads com timer ativo que ultrapassaram 5 minutos sem serem trabalhados.
  *
  * Regras de redistribuição:
  * - Leads da fila FOCO (tipoFilaOrigem='foco') → redistribuídos apenas entre corretores da fila foco
@@ -142,7 +142,7 @@ export async function verificarTimerLeads() {
 
     console.log(`[Timer Job] Verificando leads com timer ativo (limite: ${TIMER_MINUTOS} min)...`);
 
-    // Buscar leads com timer ativo que ultrapassaram 30 minutos
+    // Buscar leads com timer ativo que ultrapassaram 5 minutos
     // Excluir leads transferidos manualmente pelo admin (ficam fixos no corretor)
     const leadsExpirados = await db
       .select({

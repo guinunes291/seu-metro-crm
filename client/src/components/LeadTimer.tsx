@@ -12,9 +12,9 @@ interface LeadTimerProps {
 }
 
 // Configurações de tempo (em minutos)
-const TEMPO_ALERTA_AMARELO_MIN = 5; // 5 minutos
-const TEMPO_ALERTA_VERMELHO_MIN = 30; // 30 minutos
-const TEMPO_CRITICO_MIN = 120; // 2 horas (120 minutos)
+const TEMPO_ALERTA_AMARELO_MIN = 2; // 2 minutos
+const TEMPO_ALERTA_VERMELHO_MIN = 5; // 5 minutos (limite de redistribuição)
+const TEMPO_CRITICO_MIN = 10; // 10 minutos (redistribuído)
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -49,7 +49,7 @@ function getTimerStatus(minutesWaiting: number): {
       bgColor: "bg-red-100 dark:bg-red-900/30",
       borderColor: "border-red-500",
       icon: AlertCircle,
-      message: "URGENTE! Lead aguardando há mais de 2h",
+      message: "URGENTE! Lead aguardando há mais de 10min - será redistribuído!",
     };
   }
   if (minutesWaiting >= TEMPO_ALERTA_VERMELHO_MIN) {
@@ -59,7 +59,7 @@ function getTimerStatus(minutesWaiting: number): {
       bgColor: "bg-red-50 dark:bg-red-900/20",
       borderColor: "border-red-400",
       icon: AlertTriangle,
-      message: "Lead aguardando há mais de 30min - Prioridade alta",
+      message: "Lead aguardando há mais de 5min - Atenda agora!",
     };
   }
   if (minutesWaiting >= TEMPO_ALERTA_AMARELO_MIN) {

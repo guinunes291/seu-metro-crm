@@ -3,7 +3,7 @@
  * Widget flutuante visível apenas para corretores.
  * Exibe dois contadores diários:
  *  - Leads Facebook recebidos hoje
- *  - Leads perdidos hoje por timeout de 30 minutos
+ *  - Leads perdidos hoje por timeout de 5 minutos
  */
 
 import { useState } from "react";
@@ -127,7 +127,7 @@ export function ContadorLeadsFacebook({ isCorretor }: ContadorLeadsFacebookProps
               )}>
                 <div className="flex items-center gap-2">
                   <TrendingDown className={cn("h-4 w-4", perdidos > 0 ? "text-red-500" : "text-muted-foreground")} />
-                  <span className="text-xs text-muted-foreground">Perdidos (30 min)</span>
+                  <span className="text-xs text-muted-foreground">Perdidos (5 min)</span>
                 </div>
                 {isLoading ? (
                   <div className="h-5 w-8 bg-muted animate-pulse rounded" />
@@ -142,7 +142,7 @@ export function ContadorLeadsFacebook({ isCorretor }: ContadorLeadsFacebookProps
               </div>
             </TooltipTrigger>
             <TooltipContent side="left" className="text-xs max-w-[180px]">
-              Leads Facebook redistribuídos automaticamente por falta de atendimento em 30 minutos
+              Leads Facebook redistribuídos automaticamente por falta de atendimento em 5 minutos
             </TooltipContent>
           </Tooltip>
         </div>
