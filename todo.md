@@ -5500,3 +5500,17 @@
 - [x] STATUS_CONFIG atualizado com nao_compareceu
 - [x] Procedure updateStatus atualizada com nao_compareceu
 - [x] Função updateAgendamentoNaoCompareceu criada no db.ts
+
+## Auditoria — Fase 1: Correções Urgentes
+- [x] Adicionar db.transaction() em criarNovoContrato (8 operações de escrita)
+- [x] Adicionar db.transaction() em redistribuirLeadsDoCorretor (5 operações de escrita)
+- [x] Adicionar db.transaction() em deleteLead (3 operações de escrita)
+- [x] Adicionar db.transaction() em registrarTentativaFollowUp (5 operações de escrita)
+- [x] Substituir 16 catch blocks vazios por logging adequado
+- [x] Corrigir 5 padrões N+1 críticos
+
+## Auditoria — Fase 2: Melhorias Importantes
+- [x] Remover código morto (função registrarClienteCadastrado + 4 arquivos obsoletos)
+- [x] Índices compostos no banco de dados (156 índices, incluindo compostos críticos)
+- [x] Soft delete para leads (campo naLixeira) e contratos (campo distrato)
+- [x] Módulos db.ts divididos em server/db/ (leads.ts, projetos.ts, followups.ts, etc.)

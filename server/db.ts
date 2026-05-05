@@ -4928,13 +4928,6 @@ export async function registrarAtividadePorStatus(
   console.log('[DEPRECATED] registrarAtividadePorStatus chamada - esta função não faz mais nada');
 }
 
-// Registrar cliente cadastrado pelo corretor (5 pontos)
-export async function registrarClienteCadastrado(corretorId: number) {
-  // clientesCadastrados não é um campo válido para incrementar
-  // Usar ligacoesRealizadas como proxy para atividade
-  await incrementarAtividade(corretorId, 'ligacoesRealizadas');
-  await calcularPontuacaoDiaria(corretorId);
-}
 
 // Recalcular pontuação de todos os corretores para TODAS as atividades
 export async function recalcularPontuacaoTodosCorretores() {
