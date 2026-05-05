@@ -14,7 +14,7 @@ export async function getComissoes(filtros?: {
   if (!db) return [];
   
   // Sempre excluir comissões de contratos distratados
-  const conditions: any[] = [sql`${contratos.distrato} = 0`];
+  const conditions: any[] = [eq(contratos.distrato, false)];
   
   if (filtros?.usuarioId) {
     conditions.push(eq(comissoes.usuarioId, filtros.usuarioId));
@@ -131,7 +131,7 @@ export async function listarContratosParaComissao() {
     .from(contratos)
     .innerJoin(leads, eq(contratos.leadId, leads.id))
     .leftJoin(projects, eq(leads.projectId, projects.id))
-    .where(sql`${contratos.distrato} = 0`) // Excluir contratos distratados
+    .where(eq(contratos.distrato, false)) // Excluir contratos distratados
     .orderBy(sql`${contratos.createdAt} DESC`);
 
   return resultado;
@@ -209,7 +209,7 @@ export async function getComissoesImobiliaria() {
     .from(contratos)
     .innerJoin(leads, eq(contratos.leadId, leads.id))
     .leftJoin(projects, eq(leads.projectId, projects.id))
-    .where(sql`${contratos.distrato} = 0`) // Excluir contratos distratados
+    .where(eq(contratos.distrato, false)) // Excluir contratos distratados
     .orderBy(sql`${contratos.createdAt} DESC`);
 
   return resultado.map(r => {
@@ -273,7 +273,7 @@ export async function gerarComissoesEmLote() {
     percentualSuperintendente: contratos.percentualSuperintendente,
   })
     .from(contratos)
-    .where(sql`${contratos.distrato} = 0`); // Excluir contratos distratados
+    .where(eq(contratos.distrato, false)); // Excluir contratos distratados
 
   const contratosSemComissoes = todosContratos.filter(c => !idsComComissoes.has(c.id));
 

@@ -1585,9 +1585,9 @@ export default function Leads() {
                     <div className="space-y-2">
                       <Label>Temperatura do Lead</Label>
                       <Select
-                        value={selectedLead.temperatura || "nenhum"}
+                        value={selectedLead.temperatura || ""}
                         onValueChange={(val) => {
-                          const novaTemp = val === "nenhum" ? null : val;
+                          const novaTemp = val === "" ? null : val;
                           updateLeadMutation.mutate({ id: selectedLead.id, data: { temperatura: novaTemp as any } });
                           setSelectedLead({ ...selectedLead, temperatura: novaTemp });
                         }}
@@ -1596,7 +1596,7 @@ export default function Leads() {
                           <SelectValue placeholder="Não classificado" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="nenhum">
+                          <SelectItem value="">
                             <span className="text-muted-foreground">Não classificado</span>
                           </SelectItem>
                           <SelectItem value="quente">

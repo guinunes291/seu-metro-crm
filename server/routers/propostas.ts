@@ -6,12 +6,6 @@ import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 // ============================================================================
 // HELPERS E MIDDLEWARES
 // ============================================================================
-function parseDate(isoStr: string | undefined): Date | undefined {
-  if (!isoStr) return undefined;
-  const d = new Date(isoStr);
-  d.setMilliseconds(0);
-  return d;
-}
 function isGestorLevel(role: string): boolean {
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
 }
@@ -92,8 +86,8 @@ export const propostasRouter = router({
           corretorId: input?.corretorId,
           projectId: input?.projectId,
           status: input?.status,
-          dataInicio: parseDate(input?.dataInicio),
-          dataFim: parseDate(input?.dataFim)
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined
         });
       }),
     

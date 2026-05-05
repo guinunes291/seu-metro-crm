@@ -1926,14 +1926,12 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     .from(contratos)
     .leftJoin(leads, eq(contratos.leadId, leads.id))
     .where(and(
-      sql`${contratos.distrato} = 0`, // Excluir distratos (tinyint 0/1 — eq() com boolean falha no TiDB)
+      eq(contratos.distrato, false), // Excluir distratos do VGV
       ...(dateOtherConditions.contrato.length > 0 ? dateOtherConditions.contrato : [])
     ));
   
-  // Executar todas as queries em paralelo com allSettled para isolar falhas individuais
-  // (Promise.all cancela tudo se uma query falhar — allSettled permite retornar dados parciais)
-  const queryNames = ['leadsCountsQuery', 'agendQuery', 'visitQuery', 'analiseQuery', 'contratoQuery', 'vgvQuery'];
-  const results = await Promise.allSettled([
+  // Executar todas as queries em paralelo (5 queries ao invés de 9)
+  const [leadsCounts, agendResult, visitResult, analiseResult, contratoResult, vgvResult] = await Promise.all([
     leadsCountsQuery,
     agendQuery,
     visitQuery,
@@ -1941,19 +1939,7 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     contratoQuery,
     vgvQuery,
   ]);
-  results.forEach((r, i) => {
-    if (r.status === 'rejected') {
-      console.error(`[getDashboardMetrics] Query "${queryNames[i]}" falhou:`, r.reason);
-    }
-  });
-  const [leadsCountsR, agendR, visitR, analiseR, contratoR, vgvR] = results;
-  const leadsCounts   = leadsCountsR.status === 'fulfilled' ? leadsCountsR.value : [];
-  const agendResult   = agendR.status === 'fulfilled'       ? agendR.value       : [];
-  const visitResult   = visitR.status === 'fulfilled'       ? visitR.value       : [];
-  const analiseResult = analiseR.status === 'fulfilled'     ? analiseR.value     : [];
-  const contratoResult = contratoR.status === 'fulfilled'   ? contratoR.value    : [];
-  const vgvResult     = vgvR.status === 'fulfilled'         ? vgvR.value         : [];
-
+  
   return {
     total: Number(leadsCounts[0]?.total || 0),
     aguardando: Number(leadsCounts[0]?.aguardando || 0),
@@ -2199,7 +2185,7 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   }
   
   // Sempre excluir distratos do ranking de vendas
-  contratosConditions.push(sql`${contratos.distrato} = 0`);
+  contratosConditions.push(eq(contratos.distrato, false));
 
   const vendasQuery = db.select({
     corretorId: contratos.corretorId,
@@ -2302,7 +2288,7 @@ export async function getRelatorioProducaoCorretores(
   // Contratos por corretor
   const contratosConditions: any[] = [
     inArray(contratos.corretorId, ids),
-    sql`${contratos.distrato} = 0`
+    eq(contratos.distrato, false)
   ];
   if (dataInicio) contratosConditions.push(gte(contratos.createdAt, dataInicio));
   if (dataFim) contratosConditions.push(lte(contratos.createdAt, dataFim));
@@ -2368,7 +2354,7 @@ export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: n
   const dataInicio = inicioDoDia(new Date(hoje));
   dataInicio.setDate(dataInicio.getDate() - (dias - 1));
   const dataFim = new Date(hoje);
-  dataFim.setHours(23, 59, 59, 0); // TiDB timestamp(0) rejeita milissegundos != 0
+  dataFim.setHours(23, 59, 59, 999);
 
   const conditions: any[] = [
     gte(leads.createdAt, dataInicio),
@@ -2386,7 +2372,7 @@ export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: n
   })
     .from(leads)
     .where(and(...conditions))
-    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m-%d')`, leads.status); // TiDB: usar string literal no groupBy, não template com coluna
+    .groupBy(sql`DATE_FORMAT(${leads.createdAt}, '%Y-%m-%d')`, leads.status);
 
   // Montar mapa de resultados por data
   const mapaMetricas = new Map<string, MetricasDiarias>();
@@ -2715,11 +2701,11 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
   
   try {
     // Definir filtro de data para contratos (sempre excluindo distratos)
-    let contratosWhere = sql`${contratos.distrato} = 0` as any;
+    let contratosWhere = eq(contratos.distrato, false) as any;
     if (dataInicio && dataFim) {
       // Filtro por range de datas (prioridade)
       contratosWhere = and(
-        sql`${contratos.distrato} = 0`,
+        eq(contratos.distrato, false),
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
       );
@@ -2727,7 +2713,7 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
       const inicio = new Date(ano, mes - 1, 1);
       const fim = new Date(ano, mes, 0, 23, 59, 59, 999);
       contratosWhere = and(
-        sql`${contratos.distrato} = 0`,
+        eq(contratos.distrato, false),
         gte(contratos.createdAt, inicio),
         lte(contratos.createdAt, fim)
       );
@@ -3719,7 +3705,7 @@ export async function getCorretorDashboardMetrics(corretorId: number, filtros?: 
   // VGV do corretor (soma dos valores reais dos contratos, excluindo distratos)
   const contratoConditions: any[] = [
     eq(contratos.corretorId, corretorId),
-    sql`${contratos.distrato} = 0`, // Excluir distratos
+    eq(contratos.distrato, false), // Excluir distratos
   ];
   
   if (filtros?.dataInicio) {
@@ -9383,7 +9369,7 @@ export async function sincronizarContratosDoDia() {
     .from(contratos)
     .where(
       and(
-        sql`${contratos.distrato} = 0`, // Excluir distratos
+        eq(contratos.distrato, false), // Excluir distratos
         gte(contratos.createdAt, inicioHoje),
         lte(contratos.createdAt, fimHoje)
       )
@@ -9635,7 +9621,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
     .from(contratos)
     .where(and(
       inArray(contratos.corretorId, idsAtivos),
-      sql`${contratos.distrato} = 0`,
+      eq(contratos.distrato, false),
       gte(contratos.createdAt, dataInicio),
       lte(contratos.createdAt, dataFim)
     ))
@@ -9782,7 +9768,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
   const dataFimAno = new Date(anoReferencia, 11, 31, 23, 59, 59, 999);
 
   const baseWhere = and(
-    sql`${contratos.distrato} = 0`,
+    eq(contratos.distrato, false),
     gte(contratos.createdAt, dataInicioAno),
     lte(contratos.createdAt, dataFimAno)
   );
@@ -10226,7 +10212,7 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
   if (!db) return [];
   
   const conditions: any[] = [
-    sql`${contratos.distrato} = 0`, // Excluir distratos (tinyint 0/1 — eq() com boolean falha no TiDB)
+    eq(contratos.distrato, false), // Excluir distratos
   ];
   
   if (filtros?.dataInicio) {
@@ -10255,8 +10241,8 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
     anexos: contratos.anexos,
   })
     .from(contratos)
-    .leftJoin(users, eq(contratos.corretorId, users.id))
-    .leftJoin(leads, eq(contratos.leadId, leads.id))
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(contratos.createdAt));
   
@@ -10296,9 +10282,7 @@ export async function getVGVPorEquipeProjeto(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
   
-  const conditions: any[] = [
-    sql`${contratos.distrato} = 0`, // Excluir distratos (tinyint 0/1 — eq() com boolean falha no TiDB)
-  ];
+  const conditions: any[] = [];
   
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.createdAt, filtros.dataInicio));
@@ -10321,9 +10305,9 @@ export async function getVGVPorEquipeProjeto(filtros?: DashboardFilters) {
     projetoCustom: leads.projetoCustom,
   })
     .from(contratos)
-    .leftJoin(users, eq(contratos.corretorId, users.id))
-    .leftJoin(leads, eq(contratos.leadId, leads.id))
-    .where(and(...conditions));
+    .innerJoin(users, eq(contratos.corretorId, users.id))
+    .innerJoin(leads, eq(contratos.leadId, leads.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
   
   // Buscar nomes das equipes
   const equipeIds = [...new Set(result.filter(r => r.equipeId).map(r => r.equipeId!))];
@@ -11064,7 +11048,7 @@ export async function getDistratos(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions: any[] = [sql`${contratos.distrato} = 1`];
+  const conditions: any[] = [eq(contratos.distrato, true)];
 
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));
@@ -11131,7 +11115,7 @@ export async function getMetricasDistratos(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return { totalDistratos: 0, vgvDistratado: 0 };
 
-  const conditions: any[] = [sql`${contratos.distrato} = 1`];
+  const conditions: any[] = [eq(contratos.distrato, true)];
 
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));
