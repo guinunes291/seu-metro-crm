@@ -66,6 +66,57 @@ async function startServer() {
   // Webhook routes (público, com rate limiting de 10 req/min por token)
   app.use('/api/webhook', webhookRateLimit, webhookRoutes);
 
+  // Endpoint de diagnóstico de métricas do dashboard (sem autenticação)
+  app.get('/api/diag/metrics-check', async (_req, res) => {
+    try {
+      const { getDb } = await import('../db');
+      const db = await getDb();
+      if (!db) return res.json({ error: 'db null' });
+      const { sql } = await import('drizzle-orm');
+      // Testar contagem de contratos
+      const contratos = await (db as any).execute(sql`SELECT COUNT(*) as total FROM contratos WHERE distrato = 0`);
+      const contratosRows = Array.isArray(contratos) ? contratos[0] : contratos;
+      const contratosRow = Array.isArray(contratosRows) ? contratosRows[0] : contratosRows;
+      // Testar contagem de leads por status
+      const leadsByStatus = await (db as any).execute(sql`SELECT status, COUNT(*) as total FROM leads GROUP BY status`);
+      const statusRows = Array.isArray(leadsByStatus) ? leadsByStatus[0] : leadsByStatus;
+      // Testar VGV
+      const vgv = await (db as any).execute(sql`SELECT SUM(valorVenda) as total FROM contratos WHERE distrato = 0`);
+      const vgvRows = Array.isArray(vgv) ? vgv[0] : vgv;
+      const vgvRow = Array.isArray(vgvRows) ? vgvRows[0] : vgvRows;
+      res.json({
+        contratos: contratosRow?.total ?? -1,
+        vgv: vgvRow?.total ?? -1,
+        leadsByStatus: statusRows,
+        ts: new Date().toISOString()
+      });
+    } catch (e: any) {
+      res.json({ error: e.message });
+    }
+  });
+
+  // Endpoint de diagnóstico de usuários (sem autenticação)
+  app.get('/api/diag/user-check', async (req, res) => {
+    try {
+      const { getDb } = await import('../db');
+      const db = await getDb();
+      if (!db) return res.json({ error: 'db null' });
+      const { sql } = await import('drizzle-orm');
+      const email = req.query.email as string;
+      let query;
+      if (email) {
+        query = sql`SELECT id, name, email, role, openId FROM users WHERE email = ${email} LIMIT 5`;
+      } else {
+        query = sql`SELECT id, name, email, role FROM users ORDER BY id DESC LIMIT 10`;
+      }
+      const result = await (db as any).execute(query);
+      const rows = Array.isArray(result) ? result[0] : result;
+      res.json({ users: rows, ts: new Date().toISOString() });
+    } catch (e: any) {
+      res.json({ error: e.message });
+    }
+  });
+
   // Endpoint de diagnóstico temporário (sem autenticação)
   app.get('/api/diag/leads-count', async (_req, res) => {
     try {
