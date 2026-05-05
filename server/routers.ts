@@ -1452,7 +1452,10 @@ export const appRouter = router({
           dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
-        return await db.getContratosFechados(filtros);
+        console.log('[dashboard.contratosFechados] input:', JSON.stringify(input), 'filtros:', JSON.stringify({ dataInicio: filtros.dataInicio?.toISOString(), dataFim: filtros.dataFim?.toISOString(), corretoresIds }));
+        const result = await db.getContratosFechados(filtros);
+        console.log('[dashboard.contratosFechados] result count:', result.length);
+        return result;
       }),
     
     // Obter detalhes de um contrato para edição (admin only)
@@ -1556,7 +1559,10 @@ export const appRouter = router({
           dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
-        return await db.getVGVPorEquipeProjeto(filtros);
+        console.log('[dashboard.vgvPorEquipeProjeto] input:', JSON.stringify(input), 'filtros:', JSON.stringify({ dataInicio: filtros.dataInicio?.toISOString(), dataFim: filtros.dataFim?.toISOString(), corretoresIds }));
+        const result = await db.getVGVPorEquipeProjeto(filtros);
+        console.log('[dashboard.vgvPorEquipeProjeto] result:', JSON.stringify(result));
+        return result;
       }),
     
     // Registrar distrato em um contrato (admin only)

@@ -2354,7 +2354,7 @@ export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: n
   const dataInicio = inicioDoDia(new Date(hoje));
   dataInicio.setDate(dataInicio.getDate() - (dias - 1));
   const dataFim = new Date(hoje);
-  dataFim.setHours(23, 59, 59, 999);
+  dataFim.setHours(23, 59, 59, 0); // TiDB timestamp(0) rejeita milissegundos != 0
 
   const conditions: any[] = [
     gte(leads.createdAt, dataInicio),
@@ -2372,7 +2372,7 @@ export async function getMetricasHistoricas(dias: number = 30, corretoresIds?: n
   })
     .from(leads)
     .where(and(...conditions))
-    .groupBy(sql`DATE_FORMAT(${leads.createdAt}, '%Y-%m-%d')`, leads.status);
+    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m-%d')`, leads.status); // TiDB: usar string literal no groupBy, não template com coluna
 
   // Montar mapa de resultados por data
   const mapaMetricas = new Map<string, MetricasDiarias>();
