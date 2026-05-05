@@ -95,6 +95,29 @@ async function startServer() {
     }
   });
 
+  // Endpoint de diagnóstico que chama getDashboardMetrics diretamente
+  app.get('/api/diag/dashboard-metrics', async (_req, res) => {
+    // Resposta imediata para confirmar que a rota é atingida
+    res.json({ reached: true, ts: new Date().toISOString() });
+  });
+
+  // Endpoint de diagnóstico que chama getDashboardMetrics com timeout
+  app.get('/api/diag/dashboard-metrics-full', async (_req, res) => {
+    try {
+      const { getDashboardMetrics } = await import('../db');
+      const t0 = Date.now();
+      const resultSemFiltros = await getDashboardMetrics();
+      const t1 = Date.now();
+      res.json({
+        semFiltros: resultSemFiltros,
+        durationMs: t1 - t0,
+        ts: new Date().toISOString()
+      });
+    } catch (e: any) {
+      res.json({ error: e.message, stack: e.stack?.slice(0, 500) });
+    }
+  });
+
   // Endpoint de diagnóstico de usuários (sem autenticação)
   app.get('/api/diag/user-check', async (req, res) => {
     try {
