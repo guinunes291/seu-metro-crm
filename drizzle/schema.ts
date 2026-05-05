@@ -326,7 +326,31 @@ export const leads = mysqlTable("leads", {
   
   // Fila de origem do lead (para redistribuição correta no timer)
   tipoFilaOrigem: mysqlEnum("tipoFilaOrigem", ["geral", "foco"]).default("geral"), // Fila pela qual o lead foi distribuído
-  
+
+  // ============================================================
+  // FASE 2 — Organização Comercial (campos aditivos, sem breaking change)
+  // ============================================================
+
+  // Temperatura do lead (classificação de interesse)
+  temperatura: mysqlEnum("temperatura", ["quente", "morno", "frio"]), // null = não classificado
+
+  // Qualificação financeira
+  rendaInformada: varchar("rendaInformada", { length: 100 }), // Renda declarada pelo cliente
+  usaFgts: boolean("usaFgts").default(false), // Cliente tem FGTS disponível
+  entradaDisponivel: varchar("entradaDisponivel", { length: 100 }), // Valor de entrada disponível
+  dataNascimento: timestamp("dataNascimento"), // Data de nascimento para cálculo de elegibilidade MCMV
+
+  // UTMs para rastreamento de origem de campanha
+  utmSource: varchar("utmSource", { length: 255 }), // utm_source
+  utmMedium: varchar("utmMedium", { length: 255 }), // utm_medium
+  utmCampaign: varchar("utmCampaign", { length: 255 }), // utm_campaign
+  utmContent: varchar("utmContent", { length: 255 }), // utm_content
+  utmTerm: varchar("utmTerm", { length: 255 }), // utm_term
+
+  // Rastreamento de primeiro contato
+  primeiroContatoEm: timestamp("primeiroContatoEm"), // Quando o corretor fez o primeiro contato
+  tempoAtePrimeiroContato: int("tempoAtePrimeiroContato"), // Minutos entre recebimento e primeiro contato
+
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({
@@ -347,6 +371,8 @@ export const leads = mysqlTable("leads", {
   corretorStatusIdx: index("lead_corretor_status_idx").on(table.corretorId, table.status),
   // Índice composto para getPerformanceSemanal (leads por corretor por período)
   corretorCreatedAtIdx: index("lead_corretor_created_at_idx").on(table.corretorId, table.createdAt),
+  // Fase 2 — Índice de temperatura para filtro rápido
+  temperaturaIdx: index("lead_temperatura_idx").on(table.temperatura),
 }));
 
 export type Lead = typeof leads.$inferSelect;
@@ -476,8 +502,13 @@ export const agendamentos = mysqlTable("agendamentos", {
     "confirmado", 
     "realizado",
     "cancelado",
-    "reagendado"
+    "reagendado",
+    "nao_compareceu" // Fase 2: cliente agendou mas não apareceu
   ]).default("pendente").notNull(),
+  
+  // Fase 2: rastrear não comparecimento para cálculo de show rate
+  naoCompareceu: boolean("naoCompareceu").default(false),
+  motivoNaoCompareceu: varchar("motivoNaoCompareceu", { length: 255 }),
   
   // Observações
   observacoes: text("observacoes"),

@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield
+  Shield, Flame, Thermometer, Snowflake
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -110,6 +110,7 @@ export default function Leads() {
   const [projectFilter, setProjectFilter] = useState<string>("all");
   const [origemFilter, setOrigemFilter] = useState<string>("all");
   const [corretorFilter, setCorretorFilter] = useState<string>("all");
+  const [temperaturaFilter, setTemperaturaFilter] = useState<string>("all"); // Fase 2
   const [dateRangePreset, setDateRangePreset] = useState<DateRangePreset>("all");
   const [customDateStart, setCustomDateStart] = useState<Date | undefined>();
   const [customDateEnd, setCustomDateEnd] = useState<Date | undefined>();
@@ -138,6 +139,7 @@ export default function Leads() {
     projectId: projectFilter !== 'all' ? parseInt(projectFilter) : undefined,
     origem: origemFilter !== 'all' ? origemFilter : undefined,
     corretorId: corretorFilter !== 'all' ? parseInt(corretorFilter) : undefined,
+    temperatura: temperaturaFilter !== 'all' ? temperaturaFilter as 'quente' | 'morno' | 'frio' : undefined, // Fase 2
     dataInicio: dataInicioFilter || undefined,
     dataFim: dataFimFilter || undefined,
   }, {
@@ -650,6 +652,28 @@ export default function Leads() {
               </div>
             )}
 
+            {/* Filtro de Temperatura — Fase 2 */}
+            <div className="space-y-2">
+              <Label>Temperatura</Label>
+              <Select value={temperaturaFilter} onValueChange={(v) => { setTemperaturaFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as temperaturas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as temperaturas</SelectItem>
+                  <SelectItem value="quente">
+                    <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-red-500" /> Quente</span>
+                  </SelectItem>
+                  <SelectItem value="morno">
+                    <span className="flex items-center gap-1"><Thermometer className="h-3 w-3 text-orange-400" /> Morno</span>
+                  </SelectItem>
+                  <SelectItem value="frio">
+                    <span className="flex items-center gap-1"><Snowflake className="h-3 w-3 text-blue-400" /> Frio</span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Filtro de Período */}
             <div className="space-y-2">
               <Label>Período</Label>
@@ -778,6 +802,22 @@ export default function Leads() {
                               <Badge variant="secondary" className="flex items-center gap-1">
                                 <UserPlus className="h-3 w-3" />
                                 {lead.corretorNome}
+                              </Badge>
+                            )}
+                            {/* Badge de Temperatura — Fase 2 */}
+                            {lead.temperatura === 'quente' && (
+                              <Badge className="bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
+                                <Flame className="h-3 w-3" /> Quente
+                              </Badge>
+                            )}
+                            {lead.temperatura === 'morno' && (
+                              <Badge className="bg-orange-100 text-orange-700 border border-orange-300 flex items-center gap-1">
+                                <Thermometer className="h-3 w-3" /> Morno
+                              </Badge>
+                            )}
+                            {lead.temperatura === 'frio' && (
+                              <Badge className="bg-blue-100 text-blue-700 border border-blue-300 flex items-center gap-1">
+                                <Snowflake className="h-3 w-3" /> Frio
                               </Badge>
                             )}
                             {lead.origemWebhook && (
@@ -1528,6 +1568,125 @@ export default function Leads() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Temperatura e Qualificação Financeira — Fase 2 */}
+                <div>
+                  <h3 className="font-semibold mb-3 flex items-center gap-2">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    Temperatura e Qualificação Financeira
+                  </h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+
+                    {/* Temperatura */}
+                    <div className="space-y-2">
+                      <Label>Temperatura do Lead</Label>
+                      <Select
+                        value={selectedLead.temperatura || ""}
+                        onValueChange={(val) => {
+                          const novaTemp = val === "" ? null : val;
+                          updateLeadMutation.mutate({ id: selectedLead.id, data: { temperatura: novaTemp as any } });
+                          setSelectedLead({ ...selectedLead, temperatura: novaTemp });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Não classificado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">
+                            <span className="text-muted-foreground">Não classificado</span>
+                          </SelectItem>
+                          <SelectItem value="quente">
+                            <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-red-500" /> Quente</span>
+                          </SelectItem>
+                          <SelectItem value="morno">
+                            <span className="flex items-center gap-1"><Thermometer className="h-3 w-3 text-orange-400" /> Morno</span>
+                          </SelectItem>
+                          <SelectItem value="frio">
+                            <span className="flex items-center gap-1"><Snowflake className="h-3 w-3 text-blue-400" /> Frio</span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Renda Informada */}
+                    <div className="space-y-2">
+                      <Label htmlFor="rendaInformada">Renda Familiar Informada</Label>
+                      <Input
+                        id="rendaInformada"
+                        placeholder="Ex: R$ 3.500,00"
+                        value={selectedLead.rendaInformada || ""}
+                        onChange={(e) => setSelectedLead({ ...selectedLead, rendaInformada: e.target.value })}
+                        onBlur={() => updateLeadMutation.mutate({ id: selectedLead.id, data: { rendaInformada: selectedLead.rendaInformada || null } })}
+                      />
+                    </div>
+
+                    {/* Entrada Disponível */}
+                    <div className="space-y-2">
+                      <Label htmlFor="entradaDisponivel">Entrada Disponível</Label>
+                      <Input
+                        id="entradaDisponivel"
+                        placeholder="Ex: R$ 10.000,00"
+                        value={selectedLead.entradaDisponivel || ""}
+                        onChange={(e) => setSelectedLead({ ...selectedLead, entradaDisponivel: e.target.value })}
+                        onBlur={() => updateLeadMutation.mutate({ id: selectedLead.id, data: { entradaDisponivel: selectedLead.entradaDisponivel || null } })}
+                      />
+                    </div>
+
+                    {/* Usa FGTS */}
+                    <div className="space-y-2">
+                      <Label>Possui FGTS disponível?</Label>
+                      <div className="flex gap-3 mt-1">
+                        <Button
+                          size="sm"
+                          variant={selectedLead.usaFgts === true ? "default" : "outline"}
+                          onClick={() => {
+                            updateLeadMutation.mutate({ id: selectedLead.id, data: { usaFgts: true } });
+                            setSelectedLead({ ...selectedLead, usaFgts: true });
+                          }}
+                        >
+                          Sim
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={selectedLead.usaFgts === false ? "default" : "outline"}
+                          onClick={() => {
+                            updateLeadMutation.mutate({ id: selectedLead.id, data: { usaFgts: false } });
+                            setSelectedLead({ ...selectedLead, usaFgts: false });
+                          }}
+                        >
+                          Não
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* CPF */}
+                    <div className="space-y-2">
+                      <Label htmlFor="cpf-detail">CPF</Label>
+                      <Input
+                        id="cpf-detail"
+                        placeholder="000.000.000-00"
+                        value={selectedLead.cpf || ""}
+                        onChange={(e) => setSelectedLead({ ...selectedLead, cpf: e.target.value })}
+                        onBlur={() => updateLeadMutation.mutate({ id: selectedLead.id, data: { cpf: selectedLead.cpf || null } })}
+                      />
+                    </div>
+
+                    {/* Data de Nascimento */}
+                    <div className="space-y-2">
+                      <Label htmlFor="dataNascimento">Data de Nascimento</Label>
+                      <Input
+                        id="dataNascimento"
+                        type="date"
+                        value={selectedLead.dataNascimento ? new Date(selectedLead.dataNascimento).toISOString().split('T')[0] : ""}
+                        onChange={(e) => setSelectedLead({ ...selectedLead, dataNascimento: e.target.value ? new Date(e.target.value) : null })}
+                        onBlur={() => updateLeadMutation.mutate({ id: selectedLead.id, data: { dataNascimento: selectedLead.dataNascimento ? new Date(selectedLead.dataNascimento) : null } })}
+                      />
+                    </div>
+
                   </div>
                 </div>
 

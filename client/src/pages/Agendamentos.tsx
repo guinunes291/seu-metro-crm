@@ -101,6 +101,7 @@ const STATUS_CONFIG = {
   realizado: { label: "Realizado", color: "bg-green-500", icon: CheckCircle },
   cancelado: { label: "Cancelado", color: "bg-red-500", icon: XCircle },
   reagendado: { label: "Reagendado", color: "bg-orange-500", icon: AlertCircle },
+  nao_compareceu: { label: "Não Compareceu", color: "bg-gray-500", icon: XCircle }, // Fase 2
 };
 
 export default function AgendamentosPage() {
@@ -592,7 +593,7 @@ function AgendamentoCard({
   onUpdateStatus 
 }: { 
   agendamento: Agendamento;
-  onUpdateStatus: (status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado') => void;
+  onUpdateStatus: (status: 'pendente' | 'confirmado' | 'realizado' | 'cancelado' | 'reagendado' | 'nao_compareceu') => void; // Fase 2
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: lead } = trpc.leads.getById.useQuery({ id: agendamento.leadId });
@@ -692,9 +693,9 @@ function AgendamentoCard({
               </div>
             )}
 
-            {/* Botões de Ação - Apenas para Pendente */}
-            {agendamento.status === 'pendente' && (
-              <div className="flex gap-2 pt-2">
+            {/* Botões de Ação - Apenas para Pendente/Confirmado */}
+            {(agendamento.status === 'pendente' || agendamento.status === 'confirmado') && (
+              <div className="flex flex-wrap gap-2 pt-2">
                 <Button
                   size="sm"
                   variant="default"
@@ -705,7 +706,20 @@ function AgendamentoCard({
                   }}
                 >
                   <Check className="h-4 w-4 mr-1" />
-                  Marcar como Realizado
+                  Realizado
+                </Button>
+                {/* Botão Não Compareceu — Fase 2 */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 border-gray-400 text-gray-700 hover:bg-gray-100"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdateStatus('nao_compareceu');
+                  }}
+                >
+                  <XCircle className="h-4 w-4 mr-1" />
+                  Não Compareceu
                 </Button>
                 <Button
                   size="sm"
