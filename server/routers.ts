@@ -1420,6 +1420,27 @@ export const appRouter = router({
         );
       }),
 
+    // Endpoint consolidado: todas as métricas por corretor em uma única chamada
+    metricasPorCorretor: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string().optional(),
+        dataFim: z.string().optional(),
+      }).optional())
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        const filtros = {
+          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
+          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          corretoresIds,
+        };
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.metricasPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getMetricasPorCorretor(filtros),
+        );
+      }),
+
     // Métricas do funil baseadas em transições de status
     metricasFunil: gestorProcedure
       .input(z.object({
@@ -1501,7 +1522,7 @@ export const appRouter = router({
           dataVenda: dados.dataVenda ? new Date(dados.dataVenda) : undefined,
         });
         const { cacheInvalidate } = await import('./_core/cache');
-        cacheInvalidate('dashboard.');
+        await cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('edição de contrato').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após editar contrato:', err));
@@ -1592,7 +1613,7 @@ export const appRouter = router({
           distratadoPorId: ctx.user.id,
         });
         const { cacheInvalidate } = await import('./_core/cache');
-        cacheInvalidate('dashboard.');
+        await cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('distrato registrado').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após registrar distrato:', err));
@@ -1606,7 +1627,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const resultado = await db.desfazerDistrato(input.contratoId);
         const { cacheInvalidate } = await import('./_core/cache');
-        cacheInvalidate('dashboard.');
+        await cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('distrato desfeito').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após desfazer distrato:', err));

@@ -2278,6 +2278,144 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   return result.filter(c => c.vendas > 0).sort((a, b) => b.vgv - a.vgv);
 }
 
+// ============================================================================
+// MÉTRICAS POR CORRETOR — endpoint consolidado (leads + agend + visitas + vendas + pastas)
+// Roda os 5 contadores em paralelo com um único lookup de usuários compartilhado.
+// ============================================================================
+export async function getMetricasPorCorretor(filtros?: DashboardFilters) {
+  const db = await getDb();
+  if (!db) return { leads: [], agendamentos: [], visitas: [], vendas: [], pastas: [] };
+
+  const hasIds = (filtros?.corretoresIds?.length ?? 0) > 0;
+  // Gestor com equipe vazia não tem corretores — retorno imediato
+  if (filtros?.corretoresIds !== undefined && filtros.corretoresIds !== null && filtros.corretoresIds.length === 0) {
+    return { leads: [], agendamentos: [], visitas: [], vendas: [], pastas: [] };
+  }
+
+  // ---- helpers ----
+  const dateCond = (col: any): any[] => {
+    const c: any[] = [];
+    if (filtros?.dataInicio) c.push(gte(col, filtros.dataInicio));
+    if (filtros?.dataFim) c.push(lte(col, filtros.dataFim));
+    return c;
+  };
+
+  // ---- 6 queries em paralelo ----
+
+  // 1. Usuários (compartilhado por agendamentos, visitas, vendas)
+  const usersQ = db.select({ id: users.id, nome: users.name, status: users.status })
+    .from(users)
+    .where(hasIds ? inArray(users.id, filtros!.corretoresIds!) : undefined);
+
+  // 2. Leads recebidos por corretor (via distribution_log)
+  const leadsC: any[] = dateCond(distributionLog.createdAt);
+  if (hasIds) leadsC.push(inArray(distributionLog.corretorId, filtros!.corretoresIds!));
+  const leadsQ = db.select({
+    corretorId: distributionLog.corretorId,
+    corretorNome: sql<string>`MAX(${users.name})`,
+    totalLeads: sql<number>`COUNT(DISTINCT ${distributionLog.leadId})`,
+  }).from(distributionLog)
+    .leftJoin(users, eq(distributionLog.corretorId, users.id))
+    .where(leadsC.length ? and(...leadsC) : undefined)
+    .groupBy(distributionLog.corretorId);
+
+  // 3. Agendamentos
+  const agendC: any[] = dateCond(agendamentos.createdAt);
+  if (hasIds) agendC.push(inArray(agendamentos.corretorId, filtros!.corretoresIds!));
+  const agendQ = db.select({
+    corretorId: agendamentos.corretorId,
+    count: sql<number>`count(*)`,
+  }).from(agendamentos)
+    .where(agendC.length ? and(...agendC) : undefined)
+    .groupBy(agendamentos.corretorId);
+
+  // 4. Visitas
+  const visitasC: any[] = dateCond(visitas.createdAt);
+  if (hasIds) visitasC.push(inArray(visitas.corretorId, filtros!.corretoresIds!));
+  const visitasQ = db.select({
+    corretorId: visitas.corretorId,
+    count: sql<number>`count(*)`,
+  }).from(visitas)
+    .where(visitasC.length ? and(...visitasC) : undefined)
+    .groupBy(visitas.corretorId);
+
+  // 5. Vendas / VGV
+  const vendasC: any[] = [...dateCond(contratos.createdAt), sql`${contratos.distrato} = 0`];
+  if (hasIds) vendasC.push(inArray(contratos.corretorId, filtros!.corretoresIds!));
+  const vendasQ = db.select({
+    corretorId: contratos.corretorId,
+    count: sql<number>`count(*)`,
+    vgv: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)`,
+  }).from(contratos)
+    .where(and(...vendasC))
+    .groupBy(contratos.corretorId);
+
+  // 6. Pastas (analises_credito)
+  const pastasC: any[] = dateCond(analises_credito.createdAt);
+  if (filtros?.corretoresIds !== undefined && filtros.corretoresIds !== null) {
+    pastasC.push(
+      or(
+        inArray(analises_credito.corretorId, filtros.corretoresIds),
+        and(isNull(analises_credito.corretorId), inArray(leads.corretorId, filtros.corretoresIds)),
+      )
+    );
+  }
+  const pastasQ = db.select({
+    corretorId: sql<number>`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`,
+    corretorNome: sql<string>`MAX(${users.name})`,
+    count: sql<number>`COUNT(DISTINCT ${analises_credito.id})`,
+  }).from(analises_credito)
+    .leftJoin(leads, eq(analises_credito.leadId, leads.id))
+    .leftJoin(users, eq(sql`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`, users.id))
+    .where(pastasC.length ? and(...pastasC) : undefined)
+    .groupBy(sql`COALESCE(${analises_credito.corretorId}, ${leads.corretorId})`);
+
+  const [usersRes, leadsRes, agendRes, visitasRes, vendasRes, pastasRes] = await Promise.allSettled([
+    usersQ, leadsQ, agendQ, visitasQ, vendasQ, pastasQ,
+  ]);
+
+  const corretores  = usersRes.status  === 'fulfilled' ? usersRes.value  : [];
+  const leadsCounts = leadsRes.status  === 'fulfilled' ? leadsRes.value  : [];
+  const agendCounts = agendRes.status  === 'fulfilled' ? agendRes.value  : [];
+  const visitasCts  = visitasRes.status === 'fulfilled' ? visitasRes.value : [];
+  const vendasCts   = vendasRes.status  === 'fulfilled' ? vendasRes.value  : [];
+  const pastasCts   = pastasRes.status  === 'fulfilled' ? pastasRes.value  : [];
+
+  // Leads
+  const resultLeads = leadsCounts
+    .filter(c => Number(c.totalLeads) > 0)
+    .map(c => ({ id: c.corretorId, nome: c.corretorNome || 'Corretor Removido', totalLeads: Number(c.totalLeads) }))
+    .sort((a, b) => b.totalLeads - a.totalLeads);
+
+  // Agendamentos
+  const agendMap = new Map(agendCounts.map(a => [a.corretorId, Number(a.count)]));
+  const resultAgendamentos = corretores
+    .map(c => ({ id: c.id, nome: c.nome || 'Sem nome', status: c.status, agendados: agendMap.get(c.id) || 0 }))
+    .filter(c => c.agendados > 0)
+    .sort((a, b) => b.agendados - a.agendados);
+
+  // Visitas
+  const visitasMap = new Map(visitasCts.map(v => [v.corretorId, Number(v.count)]));
+  const resultVisitas = corretores
+    .map(c => ({ id: c.id, nome: c.nome || 'Sem nome', status: c.status, visitas: visitasMap.get(c.id) || 0 }))
+    .filter(c => c.visitas > 0)
+    .sort((a, b) => b.visitas - a.visitas);
+
+  // Vendas / VGV
+  const vendasMap = new Map(vendasCts.map(v => [v.corretorId, { vendas: Number(v.count), vgv: Number(v.vgv) }]));
+  const resultVendas = corretores
+    .map(c => { const d = vendasMap.get(c.id) || { vendas: 0, vgv: 0 }; return { id: c.id, nome: c.nome || 'Sem nome', status: c.status, vendas: d.vendas, vgv: d.vgv }; })
+    .filter(c => c.vendas > 0)
+    .sort((a, b) => b.vgv - a.vgv);
+
+  // Pastas
+  const resultPastas = pastasCts
+    .filter(p => p.corretorId !== null && Number(p.count) > 0)
+    .map(p => ({ id: p.corretorId, nome: p.corretorNome || 'Corretor Removido', pastas: Number(p.count) }))
+    .sort((a, b) => b.pastas - a.pastas);
+
+  return { leads: resultLeads, agendamentos: resultAgendamentos, visitas: resultVisitas, vendas: resultVendas, pastas: resultPastas };
+}
 
 // ============================================================================
 // RELATÓRIO DE PRODUÇÃO POR CORRETOR (FUNIL COMPLETO)

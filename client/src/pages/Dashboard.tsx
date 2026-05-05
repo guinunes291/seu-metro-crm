@@ -190,9 +190,13 @@ export default function Dashboard() {
   // ── Tier 1: KPIs principais (carregam imediatamente) ─────────────────────
   const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorBase);
 
-  // ── Tier 2: Métricas por corretor + leads urgentes ───────────────────────
-  const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(dateFilter, tier2);
-  const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(dateFilter, tier2);
+  // ── Tier 2: Métricas por corretor (endpoint consolidado) + leads urgentes ──
+  const { data: metricasPorCorretor } = trpc.dashboard.metricasPorCorretor.useQuery(dateFilter, tier2);
+  const leadsPorCorretor = metricasPorCorretor?.leads;
+  const vendasPorCorretor = metricasPorCorretor?.vendas;
+  const agendamentosPorCorretor = metricasPorCorretor?.agendamentos;
+  const visitasPorCorretor = metricasPorCorretor?.visitas;
+  const pastasPorCorretor = metricasPorCorretor?.pastas;
   const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(dateFilter, tier2);
   const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
     ...tier2, refetchInterval: 2 * 60 * 1000,
@@ -201,9 +205,6 @@ export default function Dashboard() {
   // ── Tier 3: Gráficos históricos (14 dias por padrão — antes 30) ──────────
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery({ dias: 14 }, tier3);
   const { data: dadosFunil } = trpc.graficos.funil.useQuery({ dias: 14 }, tier3);
-  const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(dateFilter, tier3);
-  const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(dateFilter, tier3);
-  const { data: pastasPorCorretor } = trpc.dashboard.pastasPorCorretor.useQuery(dateFilter, tier3);
 
   // ── Tier 4: Tabelas detalhadas (geralmente abaixo da dobra) ──────────────
   const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, tier4);

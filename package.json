@@ -71,6 +71,7 @@
     "helmet": "^8.1.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
+    "ioredis": "^5.10.1",
     "jose": "6.1.0",
     "lucide-react": "^0.453.0",
     "multer": "^2.0.2",

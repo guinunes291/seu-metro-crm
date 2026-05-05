@@ -1920,6 +1920,7 @@ export const contratos = mysqlTable("contratos", {
   leadIdx: index("contratos_lead_idx").on(table.leadId),
   corretorIdx: index("contratos_corretor_idx").on(table.corretorId),
   createdAtIdx: index("contratos_created_at_idx").on(table.createdAt),
+  corretorDistratoCreatedIdx: index("contratos_corretor_distrato_created_idx").on(table.corretorId, table.distrato, table.createdAt),
 }));
 
 export type Contrato = typeof contratos.$inferSelect;
