@@ -59,7 +59,6 @@ export const leadsRouter = router({
       projectId: z.number().optional(),
       origem: z.string().optional(),
       corretorId: z.number().optional(),
-      temperatura: z.enum(["quente", "morno", "frio"]).optional(), // Fase 2
       dataInicio: z.string().optional(),
       dataFim: z.string().optional(),
     }).optional())
@@ -71,7 +70,6 @@ export const leadsRouter = router({
       const projectId = input?.projectId;
       const origem = input?.origem;
       const corretorId = input?.corretorId;
-      const temperatura = input?.temperatura; // Fase 2
       const dataInicio = input?.dataInicio;
       const dataFim = input?.dataFim;
 
@@ -87,7 +85,6 @@ export const leadsRouter = router({
         origem,
         corretorId: corretorId || (corretoresIds?.length === 1 ? corretoresIds[0] : undefined),
         corretoresIds,
-        temperatura, // Fase 2
         dataInicio,
         dataFim
       });
@@ -180,13 +177,6 @@ export const leadsRouter = router({
         motivoPerdido: z.string().optional(),
         proximoFollowup: z.date().optional(),
         ultimoContato: z.date().optional(),
-        // Fase 2 — Temperatura e qualificação financeira
-        temperatura: z.enum(["quente", "morno", "frio"]).nullable().optional(),
-        rendaInformada: z.string().nullable().optional(),
-        usaFgts: z.boolean().nullable().optional(),
-        entradaDisponivel: z.string().nullable().optional(),
-        dataNascimento: z.date().nullable().optional(),
-        cpf: z.string().nullable().optional(),
       })
     }))
     .mutation(async ({ input, ctx }) => {
