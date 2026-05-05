@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,45 +162,54 @@ export default function Dashboard() {
     return getDateRange(filterPreset);
   }, [filterPreset, customDateRange]);
   
-  // Opções padrão para queries do dashboard do gestor:
-  // enabled: !authLoading && isGestor garante que a query só execute DEPOIS que o user carregou (evita cache stale com dados zerados)
-  // staleTime: 0 força re-fetch quando enabled muda de false para true
-  // refetchInterval de 5 min mantém dados atualizados sem avalanche de requests
-  const gestorQueryOpts = { enabled: !authLoading && isGestor, staleTime: 0, refetchInterval: 5 * 60 * 1000 };
+  // Stage de carregamento progressivo:
+  //   1 = só métricas críticas (KPI cards) — load imediato
+  //   2 = + listagens por corretor + leads urgentes (300ms depois)
+  //   3 = + gráficos históricos / funil (800ms depois)
+  //   4 = + tabelas de contratos / VGV / relatório (1500ms depois)
+  // Reduz pico de queries simultâneas no TiDB e melhora TTI.
+  const [loadStage, setLoadStage] = useState(1);
+  useEffect(() => {
+    if (authLoading || !isGestor) return;
+    const t2 = setTimeout(() => setLoadStage((s) => Math.max(s, 2)), 300);
+    const t3 = setTimeout(() => setLoadStage((s) => Math.max(s, 3)), 800);
+    const t4 = setTimeout(() => setLoadStage((s) => Math.max(s, 4)), 1500);
+    return () => { clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, [authLoading, isGestor]);
+
+  // Opções base — ajustadas por stage. staleTime: 0 + refetchInterval mais longo,
+  // pois o cache server-side (60s) absorve as repetições.
+  const gestorBase = { enabled: !authLoading && isGestor, staleTime: 30_000, refetchInterval: 5 * 60 * 1000 } as const;
+  const tier2 = { ...gestorBase, enabled: gestorBase.enabled && loadStage >= 2 };
+  const tier3 = { ...gestorBase, enabled: gestorBase.enabled && loadStage >= 3 };
+  const tier4 = { ...gestorBase, enabled: gestorBase.enabled && loadStage >= 4 };
 
   // Diagnóstico — apenas para admin, chamado manualmente
   const diagQuery = trpc.dashboard.diagnostico.useQuery(undefined, { enabled: false });
 
-  // Queries para o dashboard do gestor
-  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorQueryOpts);
-  const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(dateFilter, gestorQueryOpts);
-  const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(dateFilter, gestorQueryOpts);
-  const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
-  const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
-  const { data: pastasPorCorretor } = trpc.dashboard.pastasPorCorretor.useQuery(dateFilter, gestorQueryOpts);
+  // ── Tier 1: KPIs principais (carregam imediatamente) ─────────────────────
+  const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorBase);
 
-  // Queries para gráficos do gestor
-  const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
-    { dias: 30 },
-    { enabled: !authLoading && isGestor, staleTime: 0 }
-  );
-  const { data: dadosFunil } = trpc.graficos.funil.useQuery(
-    { dias: 30 },
-    { enabled: !authLoading && isGestor, staleTime: 0 }
-  );
-
-  // Query de leads para o gestor (para o card de urgência)
+  // ── Tier 2: Métricas por corretor + leads urgentes ───────────────────────
+  const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(dateFilter, tier2);
+  const { data: vendasPorCorretor } = trpc.dashboard.vendasPorCorretor.useQuery(dateFilter, tier2);
+  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(dateFilter, tier2);
   const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
-    enabled: !authLoading && isGestor,
-    staleTime: 0,
-    refetchInterval: 2 * 60 * 1000,
+    ...tier2, refetchInterval: 2 * 60 * 1000,
   });
 
-  // Query para o relatório de leads criados por corretor
-  const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, gestorQueryOpts);
+  // ── Tier 3: Gráficos históricos (14 dias por padrão — antes 30) ──────────
+  const { data: metricasHistoricas } = trpc.graficos.historico.useQuery({ dias: 14 }, tier3);
+  const { data: dadosFunil } = trpc.graficos.funil.useQuery({ dias: 14 }, tier3);
+  const { data: agendamentosPorCorretor } = trpc.dashboard.agendamentosPorCorretor.useQuery(dateFilter, tier3);
+  const { data: visitasPorCorretor } = trpc.dashboard.visitasPorCorretor.useQuery(dateFilter, tier3);
+  const { data: pastasPorCorretor } = trpc.dashboard.pastasPorCorretor.useQuery(dateFilter, tier3);
 
-  // Queries para tabelas de contratos fechados
-  const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(dateFilter, gestorQueryOpts);
+  // ── Tier 4: Tabelas detalhadas (geralmente abaixo da dobra) ──────────────
+  const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, tier4);
+  const { data: contratosFechados } = trpc.dashboard.contratosFechados.useQuery(dateFilter, tier4);
+  const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(dateFilter, tier4);
+
   const forceSyncMutation = trpc.ranking.forceSyncMetricas.useMutation({
     onSuccess: () => {
       alert('Métricas ressincronizadas com sucesso!');
@@ -209,15 +218,11 @@ export default function Dashboard() {
       alert('Erro ao ressincronizar métricas. Tente novamente.');
     },
   });
-  const { data: vgvPorEquipeProjeto } = trpc.dashboard.vgvPorEquipeProjeto.useQuery(dateFilter, gestorQueryOpts);
-
-  // Query de métricas de distratos (filtrada pelo mesmo período do dashboard)
-  const { data: metricasDistratos } = trpc.dashboard.metricasDistratos.useQuery(dateFilter, gestorQueryOpts);
   // Painel de redistribuições de leads ADS
   const [redistPeriodo, setRedistPeriodo] = useState<'hoje' | 'semana' | 'mes'>('hoje');
   const { data: redistData } = trpc.logTransferencias.painel.useQuery(
     { periodo: redistPeriodo },
-    { enabled: !authLoading && isGestor, staleTime: 0, refetchInterval: 5 * 60 * 1000 }
+    { ...tier3, refetchInterval: 5 * 60 * 1000 }
   );
   
   // ============================================================================

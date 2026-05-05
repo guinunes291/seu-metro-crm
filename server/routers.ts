@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { cacheGetOrSet, CACHE_TTL, dashboardCacheKey } from "./_core/cache";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
@@ -1297,15 +1298,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
-        console.log('[dashboard.metrics] User:', ctx.user.name, 'Role:', ctx.user.role, 'Corretores IDs:', corretoresIds);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getDashboardMetrics(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.metrics', corretoresIds, input),
+          CACHE_TTL.SHORT,
+          () => db.getDashboardMetrics(filtros),
+        );
       }),
     
     // Diagnóstico — apenas para admin, chamado manualmente
@@ -1323,13 +1325,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getLeadsPorCorretorDashboard(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.leadsPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getLeadsPorCorretorDashboard(filtros),
+        );
       }),
     
     // Agendamentos por corretor
@@ -1341,13 +1346,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getAgendamentosPorCorretor(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.agendamentosPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getAgendamentosPorCorretor(filtros),
+        );
       }),
     
     // Visitas por corretor
@@ -1359,13 +1367,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getVisitasPorCorretor(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.visitasPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getVisitasPorCorretor(filtros),
+        );
       }),
     
     // Vendas por corretor
@@ -1377,13 +1388,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getVendasPorCorretor(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.vendasPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getVendasPorCorretor(filtros),
+        );
       }),
 
     pastasPorCorretor: gestorProcedure
@@ -1394,13 +1408,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getPastasPorCorretor(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.pastasPorCorretor', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getPastasPorCorretor(filtros),
+        );
       }),
 
     // Métricas do funil baseadas em transições de status
@@ -1442,13 +1459,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getContratosFechados(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.contratosFechados', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getContratosFechados(filtros),
+        );
       }),
     
     // Obter detalhes de um contrato para edição (admin only)
@@ -1480,6 +1500,8 @@ export const appRouter = router({
           ...dados,
           dataVenda: dados.dataVenda ? new Date(dados.dataVenda) : undefined,
         });
+        const { cacheInvalidate } = await import('./_core/cache');
+        cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('edição de contrato').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após editar contrato:', err));
@@ -1546,13 +1568,16 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const filtros = {
           dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getVGVPorEquipeProjeto(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.vgvPorEquipeProjeto', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getVGVPorEquipeProjeto(filtros),
+        );
       }),
     
     // Registrar distrato em um contrato (admin only)
@@ -1566,6 +1591,8 @@ export const appRouter = router({
           motivoDistrato: input.motivoDistrato,
           distratadoPorId: ctx.user.id,
         });
+        const { cacheInvalidate } = await import('./_core/cache');
+        cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('distrato registrado').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após registrar distrato:', err));
@@ -1578,6 +1605,8 @@ export const appRouter = router({
       .input(z.object({ contratoId: z.number() }))
       .mutation(async ({ input }) => {
         const resultado = await db.desfazerDistrato(input.contratoId);
+        const { cacheInvalidate } = await import('./_core/cache');
+        cacheInvalidate('dashboard.');
         // Sincronizar com planilha DRE em background
         import('../dreSyncJob').then(({ runDreSync }) => {
           runDreSync('distrato desfeito').catch((err: unknown) => console.error('[DRE Sync] Erro ao sincronizar após desfazer distrato:', err));
@@ -1616,7 +1645,11 @@ export const appRouter = router({
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getMetricasDistratos(filtros);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.metricasDistratos', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getMetricasDistratos(filtros),
+        );
       }),
     
     // Relatório detalhado de leads criados por corretor
@@ -1628,10 +1661,13 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        
         const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
         const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
-        return await db.getRelatorioLeadsCriados(dataInicio, dataFim, corretoresIds);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.relatorioLeadsCriados', corretoresIds, input),
+          CACHE_TTL.MEDIUM,
+          () => db.getRelatorioLeadsCriados(dataInicio, dataFim, corretoresIds),
+        );
       }),
   }),
 
@@ -1645,16 +1681,26 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        return await db.getMetricasHistoricas(input?.dias || 30, corretoresIds);
+        const dias = input?.dias || 30;
+        return await cacheGetOrSet(
+          dashboardCacheKey(`graficos.historico:${dias}`, corretoresIds),
+          CACHE_TTL.LONG,
+          () => db.getMetricasHistoricas(dias, corretoresIds),
+        );
       }),
-    
+
     // Dados do funil de vendas
     funil: gestorProcedure
       .input(z.object({ dias: z.number().default(30) }).optional())
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        return await db.getEvolucaoFunil(input?.dias || 30, corretoresIds);
+        const dias = input?.dias || 30;
+        return await cacheGetOrSet(
+          dashboardCacheKey(`graficos.funil:${dias}`, corretoresIds),
+          CACHE_TTL.LONG,
+          () => db.getEvolucaoFunil(dias, corretoresIds),
+        );
       }),
     
     // Performance semanal por corretor (evolução de conversão)
