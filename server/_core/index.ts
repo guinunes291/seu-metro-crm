@@ -172,6 +172,13 @@ async function startServer() {
       console.error("[Job] Erro ao inicializar job de reset de contadores:", err);
     });
     
+    // Keep-alive do TiDB Serverless: ping a cada 4 minutos para evitar cold start
+    import("../dbKeepAliveJob").then(({ startDbKeepAliveJob }) => {
+      startDbKeepAliveJob();
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar keep-alive do DB:", err);
+    });
+    
     // Job de importação automática de leads DESATIVADO permanentemente
     // Motivo: Requisição do usuário - importação apenas manual
     // Importação manual disponível em: Sistema → Importação de Leads

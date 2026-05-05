@@ -1305,7 +1305,11 @@ export const appRouter = router({
           dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
           corretoresIds,
         };
-        return await db.getDashboardMetrics(filtros);
+        console.log('[dashboard.metrics] Input recebido:', JSON.stringify(input));
+        console.log('[dashboard.metrics] Filtros montados:', JSON.stringify({ ...filtros, dataInicio: filtros.dataInicio?.toISOString(), dataFim: filtros.dataFim?.toISOString() }));
+        const result = await db.getDashboardMetrics(filtros);
+        console.log('[dashboard.metrics] Resultado:', JSON.stringify(result));
+        return result;
       }),
     
     // Diagnóstico — apenas para admin, chamado manualmente

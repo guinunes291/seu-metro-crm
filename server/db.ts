@@ -1850,6 +1850,15 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
   
   const db = await getDb();
   if (!db) return null;
+
+  // Warm-up do TiDB Serverless: uma query leve acorda a conexão antes das queries pesadas.
+  // Sem isso, a primeira query pesada (sem filtro de data = 32k+ leads) pode falhar
+  // por timeout durante o cold start do TiDB Serverless (~10-30s de inicialização).
+  try {
+    await db.execute(sql`SELECT 1`);
+  } catch (warmupErr) {
+    console.warn('[getDashboardMetrics] Warm-up falhou, continuando mesmo assim:', warmupErr);
+  }
   
   // Construir cláusulas de filtro reutilizáveis
   const dateLeadConditions: any[] = [];
