@@ -37,6 +37,16 @@ import { relatorioDiarioRouter } from "./routers/relatorioDiario";
 // HELPERS E MIDDLEWARES
 // ============================================================================
 
+// Utilitário: trunca milissegundos antes de passar Date para o Drizzle/TiDB.
+// O TiDB com colunas timestamp(0) rejeita silenciosamente datas com milissegundos
+// (ex: "2026-01-01 05:00:00.000"), retornando 0 registros sem lançar erro.
+function parseDate(isoStr: string | undefined): Date | undefined {
+  if (!isoStr) return undefined;
+  const d = new Date(isoStr);
+  d.setMilliseconds(0);
+  return d;
+}
+
 // Helper: verifica se o role tem visão de gestor (gestor, admin, superintendente)
 function isGestorLevel(role: string): boolean {
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
@@ -738,8 +748,8 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return await presenca.gerarDadosGraficoPresenca(
-          new Date(input.dataInicio),
-          new Date(input.dataFim)
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim)
         );
       }),
     
@@ -751,8 +761,8 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return await presenca.gerarDadosHorasPorCorretor(
-          new Date(input.dataInicio),
-          new Date(input.dataFim)
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim)
         );
       }),
     
@@ -766,8 +776,8 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await presenca.gerarDadosHeatmap(
           input.corretorId,
-          new Date(input.dataInicio),
-          new Date(input.dataFim)
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim)
         );
       }),
     
@@ -1168,8 +1178,8 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const { calcularPerformanceCorretor } = await import("./performance");
         const periodo = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         return await calcularPerformanceCorretor(ctx.user.id, periodo);
       }),
@@ -1183,8 +1193,8 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const { calcularRankingCorretores } = await import("./performance");
         const periodo = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         return await calcularRankingCorretores(periodo);
       }),
@@ -1204,8 +1214,8 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { calcularEstatisticasGerais } = await import("./relatorios");
         const periodo = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
@@ -1223,8 +1233,8 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { calcularConversaoPorProjeto } = await import("./relatorios");
         const periodo = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
@@ -1242,8 +1252,8 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { calcularConversaoPorCorretor } = await import("./relatorios");
         const periodo = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
@@ -1261,8 +1271,8 @@ export const appRouter = router({
       .query(async ({ input, ctx }) => {
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
-        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        const dataInicio = parseDate(input?.dataInicio);
+        const dataFim = parseDate(input?.dataFim);
         return await db.getRelatorioProducaoCorretores(dataInicio, dataFim, corretoresIds);
       }),
 
@@ -1277,8 +1287,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro: _timerFiltro } = await import('./equipes');
         const timerCorretoresIds = await _timerFiltro(ctx.user.id, ctx.user.role);
         return await db.getRelatorioLeadsTimerPorCorretor({
-          dataInicio: new Date(input.dataInicio),
-          dataFim: new Date(input.dataFim),
+          dataInicio: parseDate(input.dataInicio),
+          dataFim: parseDate(input.dataFim),
           corretoresIds: timerCorretoresIds || undefined,
         });;
       }),
@@ -1301,8 +1311,8 @@ export const appRouter = router({
         console.log('[dashboard.metrics] User:', ctx.user.name, 'Role:', ctx.user.role, 'Corretores IDs:', corretoresIds);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getDashboardMetrics(filtros);
@@ -1319,8 +1329,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getLeadsPorCorretorDashboard(filtros);
@@ -1337,8 +1347,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getAgendamentosPorCorretor(filtros);
@@ -1355,8 +1365,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getVisitasPorCorretor(filtros);
@@ -1373,8 +1383,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getVendasPorCorretor(filtros);
@@ -1390,8 +1400,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
 
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getPastasPorCorretor(filtros);
@@ -1407,8 +1417,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
-        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        const dataInicio = parseDate(input?.dataInicio);
+        const dataFim = parseDate(input?.dataFim);
         return await db.getMetricasFunilGeral(dataInicio, dataFim, corretoresIds);
       }),
     
@@ -1422,8 +1432,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
-        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        const dataInicio = parseDate(input?.dataInicio);
+        const dataFim = parseDate(input?.dataFim);
         return await db.getMetricasFunilTodosCorretores(dataInicio, dataFim, corretoresIds);
       }),
     
@@ -1438,8 +1448,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getContratosFechados(filtros);
@@ -1542,8 +1552,8 @@ export const appRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getVGVPorEquipeProjeto(filtros);
@@ -1589,8 +1599,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getDistratos(filtros);
@@ -1606,8 +1616,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         const filtros = {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretoresIds,
         };
         return await db.getMetricasDistratos(filtros);
@@ -1623,8 +1633,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
-        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        const dataInicio = parseDate(input?.dataInicio);
+        const dataFim = parseDate(input?.dataFim);
         return await db.getRelatorioLeadsCriados(dataInicio, dataFim, corretoresIds);
       }),
   }),
@@ -1673,8 +1683,8 @@ export const appRouter = router({
       }).optional())
       .query(async ({ ctx, input }) => {
         const filtros = input ? {
-          dataInicio: input.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         } : undefined;
         return await db.getCorretorDashboardMetrics(ctx.user.id, filtros);
       }),
@@ -1700,8 +1710,8 @@ export const appRouter = router({
         dataFim: z.string().optional(),
       }).optional())
       .query(async ({ ctx, input }) => {
-        const dataInicio = input?.dataInicio ? new Date(input.dataInicio) : undefined;
-        const dataFim = input?.dataFim ? new Date(input.dataFim) : undefined;
+        const dataInicio = parseDate(input?.dataInicio);
+        const dataFim = parseDate(input?.dataFim);
         return await db.getMetricasFunilCorretor(ctx.user.id, dataInicio, dataFim);
       }),
   }),
@@ -3217,8 +3227,8 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getMetricasFunilLeadsUnicos(
           undefined,
-          input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          input?.dataFim ? new Date(input.dataFim) : undefined
+          parseDate(input?.dataInicio),
+          parseDate(input?.dataFim)
         );
       }),
     
@@ -3232,8 +3242,8 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return await db.getMetricasFunilLeadsUnicos(
           input.corretorId,
-          input.dataInicio ? new Date(input.dataInicio) : undefined,
-          input.dataFim ? new Date(input.dataFim) : undefined
+          parseDate(input?.dataInicio),
+          parseDate(input?.dataFim)
         );
       }),
     
@@ -3246,8 +3256,8 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         return await db.getMetricasFunilLeadsUnicos(
           ctx.user.id,
-          input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          input?.dataFim ? new Date(input.dataFim) : undefined
+          parseDate(input?.dataInicio),
+          parseDate(input?.dataFim)
         );
       }),
   }),
@@ -3409,8 +3419,8 @@ export const appRouter = router({
         const corretorId = input?.corretorId || ctx.user.id;
         return await db.getBloqueiosAgenda(
           corretorId,
-          input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          input?.dataFim ? new Date(input.dataFim) : undefined
+          parseDate(input?.dataInicio),
+          parseDate(input?.dataFim)
         );
       }),
     
@@ -3426,8 +3436,8 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.createBloqueioAgenda({
           corretorId: ctx.user.id,
-          dataInicio: new Date(input.dataInicio),
-          dataFim: new Date(input.dataFim),
+          dataInicio: parseDate(input.dataInicio),
+          dataFim: parseDate(input.dataFim),
           tipo: input.tipo,
           motivo: input.motivo,
           diaInteiro: input.diaInteiro
@@ -4853,8 +4863,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await analisesCentral.getVisaoGeralKPIs(
-          new Date(input.dataInicio),
-          new Date(input.dataFim),
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim),
           input.mes,
           input.ano,
           corretoresIds
@@ -4871,8 +4881,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await analisesCentral.getComparativoEquipes(
-          new Date(input.dataInicio),
-          new Date(input.dataFim),
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim),
           corretoresIds
         );
       }),
@@ -4887,8 +4897,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await analisesCentral.getFunilComGargalos(
-          new Date(input.dataInicio),
-          new Date(input.dataFim),
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim),
           corretoresIds
         );
       }),
@@ -4920,8 +4930,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await analisesCentral.getEvolucaoTemporal(
-          new Date(input.dataInicio),
-          new Date(input.dataFim),
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim),
           corretoresIds,
           input.agrupamento
         );
@@ -4937,8 +4947,8 @@ export const appRouter = router({
         const { getCorretoresIdsParaFiltro } = await import('./equipes');
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         return await analisesCentral.getOrigensComConversao(
-          new Date(input.dataInicio),
-          new Date(input.dataFim),
+          parseDate(input.dataInicio),
+          parseDate(input.dataFim),
           corretoresIds
         );
       }),

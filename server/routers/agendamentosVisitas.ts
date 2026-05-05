@@ -7,6 +7,13 @@ import { protectedProcedure, router } from "../_core/trpc";
 // HELPERS E MIDDLEWARES (copiados do routers.ts principal)
 // ============================================================================
 function isGestorLevel(role: string): boolean {
+
+function parseDate(isoStr: string | undefined): Date | undefined {
+  if (!isoStr) return undefined;
+  const d = new Date(isoStr);
+  d.setMilliseconds(0);
+  return d;
+}
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
 }
 function isAdminLevel(role: string): boolean {
@@ -128,8 +135,8 @@ export const agendamentosVisitasRouter = router({
       }).optional())
       .query(async ({ ctx, input }) => {
         return await db.getAgendamentosCorretor(ctx.user.id, {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           status: input?.status,
         });
       }),
@@ -148,8 +155,8 @@ export const agendamentosVisitasRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await db.getAllAgendamentos({
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretorId: input?.corretorId,
           corretoresIds,
           status: input?.status,
@@ -319,8 +326,8 @@ export const agendamentosVisitasRouter = router({
       }).optional())
       .query(async ({ ctx, input }) => {
         return await db.getVisitasCorretor(ctx.user.id, {
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
         });
       }),
     
@@ -337,8 +344,8 @@ export const agendamentosVisitasRouter = router({
         const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
         
         return await db.getAllVisitas({
-          dataInicio: input?.dataInicio ? new Date(input.dataInicio) : undefined,
-          dataFim: input?.dataFim ? new Date(input.dataFim) : undefined,
+          dataInicio: parseDate(input?.dataInicio),
+          dataFim: parseDate(input?.dataFim),
           corretorId: input?.corretorId,
           corretoresIds,
         });

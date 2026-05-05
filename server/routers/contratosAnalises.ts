@@ -7,6 +7,13 @@ import { protectedProcedure, router } from "../_core/trpc";
 // HELPERS E MIDDLEWARES (copiados do routers.ts principal)
 // ============================================================================
 function isGestorLevel(role: string): boolean {
+
+function parseDate(isoStr: string | undefined): Date | undefined {
+  if (!isoStr) return undefined;
+  const d = new Date(isoStr);
+  d.setMilliseconds(0);
+  return d;
+}
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
 }
 function isAdminLevel(role: string): boolean {
@@ -119,10 +126,10 @@ export const contratosAnalisesRouter = router({
         
         const conditions = [eq(contratos.corretorId, ctx.user.id)];
         if (input?.dataInicio) {
-          conditions.push(gte(contratos.createdAt, new Date(input.dataInicio)));
+          conditions.push(gte(contratos.createdAt, parseDate(input.dataInicio)));
         }
         if (input?.dataFim) {
-          conditions.push(lte(contratos.createdAt, new Date(input.dataFim)));
+          conditions.push(lte(contratos.createdAt, parseDate(input.dataFim)));
         }
         
         return await database
@@ -167,10 +174,10 @@ export const contratosAnalisesRouter = router({
           conditions.push(eq(contratos.corretorId, input.corretorId));
         }
         if (input?.dataInicio) {
-          conditions.push(gte(contratos.createdAt, new Date(input.dataInicio)));
+          conditions.push(gte(contratos.createdAt, parseDate(input.dataInicio)));
         }
         if (input?.dataFim) {
-          conditions.push(lte(contratos.createdAt, new Date(input.dataFim)));
+          conditions.push(lte(contratos.createdAt, parseDate(input.dataFim)));
         }
         
         return await database
@@ -276,10 +283,10 @@ export const contratosAnalisesRouter = router({
         
         const conditions = [eq(analises_credito.corretorId, ctx.user.id)];
         if (input?.dataInicio) {
-          conditions.push(gte(analises_credito.createdAt, new Date(input.dataInicio)));
+          conditions.push(gte(analises_credito.createdAt, parseDate(input.dataInicio)));
         }
         if (input?.dataFim) {
-          conditions.push(lte(analises_credito.createdAt, new Date(input.dataFim)));
+          conditions.push(lte(analises_credito.createdAt, parseDate(input.dataFim)));
         }
         
         return await database
