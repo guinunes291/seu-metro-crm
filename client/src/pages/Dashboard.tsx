@@ -163,10 +163,16 @@ export default function Dashboard() {
   }, [filterPreset, customDateRange]);
   
   // Opções padrão para queries do dashboard do gestor:
-  // enabled: !authLoading && isGestor garante que a query só execute DEPOIS que o user carregou (evita cache stale com dados zerados)
-  // staleTime: 0 força re-fetch quando enabled muda de false para true
-  // refetchInterval de 5 min mantém dados atualizados sem avalanche de requests
-  const gestorQueryOpts = { enabled: !authLoading && isGestor, staleTime: 0, refetchInterval: 5 * 60 * 1000 };
+  // enabled: !authLoading && isGestor garante que a query só execute DEPOIS que o user carregou
+  // staleTime: 30s (antes 2min — zeros ficavam cacheados por 2min após cold start do TiDB)
+  // retry: 2 com backoff exponencial para re-tentar em caso de falha de conexão no cold start
+  const gestorQueryOpts = {
+    enabled: !authLoading && isGestor,
+    staleTime: 30 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+    retry: 2,
+    retryDelay: (attempt: number) => Math.min(1000 * 2 ** attempt, 10000),
+  };
 
   // Diagnóstico — apenas para admin, chamado manualmente
   const diagQuery = trpc.dashboard.diagnostico.useQuery(undefined, { enabled: false });

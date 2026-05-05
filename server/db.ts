@@ -95,10 +95,13 @@ let _pool: ReturnType<typeof mysql.createPool> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      // Pool com limite explícito de conexões para reduzir custo de Cloud
+      // Pool explícito com timeouts altos para suportar cold start do TiDB Serverless.
+      // drizzle(url_string) cria pool mas sem configuração de timeout — pool manual
+      // permite ajustar connectTimeout e waitForConnections.
       _pool = mysql.createPool({
         uri: process.env.DATABASE_URL,
-        connectionLimit: 5,       // máx 5 conexões simultâneas (padrão era 10)
+        connectionLimit: 5,       // máx 5 conexões simultâneas
+        connectTimeout: 30_000,   // 30s — TiDB Serverless pode demorar no cold start
         waitForConnections: true, // fila em vez de erro quando o pool está cheio
         queueLimit: 0,            // sem limite de fila
         idleTimeout: 60000,       // libera conexões ociosas após 60s
@@ -106,6 +109,7 @@ export async function getDb() {
         keepAliveInitialDelay: 0,
       });
       _db = drizzle(_pool);
+      console.log('[Database] Pool criado com sucesso');
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -1887,16 +1891,14 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
   
   const leadWhereClause = dateLeadConditions.length > 0 ? and(...dateLeadConditions) : undefined;
   
-  // OTIMIZAÇÃO: Consolidar counts de leads em UMA única query SQL com COUNT(CASE WHEN)
-  // Reduz de 3 queries separadas para 1 query com múltiplos contadores
+  // Buscar contagem por status via GROUP BY (mais compatível com TiDB que COUNT(CASE WHEN))
   const leadsCountsQuery = db.select({
-    total: sql<number>`COUNT(*)`,
-    aguardando: sql<number>`COUNT(CASE WHEN ${leads.status} = 'aguardando_atendimento' THEN 1 END)`,
-    emAtendimento: sql<number>`COUNT(CASE WHEN ${leads.status} = 'em_atendimento' THEN 1 END)`,
-    perdido: sql<number>`COUNT(CASE WHEN ${leads.status} = 'perdido' THEN 1 END)`,
+    status: leads.status,
+    count: sql<number>`COUNT(*)`,
   })
     .from(leads)
-    .where(leadWhereClause);
+    .where(leadWhereClause)
+    .groupBy(leads.status);
   
   // Queries para tabelas relacionadas (agendamentos, visitas, análises, contratos)
   // Executadas em paralelo com a query consolidada de leads
@@ -1950,24 +1952,33 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
   });
 
   const [leadsCountsR, agendR, visitR, analiseR, contratoR, vgvR] = results;
-  const leadsCounts   = leadsCountsR.status === 'fulfilled' ? leadsCountsR.value : [];
+  const leadsCountsByStatus = leadsCountsR.status === 'fulfilled' ? leadsCountsR.value : [];
   const agendResult   = agendR.status === 'fulfilled'       ? agendR.value       : [];
   const visitResult   = visitR.status === 'fulfilled'       ? visitR.value       : [];
   const analiseResult = analiseR.status === 'fulfilled'     ? analiseR.value     : [];
   const contratoResult = contratoR.status === 'fulfilled'   ? contratoR.value    : [];
   const vgvResult     = vgvR.status === 'fulfilled'         ? vgvR.value         : [];
 
-  return {
-    total: Number(leadsCounts[0]?.total || 0),
-    aguardando: Number(leadsCounts[0]?.aguardando || 0),
-    emAtendimento: Number(leadsCounts[0]?.emAtendimento || 0),
+  // Montar counters a partir do GROUP BY status
+  const countByStatus = Object.fromEntries(
+    leadsCountsByStatus.map(r => [r.status, Number(r.count)])
+  );
+  const totalLeads = leadsCountsByStatus.reduce((acc, r) => acc + Number(r.count), 0);
+
+  const metricsResult = {
+    total: totalLeads,
+    aguardando: countByStatus['aguardando_atendimento'] ?? 0,
+    emAtendimento: countByStatus['em_atendimento'] ?? 0,
     agendado: Number(agendResult[0]?.count || 0),
     visitaRealizada: Number(visitResult[0]?.count || 0),
     analiseCredito: Number(analiseResult[0]?.count || 0),
     contratoFechado: Number(contratoResult[0]?.count || 0),
-    perdido: Number(leadsCounts[0]?.perdido || 0),
+    perdido: countByStatus['perdido'] ?? 0,
     vgv: Number(vgvResult[0]?.total || 0),
   };
+
+  console.log('[getDashboardMetrics] Resultado final:', JSON.stringify(metricsResult));
+  return metricsResult;
 }
 
 /**
