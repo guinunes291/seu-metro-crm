@@ -105,7 +105,7 @@ const menuGroups = [
       { icon: Zap, label: "Modo Foco", path: "/meu-negocio/foco", roles: ["corretor"] },
       { icon: BookOpen, label: "Como Avaliar", path: "/meu-negocio/como-avaliar", roles: ["corretor"] },
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes", roles: ["corretor"] },
-      { icon: ClipboardList, label: "Relatório Diário", path: "/meu-negocio/relatorio-diario", roles: ["corretor", "gestor", "admin", "superintendente"] },
+      { icon: ClipboardList, label: "Meu Painel", path: "/meu-painel", roles: ["corretor", "gestor", "admin", "superintendente"] },
     ],
   },
   {
@@ -114,8 +114,8 @@ const menuGroups = [
     icon: TrendingUp,
     items: [
       { icon: Trophy, label: "Conquistas", path: "/meu-perfil" },
-      // Corretor acessa apenas sua própria performance
-      { icon: TrendingUp, label: "Minha Performance", path: "/minha-performance", roles: ["corretor"] },
+      // Corretor acessa seu painel unificado
+      { icon: BarChart3, label: "Meu Painel", path: "/meu-painel", roles: ["corretor"] },
       // Gestor e Admin acessam ranking do time / geral
       { icon: Trophy, label: "Corrida dos Campeões", path: "/ranking-tv", roles: ["gestor", "admin", "superintendente"] },
       { icon: Tv, label: "Performance TV", path: "/performance-tv", roles: ["gestor", "admin", "superintendente"] },

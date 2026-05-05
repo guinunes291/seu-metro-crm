@@ -18,6 +18,7 @@ import ProjetoDetalhes from "@/pages/ProjetoDetalhes";
 import ImportarProjetos from "@/pages/ImportarProjetos";
 import Corretores from "@/pages/Corretores";
 import MinhaPerformance from "@/pages/MinhaPerformance";
+import MeuPainel from "@/pages/MeuPainel";
 import ImportarCSV from "@/pages/ImportarCSV";
 import ControleDistribuicao from "@/pages/ControleDistribuicao";
 import Comissoes from "@/pages/Comissoes";
@@ -87,7 +88,8 @@ function Router() {
       <Route path="/projetos/:id" component={ProjetoDetalhes} />
       <Route path="/importar-projetos" component={ImportarProjetos} />
       <Route path="/corretores" component={Corretores} />
-      <Route path="/minha-performance" component={MinhaPerformance} />
+      <Route path="/meu-painel" component={MeuPainel} />
+      <Route path="/minha-performance">{() => { window.location.replace("/meu-painel"); return null; }}</Route>
       <Route path="/importar-csv" component={ImportarCSV} />
       <Route path="/controle-distribuicao" component={ControleDistribuicao} />
       <Route path="/comissoes" component={Comissoes} />
@@ -132,10 +134,10 @@ function Router() {
       <Route path="/meu-negocio/dashboard" component={MeuDashboard} />
       <Route path="/meu-negocio/followup" component={MeuFollowUp} />
       <Route path="/meu-negocio/pre-analise" component={PreAnaliseMcmv} />
-      <Route path="/meu-negocio/evolucao" component={MinhaEvolucao} />
+      <Route path="/meu-negocio/evolucao">{() => { window.location.replace("/meu-painel"); return null; }}</Route>
       <Route path="/meu-negocio/como-avaliar" component={ComoAvaliarMeuNegocio} />
       <Route path="/meu-negocio/foco" component={ModeFoco} />
-      <Route path="/meu-negocio/relatorio-diario" component={RelatorioDiarioCorretor} />
+      <Route path="/meu-negocio/relatorio-diario">{() => { window.location.replace("/meu-painel"); return null; }}</Route>
 
       {/* Rotas Públicas */}
       <Route path="/agendar/:token" component={AgendamentoPublico} />
