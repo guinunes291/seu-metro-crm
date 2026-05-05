@@ -65,6 +65,22 @@ async function startServer() {
   
   // Webhook routes (público, com rate limiting de 10 req/min por token)
   app.use('/api/webhook', webhookRateLimit, webhookRoutes);
+
+  // Endpoint de diagnóstico temporário (sem autenticação)
+  app.get('/api/diag/leads-count', async (_req, res) => {
+    try {
+      const { getDb } = await import('../db');
+      const db = await getDb();
+      if (!db) return res.json({ error: 'db null', total: -1 });
+      const { sql } = await import('drizzle-orm');
+      const result = await (db as any).execute(sql`SELECT COUNT(*) as total FROM leads`);
+      const rows = Array.isArray(result) ? result[0] : result;
+      const row = Array.isArray(rows) ? rows[0] : rows;
+      res.json({ total: row?.total ?? -2, ts: new Date().toISOString() });
+    } catch (e: any) {
+      res.json({ error: e.message, total: -3 });
+    }
+  });
   
   // Upload routes (requer autenticação via cookie)
   app.use('/api', uploadRoutes);
