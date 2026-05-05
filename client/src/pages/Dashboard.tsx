@@ -131,7 +131,7 @@ function formatDateShort(dateStr: string): string {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   const isAdmin = user?.role === "admin" || user?.role === "superintendente";
   const isAdminExport = user?.role === "admin"; // Apenas admin pode exportar leads
@@ -163,9 +163,10 @@ export default function Dashboard() {
   }, [filterPreset, customDateRange]);
   
   // Opções padrão para queries do dashboard do gestor:
-  // staleTime de 2 min evita re-fetch em cada troca de aba/foco
+  // enabled: !authLoading && isGestor garante que a query só execute DEPOIS que o user carregou (evita cache stale com dados zerados)
+  // staleTime: 0 força re-fetch quando enabled muda de false para true
   // refetchInterval de 5 min mantém dados atualizados sem avalanche de requests
-  const gestorQueryOpts = { enabled: isGestor, staleTime: 2 * 60 * 1000, refetchInterval: 5 * 60 * 1000 };
+  const gestorQueryOpts = { enabled: !authLoading && isGestor, staleTime: 0, refetchInterval: 5 * 60 * 1000 };
 
   // Diagnóstico — apenas para admin, chamado manualmente
   const diagQuery = trpc.dashboard.diagnostico.useQuery(undefined, { enabled: false });
@@ -181,17 +182,17 @@ export default function Dashboard() {
   // Queries para gráficos do gestor
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery(
     { dias: 30 },
-    { enabled: isGestor, staleTime: 5 * 60 * 1000 }
+    { enabled: !authLoading && isGestor, staleTime: 0 }
   );
   const { data: dadosFunil } = trpc.graficos.funil.useQuery(
     { dias: 30 },
-    { enabled: isGestor, staleTime: 5 * 60 * 1000 }
+    { enabled: !authLoading && isGestor, staleTime: 0 }
   );
 
   // Query de leads para o gestor (para o card de urgência)
   const { data: allLeads } = trpc.leads.list.useQuery(undefined, {
-    enabled: isGestor,
-    staleTime: 60 * 1000,
+    enabled: !authLoading && isGestor,
+    staleTime: 0,
     refetchInterval: 2 * 60 * 1000,
   });
 
@@ -216,7 +217,7 @@ export default function Dashboard() {
   const [redistPeriodo, setRedistPeriodo] = useState<'hoje' | 'semana' | 'mes'>('hoje');
   const { data: redistData } = trpc.logTransferencias.painel.useQuery(
     { periodo: redistPeriodo },
-    { enabled: isGestor, staleTime: 2 * 60 * 1000, refetchInterval: 5 * 60 * 1000 }
+    { enabled: !authLoading && isGestor, staleTime: 0, refetchInterval: 5 * 60 * 1000 }
   );
   
   // ============================================================================
