@@ -1926,12 +1926,13 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     .from(contratos)
     .leftJoin(leads, eq(contratos.leadId, leads.id))
     .where(and(
-      eq(contratos.distrato, false), // Excluir distratos do VGV
+      sql`${contratos.distrato} = 0`, // Excluir distratos do VGV
       ...(dateOtherConditions.contrato.length > 0 ? dateOtherConditions.contrato : [])
     ));
   
-  // Executar todas as queries em paralelo (5 queries ao invés de 9)
-  const [leadsCounts, agendResult, visitResult, analiseResult, contratoResult, vgvResult] = await Promise.all([
+  // Executar em paralelo com allSettled para isolar falhas individuais
+  const queryNames = ['leadsCountsQuery', 'agendQuery', 'visitQuery', 'analiseQuery', 'contratoQuery', 'vgvQuery'];
+  const results = await Promise.allSettled([
     leadsCountsQuery,
     agendQuery,
     visitQuery,
@@ -1939,7 +1940,23 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     contratoQuery,
     vgvQuery,
   ]);
-  
+
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error(`[getDashboardMetrics] Query "${queryNames[i]}" falhou:`, r.reason);
+    } else {
+      console.log(`[getDashboardMetrics] Query "${queryNames[i]}" OK:`, JSON.stringify(r.value?.[0] ?? {}));
+    }
+  });
+
+  const [leadsCountsR, agendR, visitR, analiseR, contratoR, vgvR] = results;
+  const leadsCounts   = leadsCountsR.status === 'fulfilled' ? leadsCountsR.value : [];
+  const agendResult   = agendR.status === 'fulfilled'       ? agendR.value       : [];
+  const visitResult   = visitR.status === 'fulfilled'       ? visitR.value       : [];
+  const analiseResult = analiseR.status === 'fulfilled'     ? analiseR.value     : [];
+  const contratoResult = contratoR.status === 'fulfilled'   ? contratoR.value    : [];
+  const vgvResult     = vgvR.status === 'fulfilled'         ? vgvR.value         : [];
+
   return {
     total: Number(leadsCounts[0]?.total || 0),
     aguardando: Number(leadsCounts[0]?.aguardando || 0),
@@ -1951,6 +1968,49 @@ export async function getDashboardMetrics(filtros?: DashboardFilters) {
     perdido: Number(leadsCounts[0]?.perdido || 0),
     vgv: Number(vgvResult[0]?.total || 0),
   };
+}
+
+/**
+ * Diagnóstico de produção: executa queries individuais e retorna o resultado
+ * ou a mensagem de erro de cada uma. Usado para identificar a causa raiz de zeros
+ * no dashboard sem precisar ler logs do servidor.
+ */
+export async function diagnosticoDashboard() {
+  const db = await getDb();
+  const dbOk = !!db;
+
+  const runQuery = async (name: string, fn: () => Promise<any>) => {
+    try {
+      const result = await fn();
+      return { name, ok: true, result };
+    } catch (err: any) {
+      return { name, ok: false, error: String(err?.message ?? err) };
+    }
+  };
+
+  if (!db) {
+    return { dbOk: false, databaseUrl: !!process.env.DATABASE_URL, queries: [] };
+  }
+
+  const queries = await Promise.all([
+    runQuery('SELECT 1', () => db.execute(sql`SELECT 1 AS ping`)),
+    runQuery('COUNT leads', () => db.select({ total: sql<number>`COUNT(*)` }).from(leads)),
+    runQuery('COUNT contratos', () => db.select({ total: sql<number>`COUNT(*)` }).from(contratos)),
+    runQuery('COUNT contratos ativos (distrato=0)', () =>
+      db.select({ total: sql<number>`COUNT(*)` }).from(contratos).where(sql`${contratos.distrato} = 0`)),
+    runQuery('SUM valorVenda (distrato=0)', () =>
+      db.select({ total: sql<number>`COALESCE(SUM(${contratos.valorVenda}), 0)` })
+        .from(contratos).where(sql`${contratos.distrato} = 0`)),
+    runQuery('COUNT agendamentos', () => db.select({ total: sql<number>`COUNT(*)` }).from(agendamentos)),
+    runQuery('COUNT visitas', () => db.select({ total: sql<number>`COUNT(*)` }).from(visitas)),
+    runQuery('COUNT analises_credito', () => db.select({ total: sql<number>`COUNT(*)` }).from(analises_credito)),
+    runQuery('COUNT leads by status', () =>
+      db.select({ status: leads.status, count: sql<number>`COUNT(*)` }).from(leads).groupBy(leads.status).limit(20)),
+  ]);
+
+  console.log('[diagnosticoDashboard] Resultado:', JSON.stringify(queries, null, 2));
+
+  return { dbOk, databaseUrl: !!process.env.DATABASE_URL, queries };
 }
 
 export async function getLeadsPorCorretorDashboard(filtros?: DashboardFilters) {
@@ -2185,7 +2245,7 @@ export async function getVendasPorCorretor(filtros?: DashboardFilters) {
   }
   
   // Sempre excluir distratos do ranking de vendas
-  contratosConditions.push(eq(contratos.distrato, false));
+  contratosConditions.push(sql`${contratos.distrato} = 0`);
 
   const vendasQuery = db.select({
     corretorId: contratos.corretorId,
@@ -2288,7 +2348,7 @@ export async function getRelatorioProducaoCorretores(
   // Contratos por corretor
   const contratosConditions: any[] = [
     inArray(contratos.corretorId, ids),
-    eq(contratos.distrato, false)
+    sql`${contratos.distrato} = 0`
   ];
   if (dataInicio) contratosConditions.push(gte(contratos.createdAt, dataInicio));
   if (dataFim) contratosConditions.push(lte(contratos.createdAt, dataFim));
@@ -2701,11 +2761,11 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
   
   try {
     // Definir filtro de data para contratos (sempre excluindo distratos)
-    let contratosWhere = eq(contratos.distrato, false) as any;
+    let contratosWhere = sql`${contratos.distrato} = 0` as any;
     if (dataInicio && dataFim) {
       // Filtro por range de datas (prioridade)
       contratosWhere = and(
-        eq(contratos.distrato, false),
+        sql`${contratos.distrato} = 0`,
         gte(contratos.createdAt, dataInicio),
         lte(contratos.createdAt, dataFim)
       );
@@ -2713,7 +2773,7 @@ export async function getRankingCorretores(mes?: number | null, ano?: number | n
       const inicio = new Date(ano, mes - 1, 1);
       const fim = new Date(ano, mes, 0, 23, 59, 59, 999);
       contratosWhere = and(
-        eq(contratos.distrato, false),
+        sql`${contratos.distrato} = 0`,
         gte(contratos.createdAt, inicio),
         lte(contratos.createdAt, fim)
       );
@@ -3705,7 +3765,7 @@ export async function getCorretorDashboardMetrics(corretorId: number, filtros?: 
   // VGV do corretor (soma dos valores reais dos contratos, excluindo distratos)
   const contratoConditions: any[] = [
     eq(contratos.corretorId, corretorId),
-    eq(contratos.distrato, false), // Excluir distratos
+    sql`${contratos.distrato} = 0`, // Excluir distratos
   ];
   
   if (filtros?.dataInicio) {
@@ -9369,7 +9429,7 @@ export async function sincronizarContratosDoDia() {
     .from(contratos)
     .where(
       and(
-        eq(contratos.distrato, false), // Excluir distratos
+        sql`${contratos.distrato} = 0`, // Excluir distratos
         gte(contratos.createdAt, inicioHoje),
         lte(contratos.createdAt, fimHoje)
       )
@@ -9621,7 +9681,7 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
     .from(contratos)
     .where(and(
       inArray(contratos.corretorId, idsAtivos),
-      eq(contratos.distrato, false),
+      sql`${contratos.distrato} = 0`,
       gte(contratos.createdAt, dataInicio),
       lte(contratos.createdAt, dataFim)
     ))
@@ -9768,7 +9828,7 @@ export async function getEvolucaoMensalVGV(anoReferencia: number, equipeId?: num
   const dataFimAno = new Date(anoReferencia, 11, 31, 23, 59, 59, 999);
 
   const baseWhere = and(
-    eq(contratos.distrato, false),
+    sql`${contratos.distrato} = 0`,
     gte(contratos.createdAt, dataInicioAno),
     lte(contratos.createdAt, dataFimAno)
   );
@@ -10212,7 +10272,7 @@ export async function getContratosFechados(filtros?: DashboardFilters) {
   if (!db) return [];
   
   const conditions: any[] = [
-    eq(contratos.distrato, false), // Excluir distratos
+    sql`${contratos.distrato} = 0`, // Excluir distratos
   ];
   
   if (filtros?.dataInicio) {
@@ -11048,7 +11108,7 @@ export async function getDistratos(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return [];
 
-  const conditions: any[] = [eq(contratos.distrato, true)];
+  const conditions: any[] = [sql`${contratos.distrato} = 1`];
 
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));
@@ -11115,7 +11175,7 @@ export async function getMetricasDistratos(filtros?: DashboardFilters) {
   const db = await getDb();
   if (!db) return { totalDistratos: 0, vgvDistratado: 0 };
 
-  const conditions: any[] = [eq(contratos.distrato, true)];
+  const conditions: any[] = [sql`${contratos.distrato} = 1`];
 
   if (filtros?.dataInicio) {
     conditions.push(gte(contratos.dataDistrato, filtros.dataInicio));

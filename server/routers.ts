@@ -1308,6 +1308,12 @@ export const appRouter = router({
         return await db.getDashboardMetrics(filtros);
       }),
     
+    // Diagnóstico — apenas para admin, chamado manualmente
+    diagnostico: gestorProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return await db.diagnosticoDashboard();
+    }),
+
     // Leads por corretor
     leadsPorCorretor: gestorProcedure
       .input(z.object({

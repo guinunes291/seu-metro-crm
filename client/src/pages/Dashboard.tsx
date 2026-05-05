@@ -167,6 +167,9 @@ export default function Dashboard() {
   // refetchInterval de 5 min mantém dados atualizados sem avalanche de requests
   const gestorQueryOpts = { enabled: isGestor, staleTime: 2 * 60 * 1000, refetchInterval: 5 * 60 * 1000 };
 
+  // Diagnóstico — apenas para admin, chamado manualmente
+  const diagQuery = trpc.dashboard.diagnostico.useQuery(undefined, { enabled: false });
+
   // Queries para o dashboard do gestor
   const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorQueryOpts);
   const { data: leadsPorCorretor } = trpc.dashboard.leadsPorCorretor.useQuery(dateFilter, gestorQueryOpts);
@@ -659,6 +662,20 @@ export default function Dashboard() {
             <RefreshCw className={`h-4 w-4 mr-2 ${forceSyncMutation.isPending ? 'animate-spin' : ''}`} />
             {forceSyncMutation.isPending ? 'Sincronizando...' : 'Sincronizar Métricas'}
           </Button>
+          {isAdminExport && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={async () => {
+                const result = await diagQuery.refetch();
+                alert(JSON.stringify(result.data, null, 2));
+              }}
+              title="Diagnóstico do banco de dados — apenas admin"
+            >
+              [ADMIN] Diagnóstico DB
+            </Button>
+          )}
         </div>
 
         {metricsLoading ? (
