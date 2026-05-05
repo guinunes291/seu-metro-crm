@@ -6,14 +6,13 @@ import { protectedProcedure, router } from "../_core/trpc";
 // ============================================================================
 // HELPERS E MIDDLEWARES (copiados do routers.ts principal)
 // ============================================================================
-function isGestorLevel(role: string): boolean {
-
 function parseDate(isoStr: string | undefined): Date | undefined {
   if (!isoStr) return undefined;
   const d = new Date(isoStr);
   d.setMilliseconds(0);
   return d;
 }
+function isGestorLevel(role: string): boolean {
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
 }
 function isAdminLevel(role: string): boolean {
