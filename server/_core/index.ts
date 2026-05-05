@@ -101,6 +101,29 @@ async function startServer() {
     res.json({ reached: true, ts: new Date().toISOString() });
   });
 
+  // Endpoint de diagnóstico que testa getCorretoresIdsParaFiltro para o admin
+  app.get('/api/diag/admin-filtro', async (_req, res) => {
+    try {
+      const { getCorretoresIdsParaFiltro } = await import('../equipes');
+      const { getDashboardMetrics } = await import('../db');
+      // Simular admin com userId=7722800
+      const corretoresIds = await getCorretoresIdsParaFiltro(7722800, 'admin');
+      const metricsComFiltro = await getDashboardMetrics({ corretoresIds: corretoresIds ?? undefined });
+      const metricsNullFiltro = await getDashboardMetrics({ corretoresIds: null });
+      res.json({
+        corretoresIds,
+        corretoresIdsType: typeof corretoresIds,
+        corretoresIdsIsNull: corretoresIds === null,
+        corretoresIdsIsArray: Array.isArray(corretoresIds),
+        metricsComFiltro,
+        metricsNullFiltro,
+        ts: new Date().toISOString()
+      });
+    } catch (e: any) {
+      res.json({ error: e.message, stack: e.stack?.slice(0, 500) });
+    }
+  });
+
   // Endpoint de diagnóstico que chama getDashboardMetrics com timeout
   app.get('/api/diag/dashboard-metrics-full', async (_req, res) => {
     try {
