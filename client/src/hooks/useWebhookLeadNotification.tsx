@@ -113,7 +113,7 @@ export function useWebhookLeadNotification() {
       hasNewLeads = true;
 
       // Rastrear o lead mais recente para avançar o `since`
-      const leadDate = lead.createdAt ? new Date(lead.createdAt as string) : null;
+      const leadDate = lead.createdAt ? new Date(String(lead.createdAt)) : null;
       if (leadDate && (!latestCreatedAt || leadDate > latestCreatedAt)) {
         latestCreatedAt = leadDate;
       }

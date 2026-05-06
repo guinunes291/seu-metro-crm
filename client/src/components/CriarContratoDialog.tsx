@@ -66,7 +66,7 @@ export function CriarContratoDialog({ open, onOpenChange, onSuccess }: CriarCont
       toast.success('Contrato criado com sucesso!');
       utils.dashboard.contratosFechados.invalidate();
       utils.dashboard.vgvPorEquipeProjeto.invalidate();
-      utils.dashboard.get.invalidate();
+      utils.dashboard.metrics.invalidate();
       onSuccess();
       limparFormulario();
       onOpenChange(false);

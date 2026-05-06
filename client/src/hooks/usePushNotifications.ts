@@ -89,7 +89,7 @@ export function usePushNotifications() {
       // Criar inscrição
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidData.publicKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidData.publicKey) as unknown as ArrayBuffer,
       });
 
       // Salvar subscription no backend
@@ -156,6 +156,7 @@ export function usePushNotifications() {
         body: options.body,
         icon: options.icon || '/icons/icon-192x192.png',
         badge: '/icons/icon-96x96.png',
+        // @ts-expect-error vibrate is supported by browsers but not in TS lib types
         vibrate: [200, 100, 200],
         tag: options.tag || 'default',
         requireInteraction: options.requireInteraction || false,
