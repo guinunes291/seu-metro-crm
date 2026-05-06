@@ -15,7 +15,7 @@ import { CONQUISTAS, CATEGORIAS, getNivelAtual, type Conquista } from "../../../
 import { 
   Camera, Trophy, Target, Flame, Star, Crown, Medal, Award, 
   Gem, Rocket, Flag, Sparkles, Upload, User, Calendar,
-  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, ChevronDown, Lock, Share2
+  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, ChevronDown, Lock, Share2, Bell
 } from "lucide-react";
 import {
   Collapsible,
@@ -23,6 +23,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConquistaShareCard from "@/components/ConquistaShareCard";
+import { PushNotificationToggle } from "@/components/PushNotificationBanner";
 
 export default function MeuPerfil() {
   const { user } = useAuth();
@@ -278,6 +279,10 @@ export default function MeuPerfil() {
             <TabsTrigger value="estatisticas" className="data-[state=active]:bg-cyan-500 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4 mr-2" />
               Estatísticas
+            </TabsTrigger>
+            <TabsTrigger value="notificacoes" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+              <Bell className="h-4 w-4 mr-2" />
+              Notificações
             </TabsTrigger>
           </TabsList>
 
@@ -535,6 +540,29 @@ export default function MeuPerfil() {
                     <p className="text-slate-400">Carregando estatísticas...</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab Notificações */}
+          <TabsContent value="notificacoes" className="space-y-4">
+            <Card className="bg-slate-900 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white text-lg flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-green-400" />
+                  Notificações Push
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Receba alertas de novos leads diretamente no seu dispositivo, mesmo com a aba fechada ou o celular bloqueado.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <PushNotificationToggle />
+                <div className="text-xs text-slate-500 space-y-1">
+                  <p>• As notificações funcionam em Chrome, Edge, Firefox e Safari (iOS 16.4+)</p>
+                  <p>• Você será notificado imediatamente quando receber um novo lead</p>
+                  <p>• Clique na notificação para abrir o lead diretamente</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

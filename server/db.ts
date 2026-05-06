@@ -1989,16 +1989,40 @@ export async function markAllNotificationsAsRead(userId: number) {
     ));
 }
 
-// Função para criar notificação quando lead é distribuído
 export async function notifyLeadDistribuido(corretorId: number, leadId: number, leadNome: string) {
-  return await createNotification({
+  // Notificacao interna no sistema
+  const result = await createNotification({
     userId: corretorId,
     titulo: "Novo lead recebido!",
-    mensagem: `Você recebeu um novo lead: ${leadNome}. Entre em contato o mais rápido possível.`,
+    mensagem: `Voce recebeu um novo lead: ${leadNome}. Entre em contato o mais rapido possivel.`,
     tipo: "lead_recebido",
     leadId: leadId,
   });
+  // Push notification nativa (non-blocking)
+  try {
+    const { sendPushNotification } = await import("./pushNotifications");
+    sendPushNotification(corretorId, {
+      title: "Novo Lead!",
+      body: `${leadNome} -- acesse agora`,
+      url: `/leads?leadId=${leadId}`,
+      tag: `lead-novo-${leadId}`,
+      requireInteraction: true,
+    }).catch((err: unknown) => console.error("[Push] Erro ao enviar push (distribuicao):", err));
+  } catch (pushErr) {
+    console.error("[Push] Erro ao importar pushNotifications (distribuicao):", pushErr);
+  }
+  return result;
 }
+// Função para criar notificação quando lead é distribuído
+
+
+
+
+
+
+
+
+
 
 
 // ============================================================================
@@ -3719,6 +3743,22 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     } catch (error) {
       console.error('[Webhook] Erro ao notificar corretor:', error);
     }
+
+    // Push notification nativa (non-blocking) -- funciona mesmo com aba fechada / PWA
+    try {
+      const { sendPushNotification } = await import("./pushNotifications");
+      const projetoParaPush = leadCriado.projectId ? await getProjectById(leadCriado.projectId) : null;
+      const projetoNomePush = projetoParaPush?.nome || leadCriado.origem || "Lead novo";
+      sendPushNotification(corretorId, {
+        title: "Novo Lead!",
+        body: `${leadCriado.nome} -- ${projetoNomePush}`,
+        url: `/leads?leadId=${leadCriado.id}`,
+        tag: `lead-novo-${leadCriado.id}`,
+        requireInteraction: true,
+      }).catch((err: unknown) => console.error("[Push] Erro ao enviar push (webhook):", err));
+    } catch (pushErr) {
+      console.error("[Push] Erro ao importar pushNotifications:", pushErr);
+    }
   }
   
   return {
@@ -3881,6 +3921,22 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     }
     
     console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
+
+    // Push notification nativa (non-blocking) -- funciona mesmo com aba fechada / PWA
+    try {
+      const { sendPushNotification } = await import("./pushNotifications");
+      const projetoParaPushFoco = leadCriado.projectId ? await getProjectById(leadCriado.projectId) : null;
+      const projetoNomePushFoco = projetoParaPushFoco?.nome || leadCriado.origem || "Lead Foco";
+      sendPushNotification(corretorId, {
+        title: "Novo Lead!",
+        body: `${leadCriado.nome} -- ${projetoNomePushFoco}`,
+        url: `/leads?leadId=${leadCriado.id}`,
+        tag: `lead-novo-${leadCriado.id}`,
+        requireInteraction: true,
+      }).catch((err: unknown) => console.error("[Push] Erro ao enviar push (webhook foco):", err));
+    } catch (pushErrFoco) {
+      console.error("[Push] Erro ao importar pushNotifications (foco):", pushErrFoco);
+    }
   }
   
   return {
