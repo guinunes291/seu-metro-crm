@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -15,7 +16,11 @@ import { toast } from "sonner";
 import {
   Copy, Plus, Pencil, Trash2, Search, MessageSquare,
   Phone, Mail, BookOpen, ToggleLeft, ToggleRight,
+  ChevronDown, ChevronUp, Flame, Thermometer, Snowflake,
+  AlertCircle, Target, MessageCircle, Clock, Tag,
 } from "lucide-react";
+
+// ─── SCRIPTS DE VENDAS ───────────────────────────────────────────────────────
 
 type Categoria =
   | "primeiro_contato" | "agendamento" | "pos_visita"
@@ -72,10 +77,365 @@ const FORM_EMPTY: FormData = {
   ordem: 0,
 };
 
+// ─── OBJEÇÕES DO PLAYBOOK ─────────────────────────────────────────────────────
+
+const FASES = [
+  { slug: "fase_a", label: "A — Lead Novo / 1º Contato" },
+  { slug: "fase_b", label: "B — Sem Resposta" },
+  { slug: "fase_c", label: "C — Qualificação" },
+  { slug: "fase_d", label: "D — Simulação e Crédito" },
+  { slug: "fase_e", label: "E — Produto e Localização" },
+  { slug: "fase_f", label: "F — Preço e Negociação" },
+  { slug: "fase_g", label: "G — Agendamento de Visita" },
+  { slug: "fase_h", label: "H — Confirmação de Visita" },
+  { slug: "fase_i", label: "I — Pós-Visita" },
+  { slug: "fase_j", label: "J — Documentação" },
+  { slug: "fase_k", label: "K — Análise de Crédito" },
+  { slug: "fase_l", label: "L — Fechamento" },
+  { slug: "fase_m", label: "M — Recuperação" },
+];
+
+type Temperatura = "quente" | "morno" | "frio";
+
+const TEMP_CONFIG: Record<Temperatura, { label: string; color: string; icon: React.ReactNode }> = {
+  quente: { label: "Quente", color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400", icon: <Flame className="h-3 w-3" /> },
+  morno: { label: "Morno", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", icon: <Thermometer className="h-3 w-3" /> },
+  frio: { label: "Frio", color: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400", icon: <Snowflake className="h-3 w-3" /> },
+};
+
+type Objecao = {
+  id: number;
+  fase: string;
+  faseSlug: string;
+  situacao: string;
+  frase: string;
+  significado: string | null;
+  tipoObjecao: string | null;
+  temperatura: Temperatura | null;
+  objetivo: string | null;
+  respostaAcr: string | null;
+  msgWhatsapp: string | null;
+  canal: string | null;
+  perguntaQualificacao: string | null;
+  tagCrm: string | null;
+  tempoResposta: string | null;
+  prioridade: string | null;
+  erroComum: string | null;
+};
+
+// ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
+
 export default function ScriptsVendas() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "superintendente";
 
+  return (
+    <DashboardLayout>
+      <div className="p-4 md:p-6 space-y-4 max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <BookOpen className="h-6 w-6 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Scripts de Vendas</h1>
+            <p className="text-sm text-muted-foreground">Abordagens prontas e playbook de objeções</p>
+          </div>
+        </div>
+
+        <Tabs defaultValue="objecoes">
+          <TabsList className="flex flex-wrap gap-0.5 h-auto bg-muted p-1 rounded-lg">
+            <TabsTrigger value="objecoes" className="flex-1 min-w-[120px] text-xs">
+              🛡️ Objeções do Playbook
+            </TabsTrigger>
+            <TabsTrigger value="scripts" className="flex-1 min-w-[100px] text-xs">
+              📋 Scripts Prontos
+            </TabsTrigger>
+          </TabsList>
+
+          {/* ABA: OBJEÇÕES DO PLAYBOOK */}
+          <TabsContent value="objecoes" className="mt-4">
+            <ObjecoesPlaybook />
+          </TabsContent>
+
+          {/* ABA: SCRIPTS PRONTOS */}
+          <TabsContent value="scripts" className="mt-4">
+            <ScriptsProntos isAdmin={isAdmin} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+  );
+}
+
+// ─── ABA OBJEÇÕES DO PLAYBOOK ─────────────────────────────────────────────────
+
+function ObjecoesPlaybook() {
+  const [faseFiltro, setFaseFiltro] = useState<string>("todas");
+  const [tempFiltro, setTempFiltro] = useState<string>("todas");
+  const [busca, setBusca] = useState("");
+  const [buscaDebounced, setBuscaDebounced] = useState("");
+  const [expandido, setExpandido] = useState<number | null>(null);
+
+  // Debounce simples
+  const handleBusca = (v: string) => {
+    setBusca(v);
+    clearTimeout((window as any).__buscaTimer);
+    (window as any).__buscaTimer = setTimeout(() => setBuscaDebounced(v), 350);
+  };
+
+  const { data: objecoes = [], isLoading } = trpc.scripts.listObjecoes.useQuery({
+    faseSlug: faseFiltro === "todas" ? undefined : faseFiltro,
+    temperatura: tempFiltro === "todas" ? undefined : tempFiltro as Temperatura,
+    busca: buscaDebounced || undefined,
+  });
+
+  // Agrupar por fase
+  const porFase: Record<string, Objecao[]> = {};
+  for (const o of objecoes as Objecao[]) {
+    if (!porFase[o.faseSlug]) porFase[o.faseSlug] = [];
+    porFase[o.faseSlug].push(o);
+  }
+
+  const fasesParaExibir = faseFiltro === "todas"
+    ? FASES.filter(f => porFase[f.slug]?.length > 0)
+    : FASES.filter(f => f.slug === faseFiltro);
+
+  return (
+    <div className="space-y-4">
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por frase, situação ou mensagem..."
+            className="pl-9"
+            value={busca}
+            onChange={(e) => handleBusca(e.target.value)}
+          />
+        </div>
+        <Select value={faseFiltro} onValueChange={setFaseFiltro}>
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="Fase do funil" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas as fases</SelectItem>
+            {FASES.map(f => (
+              <SelectItem key={f.slug} value={f.slug}>{f.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={tempFiltro} onValueChange={setTempFiltro}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="Temperatura" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas</SelectItem>
+            <SelectItem value="quente">🔥 Quente</SelectItem>
+            <SelectItem value="morno">🌡️ Morno</SelectItem>
+            <SelectItem value="frio">❄️ Frio</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Contagem */}
+      {!isLoading && (
+        <p className="text-xs text-muted-foreground">
+          {(objecoes as Objecao[]).length} situações encontradas
+        </p>
+      )}
+
+      {isLoading && (
+        <div className="text-center py-10 text-muted-foreground">
+          <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+          Carregando objeções...
+        </div>
+      )}
+
+      {/* Objeções por fase */}
+      {fasesParaExibir.map(fase => {
+        const lista = porFase[fase.slug] || [];
+        if (!lista.length) return null;
+        return (
+          <div key={fase.slug}>
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
+              <span className="text-primary">{fase.label}</span>
+              <Badge variant="secondary" className="text-xs">{lista.length}</Badge>
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {lista.map(obj => (
+                <ObjecaoCard
+                  key={obj.id}
+                  objecao={obj}
+                  expandido={expandido === obj.id}
+                  onToggle={() => setExpandido(expandido === obj.id ? null : obj.id)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      {!isLoading && (objecoes as Objecao[]).length === 0 && (
+        <div className="text-center py-16 text-muted-foreground">
+          <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p className="font-medium">Nenhuma objeção encontrada</p>
+          <p className="text-sm">Tente ajustar os filtros</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ObjecaoCard({ objecao, expandido, onToggle }: {
+  objecao: Objecao;
+  expandido: boolean;
+  onToggle: () => void;
+}) {
+  const temp = objecao.temperatura ? TEMP_CONFIG[objecao.temperatura] : TEMP_CONFIG.morno;
+
+  function copiar(texto: string) {
+    navigator.clipboard.writeText(texto).then(() => {
+      toast.success("Copiado!");
+    }).catch(() => {
+      toast.error("Não foi possível copiar.");
+    });
+  }
+
+  return (
+    <Card className="flex flex-col gap-0">
+      <CardHeader className="pb-2 pt-4 px-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-muted-foreground mb-1 truncate">{objecao.situacao}</p>
+            <CardTitle className="text-sm font-semibold leading-snug">
+              "{objecao.frase}"
+            </CardTitle>
+          </div>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Badge className={`gap-1 text-xs px-1.5 py-0 ${temp.color}`}>
+              {temp.icon} {temp.label}
+            </Badge>
+            {objecao.prioridade && (
+              <span className="text-xs text-muted-foreground">{objecao.prioridade}</span>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="px-4 pb-4 flex flex-col gap-3 flex-1">
+        {/* Significado */}
+        {objecao.significado && (
+          <p className="text-xs text-muted-foreground italic leading-relaxed">
+            {objecao.significado}
+          </p>
+        )}
+
+        {/* Mensagem WhatsApp */}
+        {objecao.msgWhatsapp && (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-md p-3 space-y-1">
+            <div className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+              <MessageSquare className="h-3 w-3" />
+              Mensagem WhatsApp
+            </div>
+            <p className="text-xs text-foreground leading-relaxed">
+              {expandido ? objecao.msgWhatsapp : objecao.msgWhatsapp.slice(0, 120) + (objecao.msgWhatsapp.length > 120 ? "…" : "")}
+            </p>
+            <Button
+              size="sm"
+              variant="default"
+              className="gap-1.5 w-full mt-1 h-7 text-xs"
+              onClick={() => copiar(objecao.msgWhatsapp!)}
+            >
+              <Copy className="h-3 w-3" />
+              Copiar mensagem
+            </Button>
+          </div>
+        )}
+
+        {/* Expandido: Resposta ACR + Objetivo + Erro */}
+        {expandido && (
+          <div className="space-y-3 border-t pt-3">
+            {objecao.objetivo && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <Target className="h-3 w-3" />
+                  Objetivo do Corretor
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{objecao.objetivo}</p>
+              </div>
+            )}
+            {objecao.respostaAcr && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <MessageCircle className="h-3 w-3" />
+                  Resposta Estruturada (ACR)
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">{objecao.respostaAcr}</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 w-full h-7 text-xs"
+                  onClick={() => copiar(objecao.respostaAcr!)}
+                >
+                  <Copy className="h-3 w-3" />
+                  Copiar resposta ACR
+                </Button>
+              </div>
+            )}
+            {objecao.perguntaQualificacao && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <MessageCircle className="h-3 w-3" />
+                  Pergunta de Avanço
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{objecao.perguntaQualificacao}</p>
+              </div>
+            )}
+            {objecao.erroComum && (
+              <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-2 space-y-1">
+                <div className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-3 w-3" />
+                  Erro a Evitar
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">{objecao.erroComum}</p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              {objecao.tagCrm && (
+                <span className="flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  {objecao.tagCrm}
+                </span>
+              )}
+              {objecao.tempoResposta && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {objecao.tempoResposta}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Botão expandir */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="gap-1.5 w-full h-7 text-xs text-muted-foreground"
+          onClick={onToggle}
+        >
+          {expandido ? (
+            <><ChevronUp className="h-3 w-3" /> Ver menos</>
+          ) : (
+            <><ChevronDown className="h-3 w-3" /> Ver resposta completa</>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── ABA SCRIPTS PRONTOS ──────────────────────────────────────────────────────
+
+function ScriptsProntos({ isAdmin }: { isAdmin: boolean }) {
   const [busca, setBusca] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<Categoria | "todas">("todas");
   const [tipoFiltro, setTipoFiltro] = useState<Tipo | "todos">("todos");
@@ -175,25 +535,8 @@ export default function ScriptsVendas() {
     : [categoriaFiltro];
 
   return (
-    <DashboardLayout>
-      <div className="p-4 md:p-6 space-y-4 max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <div>
-              <h1 className="text-2xl font-bold">Scripts de Vendas</h1>
-              <p className="text-sm text-muted-foreground">Abordagens prontas para cada situação</p>
-            </div>
-          </div>
-          {isAdmin && (
-            <Button onClick={abrirCriar} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Script
-            </Button>
-          )}
-        </div>
-
+    <>
+      <div className="space-y-4">
         {/* Filtros */}
         <div className="flex flex-wrap gap-3">
           <div className="relative flex-1 min-w-48">
@@ -236,6 +579,12 @@ export default function ScriptsVendas() {
             >
               {incluirInativos ? <ToggleRight className="h-4 w-4 text-primary" /> : <ToggleLeft className="h-4 w-4" />}
               {incluirInativos ? "Mostrando inativos" : "Ocultar inativos"}
+            </Button>
+          )}
+          {isAdmin && (
+            <Button onClick={abrirCriar} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Script
             </Button>
           )}
         </div>
@@ -357,7 +706,7 @@ export default function ScriptsVendas() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </>
   );
 }
 

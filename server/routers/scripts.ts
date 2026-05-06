@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { router, protectedProcedure } from '../_core/trpc';
 import * as db from '../db';
 import { TRPCError } from '@trpc/server';
+import { objecoesPlaybook } from '../../drizzle/schema';
+import { eq, and, like, or } from 'drizzle-orm';
 
 function isAdminLevel(role: string) {
   return role === 'admin' || role === 'superintendente';
@@ -23,6 +25,48 @@ const CATEGORIAS = [
 const TIPOS = ['whatsapp', 'telefone', 'email'] as const;
 
 export const scriptsRouter = router({
+  // ── OBJEÇÕES DO PLAYBOOK ──
+  listObjecoes: protectedProcedure
+    .input(z.object({
+      faseSlug: z.string().optional(),
+      busca: z.string().optional(),
+      tipoObjecao: z.string().optional(),
+      temperatura: z.enum(['quente', 'morno', 'frio']).optional(),
+    }).optional())
+    .query(async ({ input }) => {
+      const drizzleDb = await db.getDb();
+      if (!drizzleDb) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB indisponível' });
+      
+      const conditions: ReturnType<typeof eq>[] = [eq(objecoesPlaybook.ativo, true)];
+      
+      if (input?.faseSlug) {
+        conditions.push(eq(objecoesPlaybook.faseSlug, input.faseSlug));
+      }
+      if (input?.tipoObjecao) {
+        conditions.push(eq(objecoesPlaybook.tipoObjecao, input.tipoObjecao) as any);
+      }
+      if (input?.temperatura) {
+        conditions.push(eq(objecoesPlaybook.temperatura, input.temperatura) as any);
+      }
+      if (input?.busca && input.busca.trim()) {
+        const termo = `%${input.busca.trim()}%`;
+        conditions.push(
+          or(
+            like(objecoesPlaybook.frase, termo),
+            like(objecoesPlaybook.situacao, termo),
+            like(objecoesPlaybook.msgWhatsapp, termo),
+            like(objecoesPlaybook.objetivo, termo),
+          ) as any
+        );
+      }
+      
+      return await drizzleDb
+        .select()
+        .from(objecoesPlaybook)
+        .where(and(...conditions))
+        .orderBy(objecoesPlaybook.ordem);
+    }),
+
   // Listar scripts (todos os usuários autenticados)
   list: protectedProcedure
     .input(z.object({

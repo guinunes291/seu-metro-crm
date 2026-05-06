@@ -2513,3 +2513,36 @@ export const blitzSessoes = mysqlTable("blitz_sessoes", {
 }));
 export type BlitzSessao = typeof blitzSessoes.$inferSelect;
 export type InsertBlitzSessao = typeof blitzSessoes.$inferInsert;
+
+// ============================================================================
+// TABELA DE OBJEÇÕES DO PLAYBOOK
+// ============================================================================
+export const objecoesPlaybook = mysqlTable("objecoes_playbook", {
+  id: int("id").autoincrement().primaryKey(),
+  fase: varchar("fase", { length: 100 }).notNull(),
+  faseSlug: varchar("faseSlug", { length: 20 }).notNull(),
+  situacao: varchar("situacao", { length: 255 }).notNull(),
+  frase: varchar("frase", { length: 255 }).notNull(),
+  significado: text("significado"),
+  tipoObjecao: varchar("tipoObjecao", { length: 50 }),
+  temperatura: mysqlEnum("temperatura", ["quente", "morno", "frio"]).default("morno"),
+  objetivo: text("objetivo"),
+  respostaAcr: text("respostaAcr"),
+  msgWhatsapp: text("msgWhatsapp"),
+  msgWhatsappLonga: text("msgWhatsappLonga"),
+  canal: varchar("canal", { length: 30 }),
+  perguntaQualificacao: text("perguntaQualificacao"),
+  tagCrm: varchar("tagCrm", { length: 100 }),
+  tempoResposta: varchar("tempoResposta", { length: 50 }),
+  prioridade: varchar("prioridade", { length: 20 }),
+  erroComum: text("erroComum"),
+  ativo: boolean("ativo").default(true).notNull(),
+  ordem: int("ordem").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  objecaoFaseIdx: index("objecao_fase_idx").on(table.faseSlug),
+  objecaoTipoIdx: index("objecao_tipo_idx").on(table.tipoObjecao),
+  objecaoTempIdx: index("objecao_temp_idx").on(table.temperatura),
+}));
+export type ObjecaoPlaybook = typeof objecoesPlaybook.$inferSelect;
+export type InsertObjecaoPlaybook = typeof objecoesPlaybook.$inferInsert;
