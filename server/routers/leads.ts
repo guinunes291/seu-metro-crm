@@ -4,6 +4,7 @@ import * as db from '../db';
 import { blitzSessoes } from '../../drizzle/schema';
 import { desc, eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { sendPushNotification } from '../pushNotifications';
 
 // ============================================================================
 // HELPERS DE ROLE (replicados do routers.ts para independência)
@@ -394,6 +395,14 @@ export const leadsRouter = router({
         observacoes: `Lead transferido para ${novoCorretor.name}${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
       });
 
+      // Push notification imediata para o novo corretor (non-blocking)
+      sendPushNotification(input.novoCorretorId, {
+        title: 'Novo Lead!',
+        body: `${lead.nome} \u2014 acesse agora`,
+        url: `/leads?leadId=${input.leadId}`,
+        tag: `lead-novo-${input.leadId}`,
+        requireInteraction: true,
+      }).catch((err: unknown) => console.error('[Push] Erro ao enviar push (transferir):', err));
       return { success: true, novoCorretor: novoCorretor.name };
     }),
 
@@ -433,6 +442,14 @@ export const leadsRouter = router({
         observacoes: `Lead reatribuído para ${novoCorretor.name} (status mantido: ${statusAtual})${corretorAnteriorId ? ` (anterior: corretor ID ${corretorAnteriorId})` : ''}`,
       });
 
+      // Push notification imediata para o novo corretor (non-blocking)
+      sendPushNotification(input.novoCorretorId, {
+        title: 'Novo Lead!',
+        body: `${lead.nome} \u2014 acesse agora`,
+        url: `/leads?leadId=${input.leadId}`,
+        tag: `lead-novo-${input.leadId}`,
+        requireInteraction: true,
+      }).catch((err: unknown) => console.error('[Push] Erro ao enviar push (reatribuir):', err));
       return { success: true, novoCorretor: novoCorretor.name, statusMantido: statusAtual };
     }),
 
@@ -529,6 +546,14 @@ export const leadsRouter = router({
         observacoes: `Lead atribuído manualmente pelo gestor`,
       });
 
+      // Push notification imediata para o corretor atribuido (non-blocking)
+      sendPushNotification(input.corretorId, {
+        title: 'Novo Lead!',
+        body: `${lead.nome} \u2014 acesse agora`,
+        url: `/leads?leadId=${input.leadId}`,
+        tag: `lead-novo-${input.leadId}`,
+        requireInteraction: true,
+      }).catch((err: unknown) => console.error('[Push] Erro ao enviar push (atribuirCorretor):', err));
       return { success: true, corretor: corretor.name };
     }),
 
