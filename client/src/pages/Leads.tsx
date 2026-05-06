@@ -58,10 +58,13 @@ const statusLabels: Record<string, string> = {
   novo: "Novo",
   aguardando_atendimento: "Aguardando Atendimento",
   em_atendimento: "Em Atendimento",
+  qualificado: "Qualificado",
   agendado: "Agendado",
   visita_realizada: "Visita Realizada",
+  proposta_enviada: "Proposta Enviada",
   analise_credito: "Análise de Crédito",
   contrato_fechado: "Contrato Fechado",
+  pos_venda: "Pós-venda",
   perdido: "Perdido",
 };
 
@@ -446,13 +449,21 @@ export default function Leads() {
     await executeStatusUpdate(leadId, newStatus);
   };
 
-  const executeStatusUpdate = async (leadId: number, newStatus: string, contactType?: 'ligacao' | 'whatsapp', motivoPerdido?: string) => {
+  const executeStatusUpdate = async (
+    leadId: number,
+    newStatus: string,
+    contactType?: 'ligacao' | 'whatsapp',
+    motivoPerdidoTexto?: string,
+    motivoPerdaCategoria?: string,
+  ) => {
     try {
       const updateData: any = { status: newStatus as any };
-      
-      // Se foi fornecido motivo da perda, incluir no update
-      if (motivoPerdido) {
-        updateData.motivoPerdido = motivoPerdido;
+
+      if (motivoPerdidoTexto) {
+        updateData.motivoPerdido = motivoPerdidoTexto;
+      }
+      if (motivoPerdaCategoria) {
+        updateData.motivoPerdaCategoria = motivoPerdaCategoria;
       }
       
       await updateLeadMutation.mutateAsync({
@@ -2197,7 +2208,7 @@ export default function Leads() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="motivo">Motivo da Perda *</Label>
+                <Label htmlFor="motivo">Categoria da Perda *</Label>
                 <Select value={motivoPerdido} onValueChange={setMotivoPerdido}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o motivo" />
@@ -2210,23 +2221,25 @@ export default function Leads() {
                     <SelectItem value="localizacao">Localização Não Atende</SelectItem>
                     <SelectItem value="nao_atende">Não Atende / Não Responde</SelectItem>
                     <SelectItem value="desistiu">Desistiu da Compra</SelectItem>
+                    <SelectItem value="mudou_planos">Mudou de Planos</SelectItem>
+                    <SelectItem value="sem_entrada">Sem Entrada / Sem Recurso Próprio</SelectItem>
                     <SelectItem value="outro">Outro Motivo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
-              {motivoPerdido === 'outro' && (
-                <div className="space-y-2">
-                  <Label htmlFor="outro-motivo">Especifique o Motivo *</Label>
-                  <Textarea
-                    id="outro-motivo"
-                    placeholder="Descreva o motivo da perda..."
-                    value={outroMotivo}
-                    onChange={(e) => setOutroMotivo(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="outro-motivo">
+                  {motivoPerdido === 'outro' ? 'Especifique o Motivo *' : 'Observações (opcional)'}
+                </Label>
+                <Textarea
+                  id="outro-motivo"
+                  placeholder={motivoPerdido === 'outro' ? 'Descreva o motivo da perda...' : 'Detalhes adicionais...'}
+                  value={outroMotivo}
+                  onChange={(e) => setOutroMotivo(e.target.value)}
+                  rows={3}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => {
@@ -2237,7 +2250,7 @@ export default function Leads() {
               }}>
                 Cancelar
               </Button>
-              <Button 
+              <Button
                 onClick={async () => {
                   if (!motivoPerdido) {
                     toast.error('Selecione o motivo da perda');
@@ -2247,10 +2260,15 @@ export default function Leads() {
                     toast.error('Especifique o motivo da perda');
                     return;
                   }
-                  
+
                   if (pendingLossChange) {
-                    const motivoFinal = motivoPerdido === 'outro' ? outroMotivo : motivoPerdido;
-                    await executeStatusUpdate(pendingLossChange.leadId, 'perdido', undefined, motivoFinal);
+                    await executeStatusUpdate(
+                      pendingLossChange.leadId,
+                      'perdido',
+                      undefined,
+                      outroMotivo.trim() || undefined,
+                      motivoPerdido,
+                    );
                     setMotivoPerdidoDialog(false);
                     setPendingLossChange(null);
                     setMotivoPerdido('');

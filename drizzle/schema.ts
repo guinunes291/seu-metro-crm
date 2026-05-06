@@ -285,10 +285,13 @@ export const leads = mysqlTable("leads", {
     "novo",
     "aguardando_atendimento",
     "em_atendimento",
+    "qualificado",
     "agendado",
     "visita_realizada",
+    "proposta_enviada",
     "analise_credito",
     "contrato_fechado",
+    "pos_venda",
     "perdido"
   ]).default("novo").notNull(),
   
@@ -302,6 +305,7 @@ export const leads = mysqlTable("leads", {
   // Observações
   observacoes: text("observacoes"),
   motivoPerdido: text("motivoPerdido"),
+  motivoPerdaCategoria: varchar("motivoPerdaCategoria", { length: 50 }),
   
   // Lixeira - leads perdidos ficam aqui
   naLixeira: boolean("naLixeira").default(false).notNull(),
@@ -438,21 +442,27 @@ export const leadStatusTransitions = mysqlTable("lead_status_transitions", {
     "novo",
     "aguardando_atendimento",
     "em_atendimento",
+    "qualificado",
     "agendado",
     "visita_realizada",
+    "proposta_enviada",
     "analise_credito",
     "contrato_fechado",
+    "pos_venda",
     "perdido"
   ]).notNull(),
-  
+
   statusNovo: mysqlEnum("statusNovo", [
     "novo",
     "aguardando_atendimento",
     "em_atendimento",
+    "qualificado",
     "agendado",
     "visita_realizada",
+    "proposta_enviada",
     "analise_credito",
     "contrato_fechado",
+    "pos_venda",
     "perdido"
   ]).notNull(),
   

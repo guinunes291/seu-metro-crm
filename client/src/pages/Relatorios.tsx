@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, TrendingUp, TrendingDown, Users, Target, AlertTriangle,
   CalendarX, ArrowRight, ChevronDown, ChevronUp, Filter,
-  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle
+  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle, CalendarCheck
 } from "lucide-react";
 
 // ============================================================================
@@ -157,6 +157,11 @@ export default function Relatorios() {
     dataFim: inputDatas.dataFim,
   });
 
+  const showRate = trpc.relatoriosGestor.showRate.useQuery({
+    dataInicio: inputDatas.dataInicio,
+    dataFim: inputDatas.dataFim,
+  }, { enabled: abaAtiva === 'show_rate' });
+
   const isLoading = visaoGeral.isLoading;
 
   return (
@@ -223,6 +228,9 @@ export default function Relatorios() {
             <TabsTrigger value="facebook" className="gap-1.5 text-xs sm:text-sm">
               <Zap className="h-3.5 w-3.5" /> Facebook ADS
             </TabsTrigger>
+            <TabsTrigger value="show_rate" className="gap-1.5 text-xs sm:text-sm">
+              <CalendarCheck className="h-3.5 w-3.5" /> Show Rate
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="producao" className="mt-4">
@@ -251,6 +259,10 @@ export default function Relatorios() {
 
           <TabsContent value="facebook" className="mt-4">
             <AbaFacebook data={facebookTimer.data} isLoading={facebookTimer.isLoading} />
+          </TabsContent>
+
+          <TabsContent value="show_rate" className="mt-4">
+            <AbaShowRate data={showRate.data} isLoading={showRate.isLoading} />
           </TabsContent>
         </Tabs>
       </div>
@@ -1170,6 +1182,102 @@ function CardsSkeleton({ count }: { count: number }) {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// ABA SHOW RATE
+// ============================================================================
+
+function AbaShowRate({ data, isLoading }: { data: any[] | undefined; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}><CardContent className="p-4"><Skeleton className="h-8 w-full" /></CardContent></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <CalendarCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p>Nenhum agendamento no período selecionado.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const total = data.reduce((acc: number, r: any) => acc + r.total, 0);
+  const totalRealizados = data.reduce((acc: number, r: any) => acc + r.realizados, 0);
+  const taxaMedia = total > 0 ? Math.round((totalRealizados / total) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Resumo geral */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Total de Agendamentos', value: total, color: 'text-foreground' },
+          { label: 'Realizados', value: totalRealizados, color: 'text-green-600 dark:text-green-400' },
+          { label: 'Não Compareceram', value: data.reduce((a: number, r: any) => a + r.naoCompareceram, 0), color: 'text-red-600 dark:text-red-400' },
+          { label: 'Taxa de Show Média', value: `${taxaMedia}%`, color: taxaMedia >= 70 ? 'text-green-600 dark:text-green-400' : taxaMedia >= 50 ? 'text-yellow-600' : 'text-red-600 dark:text-red-400' },
+        ].map(item => (
+          <Card key={item.label}>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Tabela por corretor */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Show Rate por Corretor</CardTitle>
+          <CardDescription>Agendamentos realizados vs. total de agendamentos no período</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b">
+                <tr className="text-left">
+                  <th className="px-4 py-3 text-muted-foreground font-medium">Corretor</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Total</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Realizados</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Não Comp.</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Pendentes</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Show Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row: any) => (
+                  <tr key={row.corretorId} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{row.corretorNome}</td>
+                    <td className="px-4 py-3 text-right">{row.total}</td>
+                    <td className="px-4 py-3 text-right text-green-600 dark:text-green-400">{row.realizados}</td>
+                    <td className="px-4 py-3 text-right text-red-600 dark:text-red-400">{row.naoCompareceram}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{row.pendentes}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`font-semibold ${
+                        row.taxaShow >= 70 ? 'text-green-600 dark:text-green-400' :
+                        row.taxaShow >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
+                        'text-red-600 dark:text-red-400'
+                      }`}>
+                        {row.taxaShow}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

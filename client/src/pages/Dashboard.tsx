@@ -53,6 +53,8 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  PieChart,
+  Pie,
 } from "recharts";
 
 // Tipos de filtros predefinidos
@@ -206,6 +208,9 @@ export default function Dashboard() {
   // ── Tier 3: Gráficos históricos (14 dias por padrão — antes 30) ──────────
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery({ dias: 14 }, tier3);
   const { data: dadosFunil } = trpc.graficos.funil.useQuery({ dias: 14 }, tier3);
+
+  // ── Tier 3.5: Motivos de perda ────────────────────────────────────────────
+  const { data: motivosPerda } = trpc.dashboard.motivosPerda.useQuery(undefined, tier3);
 
   // ── Tier 4: Tabelas detalhadas (geralmente abaixo da dobra) ──────────────
   const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, tier4);
@@ -1171,6 +1176,59 @@ export default function Dashboard() {
                       <div className="flex flex-col items-center p-3 rounded-lg border min-w-[90px] bg-muted/40">
                         <span className="text-2xl font-bold">{leadsParados.total}</span>
                         <span className="text-xs text-muted-foreground mt-1">Total</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Gráfico de Motivos de Perda */}
+            {motivosPerda && motivosPerda.length > 0 && (
+              <div className="mb-8">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                      Motivos de Perda
+                    </CardTitle>
+                    <CardDescription>Distribuição dos motivos pelos quais leads foram marcados como perdidos</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={motivosPerda}
+                            dataKey="total"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={({ label, percent }) => `${label} (${Math.round(percent * 100)}%)`}
+                            labelLine={false}
+                          >
+                            {motivosPerda.map((_: any, idx: number) => (
+                              <Cell key={idx} fill={[
+                                '#ef4444','#f97316','#eab308','#22c55e','#3b82f6',
+                                '#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6b7280',
+                              ][idx % 10]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v: number) => [v, 'Leads']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-col gap-1 min-w-[160px]">
+                        {motivosPerda.map((m: any, idx: number) => (
+                          <div key={m.categoria} className="flex items-center gap-2 text-sm">
+                            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: [
+                              '#ef4444','#f97316','#eab308','#22c55e','#3b82f6',
+                              '#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6b7280',
+                            ][idx % 10] }} />
+                            <span className="text-muted-foreground">{m.label}</span>
+                            <span className="font-semibold ml-auto">{m.total}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </CardContent>

@@ -1714,6 +1714,54 @@ export const appRouter = router({
           () => db.getLeadsPrioritariosCorretor(ctx.user.id),
         );
       }),
+
+    // Motivos de perda estruturados para gráfico
+    motivosPerda: gestorProcedure
+      .query(async ({ ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await cacheGetOrSet(
+          dashboardCacheKey('motivosPerda', corretoresIds),
+          CACHE_TTL.MEDIUM,
+          () => db.getMotivosPerda(corretoresIds),
+        );
+      }),
+  }),
+
+  // ============================================================================
+  // CENTRAL DE ALERTAS DO GESTOR
+  // ============================================================================
+  alertasGestor: router({
+    lista: gestorProcedure
+      .query(async ({ ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await cacheGetOrSet(
+          dashboardCacheKey('alertasGestor', corretoresIds),
+          CACHE_TTL.SHORT,
+          () => db.getAlertasGestor(corretoresIds),
+        );
+      }),
+  }),
+
+  // ============================================================================
+  // SHOW RATE POR CORRETOR
+  // ============================================================================
+  relatoriosGestor: router({
+    showRate: gestorProcedure
+      .input(z.object({
+        dataInicio: z.string(),
+        dataFim: z.string(),
+      }))
+      .query(async ({ input, ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await db.getShowRatePorCorretor(
+          new Date(input.dataInicio),
+          new Date(input.dataFim),
+          corretoresIds,
+        );
+      }),
   }),
 
   // ============================================================================
