@@ -151,7 +151,15 @@ export default function Relatorios() {
     ...inputDatas,
     agrupamento: periodo === "ano" || periodo === "semestre" ? "mes" : periodo === "trimestre" ? "semana" : "dia",
   });
-  const origens = trpc.centralAnalises.origensConversao.useQuery(inputDatas);
+  const origens = trpc.centralAnalises.origensConversao.useQuery(inputDatas, { enabled: abaAtiva === 'origens' });
+
+  const inputDatasAnterior = useMemo(() => {
+    const duracaoMs = datas.dataFim.getTime() - datas.dataInicio.getTime() + 1;
+    const fimAnterior = new Date(datas.dataInicio.getTime() - 1);
+    const inicioAnterior = new Date(fimAnterior.getTime() - duracaoMs + 1);
+    return { dataInicio: inicioAnterior.toISOString(), dataFim: fimAnterior.toISOString() };
+  }, [datas]);
+  const origensAnterior = trpc.centralAnalises.origensConversao.useQuery(inputDatasAnterior, { enabled: abaAtiva === 'origens' });
   const facebookTimer = trpc.relatorios.leadsTimerPorCorretor.useQuery({
     dataInicio: inputDatas.dataInicio,
     dataFim: inputDatas.dataFim,
@@ -254,7 +262,7 @@ export default function Relatorios() {
           </TabsContent>
 
           <TabsContent value="origens" className="mt-4">
-            <AbaOrigens data={origens.data} isLoading={origens.isLoading} />
+            <AbaOrigens data={origens.data} isLoading={origens.isLoading} dadosAnteriores={origensAnterior.data} />
           </TabsContent>
 
           <TabsContent value="facebook" className="mt-4">
@@ -963,11 +971,29 @@ function AbaEvolucao({ data, isLoading, periodo }: { data: any; isLoading: boole
 // ABA: ORIGENS
 // ============================================================================
 
-function AbaOrigens({ data, isLoading }: { data: any; isLoading: boolean }) {
+function MoMBadge({ atual, anterior }: { atual: number; anterior: number | undefined }) {
+  if (anterior === undefined || anterior === 0) return null;
+  const diff = atual - anterior;
+  const pct = Math.round((diff / anterior) * 100);
+  if (pct === 0) return null;
+  const up = pct > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ml-1 ${up ? "text-emerald-600" : "text-red-500"}`}>
+      {up ? "▲" : "▼"}{Math.abs(pct)}%
+    </span>
+  );
+}
+
+function AbaOrigens({ data, isLoading, dadosAnteriores }: { data: any; isLoading: boolean; dadosAnteriores?: any }) {
   if (isLoading) return <TableSkeleton rows={6} cols={7} />;
   if (!data || data.length === 0) return <EmptyState message="Sem dados de origem para o período." />;
 
   const totalLeads = data.reduce((s: number, o: any) => s + o.totalLeads, 0);
+  const totalAnterior = dadosAnteriores?.reduce((s: number, o: any) => s + o.totalLeads, 0) ?? 0;
+
+  const anteriorMap = new Map<string, any>(
+    (dadosAnteriores || []).map((o: any) => [o.origem, o])
+  );
 
   const origemLabels: Record<string, string> = {
     facebook: "Facebook ADS",
@@ -981,64 +1007,101 @@ function AbaOrigens({ data, isLoading }: { data: any; isLoading: boolean }) {
     webhook: "Webhook",
   };
 
+  const hasMoM = !!dadosAnteriores && dadosAnteriores.length > 0;
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <PieChart className="h-4 w-4" />
-          Análise por Origem — Volume, Conversão e VGV
-        </CardTitle>
-        <CardDescription>Qual canal traz mais leads e qual converte melhor?</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-y">
-              <tr>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground">Origem</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Leads</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">% Total</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Atend.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Agend.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Contratos</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Tx Conv.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">VGV</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Perdidos</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {data.map((o: any) => {
-                const pctTotal = totalLeads > 0 ? Math.round((o.totalLeads / totalLeads) * 100) : 0;
-                return (
-                  <tr key={o.origem} className="hover:bg-muted/30">
-                    <td className="px-3 py-2.5 font-medium">{origemLabels[o.origem] || o.origem}</td>
-                    <td className="px-3 py-2.5 text-right font-semibold">{o.totalLeads}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <div className="w-12 h-1.5 bg-muted rounded-full">
-                          <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pctTotal}%` }} />
-                        </div>
-                        <span className="text-xs">{pctTotal}%</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-right">{o.emAtendimento}</td>
-                    <td className="px-3 py-2.5 text-right">{o.agendados}</td>
-                    <td className="px-3 py-2.5 text-right font-semibold">{o.contratosFechados}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className={`font-semibold ${o.taxaConversao >= 2 ? "text-emerald-600 dark:text-emerald-400" : o.taxaConversao >= 0.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
-                        {o.taxaConversao}%
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-emerald-700 dark:text-emerald-400">{formatCurrencyCompact(o.vgv)}</td>
-                    <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400">{o.perdidos}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+    <div className="space-y-4">
+      {hasMoM && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Total de Leads", atual: totalLeads, anterior: totalAnterior },
+            { label: "Contratos", atual: data.reduce((s: number, o: any) => s + o.contratosFechados, 0), anterior: dadosAnteriores.reduce((s: number, o: any) => s + o.contratosFechados, 0) },
+            { label: "Perdidos", atual: data.reduce((s: number, o: any) => s + o.perdidos, 0), anterior: dadosAnteriores.reduce((s: number, o: any) => s + o.perdidos, 0) },
+          ].map(({ label, atual, anterior }) => (
+            <Card key={label} className="p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="text-xl font-bold mt-0.5">
+                {atual}
+                <MoMBadge atual={atual} anterior={anterior} />
+              </p>
+              <p className="text-xs text-muted-foreground">vs {anterior} período anterior</p>
+            </Card>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <PieChart className="h-4 w-4" />
+            Análise por Origem — Volume, Conversão e VGV
+          </CardTitle>
+          <CardDescription>
+            Qual canal traz mais leads e qual converte melhor?
+            {hasMoM && <span className="ml-2 text-xs text-muted-foreground">▲▼ vs período anterior</span>}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-y">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground">Origem</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Leads</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">% Total</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Atend.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Agend.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Contratos</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Tx Conv.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">VGV</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Perdidos</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.map((o: any) => {
+                  const pctTotal = totalLeads > 0 ? Math.round((o.totalLeads / totalLeads) * 100) : 0;
+                  const prev = anteriorMap.get(o.origem);
+                  return (
+                    <tr key={o.origem} className="hover:bg-muted/30">
+                      <td className="px-3 py-2.5 font-medium">{origemLabels[o.origem] || o.origem}</td>
+                      <td className="px-3 py-2.5 text-right font-semibold">
+                        {o.totalLeads}
+                        {hasMoM && <MoMBadge atual={o.totalLeads} anterior={prev?.totalLeads} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <div className="w-12 h-1.5 bg-muted rounded-full">
+                            <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pctTotal}%` }} />
+                          </div>
+                          <span className="text-xs">{pctTotal}%</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right">{o.emAtendimento}</td>
+                      <td className="px-3 py-2.5 text-right">{o.agendados}</td>
+                      <td className="px-3 py-2.5 text-right font-semibold">
+                        {o.contratosFechados}
+                        {hasMoM && <MoMBadge atual={o.contratosFechados} anterior={prev?.contratosFechados} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <span className={`font-semibold ${o.taxaConversao >= 2 ? "text-emerald-600 dark:text-emerald-400" : o.taxaConversao >= 0.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
+                          {o.taxaConversao}%
+                        </span>
+                        {hasMoM && <MoMBadge atual={Number(o.taxaConversao)} anterior={prev ? Number(prev.taxaConversao) : undefined} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-emerald-700 dark:text-emerald-400">{formatCurrencyCompact(o.vgv)}</td>
+                      <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400">
+                        {o.perdidos}
+                        {hasMoM && <MoMBadge atual={o.perdidos} anterior={prev?.perdidos} />}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

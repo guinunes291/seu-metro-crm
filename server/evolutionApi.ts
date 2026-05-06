@@ -295,3 +295,37 @@ export async function enviarLembreteAgendamento(dados: {
   const mensagem = gerarMensagemLembreteAgendamento(dados);
   return sendWhatsAppMessage(dados.telefoneCliente, mensagem);
 }
+
+/**
+ * Gera mensagem de boas-vindas para novo lead
+ */
+export function gerarMensagemBoasVindas(dados: {
+  nomeCliente: string;
+  nomeCorretor: string;
+  projeto?: string;
+}): string {
+  const { nomeCliente, nomeCorretor, projeto } = dados;
+  let msg = `👋 Olá *${nomeCliente}*!\n\n`;
+  msg += `Tudo bem? Aqui é *${nomeCorretor}*, especialista em imóveis do *Seu Metro Quadrado*.\n\n`;
+  if (projeto) {
+    msg += `Vi que você tem interesse em *${projeto}*. Posso te passar mais detalhes?\n\n`;
+  } else {
+    msg += `Fiquei sabendo do seu interesse e adoraria ajudar você a encontrar o imóvel ideal! 🏠\n\n`;
+  }
+  msg += `Tem um melhor momento para eu te ligar ou prefere continuar por aqui mesmo?\n`;
+  msg += `\n_Seu Metro Quadrado_ 🏡`;
+  return msg;
+}
+
+/**
+ * Envia mensagem de boas-vindas para novo lead
+ */
+export async function enviarBoasVindasLead(dados: {
+  telefoneCliente: string;
+  nomeCliente: string;
+  nomeCorretor: string;
+  projeto?: string;
+}): Promise<SendMessageResponse> {
+  const mensagem = gerarMensagemBoasVindas(dados);
+  return sendWhatsAppMessage(dados.telefoneCliente, mensagem);
+}

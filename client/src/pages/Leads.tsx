@@ -1880,24 +1880,30 @@ export default function Leads() {
 
                 {/* ── ABA: EXECUTANDO COM IA ── */}
                 <TabsContent value="ia">
-                  <ExecutandoComIA
-                    lead={{
-                      id: selectedLead.id,
-                      nome: selectedLead.nome,
-                      faixaRenda: selectedLead.faixaRenda,
-                      origem: selectedLead.origem,
-                      observacoes: selectedLead.observacoes,
-                      finalidadeImovel: selectedLead.finalidadeImovel,
-                      status: selectedLead.status,
-                      projectId: selectedLead.projectId,
-                      projetoCustom: selectedLead.projetoCustom,
-                    }}
-                    nomeEmpreendimento={
-                      projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
-                      selectedLead.projetoCustom ||
-                      undefined
-                    }
-                  />
+                  <div className="space-y-4">
+                    <IALeadPanel leadId={selectedLead.id} />
+                    <div className="border-t pt-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Script WhatsApp com IA</p>
+                      <ExecutandoComIA
+                        lead={{
+                          id: selectedLead.id,
+                          nome: selectedLead.nome,
+                          faixaRenda: selectedLead.faixaRenda,
+                          origem: selectedLead.origem,
+                          observacoes: selectedLead.observacoes,
+                          finalidadeImovel: selectedLead.finalidadeImovel,
+                          status: selectedLead.status,
+                          projectId: selectedLead.projectId,
+                          projetoCustom: selectedLead.projetoCustom,
+                        }}
+                        nomeEmpreendimento={
+                          projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
+                          selectedLead.projetoCustom ||
+                          undefined
+                        }
+                      />
+                    </div>
+                  </div>
                 </TabsContent>
 
                 {/* ── ABA: SCRIPTS ── */}
@@ -2439,6 +2445,133 @@ export default function Leads() {
         }}
       />
     </DashboardLayout>
+  );
+}
+
+function IALeadPanel({ leadId }: { leadId: number }) {
+  const [abaAtiva, setAbaAtiva] = useState<"resumo" | "acao" | "temperatura">("resumo");
+
+  const resumoQuery = trpc.ia.resumoLead.useQuery({ leadId }, { enabled: abaAtiva === "resumo", staleTime: 5 * 60_000 });
+  const acaoQuery = trpc.ia.sugestaoProximaAcao.useQuery({ leadId }, { enabled: abaAtiva === "acao", staleTime: 5 * 60_000 });
+  const [tempResult, setTempResult] = useState<{ temperatura: string; confianca: string; motivo: string } | null>(null);
+  const classificarMutation = trpc.ia.classificarTemperatura.useMutation({
+    onSuccess: (data) => setTempResult(data),
+  });
+
+  const URGENCIA_COLORS: Record<string, string> = {
+    imediata: "text-red-600 font-semibold",
+    hoje: "text-orange-500 font-semibold",
+    essa_semana: "text-yellow-600",
+  };
+  const TEMP_COLORS: Record<string, string> = {
+    quente: "text-red-500",
+    morno: "text-orange-400",
+    frio: "text-blue-500",
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 border-b pb-2">
+        {(["resumo", "acao", "temperatura"] as const).map((aba) => (
+          <button
+            key={aba}
+            onClick={() => setAbaAtiva(aba)}
+            className={`text-xs px-3 py-1 rounded-full transition-colors ${abaAtiva === aba ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+          >
+            {aba === "resumo" ? "📋 Resumo" : aba === "acao" ? "⚡ Próxima Ação" : "🌡️ Temperatura"}
+          </button>
+        ))}
+      </div>
+
+      {abaAtiva === "resumo" && (
+        <div className="space-y-3">
+          {resumoQuery.isLoading && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Gerando resumo com IA...</p>}
+          {resumoQuery.error && <p className="text-sm text-red-500 text-center py-4">{resumoQuery.error.message}</p>}
+          {resumoQuery.data && (
+            <>
+              <div className="bg-muted/40 rounded-lg p-3 space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Resumo</p>
+                <p className="text-sm leading-relaxed">{resumoQuery.data.resumo}</p>
+              </div>
+              {resumoQuery.data.pontosCriticos.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pontos Críticos</p>
+                  <ul className="space-y-1">
+                    {resumoQuery.data.pontosCriticos.map((p, i) => (
+                      <li key={i} className="text-sm flex items-start gap-2"><span className="text-amber-500 mt-0.5">⚠</span>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Próximo Follow-up</p>
+                <p className="text-sm">{resumoQuery.data.proximoFollowup}</p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {abaAtiva === "acao" && (
+        <div className="space-y-3">
+          {acaoQuery.isLoading && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Analisando histórico...</p>}
+          {acaoQuery.error && <p className="text-sm text-red-500 text-center py-4">{acaoQuery.error.message}</p>}
+          {acaoQuery.data && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-semibold">{acaoQuery.data.acao}</span>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{acaoQuery.data.canal}</span>
+                <span className={`text-xs ${URGENCIA_COLORS[acaoQuery.data.urgencia] || ""}`}>{acaoQuery.data.urgencia?.replace("_", " ")}</span>
+              </div>
+              <p className="text-xs text-muted-foreground italic">{acaoQuery.data.justificativa}</p>
+              {acaoQuery.data.script && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Script sugerido</p>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => navigator.clipboard.writeText(acaoQuery.data!.script).then(() => toast.success("Copiado!"))}>
+                      <Copy className="h-3 w-3" />Copiar
+                    </Button>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap">{acaoQuery.data.script}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {abaAtiva === "temperatura" && (
+        <div className="space-y-3">
+          {!tempResult && !classificarMutation.isPending && (
+            <div className="text-center py-6 space-y-3">
+              <p className="text-sm text-muted-foreground">A IA irá analisar o histórico e perfil do lead para classificar a temperatura.</p>
+              <Button size="sm" onClick={() => classificarMutation.mutate({ leadId, salvar: false })}>
+                🌡️ Classificar com IA
+              </Button>
+            </div>
+          )}
+          {classificarMutation.isPending && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Analisando lead...</p>}
+          {classificarMutation.error && <p className="text-sm text-red-500 text-center py-4">{classificarMutation.error.message}</p>}
+          {tempResult && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className={`text-2xl font-bold capitalize ${TEMP_COLORS[tempResult.temperatura] || ""}`}>{tempResult.temperatura}</span>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">confiança: {tempResult.confianca}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{tempResult.motivo}</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => classificarMutation.mutate({ leadId, salvar: true })} disabled={classificarMutation.isPending}>
+                  Salvar no lead
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setTempResult(null); classificarMutation.reset(); }}>
+                  Reclassificar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
