@@ -1391,14 +1391,14 @@ export default function Leads() {
             
             {selectedLead && (
               <Tabs defaultValue="detalhes" className="w-full">
-                <TabsList className="flex w-full flex-wrap gap-1 h-auto mb-4 bg-muted p-1 rounded-lg">
-                  <TabsTrigger value="detalhes" className="flex-1 min-w-[80px]">Detalhes</TabsTrigger>
-                  <TabsTrigger value="copilot" className="flex-1 min-w-[120px]">Copilot & Histórico</TabsTrigger>
-                  <TabsTrigger value="ia" className="flex-1 min-w-[120px] flex items-center gap-1.5">
+                <TabsList className="flex flex-wrap h-auto gap-0.5 w-full mb-4 p-1">
+                  <TabsTrigger value="detalhes" className="text-xs flex-1 min-w-[80px]">Detalhes</TabsTrigger>
+                  <TabsTrigger value="copilot" className="text-xs flex-1 min-w-[80px]">Histórico</TabsTrigger>
+                  <TabsTrigger value="ia" className="flex items-center gap-1 text-xs flex-1 min-w-[80px]">
                     <span>🤖</span> IA
                   </TabsTrigger>
-                  <TabsTrigger value="scripts" className="flex-1 min-w-[80px] flex items-center gap-1.5">
-                    <BookOpen className="h-3.5 w-3.5" /> Scripts
+                  <TabsTrigger value="scripts" className="flex items-center gap-1 text-xs flex-1 min-w-[80px]">
+                    <BookOpen className="h-3 w-3" /> Scripts
                   </TabsTrigger>
                 </TabsList>
 
