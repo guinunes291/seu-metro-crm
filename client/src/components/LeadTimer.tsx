@@ -5,6 +5,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface LeadTimerProps {
   createdAt: Date | string;
+  timerAtivo?: boolean;
   status: string;
   className?: string;
   showIcon?: boolean;
@@ -15,8 +16,9 @@ interface LeadTimerProps {
 const TEMPO_ALERTA_AMARELO_MIN = 2; // 2 minutos
 const TEMPO_ALERTA_VERMELHO_MIN = 5; // 5 minutos (limite de redistribuição)
 const TEMPO_CRITICO_MIN = 10; // 10 minutos (redistribuído)
-// Janela máxima: timer só é exibido para leads que chegaram há menos de 30 minutos
-const JANELA_MAXIMA_MIN = 30;
+// Janela máxima: timer só é exibido para leads que chegaram há menos de 5 dias
+const JANELA_MAXIMA_DIAS = 5;
+const JANELA_MAXIMA_MIN = JANELA_MAXIMA_DIAS * 24 * 60;
 
 function formatDuration(ms: number): string {
   const seconds = Math.floor(ms / 1000);
@@ -86,6 +88,7 @@ function getTimerStatus(minutesWaiting: number): {
 
 export default function LeadTimer({
   createdAt,
+  timerAtivo,
   status,
   className,
   showIcon = true,
@@ -114,7 +117,8 @@ export default function LeadTimer({
 
   const minutesWaiting = elapsed / (1000 * 60);
 
-  // Não mostrar timer para leads que chegaram há mais de 30 minutos (leads antigos ou após transferência)
+  // Não mostrar timer se timerAtivo=false (quando fornecido) ou se lead tem mais de 5 dias
+  if (timerAtivo === false) return null;
   if (minutesWaiting > JANELA_MAXIMA_MIN) {
     return null;
   }
@@ -201,7 +205,7 @@ export function LeadUrgencyBadge({
 
   const minutesWaiting = elapsed / (1000 * 60);
 
-  // Não mostrar badge para leads que chegaram há mais de 30 minutos
+  // Não mostrar badge para leads que chegaram há mais de 5 dias
   if (minutesWaiting > JANELA_MAXIMA_MIN) {
     return null;
   }

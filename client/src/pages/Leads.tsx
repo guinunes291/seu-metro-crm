@@ -890,7 +890,7 @@ export default function Leads() {
                             {statusLabels[lead.status]}
                           </Badge>
                           <div className="flex flex-col gap-1">
-                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
+                            <LeadTimer createdAt={lead.createdAt} timerAtivo={lead.timerAtivo ?? false} status={lead.status} compact />
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
@@ -1238,7 +1238,7 @@ export default function Leads() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
-                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon={false} />
+                            <LeadTimer createdAt={lead.createdAt} timerAtivo={lead.timerAtivo ?? false} status={lead.status} compact showIcon={false} />
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}

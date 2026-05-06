@@ -377,11 +377,14 @@ export const leadsRouter = router({
         await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
       }
 
-      // Timer NÃO é ativado em transferências manuais — apenas na chegada original via webhook/roleta
+      // Timer segue o lead se ele tem menos de 5 dias no sistema
+      const cincodiasMs = 5 * 24 * 60 * 60 * 1000;
+      const leadIdade = Date.now() - new Date(lead.createdAt).getTime();
+      const timerAtivo = lead.timerAtivo && leadIdade < cincodiasMs;
       await db.updateLead(input.leadId, {
         corretorId: input.novoCorretorId,
         status: 'aguardando_atendimento',
-        timerAtivo: false,
+        timerAtivo,
         corretorAnteriorId: corretorAnteriorId ?? undefined,
       });
 
@@ -482,11 +485,14 @@ export const leadsRouter = router({
             await db.cancelarFollowUpsPorTransferencia(leadId, corretorAnteriorId);
           }
 
-          // Timer NÃO é ativado em transferências em lote — apenas na chegada original via webhook/roleta
+          // Timer segue o lead se ele tem menos de 5 dias no sistema
+          const cincodiasMs2 = 5 * 24 * 60 * 60 * 1000;
+          const leadIdade2 = Date.now() - new Date(lead.createdAt).getTime();
+          const timerAtivoLote = lead.timerAtivo && leadIdade2 < cincodiasMs2;
           await db.updateLead(leadId, {
             corretorId: input.novoCorretorId,
             status: 'aguardando_atendimento',
-            timerAtivo: false,
+            timerAtivo: timerAtivoLote,
             corretorAnteriorId: corretorAnteriorId ?? undefined,
           });
 
@@ -543,11 +549,14 @@ export const leadsRouter = router({
 
       const novoStatus = lead.status === 'novo' ? 'aguardando_atendimento' : lead.status;
 
-      // Timer NÃO é ativado na atribuição manual pelo gestor — apenas na chegada original via webhook/roleta
+      // Timer segue o lead se ele tem menos de 5 dias no sistema
+      const cincodiasMs3 = 5 * 24 * 60 * 60 * 1000;
+      const leadIdade3 = Date.now() - new Date(lead.createdAt).getTime();
+      const timerAtivoAtrib = lead.timerAtivo && leadIdade3 < cincodiasMs3;
       await db.updateLead(input.leadId, {
         corretorId: input.corretorId,
         status: novoStatus,
-        timerAtivo: false,
+        timerAtivo: timerAtivoAtrib,
       });
 
       await db.criarFollowUpsAutomaticos();
