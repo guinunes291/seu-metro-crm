@@ -42,7 +42,12 @@ import {
   comissoes, InsertComissao, Comissao,
   templatesComissao, InsertTemplateComissao, TemplateComissao,
   metasGlobais,
-  equipes
+  equipes,
+  historicoPresenca,
+  resumoPresencaDiaria,
+  carteiraAtiva,
+  carteiraTarefas,
+  meuNegocioParametros
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -415,48 +420,39 @@ export async function deleteCorretor(id: number, redistribuirLeads: boolean = fa
   await db.delete(filaDistribuicao).where(eq(filaDistribuicao.corretorId, id));
   
   // ============================================================
-  // PRESERVAR REGISTROS HISTÓRICOS: desvincular corretorId antes
-  // de excluir o usuário (tabelas sem FK declarada no banco)
-  // Regra: registros históricos NUNCA devem ser apagados ao
-  // excluir um corretor. Apenas o vínculo é removido.
+  // ESTRATÉGIA DE EXCLUSÃO DE CORRETOR:
+  //
+  // 1. Tabelas com FK onDelete:"set null" (interacoes, documentacoes,
+  //    analises_credito, contratos, historicoAtribuicoes):
+  //    → O TiDB resolve automaticamente ao deletar o usuário. NÃO fazer update manual.
+  //
+  // 2. Tabelas históricas imutáveis com corretorId NOT NULL
+  //    (agendamentos, visitas, leadHistory, leadStatusTransitions):
+  //    → Manter o corretorId original como referência histórica.
+  //      NÃO tentar setar null (campo NOT NULL, TiDB rejeita).
+  //
+  // 3. Tabelas operacionais com corretorId NOT NULL:
+  //    → Deletar os registros, pois não fazem sentido sem o corretor.
   // ============================================================
-  
-  // Agendamentos: preservar histórico, apenas desvincular
-  await db.update(agendamentos)
-    .set({ corretorId: null as any })
-    .where(eq(agendamentos.corretorId, id));
-  
-  // Visitas: preservar histórico, apenas desvincular
-  await db.update(visitas)
-    .set({ corretorId: null as any })
-    .where(eq(visitas.corretorId, id));
-  
-  // Interações (ligações/whatsapp): preservar histórico
-  await db.update(interacoes)
-    .set({ corretorId: null as any })
-    .where(eq(interacoes.corretorId, id));
-  
-  // Documentações/Pastas: preservar histórico
-  await db.update(documentacoes)
-    .set({ corretorId: null as any })
-    .where(eq(documentacoes.corretorId, id));
-  
-  // Análises de crédito: preservar histórico
-  await db.update(analises_credito)
-    .set({ corretorId: null as any })
-    .where(eq(analises_credito.corretorId, id));
-  
-  // Contratos/Vendas: preservar histórico
-  await db.update(contratos)
-    .set({ corretorId: null as any })
-    .where(eq(contratos.corretorId, id));
-  
-  // Atividades diárias: preservar histórico
-  await db.update(atividadesDiarias)
-    .set({ corretorId: null as any })
-    .where(eq(atividadesDiarias.corretorId, id));
-  
-  console.log(`[DeleteCorretor] Registros históricos desvinculados do corretor ${id}`);
+
+  // Deletar registros operacionais do corretor (não têm valor sem o corretor)
+  await db.delete(tarefas).where(eq(tarefas.corretorId, id));
+  await db.delete(followUps).where(eq(followUps.corretorId, id));
+  await db.delete(atividadesDiarias).where(eq(atividadesDiarias.corretorId, id));
+  await db.delete(metasDiarias).where(eq(metasDiarias.corretorId, id));
+  await db.delete(alertasProdutividade).where(eq(alertasProdutividade.corretorId, id));
+  await db.delete(conquistas).where(eq(conquistas.corretorId, id));
+  await db.delete(disponibilidadeCorretor).where(eq(disponibilidadeCorretor.corretorId, id));
+  await db.delete(bloqueiosAgenda).where(eq(bloqueiosAgenda.corretorId, id));
+  await db.delete(linksAgendamento).where(eq(linksAgendamento.corretorId, id));
+  await db.delete(carteiraAtiva).where(eq(carteiraAtiva.corretorId, id));
+  await db.delete(carteiraTarefas).where(eq(carteiraTarefas.corretorId, id));
+  await db.delete(meuNegocioParametros).where(eq(meuNegocioParametros.corretorId, id));
+  await db.delete(metas).where(eq(metas.corretorId, id));
+  await db.delete(resumoPresencaDiaria).where(eq(resumoPresencaDiaria.corretorId, id));
+  await db.delete(historicoPresenca).where(eq(historicoPresenca.corretorId, id));
+
+  console.log(`[DeleteCorretor] Registros operacionais do corretor ${id} removidos`);
   
   // Excluir o corretor
   await db.delete(users).where(eq(users.id, id));
