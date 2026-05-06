@@ -507,6 +507,20 @@ export const leadsRouter = router({
 
       await db.criarFollowUpsAutomaticos();
 
+      // Push notification consolidada — um único alerta com o total de leads transferidos
+      if (transferidos > 0) {
+        const body = transferidos === 1
+          ? `Você recebeu 1 novo lead \u2014 acesse agora`
+          : `Você recebeu ${transferidos} novos leads \u2014 acesse agora`;
+        sendPushNotification(input.novoCorretorId, {
+          title: 'Novos Leads!',
+          body,
+          url: '/leads',
+          tag: `leads-lote-${input.novoCorretorId}-${Date.now()}`,
+          requireInteraction: true,
+        }).catch((err: unknown) => console.error('[Push] Erro ao enviar push consolidado (lote):', err));
+      }
+
       return { success: true, transferidos, erros, novoCorretor: novoCorretor.name };
     }),
 
