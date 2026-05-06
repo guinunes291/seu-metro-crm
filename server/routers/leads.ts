@@ -376,11 +376,11 @@ export const leadsRouter = router({
         await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
       }
 
+      // Timer NÃO é ativado em transferências manuais — apenas na chegada original via webhook/roleta
       await db.updateLead(input.leadId, {
         corretorId: input.novoCorretorId,
         status: 'aguardando_atendimento',
-        timerAtivo: true,
-        timestampRecebimento: agora,
+        timerAtivo: false,
         corretorAnteriorId: corretorAnteriorId ?? undefined,
       });
 
@@ -465,11 +465,11 @@ export const leadsRouter = router({
             await db.cancelarFollowUpsPorTransferencia(leadId, corretorAnteriorId);
           }
 
+          // Timer NÃO é ativado em transferências em lote — apenas na chegada original via webhook/roleta
           await db.updateLead(leadId, {
             corretorId: input.novoCorretorId,
             status: 'aguardando_atendimento',
-            timerAtivo: true,
-            timestampRecebimento: new Date(),
+            timerAtivo: false,
             corretorAnteriorId: corretorAnteriorId ?? undefined,
           });
 
@@ -511,12 +511,12 @@ export const leadsRouter = router({
       }
 
       const novoStatus = lead.status === 'novo' ? 'aguardando_atendimento' : lead.status;
-      const deveAtivarTimer = novoStatus === 'aguardando_atendimento';
 
+      // Timer NÃO é ativado na atribuição manual pelo gestor — apenas na chegada original via webhook/roleta
       await db.updateLead(input.leadId, {
         corretorId: input.corretorId,
         status: novoStatus,
-        ...(deveAtivarTimer ? { timerAtivo: true, timestampRecebimento: new Date() } : {}),
+        timerAtivo: false,
       });
 
       await db.criarFollowUpsAutomaticos();
