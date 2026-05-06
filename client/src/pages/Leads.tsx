@@ -1381,7 +1381,7 @@ export default function Leads() {
 
         {/* Dialog de detalhes do lead */}
         <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">{selectedLead?.nome}</DialogTitle>
               <DialogDescription>
@@ -1391,13 +1391,13 @@ export default function Leads() {
             
             {selectedLead && (
               <Tabs defaultValue="detalhes" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-4">
-                  <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
-                  <TabsTrigger value="copilot">Copilot & Histórico</TabsTrigger>
-                  <TabsTrigger value="ia" className="flex items-center gap-1.5">
-                    <span>🤖</span> Executando com IA
+                <TabsList className="flex w-full flex-wrap gap-1 h-auto mb-4 bg-muted p-1 rounded-lg">
+                  <TabsTrigger value="detalhes" className="flex-1 min-w-[80px]">Detalhes</TabsTrigger>
+                  <TabsTrigger value="copilot" className="flex-1 min-w-[120px]">Copilot & Histórico</TabsTrigger>
+                  <TabsTrigger value="ia" className="flex-1 min-w-[120px] flex items-center gap-1.5">
+                    <span>🤖</span> IA
                   </TabsTrigger>
-                  <TabsTrigger value="scripts" className="flex items-center gap-1.5">
+                  <TabsTrigger value="scripts" className="flex-1 min-w-[80px] flex items-center gap-1.5">
                     <BookOpen className="h-3.5 w-3.5" /> Scripts
                   </TabsTrigger>
                 </TabsList>
@@ -1409,30 +1409,32 @@ export default function Leads() {
                 <div>
                   <h3 className="font-semibold mb-3">Informações de Contato</h3>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${selectedLead.telefone}`} className="hover:underline">
-                        {selectedLead.telefone}
-                      </a>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`tel:${selectedLead.telefone}`} className="hover:underline font-medium">
+                          {selectedLead.telefone}
+                        </a>
+                      </div>
                       {selectedLead.telefone && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="ml-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                          className="w-fit bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
                           onClick={() => {
                             const projeto = projects?.find(p => p.id === selectedLead.projectId)?.nome || selectedLead.projetoCustom;
                             window.open(gerarLinkWhatsApp(selectedLead.telefone, selectedLead.nome, projeto), '_blank');
                           }}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />
-                          WhatsApp
+                          Abrir WhatsApp
                         </Button>
                       )}
                     </div>
                     {selectedLead.email && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <a href={`mailto:${selectedLead.email}`} className="hover:underline">
+                        <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`mailto:${selectedLead.email}`} className="hover:underline break-all">
                           {selectedLead.email}
                         </a>
                       </div>
