@@ -661,6 +661,39 @@ export const quickMessages = mysqlTable("quick_messages", {
 export type QuickMessage = typeof quickMessages.$inferSelect;
 export type InsertQuickMessage = typeof quickMessages.$inferInsert;
 
+// ============================================================================
+// TABELA DE SCRIPTS DE VENDAS (Biblioteca de Scripts e Objeções)
+// ============================================================================
+
+export const scriptsVendas = mysqlTable("scripts_vendas", {
+  id: int("id").autoincrement().primaryKey(),
+  titulo: varchar("titulo", { length: 150 }).notNull(),
+  conteudo: text("conteudo").notNull(),
+  categoria: mysqlEnum("categoria", [
+    "primeiro_contato",
+    "agendamento",
+    "pos_visita",
+    "objecao_preco",
+    "objecao_documentacao",
+    "objecao_credito",
+    "nao_compareceu",
+    "reativacao",
+    "fechamento",
+    "outro",
+  ]).notNull().default("outro"),
+  tipo: mysqlEnum("tipo", ["whatsapp", "telefone", "email"]).notNull().default("whatsapp"),
+  ativo: boolean("ativo").default(true).notNull(),
+  ordem: int("ordem").default(0).notNull(),
+  criadoPorId: int("criadoPorId").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  categoriaIdx: index("script_categoria_idx").on(table.categoria),
+  ativoIdx: index("script_ativo_idx").on(table.ativo),
+}));
+
+export type ScriptVendas = typeof scriptsVendas.$inferSelect;
+export type InsertScriptVendas = typeof scriptsVendas.$inferInsert;
 
 // ============================================================================
 // TABELA DE NOTIFICAÇÕES

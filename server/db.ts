@@ -42,7 +42,8 @@ import {
   comissoes, InsertComissao, Comissao,
   templatesComissao, InsertTemplateComissao, TemplateComissao,
   metasGlobais,
-  equipes
+  equipes,
+  scriptsVendas, InsertScriptVendas, ScriptVendas,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -1216,6 +1217,42 @@ export async function getLeadById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// Altera o status de múltiplos leads de uma vez.
+// Registra transição de status para cada lead individualmente para manter auditoria.
+export async function bulkUpdateLeadStatus(
+  ids: number[],
+  novoStatus: string,
+  alteradoPorId: number,
+): Promise<{ atualizados: number }> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  if (ids.length === 0) return { atualizados: 0 };
+
+  // Buscar leads atuais para registrar transições
+  const leadsAtuais = await db.select({ id: leads.id, status: leads.status, corretorId: leads.corretorId })
+    .from(leads)
+    .where(inArray(leads.id, ids));
+
+  // Atualizar em bulk
+  await db.update(leads)
+    .set({ status: novoStatus as any, updatedAt: new Date(), ultimaInteracao: new Date() })
+    .where(inArray(leads.id, ids));
+
+  // Registrar transições de status individualmente (não bloqueia se falhar)
+  for (const lead of leadsAtuais) {
+    if (lead.status !== novoStatus) {
+      await registrarTransicaoStatus({
+        leadId: lead.id,
+        corretorId: lead.corretorId || alteradoPorId,
+        statusAnterior: lead.status as any,
+        statusNovo: novoStatus as any,
+      }).catch(() => {}); // log de transição não bloqueia a operação
+    }
+  }
+
+  return { atualizados: leadsAtuais.length };
+}
+
 export async function updateLead(id: number, data: Partial<InsertLead>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1323,7 +1360,7 @@ export async function getLeadsNaoDistribuidos() {
 export async function getLeadsPendentesFollowup() {
   const db = await getDb();
   if (!db) return [];
-  
+
   const now = new Date();
   // LIMIT 1000 para evitar full table scan com 31k+ leads
   return await db.select().from(leads)
@@ -1335,6 +1372,139 @@ export async function getLeadsPendentesFollowup() {
     )
     .orderBy(leads.proximoFollowup)
     .limit(1000);
+}
+
+// Retorna contagem de leads "parados" por faixa de dias sem interação.
+// "Parado" = ativo (não perdido/fechado/lixeira) e sem ultimaInteracao há N+ dias.
+export async function getResumoLeadsParados(corretoresIds?: number[] | null): Promise<{
+  total: number;
+  faixas: { label: string; dias: number; count: number }[];
+}> {
+  const db = await getDb();
+  if (!db) return { total: 0, faixas: [] };
+
+  const statusAtivos = ['aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito'];
+  const baseConditions: any[] = [
+    inArray(leads.status, statusAtivos),
+    eq(leads.naLixeira, false),
+  ];
+  if (corretoresIds && corretoresIds.length > 0) {
+    baseConditions.push(inArray(leads.corretorId, corretoresIds));
+  }
+
+  const faixas = [
+    { label: '3-7 dias', dias: 3, max: 7 },
+    { label: '7-15 dias', dias: 7, max: 15 },
+    { label: '+15 dias', dias: 15, max: 99999 },
+  ];
+
+  const results = await Promise.allSettled(
+    faixas.map(f => {
+      const cutoffMin = new Date(Date.now() - f.dias * 86_400_000);
+      const cutoffMax = new Date(Date.now() - f.max * 86_400_000);
+      const conds: any[] = [
+        ...baseConditions,
+        lte(leads.ultimaInteracao, cutoffMin),
+      ];
+      if (f.max < 99999) conds.push(gt(leads.ultimaInteracao, cutoffMax));
+      return db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(and(...conds));
+    })
+  );
+
+  const counts = results.map((r, i) => ({
+    label: faixas[i].label,
+    dias: faixas[i].dias,
+    count: r.status === 'fulfilled' ? Number(r.value[0]?.count ?? 0) : 0,
+  }));
+
+  return { total: counts.reduce((s, c) => s + c.count, 0), faixas: counts };
+}
+
+// Retorna leads prioritários para o bloco "O que fazer agora" do corretor.
+// Cada categoria tem limite de 10 registros — apenas para UI (não paginado).
+export async function getLeadsPrioritariosCorretor(corretorId: number): Promise<{
+  followUpsVencidos: { id: number; nome: string; telefone: string; status: string }[];
+  leadsQuentes:      { id: number; nome: string; telefone: string; status: string }[];
+  semPrimeiroContato: { id: number; nome: string; telefone: string; createdAt: Date }[];
+  agendamentosHoje:  { id: number; leadNome: string; dataAgendamento: Date; horaAgendamento: string | null; status: string }[];
+}> {
+  const db = await getDb();
+  if (!db) return { followUpsVencidos: [], leadsQuentes: [], semPrimeiroContato: [], agendamentosHoje: [] };
+
+  const agora = new Date();
+  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const fimHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59);
+  const statusAtivos = ['aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito'];
+
+  const [fvResult, lqResult, spcResult, agResult] = await Promise.allSettled([
+    // 1. Follow-ups vencidos
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, status: leads.status })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        lte(leads.proximoFollowup, agora),
+        inArray(leads.status, statusAtivos),
+        eq(leads.naLixeira, false),
+      ))
+      .orderBy(asc(leads.proximoFollowup))
+      .limit(10),
+
+    // 2. Leads quentes sem interação hoje
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, status: leads.status })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.temperatura, 'quente'),
+        inArray(leads.status, statusAtivos),
+        eq(leads.naLixeira, false),
+        or(
+          isNull(leads.ultimaInteracao),
+          lt(leads.ultimaInteracao, inicioHoje),
+        ),
+      ))
+      .orderBy(desc(leads.createdAt))
+      .limit(10),
+
+    // 3. Leads atribuídos sem primeiro contato
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, createdAt: leads.createdAt })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        isNull(leads.primeiroContatoEm),
+        inArray(leads.status, ['aguardando_atendimento', 'em_atendimento']),
+        eq(leads.naLixeira, false),
+      ))
+      .orderBy(asc(leads.createdAt))
+      .limit(10),
+
+    // 4. Agendamentos de hoje
+    db.select({
+        id: agendamentos.id,
+        leadNome: leads.nome,
+        dataAgendamento: agendamentos.dataAgendamento,
+        horaAgendamento: agendamentos.horaAgendamento,
+        status: agendamentos.status,
+      })
+      .from(agendamentos)
+      .leftJoin(leads, eq(agendamentos.leadId, leads.id))
+      .where(and(
+        eq(agendamentos.corretorId, corretorId),
+        gte(agendamentos.dataAgendamento, inicioHoje),
+        lte(agendamentos.dataAgendamento, fimHoje),
+        inArray(agendamentos.status, ['pendente', 'confirmado']),
+      ))
+      .orderBy(asc(agendamentos.dataAgendamento))
+      .limit(10),
+  ]);
+
+  return {
+    followUpsVencidos:   fvResult.status  === 'fulfilled' ? fvResult.value  : [],
+    leadsQuentes:        lqResult.status  === 'fulfilled' ? lqResult.value  : [],
+    semPrimeiroContato:  spcResult.status === 'fulfilled' ? spcResult.value : [],
+    agendamentosHoje:    agResult.status  === 'fulfilled' ? agResult.value.map(a => ({
+      ...a, leadNome: a.leadNome ?? 'Cliente',
+    })) : [],
+  };
 }
 
 // ============================================================================
@@ -11655,4 +11825,44 @@ export async function getLeadsParaBlitz(
     .limit(limit);
 
   return result;
+}
+
+// ============================================================================
+// SCRIPTS DE VENDAS — Biblioteca de Scripts e Objeções
+// ============================================================================
+
+export async function getScriptsVendas(filtros?: { categoria?: string; tipo?: string; ativo?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: any[] = [];
+  if (filtros?.categoria) conditions.push(eq(scriptsVendas.categoria, filtros.categoria as any));
+  if (filtros?.tipo) conditions.push(eq(scriptsVendas.tipo, filtros.tipo as any));
+  if (filtros?.ativo !== undefined) conditions.push(eq(scriptsVendas.ativo, filtros.ativo));
+  else conditions.push(eq(scriptsVendas.ativo, true)); // por padrão só ativos
+
+  return await db.select().from(scriptsVendas)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(asc(scriptsVendas.categoria), asc(scriptsVendas.ordem), asc(scriptsVendas.titulo));
+}
+
+export async function createScriptVendas(data: Omit<InsertScriptVendas, 'id' | 'createdAt' | 'updatedAt'>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const [result] = await db.insert(scriptsVendas).values(data).$returningId();
+  return result;
+}
+
+export async function updateScriptVendas(id: number, data: Partial<InsertScriptVendas>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(scriptsVendas).set({ ...data, updatedAt: new Date() }).where(eq(scriptsVendas.id, id));
+  return { success: true };
+}
+
+export async function deleteScriptVendas(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.delete(scriptsVendas).where(eq(scriptsVendas.id, id));
+  return { success: true };
 }

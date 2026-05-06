@@ -190,7 +190,8 @@ export default function Dashboard() {
   // ── Tier 1: KPIs principais (carregam imediatamente) ─────────────────────
   const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorBase);
 
-  // ── Tier 2: Métricas por corretor (endpoint consolidado) + leads urgentes ──
+  // ── Tier 2: Métricas por corretor (endpoint consolidado) + leads urgentes + parados ──
+  const { data: leadsParados } = trpc.dashboard.leadsParados.useQuery(undefined, tier2);
   const { data: metricasPorCorretor } = trpc.dashboard.metricasPorCorretor.useQuery(dateFilter, tier2);
   const leadsPorCorretor = metricasPorCorretor?.leads;
   const vendasPorCorretor = metricasPorCorretor?.vendas;
@@ -1128,6 +1129,52 @@ export default function Dashboard() {
             {allLeads && allLeads.length > 0 && (
               <div className="mb-8">
                 <LeadsUrgentesCard leads={allLeads} />
+              </div>
+            )}
+
+            {/* Card de Leads Parados */}
+            {leadsParados && leadsParados.total > 0 && (
+              <div className="mb-8">
+                <Card className="border-orange-200 bg-orange-50/40 dark:bg-orange-950/20 dark:border-orange-800">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                        <Clock className="h-4 w-4" />
+                        Leads Parados (sem interação)
+                      </CardTitle>
+                      <Link href="/leads">
+                        <Button variant="outline" size="sm" className="text-orange-700 border-orange-300 hover:bg-orange-100">
+                          Ver leads
+                        </Button>
+                      </Link>
+                    </div>
+                    <CardDescription>Leads ativos sem registro de interação há 3+ dias</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4 flex-wrap">
+                      {leadsParados.faixas.map((f) => (
+                        f.count > 0 && (
+                          <div key={f.label} className={`flex flex-col items-center p-3 rounded-lg border min-w-[90px] ${
+                            f.dias >= 15 ? 'bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-700' :
+                            f.dias >= 7  ? 'bg-orange-100 border-orange-300 dark:bg-orange-950/40 dark:border-orange-700' :
+                                           'bg-yellow-100 border-yellow-300 dark:bg-yellow-950/40 dark:border-yellow-700'
+                          }`}>
+                            <span className={`text-2xl font-bold ${
+                              f.dias >= 15 ? 'text-red-700 dark:text-red-400' :
+                              f.dias >= 7  ? 'text-orange-700 dark:text-orange-400' :
+                                             'text-yellow-700 dark:text-yellow-400'
+                            }`}>{f.count}</span>
+                            <span className="text-xs text-muted-foreground mt-1">{f.label}</span>
+                          </div>
+                        )
+                      ))}
+                      <div className="flex flex-col items-center p-3 rounded-lg border min-w-[90px] bg-muted/40">
+                        <span className="text-2xl font-bold">{leadsParados.total}</span>
+                        <span className="text-xs text-muted-foreground mt-1">Total</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 

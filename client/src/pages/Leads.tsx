@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield, Flame, Thermometer, Snowflake
+  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -215,6 +215,17 @@ export default function Leads() {
     },
     onError: (error) => {
       toast.error(`Erro ao enviar alerta: ${error.message}`);
+    },
+  });
+
+  const bulkUpdateStatusMutation = trpc.leads.bulkUpdateStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${data.atualizados} leads atualizados com sucesso!`);
+      setSelectedLeadIds([]);
+      utils.leads.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar status: ${error.message}`);
     },
   });
   const { data: leadHistory } = trpc.leads.getHistory.useQuery(
@@ -556,14 +567,36 @@ export default function Leads() {
               Novo Lead
             </Button>
             {isGestor && selectedLeadIds.length > 0 && (
-              <Button 
-                onClick={() => setTransferirEmLoteDialog(true)} 
-                variant="secondary"
-                className="gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Transferir {selectedLeadIds.length} {selectedLeadIds.length === 1 ? 'Lead' : 'Leads'}
-              </Button>
+              <>
+                <Button
+                  onClick={() => setTransferirEmLoteDialog(true)}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Transferir {selectedLeadIds.length} {selectedLeadIds.length === 1 ? 'Lead' : 'Leads'}
+                </Button>
+                <Select
+                  onValueChange={(novoStatus) => {
+                    if (novoStatus && window.confirm(`Alterar ${selectedLeadIds.length} lead(s) para "${statusLabels[novoStatus] ?? novoStatus}"?`)) {
+                      bulkUpdateStatusMutation.mutate({ ids: selectedLeadIds, novoStatus: novoStatus as any });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-auto gap-2 border-dashed">
+                    <SelectValue placeholder="Alterar status em massa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="aguardando_atendimento">Aguardando Atendimento</SelectItem>
+                    <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
+                    <SelectItem value="agendado">Agendado</SelectItem>
+                    <SelectItem value="visita_realizada">Visita Realizada</SelectItem>
+                    <SelectItem value="analise_credito">Análise de Crédito</SelectItem>
+                    <SelectItem value="contrato_fechado">Contrato Fechado</SelectItem>
+                    <SelectItem value="perdido">Perdido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
             )}
           </div>
         </div>
@@ -1128,9 +1161,19 @@ export default function Leads() {
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const project = projects?.find(p => p.id === lead.projectId);
-                    
+                    const statusAtivo = !['contrato_fechado', 'perdido', 'novo'].includes(lead.status);
+                    const diasParado = lead.ultimaInteracao && statusAtivo
+                      ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / 86_400_000)
+                      : null;
+                    const estaParado = diasParado !== null && diasParado >= 3;
+
                     return (
-                      <TableRow key={lead.id} className={lead.origemWebhook ? 'bg-red-50/30' : ''}>
+                      <TableRow key={lead.id} className={
+                        lead.origemWebhook ? 'bg-red-50/30' :
+                        estaParado && diasParado! >= 15 ? 'bg-red-50/20 dark:bg-red-950/10' :
+                        estaParado && diasParado! >= 7  ? 'bg-orange-50/20 dark:bg-orange-950/10' :
+                        estaParado ? 'bg-yellow-50/20 dark:bg-yellow-950/10' : ''
+                      }>
                         {isGestor && (
                           <TableCell>
                             <input
@@ -1162,9 +1205,21 @@ export default function Leads() {
                         <TableCell>{project?.nome || lead.projetoCustom || "-"}</TableCell>
                         {isGestor && <TableCell>{lead.corretorNome || "-"}</TableCell>}
                         <TableCell>
-                          <Badge variant={getStatusVariant(lead.status)}>
-                            {statusLabels[lead.status]}
-                          </Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={getStatusVariant(lead.status)}>
+                              {statusLabels[lead.status]}
+                            </Badge>
+                            {estaParado && (
+                              <Badge variant="outline" className={`text-xs ${
+                                diasParado! >= 15 ? 'text-red-600 border-red-400' :
+                                diasParado! >= 7  ? 'text-orange-600 border-orange-400' :
+                                                    'text-yellow-600 border-yellow-400'
+                              }`}>
+                                <Clock className="h-3 w-3 mr-1" />
+                                Parado {diasParado}d
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
@@ -1325,11 +1380,14 @@ export default function Leads() {
             
             {selectedLead && (
               <Tabs defaultValue="detalhes" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
                   <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
                   <TabsTrigger value="copilot">Copilot & Histórico</TabsTrigger>
                   <TabsTrigger value="ia" className="flex items-center gap-1.5">
                     <span>🤖</span> Executando com IA
+                  </TabsTrigger>
+                  <TabsTrigger value="scripts" className="flex items-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5" /> Scripts
                   </TabsTrigger>
                 </TabsList>
 
@@ -1829,6 +1887,11 @@ export default function Leads() {
                       undefined
                     }
                   />
+                </TabsContent>
+
+                {/* ── ABA: SCRIPTS ── */}
+                <TabsContent value="scripts">
+                  <ScriptsLeadTab leadStatus={selectedLead?.status} />
                 </TabsContent>
               </Tabs>
             )}
@@ -2358,5 +2421,107 @@ export default function Leads() {
         }}
       />
     </DashboardLayout>
+  );
+}
+
+// Map lead status → script category for contextual pre-filtering
+const STATUS_CATEGORIA_MAP: Record<string, string> = {
+  novo: "primeiro_contato",
+  aguardando_atendimento: "primeiro_contato",
+  em_atendimento: "primeiro_contato",
+  agendado: "agendamento",
+  visita_realizada: "pos_visita",
+  analise_credito: "objecao_credito",
+  contrato_fechado: "fechamento",
+  perdido: "reativacao",
+};
+
+function ScriptsLeadTab({ leadStatus }: { leadStatus?: string }) {
+  const categoriaContexto = leadStatus ? STATUS_CATEGORIA_MAP[leadStatus] : undefined;
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>(categoriaContexto || "todas");
+  const [busca, setBusca] = useState("");
+
+  const { data: scripts = [], isLoading } = trpc.scripts.list.useQuery({});
+
+  function copiar(conteudo: string) {
+    navigator.clipboard.writeText(conteudo).then(() => {
+      toast.success("Script copiado!");
+    }).catch(() => {
+      toast.error("Não foi possível copiar automaticamente");
+    });
+  }
+
+  const CATEGORIA_LABELS: Record<string, string> = {
+    primeiro_contato: "Primeiro Contato",
+    agendamento: "Agendamento",
+    pos_visita: "Pós-visita",
+    objecao_preco: "Objeção: Preço",
+    objecao_documentacao: "Objeção: Doc.",
+    objecao_credito: "Objeção: Crédito",
+    nao_compareceu: "Não Compareceu",
+    reativacao: "Reativação",
+    fechamento: "Fechamento",
+    outro: "Outro",
+  };
+
+  const categorias = ["todas", ...Object.keys(CATEGORIA_LABELS)];
+
+  const filtrados = scripts.filter((s: any) => {
+    const matchCategoria = categoriaSelecionada === "todas" || s.categoria === categoriaSelecionada;
+    const matchBusca = !busca || s.titulo.toLowerCase().includes(busca.toLowerCase()) || s.conteudo.toLowerCase().includes(busca.toLowerCase());
+    return matchCategoria && matchBusca;
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-32">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            className="w-full pl-8 pr-3 py-1.5 text-sm border rounded-md bg-background"
+            placeholder="Buscar..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+        <select
+          className="text-sm border rounded-md px-2 py-1.5 bg-background"
+          value={categoriaSelecionada}
+          onChange={(e) => setCategoriaSelecionada(e.target.value)}
+        >
+          <option value="todas">Todas</option>
+          {Object.entries(CATEGORIA_LABELS).map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+      </div>
+      {categoriaContexto && categoriaSelecionada !== "todas" && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <BookOpen className="h-3 w-3" />
+          Scripts sugeridos para o status atual: <strong>{CATEGORIA_LABELS[categoriaContexto]}</strong>
+        </p>
+      )}
+      {isLoading && <p className="text-sm text-muted-foreground py-4 text-center">Carregando scripts...</p>}
+      {!isLoading && filtrados.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4 text-center">Nenhum script encontrado</p>
+      )}
+      <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+        {filtrados.map((script: any) => (
+          <div key={script.id} className="border rounded-lg p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">{script.titulo}</p>
+                <p className="text-xs text-muted-foreground">{CATEGORIA_LABELS[script.categoria] || script.categoria}</p>
+              </div>
+              <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => copiar(script.conteudo)}>
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{script.conteudo}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

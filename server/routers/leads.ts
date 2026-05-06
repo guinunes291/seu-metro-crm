@@ -557,6 +557,19 @@ export const leadsRouter = router({
       return { success: true, deleted };
     }),
 
+  // Altera status de múltiplos leads de uma vez (apenas gestores)
+  bulkUpdateStatus: gestorProcedure
+    .input(z.object({
+      ids: z.array(z.number()).min(1, 'Selecione pelo menos 1 lead'),
+      novoStatus: z.enum([
+        'aguardando_atendimento', 'em_atendimento', 'agendado',
+        'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido',
+      ]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return await db.bulkUpdateLeadStatus(input.ids, input.novoStatus, ctx.user.id);
+    }),
+
   getLixeira: gestorProcedure
     .input(z.object({
       page: z.number().default(1),

@@ -33,6 +33,7 @@ import { construtorasRouter } from "./routers/construtoras";
 import { propostasRouter } from "./routers/propostas";
 import { meuNegocioRouter } from "./routers/meuNegocio";
 import { relatorioDiarioRouter } from "./routers/relatorioDiario";
+import { scriptsRouter } from "./routers/scripts";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -115,6 +116,7 @@ export const appRouter = router({
   carteiraAtiva: carteiraAtivaRouter,
   meuNegocio: meuNegocioRouter,
   relatorioDiario: relatorioDiarioRouter,
+  scripts: scriptsRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -1688,6 +1690,28 @@ export const appRouter = router({
           dashboardCacheKey('dashboard.relatorioLeadsCriados', corretoresIds, input),
           CACHE_TTL.MEDIUM,
           () => db.getRelatorioLeadsCriados(dataInicio, dataFim, corretoresIds),
+        );
+      }),
+
+    // Resumo de leads parados por faixa de dias sem interação
+    leadsParados: gestorProcedure
+      .query(async ({ ctx }) => {
+        const { getCorretoresIdsParaFiltro } = await import('./equipes');
+        const corretoresIds = await getCorretoresIdsParaFiltro(ctx.user.id, ctx.user.role);
+        return await cacheGetOrSet(
+          dashboardCacheKey('dashboard.leadsParados', corretoresIds),
+          CACHE_TTL.SHORT,
+          () => db.getResumoLeadsParados(corretoresIds),
+        );
+      }),
+
+    // Leads prioritários do corretor para o bloco "O que fazer agora"
+    leadsPrioritarios: protectedProcedure
+      .query(async ({ ctx }) => {
+        return await cacheGetOrSet(
+          `dashboard.leadsPrioritarios:${ctx.user.id}`,
+          CACHE_TTL.SHORT,
+          () => db.getLeadsPrioritariosCorretor(ctx.user.id),
         );
       }),
   }),

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -28,7 +29,7 @@ import {
   TrendingUp, Target, Trophy, Users, Clock, CheckCircle2, Edit3,
   Camera, Flame, Award, BarChart3, Zap, Phone, MessageSquare,
   Calendar, Eye, FileText, DollarSign, RefreshCw, ClipboardList,
-  XCircle,
+  XCircle, AlertTriangle, ArrowRight, UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -374,6 +375,11 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
     enabled: isGestor,
   });
 
+  const { data: prioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
+    staleTime: 30_000,
+    refetchInterval: 3 * 60 * 1000,
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -435,6 +441,136 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
           </Button>
         </div>
       </div>
+
+      {/* Bloco: O que fazer agora */}
+      {prioritarios && (
+        prioritarios.followUpsVencidos.length > 0 ||
+        prioritarios.leadsQuentes.length > 0 ||
+        prioritarios.semPrimeiroContato.length > 0 ||
+        prioritarios.agendamentosHoje.length > 0
+      ) && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-orange-500" /> O que fazer agora
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Follow-ups vencidos */}
+            {prioritarios.followUpsVencidos.length > 0 && (
+              <Card className="border-red-200 bg-red-50/40 dark:bg-red-950/20 dark:border-red-800">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm text-red-700 dark:text-red-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" /> Follow-ups vencidos
+                    </span>
+                    <Badge className="bg-red-500 text-white">{prioritarios.followUpsVencidos.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1">
+                  {prioritarios.followUpsVencidos.slice(0, 3).map(l => (
+                    <Link key={l.id} href="/leads">
+                      <div className="flex items-center justify-between text-sm hover:text-red-700 cursor-pointer">
+                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
+                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                      </div>
+                    </Link>
+                  ))}
+                  {prioritarios.followUpsVencidos.length > 3 && (
+                    <Link href="/leads">
+                      <p className="text-xs text-red-600 flex items-center gap-1 mt-1 hover:underline cursor-pointer">
+                        +{prioritarios.followUpsVencidos.length - 3} mais <ArrowRight className="h-3 w-3" />
+                      </p>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Leads quentes sem contato hoje */}
+            {prioritarios.leadsQuentes.length > 0 && (
+              <Card className="border-orange-200 bg-orange-50/40 dark:bg-orange-950/20 dark:border-orange-800">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm text-orange-700 dark:text-orange-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Flame className="h-4 w-4" /> Leads quentes — sem contato hoje
+                    </span>
+                    <Badge className="bg-orange-500 text-white">{prioritarios.leadsQuentes.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1">
+                  {prioritarios.leadsQuentes.slice(0, 3).map(l => (
+                    <Link key={l.id} href="/leads">
+                      <div className="flex items-center justify-between text-sm hover:text-orange-700 cursor-pointer">
+                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
+                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                      </div>
+                    </Link>
+                  ))}
+                  {prioritarios.leadsQuentes.length > 3 && (
+                    <Link href="/leads">
+                      <p className="text-xs text-orange-600 flex items-center gap-1 mt-1 hover:underline cursor-pointer">
+                        +{prioritarios.leadsQuentes.length - 3} mais <ArrowRight className="h-3 w-3" />
+                      </p>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Leads sem primeiro contato */}
+            {prioritarios.semPrimeiroContato.length > 0 && (
+              <Card className="border-yellow-200 bg-yellow-50/40 dark:bg-yellow-950/20 dark:border-yellow-800">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm text-yellow-700 dark:text-yellow-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <UserCheck className="h-4 w-4" /> Aguardam primeiro contato
+                    </span>
+                    <Badge className="bg-yellow-500 text-white">{prioritarios.semPrimeiroContato.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1">
+                  {prioritarios.semPrimeiroContato.slice(0, 3).map(l => (
+                    <Link key={l.id} href="/leads">
+                      <div className="flex items-center justify-between text-sm hover:text-yellow-700 cursor-pointer">
+                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
+                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                      </div>
+                    </Link>
+                  ))}
+                  {prioritarios.semPrimeiroContato.length > 3 && (
+                    <Link href="/leads">
+                      <p className="text-xs text-yellow-600 flex items-center gap-1 mt-1 hover:underline cursor-pointer">
+                        +{prioritarios.semPrimeiroContato.length - 3} mais <ArrowRight className="h-3 w-3" />
+                      </p>
+                    </Link>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Agendamentos de hoje */}
+            {prioritarios.agendamentosHoje.length > 0 && (
+              <Card className="border-blue-200 bg-blue-50/40 dark:bg-blue-950/20 dark:border-blue-800">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm text-blue-700 dark:text-blue-400 flex items-center justify-between">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" /> Agendamentos de hoje
+                    </span>
+                    <Badge className="bg-blue-500 text-white">{prioritarios.agendamentosHoje.length}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-3 space-y-1">
+                  {prioritarios.agendamentosHoje.map(a => (
+                    <div key={a.id} className="flex items-center justify-between text-sm">
+                      <span className="truncate max-w-[160px] font-medium">{a.leadNome}</span>
+                      <span className="text-xs text-muted-foreground">{a.horaAgendamento || "—"}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Score */}
       {d && (
