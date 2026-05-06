@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, TrendingUp, TrendingDown, Users, Target, AlertTriangle,
   CalendarX, ArrowRight, ChevronDown, ChevronUp, Filter,
-  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle
+  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle, CalendarCheck
 } from "lucide-react";
 
 // ============================================================================
@@ -151,11 +151,24 @@ export default function Relatorios() {
     ...inputDatas,
     agrupamento: periodo === "ano" || periodo === "semestre" ? "mes" : periodo === "trimestre" ? "semana" : "dia",
   });
-  const origens = trpc.centralAnalises.origensConversao.useQuery(inputDatas);
+  const origens = trpc.centralAnalises.origensConversao.useQuery(inputDatas, { enabled: abaAtiva === 'origens' });
+
+  const inputDatasAnterior = useMemo(() => {
+    const duracaoMs = datas.dataFim.getTime() - datas.dataInicio.getTime() + 1;
+    const fimAnterior = new Date(datas.dataInicio.getTime() - 1);
+    const inicioAnterior = new Date(fimAnterior.getTime() - duracaoMs + 1);
+    return { dataInicio: inicioAnterior.toISOString(), dataFim: fimAnterior.toISOString() };
+  }, [datas]);
+  const origensAnterior = trpc.centralAnalises.origensConversao.useQuery(inputDatasAnterior, { enabled: abaAtiva === 'origens' });
   const facebookTimer = trpc.relatorios.leadsTimerPorCorretor.useQuery({
     dataInicio: inputDatas.dataInicio,
     dataFim: inputDatas.dataFim,
   });
+
+  const showRate = trpc.relatoriosGestor.showRate.useQuery({
+    dataInicio: inputDatas.dataInicio,
+    dataFim: inputDatas.dataFim,
+  }, { enabled: abaAtiva === 'show_rate' });
 
   const isLoading = visaoGeral.isLoading;
 
@@ -223,6 +236,9 @@ export default function Relatorios() {
             <TabsTrigger value="facebook" className="gap-1.5 text-xs sm:text-sm">
               <Zap className="h-3.5 w-3.5" /> Facebook ADS
             </TabsTrigger>
+            <TabsTrigger value="show_rate" className="gap-1.5 text-xs sm:text-sm">
+              <CalendarCheck className="h-3.5 w-3.5" /> Show Rate
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="producao" className="mt-4">
@@ -246,11 +262,15 @@ export default function Relatorios() {
           </TabsContent>
 
           <TabsContent value="origens" className="mt-4">
-            <AbaOrigens data={origens.data} isLoading={origens.isLoading} />
+            <AbaOrigens data={origens.data} isLoading={origens.isLoading} dadosAnteriores={origensAnterior.data} />
           </TabsContent>
 
           <TabsContent value="facebook" className="mt-4">
             <AbaFacebook data={facebookTimer.data} isLoading={facebookTimer.isLoading} />
+          </TabsContent>
+
+          <TabsContent value="show_rate" className="mt-4">
+            <AbaShowRate data={showRate.data} isLoading={showRate.isLoading} />
           </TabsContent>
         </Tabs>
       </div>
@@ -951,11 +971,29 @@ function AbaEvolucao({ data, isLoading, periodo }: { data: any; isLoading: boole
 // ABA: ORIGENS
 // ============================================================================
 
-function AbaOrigens({ data, isLoading }: { data: any; isLoading: boolean }) {
+function MoMBadge({ atual, anterior }: { atual: number; anterior: number | undefined }) {
+  if (anterior === undefined || anterior === 0) return null;
+  const diff = atual - anterior;
+  const pct = Math.round((diff / anterior) * 100);
+  if (pct === 0) return null;
+  const up = pct > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium ml-1 ${up ? "text-emerald-600" : "text-red-500"}`}>
+      {up ? "▲" : "▼"}{Math.abs(pct)}%
+    </span>
+  );
+}
+
+function AbaOrigens({ data, isLoading, dadosAnteriores }: { data: any; isLoading: boolean; dadosAnteriores?: any }) {
   if (isLoading) return <TableSkeleton rows={6} cols={7} />;
   if (!data || data.length === 0) return <EmptyState message="Sem dados de origem para o período." />;
 
   const totalLeads = data.reduce((s: number, o: any) => s + o.totalLeads, 0);
+  const totalAnterior = dadosAnteriores?.reduce((s: number, o: any) => s + o.totalLeads, 0) ?? 0;
+
+  const anteriorMap = new Map<string, any>(
+    (dadosAnteriores || []).map((o: any) => [o.origem, o])
+  );
 
   const origemLabels: Record<string, string> = {
     facebook: "Facebook ADS",
@@ -969,64 +1007,101 @@ function AbaOrigens({ data, isLoading }: { data: any; isLoading: boolean }) {
     webhook: "Webhook",
   };
 
+  const hasMoM = !!dadosAnteriores && dadosAnteriores.length > 0;
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <PieChart className="h-4 w-4" />
-          Análise por Origem — Volume, Conversão e VGV
-        </CardTitle>
-        <CardDescription>Qual canal traz mais leads e qual converte melhor?</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-y">
-              <tr>
-                <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground">Origem</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Leads</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">% Total</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Atend.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Agend.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Contratos</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Tx Conv.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">VGV</th>
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Perdidos</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {data.map((o: any) => {
-                const pctTotal = totalLeads > 0 ? Math.round((o.totalLeads / totalLeads) * 100) : 0;
-                return (
-                  <tr key={o.origem} className="hover:bg-muted/30">
-                    <td className="px-3 py-2.5 font-medium">{origemLabels[o.origem] || o.origem}</td>
-                    <td className="px-3 py-2.5 text-right font-semibold">{o.totalLeads}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <div className="w-12 h-1.5 bg-muted rounded-full">
-                          <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pctTotal}%` }} />
-                        </div>
-                        <span className="text-xs">{pctTotal}%</span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2.5 text-right">{o.emAtendimento}</td>
-                    <td className="px-3 py-2.5 text-right">{o.agendados}</td>
-                    <td className="px-3 py-2.5 text-right font-semibold">{o.contratosFechados}</td>
-                    <td className="px-3 py-2.5 text-right">
-                      <span className={`font-semibold ${o.taxaConversao >= 2 ? "text-emerald-600 dark:text-emerald-400" : o.taxaConversao >= 0.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
-                        {o.taxaConversao}%
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-emerald-700 dark:text-emerald-400">{formatCurrencyCompact(o.vgv)}</td>
-                    <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400">{o.perdidos}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+    <div className="space-y-4">
+      {hasMoM && (
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: "Total de Leads", atual: totalLeads, anterior: totalAnterior },
+            { label: "Contratos", atual: data.reduce((s: number, o: any) => s + o.contratosFechados, 0), anterior: dadosAnteriores.reduce((s: number, o: any) => s + o.contratosFechados, 0) },
+            { label: "Perdidos", atual: data.reduce((s: number, o: any) => s + o.perdidos, 0), anterior: dadosAnteriores.reduce((s: number, o: any) => s + o.perdidos, 0) },
+          ].map(({ label, atual, anterior }) => (
+            <Card key={label} className="p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="text-xl font-bold mt-0.5">
+                {atual}
+                <MoMBadge atual={atual} anterior={anterior} />
+              </p>
+              <p className="text-xs text-muted-foreground">vs {anterior} período anterior</p>
+            </Card>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <PieChart className="h-4 w-4" />
+            Análise por Origem — Volume, Conversão e VGV
+          </CardTitle>
+          <CardDescription>
+            Qual canal traz mais leads e qual converte melhor?
+            {hasMoM && <span className="ml-2 text-xs text-muted-foreground">▲▼ vs período anterior</span>}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 border-y">
+                <tr>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-muted-foreground">Origem</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Leads</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">% Total</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Atend.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Agend.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Contratos</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Tx Conv.</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">VGV</th>
+                  <th className="px-3 py-2.5 text-right text-xs font-semibold text-muted-foreground">Perdidos</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {data.map((o: any) => {
+                  const pctTotal = totalLeads > 0 ? Math.round((o.totalLeads / totalLeads) * 100) : 0;
+                  const prev = anteriorMap.get(o.origem);
+                  return (
+                    <tr key={o.origem} className="hover:bg-muted/30">
+                      <td className="px-3 py-2.5 font-medium">{origemLabels[o.origem] || o.origem}</td>
+                      <td className="px-3 py-2.5 text-right font-semibold">
+                        {o.totalLeads}
+                        {hasMoM && <MoMBadge atual={o.totalLeads} anterior={prev?.totalLeads} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <div className="w-12 h-1.5 bg-muted rounded-full">
+                            <div className="h-full bg-primary/60 rounded-full" style={{ width: `${pctTotal}%` }} />
+                          </div>
+                          <span className="text-xs">{pctTotal}%</span>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 text-right">{o.emAtendimento}</td>
+                      <td className="px-3 py-2.5 text-right">{o.agendados}</td>
+                      <td className="px-3 py-2.5 text-right font-semibold">
+                        {o.contratosFechados}
+                        {hasMoM && <MoMBadge atual={o.contratosFechados} anterior={prev?.contratosFechados} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <span className={`font-semibold ${o.taxaConversao >= 2 ? "text-emerald-600 dark:text-emerald-400" : o.taxaConversao >= 0.5 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400"}`}>
+                          {o.taxaConversao}%
+                        </span>
+                        {hasMoM && <MoMBadge atual={Number(o.taxaConversao)} anterior={prev ? Number(prev.taxaConversao) : undefined} />}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-emerald-700 dark:text-emerald-400">{formatCurrencyCompact(o.vgv)}</td>
+                      <td className="px-3 py-2.5 text-right text-red-600 dark:text-red-400">
+                        {o.perdidos}
+                        {hasMoM && <MoMBadge atual={o.perdidos} anterior={prev?.perdidos} />}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -1170,6 +1245,102 @@ function CardsSkeleton({ count }: { count: number }) {
           </CardContent>
         </Card>
       ))}
+    </div>
+  );
+}
+
+// ============================================================================
+// ABA SHOW RATE
+// ============================================================================
+
+function AbaShowRate({ data, isLoading }: { data: any[] | undefined; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}><CardContent className="p-4"><Skeleton className="h-8 w-full" /></CardContent></Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          <CalendarCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
+          <p>Nenhum agendamento no período selecionado.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const total = data.reduce((acc: number, r: any) => acc + r.total, 0);
+  const totalRealizados = data.reduce((acc: number, r: any) => acc + r.realizados, 0);
+  const taxaMedia = total > 0 ? Math.round((totalRealizados / total) * 100) : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Resumo geral */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Total de Agendamentos', value: total, color: 'text-foreground' },
+          { label: 'Realizados', value: totalRealizados, color: 'text-green-600 dark:text-green-400' },
+          { label: 'Não Compareceram', value: data.reduce((a: number, r: any) => a + r.naoCompareceram, 0), color: 'text-red-600 dark:text-red-400' },
+          { label: 'Taxa de Show Média', value: `${taxaMedia}%`, color: taxaMedia >= 70 ? 'text-green-600 dark:text-green-400' : taxaMedia >= 50 ? 'text-yellow-600' : 'text-red-600 dark:text-red-400' },
+        ].map(item => (
+          <Card key={item.label}>
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Tabela por corretor */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm">Show Rate por Corretor</CardTitle>
+          <CardDescription>Agendamentos realizados vs. total de agendamentos no período</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b">
+                <tr className="text-left">
+                  <th className="px-4 py-3 text-muted-foreground font-medium">Corretor</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Total</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Realizados</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Não Comp.</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Pendentes</th>
+                  <th className="px-4 py-3 text-muted-foreground font-medium text-right">Show Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row: any) => (
+                  <tr key={row.corretorId} className="border-b last:border-0 hover:bg-muted/30">
+                    <td className="px-4 py-3 font-medium">{row.corretorNome}</td>
+                    <td className="px-4 py-3 text-right">{row.total}</td>
+                    <td className="px-4 py-3 text-right text-green-600 dark:text-green-400">{row.realizados}</td>
+                    <td className="px-4 py-3 text-right text-red-600 dark:text-red-400">{row.naoCompareceram}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">{row.pendentes}</td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`font-semibold ${
+                        row.taxaShow >= 70 ? 'text-green-600 dark:text-green-400' :
+                        row.taxaShow >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
+                        'text-red-600 dark:text-red-400'
+                      }`}>
+                        {row.taxaShow}%
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

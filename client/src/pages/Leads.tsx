@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield, Flame, Thermometer, Snowflake
+  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,10 +58,13 @@ const statusLabels: Record<string, string> = {
   novo: "Novo",
   aguardando_atendimento: "Aguardando Atendimento",
   em_atendimento: "Em Atendimento",
+  qualificado: "Qualificado",
   agendado: "Agendado",
   visita_realizada: "Visita Realizada",
+  proposta_enviada: "Proposta Enviada",
   analise_credito: "Análise de Crédito",
   contrato_fechado: "Contrato Fechado",
+  pos_venda: "Pós-venda",
   perdido: "Perdido",
 };
 
@@ -215,6 +218,17 @@ export default function Leads() {
     },
     onError: (error) => {
       toast.error(`Erro ao enviar alerta: ${error.message}`);
+    },
+  });
+
+  const bulkUpdateStatusMutation = trpc.leads.bulkUpdateStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(`${data.atualizados} leads atualizados com sucesso!`);
+      setSelectedLeadIds([]);
+      utils.leads.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar status: ${error.message}`);
     },
   });
   const { data: leadHistory } = trpc.leads.getHistory.useQuery(
@@ -435,13 +449,21 @@ export default function Leads() {
     await executeStatusUpdate(leadId, newStatus);
   };
 
-  const executeStatusUpdate = async (leadId: number, newStatus: string, contactType?: 'ligacao' | 'whatsapp', motivoPerdido?: string) => {
+  const executeStatusUpdate = async (
+    leadId: number,
+    newStatus: string,
+    contactType?: 'ligacao' | 'whatsapp',
+    motivoPerdidoTexto?: string,
+    motivoPerdaCategoria?: string,
+  ) => {
     try {
       const updateData: any = { status: newStatus as any };
-      
-      // Se foi fornecido motivo da perda, incluir no update
-      if (motivoPerdido) {
-        updateData.motivoPerdido = motivoPerdido;
+
+      if (motivoPerdidoTexto) {
+        updateData.motivoPerdido = motivoPerdidoTexto;
+      }
+      if (motivoPerdaCategoria) {
+        updateData.motivoPerdaCategoria = motivoPerdaCategoria;
       }
       
       await updateLeadMutation.mutateAsync({
@@ -556,14 +578,36 @@ export default function Leads() {
               Novo Lead
             </Button>
             {isGestor && selectedLeadIds.length > 0 && (
-              <Button 
-                onClick={() => setTransferirEmLoteDialog(true)} 
-                variant="secondary"
-                className="gap-2"
-              >
-                <UserPlus className="h-4 w-4" />
-                Transferir {selectedLeadIds.length} {selectedLeadIds.length === 1 ? 'Lead' : 'Leads'}
-              </Button>
+              <>
+                <Button
+                  onClick={() => setTransferirEmLoteDialog(true)}
+                  variant="secondary"
+                  className="gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Transferir {selectedLeadIds.length} {selectedLeadIds.length === 1 ? 'Lead' : 'Leads'}
+                </Button>
+                <Select
+                  onValueChange={(novoStatus) => {
+                    if (novoStatus && window.confirm(`Alterar ${selectedLeadIds.length} lead(s) para "${statusLabels[novoStatus] ?? novoStatus}"?`)) {
+                      bulkUpdateStatusMutation.mutate({ ids: selectedLeadIds, novoStatus: novoStatus as any });
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-auto gap-2 border-dashed">
+                    <SelectValue placeholder="Alterar status em massa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="aguardando_atendimento">Aguardando Atendimento</SelectItem>
+                    <SelectItem value="em_atendimento">Em Atendimento</SelectItem>
+                    <SelectItem value="agendado">Agendado</SelectItem>
+                    <SelectItem value="visita_realizada">Visita Realizada</SelectItem>
+                    <SelectItem value="analise_credito">Análise de Crédito</SelectItem>
+                    <SelectItem value="contrato_fechado">Contrato Fechado</SelectItem>
+                    <SelectItem value="perdido">Perdido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
             )}
           </div>
         </div>
@@ -1128,9 +1172,19 @@ export default function Leads() {
                 <TableBody>
                   {filteredLeads.map((lead) => {
                     const project = projects?.find(p => p.id === lead.projectId);
-                    
+                    const statusAtivo = !['contrato_fechado', 'perdido', 'novo'].includes(lead.status);
+                    const diasParado = lead.ultimaInteracao && statusAtivo
+                      ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / 86_400_000)
+                      : null;
+                    const estaParado = diasParado !== null && diasParado >= 3;
+
                     return (
-                      <TableRow key={lead.id} className={lead.origemWebhook ? 'bg-red-50/30' : ''}>
+                      <TableRow key={lead.id} className={
+                        lead.origemWebhook ? 'bg-red-50/30' :
+                        estaParado && diasParado! >= 15 ? 'bg-red-50/20 dark:bg-red-950/10' :
+                        estaParado && diasParado! >= 7  ? 'bg-orange-50/20 dark:bg-orange-950/10' :
+                        estaParado ? 'bg-yellow-50/20 dark:bg-yellow-950/10' : ''
+                      }>
                         {isGestor && (
                           <TableCell>
                             <input
@@ -1162,9 +1216,21 @@ export default function Leads() {
                         <TableCell>{project?.nome || lead.projetoCustom || "-"}</TableCell>
                         {isGestor && <TableCell>{lead.corretorNome || "-"}</TableCell>}
                         <TableCell>
-                          <Badge variant={getStatusVariant(lead.status)}>
-                            {statusLabels[lead.status]}
-                          </Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant={getStatusVariant(lead.status)}>
+                              {statusLabels[lead.status]}
+                            </Badge>
+                            {estaParado && (
+                              <Badge variant="outline" className={`text-xs ${
+                                diasParado! >= 15 ? 'text-red-600 border-red-400' :
+                                diasParado! >= 7  ? 'text-orange-600 border-orange-400' :
+                                                    'text-yellow-600 border-yellow-400'
+                              }`}>
+                                <Clock className="h-3 w-3 mr-1" />
+                                Parado {diasParado}d
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
@@ -1325,11 +1391,14 @@ export default function Leads() {
             
             {selectedLead && (
               <Tabs defaultValue="detalhes" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
                   <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
                   <TabsTrigger value="copilot">Copilot & Histórico</TabsTrigger>
                   <TabsTrigger value="ia" className="flex items-center gap-1.5">
                     <span>🤖</span> Executando com IA
+                  </TabsTrigger>
+                  <TabsTrigger value="scripts" className="flex items-center gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5" /> Scripts
                   </TabsTrigger>
                 </TabsList>
 
@@ -1811,24 +1880,35 @@ export default function Leads() {
 
                 {/* ── ABA: EXECUTANDO COM IA ── */}
                 <TabsContent value="ia">
-                  <ExecutandoComIA
-                    lead={{
-                      id: selectedLead.id,
-                      nome: selectedLead.nome,
-                      faixaRenda: selectedLead.faixaRenda,
-                      origem: selectedLead.origem,
-                      observacoes: selectedLead.observacoes,
-                      finalidadeImovel: selectedLead.finalidadeImovel,
-                      status: selectedLead.status,
-                      projectId: selectedLead.projectId,
-                      projetoCustom: selectedLead.projetoCustom,
-                    }}
-                    nomeEmpreendimento={
-                      projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
-                      selectedLead.projetoCustom ||
-                      undefined
-                    }
-                  />
+                  <div className="space-y-4">
+                    <IALeadPanel leadId={selectedLead.id} />
+                    <div className="border-t pt-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Script WhatsApp com IA</p>
+                      <ExecutandoComIA
+                        lead={{
+                          id: selectedLead.id,
+                          nome: selectedLead.nome,
+                          faixaRenda: selectedLead.faixaRenda,
+                          origem: selectedLead.origem,
+                          observacoes: selectedLead.observacoes,
+                          finalidadeImovel: selectedLead.finalidadeImovel,
+                          status: selectedLead.status,
+                          projectId: selectedLead.projectId,
+                          projetoCustom: selectedLead.projetoCustom,
+                        }}
+                        nomeEmpreendimento={
+                          projects?.find((p: { id: number }) => p.id === selectedLead.projectId)?.nome ||
+                          selectedLead.projetoCustom ||
+                          undefined
+                        }
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* ── ABA: SCRIPTS ── */}
+                <TabsContent value="scripts">
+                  <ScriptsLeadTab leadStatus={selectedLead?.status} />
                 </TabsContent>
               </Tabs>
             )}
@@ -2134,7 +2214,7 @@ export default function Leads() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="motivo">Motivo da Perda *</Label>
+                <Label htmlFor="motivo">Categoria da Perda *</Label>
                 <Select value={motivoPerdido} onValueChange={setMotivoPerdido}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o motivo" />
@@ -2147,23 +2227,25 @@ export default function Leads() {
                     <SelectItem value="localizacao">Localização Não Atende</SelectItem>
                     <SelectItem value="nao_atende">Não Atende / Não Responde</SelectItem>
                     <SelectItem value="desistiu">Desistiu da Compra</SelectItem>
+                    <SelectItem value="mudou_planos">Mudou de Planos</SelectItem>
+                    <SelectItem value="sem_entrada">Sem Entrada / Sem Recurso Próprio</SelectItem>
                     <SelectItem value="outro">Outro Motivo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
-              {motivoPerdido === 'outro' && (
-                <div className="space-y-2">
-                  <Label htmlFor="outro-motivo">Especifique o Motivo *</Label>
-                  <Textarea
-                    id="outro-motivo"
-                    placeholder="Descreva o motivo da perda..."
-                    value={outroMotivo}
-                    onChange={(e) => setOutroMotivo(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="outro-motivo">
+                  {motivoPerdido === 'outro' ? 'Especifique o Motivo *' : 'Observações (opcional)'}
+                </Label>
+                <Textarea
+                  id="outro-motivo"
+                  placeholder={motivoPerdido === 'outro' ? 'Descreva o motivo da perda...' : 'Detalhes adicionais...'}
+                  value={outroMotivo}
+                  onChange={(e) => setOutroMotivo(e.target.value)}
+                  rows={3}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => {
@@ -2174,7 +2256,7 @@ export default function Leads() {
               }}>
                 Cancelar
               </Button>
-              <Button 
+              <Button
                 onClick={async () => {
                   if (!motivoPerdido) {
                     toast.error('Selecione o motivo da perda');
@@ -2184,10 +2266,15 @@ export default function Leads() {
                     toast.error('Especifique o motivo da perda');
                     return;
                   }
-                  
+
                   if (pendingLossChange) {
-                    const motivoFinal = motivoPerdido === 'outro' ? outroMotivo : motivoPerdido;
-                    await executeStatusUpdate(pendingLossChange.leadId, 'perdido', undefined, motivoFinal);
+                    await executeStatusUpdate(
+                      pendingLossChange.leadId,
+                      'perdido',
+                      undefined,
+                      outroMotivo.trim() || undefined,
+                      motivoPerdido,
+                    );
                     setMotivoPerdidoDialog(false);
                     setPendingLossChange(null);
                     setMotivoPerdido('');
@@ -2358,5 +2445,234 @@ export default function Leads() {
         }}
       />
     </DashboardLayout>
+  );
+}
+
+function IALeadPanel({ leadId }: { leadId: number }) {
+  const [abaAtiva, setAbaAtiva] = useState<"resumo" | "acao" | "temperatura">("resumo");
+
+  const resumoQuery = trpc.ia.resumoLead.useQuery({ leadId }, { enabled: abaAtiva === "resumo", staleTime: 5 * 60_000 });
+  const acaoQuery = trpc.ia.sugestaoProximaAcao.useQuery({ leadId }, { enabled: abaAtiva === "acao", staleTime: 5 * 60_000 });
+  const [tempResult, setTempResult] = useState<{ temperatura: string; confianca: string; motivo: string } | null>(null);
+  const classificarMutation = trpc.ia.classificarTemperatura.useMutation({
+    onSuccess: (data) => setTempResult(data),
+  });
+
+  const URGENCIA_COLORS: Record<string, string> = {
+    imediata: "text-red-600 font-semibold",
+    hoje: "text-orange-500 font-semibold",
+    essa_semana: "text-yellow-600",
+  };
+  const TEMP_COLORS: Record<string, string> = {
+    quente: "text-red-500",
+    morno: "text-orange-400",
+    frio: "text-blue-500",
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 border-b pb-2">
+        {(["resumo", "acao", "temperatura"] as const).map((aba) => (
+          <button
+            key={aba}
+            onClick={() => setAbaAtiva(aba)}
+            className={`text-xs px-3 py-1 rounded-full transition-colors ${abaAtiva === aba ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+          >
+            {aba === "resumo" ? "📋 Resumo" : aba === "acao" ? "⚡ Próxima Ação" : "🌡️ Temperatura"}
+          </button>
+        ))}
+      </div>
+
+      {abaAtiva === "resumo" && (
+        <div className="space-y-3">
+          {resumoQuery.isLoading && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Gerando resumo com IA...</p>}
+          {resumoQuery.error && <p className="text-sm text-red-500 text-center py-4">{resumoQuery.error.message}</p>}
+          {resumoQuery.data && (
+            <>
+              <div className="bg-muted/40 rounded-lg p-3 space-y-1">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Resumo</p>
+                <p className="text-sm leading-relaxed">{resumoQuery.data.resumo}</p>
+              </div>
+              {resumoQuery.data.pontosCriticos.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pontos Críticos</p>
+                  <ul className="space-y-1">
+                    {resumoQuery.data.pontosCriticos.map((p, i) => (
+                      <li key={i} className="text-sm flex items-start gap-2"><span className="text-amber-500 mt-0.5">⚠</span>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-3">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Próximo Follow-up</p>
+                <p className="text-sm">{resumoQuery.data.proximoFollowup}</p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {abaAtiva === "acao" && (
+        <div className="space-y-3">
+          {acaoQuery.isLoading && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Analisando histórico...</p>}
+          {acaoQuery.error && <p className="text-sm text-red-500 text-center py-4">{acaoQuery.error.message}</p>}
+          {acaoQuery.data && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-semibold">{acaoQuery.data.acao}</span>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{acaoQuery.data.canal}</span>
+                <span className={`text-xs ${URGENCIA_COLORS[acaoQuery.data.urgencia] || ""}`}>{acaoQuery.data.urgencia?.replace("_", " ")}</span>
+              </div>
+              <p className="text-xs text-muted-foreground italic">{acaoQuery.data.justificativa}</p>
+              {acaoQuery.data.script && (
+                <div className="bg-muted/40 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Script sugerido</p>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs gap-1" onClick={() => navigator.clipboard.writeText(acaoQuery.data!.script).then(() => toast.success("Copiado!"))}>
+                      <Copy className="h-3 w-3" />Copiar
+                    </Button>
+                  </div>
+                  <p className="text-sm whitespace-pre-wrap">{acaoQuery.data.script}</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {abaAtiva === "temperatura" && (
+        <div className="space-y-3">
+          {!tempResult && !classificarMutation.isPending && (
+            <div className="text-center py-6 space-y-3">
+              <p className="text-sm text-muted-foreground">A IA irá analisar o histórico e perfil do lead para classificar a temperatura.</p>
+              <Button size="sm" onClick={() => classificarMutation.mutate({ leadId, salvar: false })}>
+                🌡️ Classificar com IA
+              </Button>
+            </div>
+          )}
+          {classificarMutation.isPending && <p className="text-sm text-muted-foreground text-center py-6 animate-pulse">Analisando lead...</p>}
+          {classificarMutation.error && <p className="text-sm text-red-500 text-center py-4">{classificarMutation.error.message}</p>}
+          {tempResult && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className={`text-2xl font-bold capitalize ${TEMP_COLORS[tempResult.temperatura] || ""}`}>{tempResult.temperatura}</span>
+                <span className="text-xs bg-muted px-2 py-0.5 rounded-full">confiança: {tempResult.confianca}</span>
+              </div>
+              <p className="text-sm text-muted-foreground">{tempResult.motivo}</p>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => classificarMutation.mutate({ leadId, salvar: true })} disabled={classificarMutation.isPending}>
+                  Salvar no lead
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => { setTempResult(null); classificarMutation.reset(); }}>
+                  Reclassificar
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Map lead status → script category for contextual pre-filtering
+const STATUS_CATEGORIA_MAP: Record<string, string> = {
+  novo: "primeiro_contato",
+  aguardando_atendimento: "primeiro_contato",
+  em_atendimento: "primeiro_contato",
+  agendado: "agendamento",
+  visita_realizada: "pos_visita",
+  analise_credito: "objecao_credito",
+  contrato_fechado: "fechamento",
+  perdido: "reativacao",
+};
+
+function ScriptsLeadTab({ leadStatus }: { leadStatus?: string }) {
+  const categoriaContexto = leadStatus ? STATUS_CATEGORIA_MAP[leadStatus] : undefined;
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>(categoriaContexto || "todas");
+  const [busca, setBusca] = useState("");
+
+  const { data: scripts = [], isLoading } = trpc.scripts.list.useQuery({});
+
+  function copiar(conteudo: string) {
+    navigator.clipboard.writeText(conteudo).then(() => {
+      toast.success("Script copiado!");
+    }).catch(() => {
+      toast.error("Não foi possível copiar automaticamente");
+    });
+  }
+
+  const CATEGORIA_LABELS: Record<string, string> = {
+    primeiro_contato: "Primeiro Contato",
+    agendamento: "Agendamento",
+    pos_visita: "Pós-visita",
+    objecao_preco: "Objeção: Preço",
+    objecao_documentacao: "Objeção: Doc.",
+    objecao_credito: "Objeção: Crédito",
+    nao_compareceu: "Não Compareceu",
+    reativacao: "Reativação",
+    fechamento: "Fechamento",
+    outro: "Outro",
+  };
+
+  const categorias = ["todas", ...Object.keys(CATEGORIA_LABELS)];
+
+  const filtrados = scripts.filter((s: any) => {
+    const matchCategoria = categoriaSelecionada === "todas" || s.categoria === categoriaSelecionada;
+    const matchBusca = !busca || s.titulo.toLowerCase().includes(busca.toLowerCase()) || s.conteudo.toLowerCase().includes(busca.toLowerCase());
+    return matchCategoria && matchBusca;
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-32">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <input
+            className="w-full pl-8 pr-3 py-1.5 text-sm border rounded-md bg-background"
+            placeholder="Buscar..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+        <select
+          className="text-sm border rounded-md px-2 py-1.5 bg-background"
+          value={categoriaSelecionada}
+          onChange={(e) => setCategoriaSelecionada(e.target.value)}
+        >
+          <option value="todas">Todas</option>
+          {Object.entries(CATEGORIA_LABELS).map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+      </div>
+      {categoriaContexto && categoriaSelecionada !== "todas" && (
+        <p className="text-xs text-muted-foreground flex items-center gap-1">
+          <BookOpen className="h-3 w-3" />
+          Scripts sugeridos para o status atual: <strong>{CATEGORIA_LABELS[categoriaContexto]}</strong>
+        </p>
+      )}
+      {isLoading && <p className="text-sm text-muted-foreground py-4 text-center">Carregando scripts...</p>}
+      {!isLoading && filtrados.length === 0 && (
+        <p className="text-sm text-muted-foreground py-4 text-center">Nenhum script encontrado</p>
+      )}
+      <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+        {filtrados.map((script: any) => (
+          <div key={script.id} className="border rounded-lg p-3 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">{script.titulo}</p>
+                <p className="text-xs text-muted-foreground">{CATEGORIA_LABELS[script.categoria] || script.categoria}</p>
+              </div>
+              <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={() => copiar(script.conteudo)}>
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-3">{script.conteudo}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -37,7 +37,7 @@ import {
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
-  Shield, Briefcase, Calculator, Phone, DollarSign, Zap
+  Shield, Briefcase, Calculator, Phone, DollarSign, Zap, AlertTriangle
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -80,6 +80,7 @@ const menuGroups = [
       { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor", roles: ["admin", "superintendente"] },
       { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
       { icon: Zap, label: "Modo Blitz", path: "/modo-blitz", roles: ["corretor"] },
+      { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
     ],
   },
   {
@@ -130,6 +131,7 @@ const menuGroups = [
     roles: ["gestor", "admin", "superintendente"],
     items: [
       { icon: Users, label: "Minha Equipe", path: "/minha-equipe", roles: ["gestor"] },
+      { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", roles: ["gestor", "admin", "superintendente"] },
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users, label: "Gestão de Equipes", path: "/gestao-equipes", roles: ["admin", "superintendente"] },

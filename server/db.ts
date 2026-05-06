@@ -47,7 +47,8 @@ import {
   resumoPresencaDiaria,
   carteiraAtiva,
   carteiraTarefas,
-  meuNegocioParametros
+  meuNegocioParametros,
+  scriptsVendas, InsertScriptVendas, ScriptVendas,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { appendLead } from './googleSheetsSync';
@@ -1216,6 +1217,42 @@ export async function getLeadById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// Altera o status de múltiplos leads de uma vez.
+// Registra transição de status para cada lead individualmente para manter auditoria.
+export async function bulkUpdateLeadStatus(
+  ids: number[],
+  novoStatus: string,
+  alteradoPorId: number,
+): Promise<{ atualizados: number }> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  if (ids.length === 0) return { atualizados: 0 };
+
+  // Buscar leads atuais para registrar transições
+  const leadsAtuais = await db.select({ id: leads.id, status: leads.status, corretorId: leads.corretorId })
+    .from(leads)
+    .where(inArray(leads.id, ids));
+
+  // Atualizar em bulk
+  await db.update(leads)
+    .set({ status: novoStatus as any, updatedAt: new Date(), ultimaInteracao: new Date() })
+    .where(inArray(leads.id, ids));
+
+  // Registrar transições de status individualmente (não bloqueia se falhar)
+  for (const lead of leadsAtuais) {
+    if (lead.status !== novoStatus) {
+      await registrarTransicaoStatus({
+        leadId: lead.id,
+        corretorId: lead.corretorId || alteradoPorId,
+        statusAnterior: lead.status as any,
+        statusNovo: novoStatus as any,
+      }).catch(() => {}); // log de transição não bloqueia a operação
+    }
+  }
+
+  return { atualizados: leadsAtuais.length };
+}
+
 export async function updateLead(id: number, data: Partial<InsertLead>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1323,7 +1360,7 @@ export async function getLeadsNaoDistribuidos() {
 export async function getLeadsPendentesFollowup() {
   const db = await getDb();
   if (!db) return [];
-  
+
   const now = new Date();
   // LIMIT 1000 para evitar full table scan com 31k+ leads
   return await db.select().from(leads)
@@ -1335,6 +1372,139 @@ export async function getLeadsPendentesFollowup() {
     )
     .orderBy(leads.proximoFollowup)
     .limit(1000);
+}
+
+// Retorna contagem de leads "parados" por faixa de dias sem interação.
+// "Parado" = ativo (não perdido/fechado/lixeira) e sem ultimaInteracao há N+ dias.
+export async function getResumoLeadsParados(corretoresIds?: number[] | null): Promise<{
+  total: number;
+  faixas: { label: string; dias: number; count: number }[];
+}> {
+  const db = await getDb();
+  if (!db) return { total: 0, faixas: [] };
+
+  const statusAtivos = ['aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito'];
+  const baseConditions: any[] = [
+    inArray(leads.status, statusAtivos),
+    eq(leads.naLixeira, false),
+  ];
+  if (corretoresIds && corretoresIds.length > 0) {
+    baseConditions.push(inArray(leads.corretorId, corretoresIds));
+  }
+
+  const faixas = [
+    { label: '3-7 dias', dias: 3, max: 7 },
+    { label: '7-15 dias', dias: 7, max: 15 },
+    { label: '+15 dias', dias: 15, max: 99999 },
+  ];
+
+  const results = await Promise.allSettled(
+    faixas.map(f => {
+      const cutoffMin = new Date(Date.now() - f.dias * 86_400_000);
+      const cutoffMax = new Date(Date.now() - f.max * 86_400_000);
+      const conds: any[] = [
+        ...baseConditions,
+        lte(leads.ultimaInteracao, cutoffMin),
+      ];
+      if (f.max < 99999) conds.push(gt(leads.ultimaInteracao, cutoffMax));
+      return db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(and(...conds));
+    })
+  );
+
+  const counts = results.map((r, i) => ({
+    label: faixas[i].label,
+    dias: faixas[i].dias,
+    count: r.status === 'fulfilled' ? Number(r.value[0]?.count ?? 0) : 0,
+  }));
+
+  return { total: counts.reduce((s, c) => s + c.count, 0), faixas: counts };
+}
+
+// Retorna leads prioritários para o bloco "O que fazer agora" do corretor.
+// Cada categoria tem limite de 10 registros — apenas para UI (não paginado).
+export async function getLeadsPrioritariosCorretor(corretorId: number): Promise<{
+  followUpsVencidos: { id: number; nome: string; telefone: string; status: string }[];
+  leadsQuentes:      { id: number; nome: string; telefone: string; status: string }[];
+  semPrimeiroContato: { id: number; nome: string; telefone: string; createdAt: Date }[];
+  agendamentosHoje:  { id: number; leadNome: string; dataAgendamento: Date; horaAgendamento: string | null; status: string }[];
+}> {
+  const db = await getDb();
+  if (!db) return { followUpsVencidos: [], leadsQuentes: [], semPrimeiroContato: [], agendamentosHoje: [] };
+
+  const agora = new Date();
+  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const fimHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59);
+  const statusAtivos = ['aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito'];
+
+  const [fvResult, lqResult, spcResult, agResult] = await Promise.allSettled([
+    // 1. Follow-ups vencidos
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, status: leads.status })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        lte(leads.proximoFollowup, agora),
+        inArray(leads.status, statusAtivos),
+        eq(leads.naLixeira, false),
+      ))
+      .orderBy(asc(leads.proximoFollowup))
+      .limit(10),
+
+    // 2. Leads quentes sem interação hoje
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, status: leads.status })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        eq(leads.temperatura, 'quente'),
+        inArray(leads.status, statusAtivos),
+        eq(leads.naLixeira, false),
+        or(
+          isNull(leads.ultimaInteracao),
+          lt(leads.ultimaInteracao, inicioHoje),
+        ),
+      ))
+      .orderBy(desc(leads.createdAt))
+      .limit(10),
+
+    // 3. Leads atribuídos sem primeiro contato
+    db.select({ id: leads.id, nome: leads.nome, telefone: leads.telefone, createdAt: leads.createdAt })
+      .from(leads)
+      .where(and(
+        eq(leads.corretorId, corretorId),
+        isNull(leads.primeiroContatoEm),
+        inArray(leads.status, ['aguardando_atendimento', 'em_atendimento']),
+        eq(leads.naLixeira, false),
+      ))
+      .orderBy(asc(leads.createdAt))
+      .limit(10),
+
+    // 4. Agendamentos de hoje
+    db.select({
+        id: agendamentos.id,
+        leadNome: leads.nome,
+        dataAgendamento: agendamentos.dataAgendamento,
+        horaAgendamento: agendamentos.horaAgendamento,
+        status: agendamentos.status,
+      })
+      .from(agendamentos)
+      .leftJoin(leads, eq(agendamentos.leadId, leads.id))
+      .where(and(
+        eq(agendamentos.corretorId, corretorId),
+        gte(agendamentos.dataAgendamento, inicioHoje),
+        lte(agendamentos.dataAgendamento, fimHoje),
+        inArray(agendamentos.status, ['pendente', 'confirmado']),
+      ))
+      .orderBy(asc(agendamentos.dataAgendamento))
+      .limit(10),
+  ]);
+
+  return {
+    followUpsVencidos:   fvResult.status  === 'fulfilled' ? fvResult.value  : [],
+    leadsQuentes:        lqResult.status  === 'fulfilled' ? lqResult.value  : [],
+    semPrimeiroContato:  spcResult.status === 'fulfilled' ? spcResult.value : [],
+    agendamentosHoje:    agResult.status  === 'fulfilled' ? agResult.value.map(a => ({
+      ...a, leadNome: a.leadNome ?? 'Cliente',
+    })) : [],
+  };
 }
 
 // ============================================================================
@@ -11665,3 +11835,274 @@ export async function getLeadsParaBlitz(
 
   return result;
 }
+
+// ============================================================================
+// SCRIPTS DE VENDAS — Biblioteca de Scripts e Objeções
+// ============================================================================
+
+export async function getScriptsVendas(filtros?: { categoria?: string; tipo?: string; ativo?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions: any[] = [];
+  if (filtros?.categoria) conditions.push(eq(scriptsVendas.categoria, filtros.categoria as any));
+  if (filtros?.tipo) conditions.push(eq(scriptsVendas.tipo, filtros.tipo as any));
+  if (filtros?.ativo !== undefined) conditions.push(eq(scriptsVendas.ativo, filtros.ativo));
+  else conditions.push(eq(scriptsVendas.ativo, true)); // por padrão só ativos
+
+  return await db.select().from(scriptsVendas)
+    .where(conditions.length ? and(...conditions) : undefined)
+    .orderBy(asc(scriptsVendas.categoria), asc(scriptsVendas.ordem), asc(scriptsVendas.titulo));
+}
+
+export async function createScriptVendas(data: Omit<InsertScriptVendas, 'id' | 'createdAt' | 'updatedAt'>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const [result] = await db.insert(scriptsVendas).values(data).$returningId();
+  return result;
+}
+
+export async function updateScriptVendas(id: number, data: Partial<InsertScriptVendas>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(scriptsVendas).set({ ...data, updatedAt: new Date() }).where(eq(scriptsVendas.id, id));
+  return { success: true };
+}
+
+export async function deleteScriptVendas(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.delete(scriptsVendas).where(eq(scriptsVendas.id, id));
+  return { success: true };
+}
+
+// ============================================================================
+// ALERTAS GESTOR — Central de Alertas
+// ============================================================================
+
+export async function getAlertasGestor(corretoresIds?: number[]) {
+  const db = await getDb();
+  if (!db) return {
+    followUpsVencidos: [],
+    agendamentosSemConfirmacao: [],
+    analisesSemRetorno: [],
+    corretoresSemAtividade: [],
+    leadsSemPrimeiroContato: [],
+  };
+
+  const agora = new Date();
+  const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+  const amanha = new Date(inicioHoje); amanha.setDate(amanha.getDate() + 1);
+  const depoisDeAmanha = new Date(amanha); depoisDeAmanha.setDate(depoisDeAmanha.getDate() + 1);
+  const ha5Dias = new Date(agora); ha5Dias.setDate(ha5Dias.getDate() - 5);
+  const ha30min = new Date(agora.getTime() - 30 * 60 * 1000);
+
+  const corretorFilter = (col: any) => corretoresIds?.length ? inArray(col, corretoresIds) : undefined;
+
+  const [
+    fuResult,
+    agendResult,
+    analiseResult,
+    atividadeResult,
+    semContatoResult,
+  ] = await Promise.allSettled([
+    // Follow-ups vencidos
+    db.select({
+      id: followUps.id,
+      leadId: followUps.leadId,
+      leadNome: leads.nome,
+      leadTelefone: leads.telefone,
+      corretorId: followUps.corretorId,
+      corretorNome: users.name,
+      dataFollowUp: followUps.dataFollowUp,
+    })
+    .from(followUps)
+    .innerJoin(leads, eq(followUps.leadId, leads.id))
+    .leftJoin(users, eq(followUps.corretorId, users.id))
+    .where(and(
+      lt(followUps.dataFollowUp, agora),
+      eq(followUps.status, 'pendente'),
+      ...(corretoresIds?.length ? [inArray(followUps.corretorId, corretoresIds)] : []),
+    ))
+    .orderBy(asc(followUps.dataFollowUp))
+    .limit(50),
+
+    // Agendamentos de amanhã sem confirmação
+    db.select({
+      id: agendamentos.id,
+      leadNome: leads.nome,
+      corretorId: agendamentos.corretorId,
+      corretorNome: users.name,
+      dataAgendamento: agendamentos.dataAgendamento,
+      horaAgendamento: agendamentos.horaAgendamento,
+    })
+    .from(agendamentos)
+    .innerJoin(leads, eq(agendamentos.leadId, leads.id))
+    .leftJoin(users, eq(agendamentos.corretorId, users.id))
+    .where(and(
+      gte(agendamentos.dataAgendamento, amanha),
+      lt(agendamentos.dataAgendamento, depoisDeAmanha),
+      eq(agendamentos.status, 'pendente'),
+      ...(corretoresIds?.length ? [inArray(agendamentos.corretorId, corretoresIds)] : []),
+    ))
+    .orderBy(asc(agendamentos.horaAgendamento))
+    .limit(50),
+
+    // Análises de crédito sem retorno > 5 dias
+    db.select({
+      id: analises_credito.id,
+      leadNome: leads.nome,
+      corretorId: analises_credito.corretorId,
+      corretorNome: users.name,
+      createdAt: analises_credito.createdAt,
+    })
+    .from(analises_credito)
+    .innerJoin(leads, eq(analises_credito.leadId, leads.id))
+    .leftJoin(users, eq(analises_credito.corretorId, users.id))
+    .where(and(
+      eq(analises_credito.status, 'enviada'),
+      lt(analises_credito.createdAt, ha5Dias),
+      ...(corretoresIds?.length ? [inArray(analises_credito.corretorId, corretoresIds)] : []),
+    ))
+    .orderBy(asc(analises_credito.createdAt))
+    .limit(50),
+
+    // Corretores sem atividade hoje (usando atividadesDiarias)
+    db.select({
+      id: users.id,
+      nome: users.name,
+      role: users.role,
+      status: users.status,
+    })
+    .from(users)
+    .where(and(
+      eq(users.status, 'presente'),
+      inArray(users.role, ['corretor']),
+      ...(corretoresIds?.length ? [inArray(users.id, corretoresIds)] : []),
+      sql`${users.id} NOT IN (
+        SELECT corretorId FROM atividades_diarias
+        WHERE DATE(data) = DATE(NOW())
+      )`,
+    ))
+    .orderBy(asc(users.name))
+    .limit(30),
+
+    // Leads aguardando atendimento > 30 min sem contato
+    db.select({
+      id: leads.id,
+      nome: leads.nome,
+      telefone: leads.telefone,
+      corretorId: leads.corretorId,
+      corretorNome: users.name,
+      createdAt: leads.createdAt,
+    })
+    .from(leads)
+    .leftJoin(users, eq(leads.corretorId, users.id))
+    .where(and(
+      eq(leads.status, 'aguardando_atendimento'),
+      lt(leads.createdAt, ha30min),
+      isNull(leads.ultimoContato),
+      eq(leads.naLixeira, false),
+      ...(corretoresIds?.length ? [inArray(leads.corretorId, corretoresIds)] : []),
+    ))
+    .orderBy(asc(leads.createdAt))
+    .limit(50),
+  ]);
+
+  return {
+    followUpsVencidos: fuResult.status === 'fulfilled' ? fuResult.value : [],
+    agendamentosSemConfirmacao: agendResult.status === 'fulfilled' ? agendResult.value : [],
+    analisesSemRetorno: analiseResult.status === 'fulfilled' ? analiseResult.value : [],
+    corretoresSemAtividade: atividadeResult.status === 'fulfilled' ? atividadeResult.value : [],
+    leadsSemPrimeiroContato: semContatoResult.status === 'fulfilled' ? semContatoResult.value : [],
+  };
+}
+
+// ============================================================================
+// SHOW RATE POR CORRETOR
+// ============================================================================
+
+export async function getShowRatePorCorretor(
+  dataInicio: Date,
+  dataFim: Date,
+  corretoresIds?: number[],
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [
+    gte(agendamentos.dataAgendamento, dataInicio),
+    lte(agendamentos.dataAgendamento, dataFim),
+    ...(corretoresIds?.length ? [inArray(agendamentos.corretorId, corretoresIds)] : []),
+  ];
+
+  const rows = await db.select({
+    corretorId: agendamentos.corretorId,
+    corretorNome: users.name,
+    total: sql<number>`COUNT(*)`,
+    realizados: sql<number>`SUM(CASE WHEN ${agendamentos.status} = 'realizado' THEN 1 ELSE 0 END)`,
+    naoCompareceram: sql<number>`SUM(CASE WHEN ${agendamentos.status} = 'nao_compareceu' THEN 1 ELSE 0 END)`,
+    cancelados: sql<number>`SUM(CASE WHEN ${agendamentos.status} = 'cancelado' THEN 1 ELSE 0 END)`,
+    pendentes: sql<number>`SUM(CASE WHEN ${agendamentos.status} = 'pendente' THEN 1 ELSE 0 END)`,
+  })
+  .from(agendamentos)
+  .leftJoin(users, eq(agendamentos.corretorId, users.id))
+  .where(and(...conditions))
+  .groupBy(agendamentos.corretorId, users.name)
+  .orderBy(desc(sql`SUM(CASE WHEN ${agendamentos.status} = 'realizado' THEN 1 ELSE 0 END)`));
+
+  return rows.map(r => ({
+    corretorId: r.corretorId,
+    corretorNome: r.corretorNome ?? 'Desconhecido',
+    total: Number(r.total),
+    realizados: Number(r.realizados),
+    naoCompareceram: Number(r.naoCompareceram),
+    cancelados: Number(r.cancelados),
+    pendentes: Number(r.pendentes),
+    taxaShow: Number(r.total) > 0 ? Math.round((Number(r.realizados) / Number(r.total)) * 100) : 0,
+  }));
+}
+
+// ============================================================================
+// MOTIVOS DE PERDA — para gráfico no dashboard
+// ============================================================================
+
+export async function getMotivosPerda(corretoresIds?: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({
+    categoria: leads.motivoPerdaCategoria,
+    total: sql<number>`COUNT(*)`,
+  })
+  .from(leads)
+  .where(and(
+    eq(leads.status, 'perdido'),
+    eq(leads.naLixeira, false),
+    ...(corretoresIds?.length ? [inArray(leads.corretorId, corretoresIds)] : []),
+  ))
+  .groupBy(leads.motivoPerdaCategoria)
+  .orderBy(desc(sql`COUNT(*)`));
+
+  const LABELS: Record<string, string> = {
+    sem_interesse: 'Sem Interesse',
+    sem_credito: 'Sem Crédito',
+    comprou_concorrente: 'Concorrente',
+    preco_alto: 'Preço Alto',
+    localizacao: 'Localização',
+    nao_atende: 'Não Responde',
+    desistiu: 'Desistiu',
+    mudou_planos: 'Mudou de Planos',
+    sem_entrada: 'Sem Entrada',
+    outro: 'Outro',
+  };
+
+  return rows
+    .filter(r => r.categoria)
+    .map(r => ({
+      categoria: r.categoria!,
+      label: LABELS[r.categoria!] ?? r.categoria!,
+      total: Number(r.total),
+    }));
+}
+

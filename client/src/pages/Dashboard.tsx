@@ -53,6 +53,8 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
+  PieChart,
+  Pie,
 } from "recharts";
 
 // Tipos de filtros predefinidos
@@ -191,7 +193,8 @@ export default function Dashboard() {
   // ── Tier 1: KPIs principais (carregam imediatamente) ─────────────────────
   const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorBase);
 
-  // ── Tier 2: Métricas por corretor (endpoint consolidado) + leads urgentes ──
+  // ── Tier 2: Métricas por corretor (endpoint consolidado) + leads urgentes + parados ──
+  const { data: leadsParados } = trpc.dashboard.leadsParados.useQuery(undefined, tier2);
   const { data: metricasPorCorretor } = trpc.dashboard.metricasPorCorretor.useQuery(dateFilter, tier2);
   const leadsPorCorretor = metricasPorCorretor?.leads;
   const vendasPorCorretor = metricasPorCorretor?.vendas;
@@ -206,6 +209,9 @@ export default function Dashboard() {
   // ── Tier 3: Gráficos históricos (14 dias por padrão — antes 30) ──────────
   const { data: metricasHistoricas } = trpc.graficos.historico.useQuery({ dias: 14 }, tier3);
   const { data: dadosFunil } = trpc.graficos.funil.useQuery({ dias: 14 }, tier3);
+
+  // ── Tier 3.5: Motivos de perda ────────────────────────────────────────────
+  const { data: motivosPerda } = trpc.dashboard.motivosPerda.useQuery(undefined, tier3);
 
   // ── Tier 4: Tabelas detalhadas (geralmente abaixo da dobra) ──────────────
   const { data: relatorioLeadsCriados } = trpc.dashboard.relatorioLeadsCriados.useQuery(dateFilter, tier4);
@@ -1129,6 +1135,105 @@ export default function Dashboard() {
             {allLeads && allLeads.length > 0 && (
               <div className="mb-8">
                 <LeadsUrgentesCard leads={allLeads} />
+              </div>
+            )}
+
+            {/* Card de Leads Parados */}
+            {leadsParados && leadsParados.total > 0 && (
+              <div className="mb-8">
+                <Card className="border-orange-200 bg-orange-50/40 dark:bg-orange-950/20 dark:border-orange-800">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                        <Clock className="h-4 w-4" />
+                        Leads Parados (sem interação)
+                      </CardTitle>
+                      <Link href="/leads">
+                        <Button variant="outline" size="sm" className="text-orange-700 border-orange-300 hover:bg-orange-100">
+                          Ver leads
+                        </Button>
+                      </Link>
+                    </div>
+                    <CardDescription>Leads ativos sem registro de interação há 3+ dias</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4 flex-wrap">
+                      {leadsParados.faixas.map((f) => (
+                        f.count > 0 && (
+                          <div key={f.label} className={`flex flex-col items-center p-3 rounded-lg border min-w-[90px] ${
+                            f.dias >= 15 ? 'bg-red-100 border-red-300 dark:bg-red-950/40 dark:border-red-700' :
+                            f.dias >= 7  ? 'bg-orange-100 border-orange-300 dark:bg-orange-950/40 dark:border-orange-700' :
+                                           'bg-yellow-100 border-yellow-300 dark:bg-yellow-950/40 dark:border-yellow-700'
+                          }`}>
+                            <span className={`text-2xl font-bold ${
+                              f.dias >= 15 ? 'text-red-700 dark:text-red-400' :
+                              f.dias >= 7  ? 'text-orange-700 dark:text-orange-400' :
+                                             'text-yellow-700 dark:text-yellow-400'
+                            }`}>{f.count}</span>
+                            <span className="text-xs text-muted-foreground mt-1">{f.label}</span>
+                          </div>
+                        )
+                      ))}
+                      <div className="flex flex-col items-center p-3 rounded-lg border min-w-[90px] bg-muted/40">
+                        <span className="text-2xl font-bold">{leadsParados.total}</span>
+                        <span className="text-xs text-muted-foreground mt-1">Total</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Gráfico de Motivos de Perda */}
+            {motivosPerda && motivosPerda.length > 0 && (
+              <div className="mb-8">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-destructive" />
+                      Motivos de Perda
+                    </CardTitle>
+                    <CardDescription>Distribuição dos motivos pelos quais leads foram marcados como perdidos</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={motivosPerda}
+                            dataKey="total"
+                            nameKey="label"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            label={({ label, percent }) => `${label} (${Math.round(percent * 100)}%)`}
+                            labelLine={false}
+                          >
+                            {motivosPerda.map((_: any, idx: number) => (
+                              <Cell key={idx} fill={[
+                                '#ef4444','#f97316','#eab308','#22c55e','#3b82f6',
+                                '#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6b7280',
+                              ][idx % 10]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v: number) => [v, 'Leads']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="flex flex-col gap-1 min-w-[160px]">
+                        {motivosPerda.map((m: any, idx: number) => (
+                          <div key={m.categoria} className="flex items-center gap-2 text-sm">
+                            <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: [
+                              '#ef4444','#f97316','#eab308','#22c55e','#3b82f6',
+                              '#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6b7280',
+                            ][idx % 10] }} />
+                            <span className="text-muted-foreground">{m.label}</span>
+                            <span className="font-semibold ml-auto">{m.total}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 

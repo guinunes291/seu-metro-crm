@@ -185,6 +185,13 @@ async function startServer() {
 
     // [DESATIVADO] Notion Job — removido por decisão do usuário para reduzir custos
     // [DESATIVADO] Carteira Ativa Job — expiração e lembretes removidos por decisão do usuário
+
+    // Inicializar job de lembretes WhatsApp (D-1 e boas-vindas para novos leads)
+    import("../whatsappRemindersJob").then(({ startWhatsAppRemindersJob }) => {
+      startWhatsAppRemindersJob();
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de lembretes WhatsApp:", err);
+    });
   });
 }
 

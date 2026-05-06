@@ -173,11 +173,14 @@ export const leadsRouter = router({
         origem: z.string().optional(),
         projectId: z.number().optional(),
         status: z.enum([
-          "novo", "aguardando_atendimento", "em_atendimento", "agendado",
-          "visita_realizada", "analise_credito", "contrato_fechado", "perdido"
+          "novo", "aguardando_atendimento", "em_atendimento",
+          "qualificado", "agendado", "visita_realizada",
+          "proposta_enviada", "analise_credito", "contrato_fechado",
+          "pos_venda", "perdido",
         ]).optional(),
         observacoes: z.string().optional(),
         motivoPerdido: z.string().optional(),
+        motivoPerdaCategoria: z.string().max(50).optional(),
         proximoFollowup: z.date().optional(),
         ultimoContato: z.date().optional(),
         // Fase 2 — Temperatura e qualificação financeira
@@ -557,6 +560,21 @@ export const leadsRouter = router({
       return { success: true, deleted };
     }),
 
+  // Altera status de múltiplos leads de uma vez (apenas gestores)
+  bulkUpdateStatus: gestorProcedure
+    .input(z.object({
+      ids: z.array(z.number()).min(1, 'Selecione pelo menos 1 lead'),
+      novoStatus: z.enum([
+        'aguardando_atendimento', 'em_atendimento',
+        'qualificado', 'agendado', 'visita_realizada',
+        'proposta_enviada', 'analise_credito', 'contrato_fechado',
+        'pos_venda', 'perdido',
+      ]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      return await db.bulkUpdateLeadStatus(input.ids, input.novoStatus, ctx.user.id);
+    }),
+
   getLixeira: gestorProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -601,7 +619,12 @@ export const leadsRouter = router({
       tipo: z.enum(['ligacao', 'whatsapp', 'email', 'sms', 'outro']),
       resultado: z.enum(['contato_realizado', 'nao_atendeu', 'agendamento', 'visita_realizada', 'proposta_enviada', 'recusou', 'outro']),
       observacoes: z.string().optional(),
-      novoStatus: z.enum(['novo', 'aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito', 'contrato_fechado', 'perdido']).optional(),
+      novoStatus: z.enum([
+        'novo', 'aguardando_atendimento', 'em_atendimento',
+        'qualificado', 'agendado', 'visita_realizada',
+        'proposta_enviada', 'analise_credito', 'contrato_fechado',
+        'pos_venda', 'perdido',
+      ]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const lead = await db.getLeadById(input.leadId);

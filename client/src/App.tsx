@@ -62,6 +62,8 @@ import AtualizarProjetosEmMassa from "@/pages/AtualizarProjetosEmMassa";
 import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
 import RelatorioEscolhasDiarias from "@/pages/RelatorioEscolhasDiarias";
 import CarteiraAtiva from "@/pages/CarteiraAtiva";
+import ScriptsVendas from "@/pages/ScriptsVendas";
+import CentralAlertas from "@/pages/CentralAlertas";
 import MeuDashboard from "@/pages/meu-negocio/MeuDashboard";
 import MeuFollowUp from "@/pages/meu-negocio/MeuFollowUp";
 import PreAnaliseMcmv from "@/pages/meu-negocio/PreAnaliseMcmv";
@@ -130,6 +132,8 @@ function Router() {
       <Route path="/gestao-equipes" component={GestaoEquipes} />
       <Route path="/minha-equipe" component={MinhaEquipe} />
       <Route path="/carteira-ativa" component={CarteiraAtiva} />
+      <Route path="/scripts" component={ScriptsVendas} />
+      <Route path="/central-alertas" component={CentralAlertas} />
       {/* Módulo Meu Negócio */}
       <Route path="/meu-negocio/dashboard" component={MeuDashboard} />
       <Route path="/meu-negocio/followup" component={MeuFollowUp} />
