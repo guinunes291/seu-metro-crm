@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy
+  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, Sparkles, ChevronDown, ChevronUp, RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,7 @@ import { TimerLead } from "@/components/TimerLead";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
+import { LeadAiDicas } from "@/components/LeadAiDicas";
 import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
@@ -1133,6 +1134,9 @@ export default function Leads() {
                           </p>
                         </div>
                       )}
+                      
+                      {/* Dicas Rápidas da IA */}
+                      <LeadAiDicas leadId={lead.id} />
                     </CardContent>
                   </Card>
                 );
