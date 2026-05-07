@@ -435,6 +435,8 @@ export const leadsRouter = router({
 
       await db.updateLead(input.leadId, {
         corretorId: input.novoCorretorId,
+        // Se o lead tinha timer ativo, reiniciar o cronômetro para o novo corretor
+        ...(lead.timerAtivo ? { timestampRecebimento: new Date() } : {}),
       });
 
       await db.createLeadHistory({
