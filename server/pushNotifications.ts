@@ -121,14 +121,11 @@ export async function sendPushNotification(
           JSON.stringify(payload)
         );
 
-        // Atualizar lastUsedAt
-        const dbInner = await getDb();
-        if (dbInner) {
-          await dbInner
-            .update(pushSubscriptions)
-            .set({ lastUsedAt: new Date() })
-            .where(eq(pushSubscriptions.id, sub.id));
-        }
+        // Atualizar lastUsedAt (reutiliza a mesma instância de db)
+        await db
+          .update(pushSubscriptions)
+          .set({ lastUsedAt: new Date() })
+          .where(eq(pushSubscriptions.id, sub.id));
 
         return { success: true };
       } catch (error: any) {
@@ -168,12 +165,12 @@ export async function sendPushNotificationToMultiple(
     actions?: Array<{ action: string; title: string }>;
   }
 ) {
-  const results = await Promise.all(
+  const results = await Promise.allSettled(
     userIds.map((userId) => sendPushNotification(userId, payload))
   );
 
-  const totalSent = results.reduce((sum, r) => sum + r.sent, 0);
-  const totalFailed = results.reduce((sum, r) => sum + r.failed, 0);
+  const totalSent = results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? r.value.sent : 0), 0);
+  const totalFailed = results.reduce((sum, r) => sum + (r.status === 'fulfilled' ? r.value.failed : 1), 0);
 
   return { sent: totalSent, failed: totalFailed };
 }
