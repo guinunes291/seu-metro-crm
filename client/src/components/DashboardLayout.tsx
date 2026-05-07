@@ -563,7 +563,11 @@ function DashboardContent({
     sessionStorage.setItem('bannersDispensados', JSON.stringify([...next]));
   };
   const atenderLeadMutation = trpc.leads.update.useMutation({
-    onSuccess: () => { utils.dashboard.leadsPrioritarios.invalidate(); },
+    onSuccess: (_, variables) => {
+      utils.dashboard.leadsPrioritarios.invalidate();
+      setLocation(`/leads?leadId=${variables.id}`);
+    },
+    onError: () => toast.error("Erro ao iniciar atendimento"),
   });
   const primeiroLeadAguardando = leadsPrioritarios?.semPrimeiroContato?.find(
     (l) => !bannersDispensados.has(l.id)
@@ -1069,14 +1073,11 @@ function DashboardContent({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
-                  onClick={() => {
-                    atenderLeadMutation.mutate({ id: primeiroLeadAguardando.id, data: { status: 'em_atendimento' } });
-                    dispensarBanner(primeiroLeadAguardando.id);
-                  }}
+                  onClick={() => atenderLeadMutation.mutate({ id: primeiroLeadAguardando.id, data: { status: 'em_atendimento' } })}
                   disabled={atenderLeadMutation.isPending}
                   className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition-colors disabled:opacity-50"
                 >
-                  ✅ Atender Agora
+                  {atenderLeadMutation.isPending ? '⏳ Iniciando...' : '✅ Atender Agora'}
                 </button>
                 <button
                   onClick={() => dispensarBanner(primeiroLeadAguardando.id)}
