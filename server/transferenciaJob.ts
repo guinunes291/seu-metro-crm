@@ -224,6 +224,9 @@ async function transferirLead(
     .set({
       corretorId: novoCorretorId,
       status: "aguardando_atendimento",
+      // Reiniciar timer para leads de webhook, para que o novo corretor receba o alerta
+      timerAtivo: lead.origemWebhook ? true : false,
+      timestampRecebimento: new Date(),
       ultimaInteracao: new Date(),
       updatedAt: new Date(),
     })
