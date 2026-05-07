@@ -53,8 +53,8 @@ export function useWebhookLeadNotification() {
     { since },
     {
       enabled: shouldNotify,
-      refetchInterval: shouldNotify ? 2 * 60 * 1000 : false, // 2 minutos (reduzido de 20s — notificação de webhook pode aguardar mais)
-      refetchIntervalInBackground: false, // Não pollar em background para economizar recursos
+      refetchInterval: shouldNotify ? 30 * 1000 : false, // 30s fallback (SSE notifica instantaneamente quando disponível)
+      refetchIntervalInBackground: false,
       refetchOnWindowFocus: true,
     }
   );

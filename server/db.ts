@@ -3493,7 +3493,20 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   if (leadData) {
     await notifyLeadDistribuido(corretorId, leadId, leadData.nome);
   }
-  
+
+  // Invalidar cache e notificar via SSE para resposta imediata no browser
+  try {
+    const { cacheInvalidate } = await import('./_core/cache');
+    await cacheInvalidate(`dashboard.leadsPrioritarios:${corretorId}`);
+    const { notifySSEUser } = await import('./sseManager');
+    notifySSEUser(corretorId, 'novo_lead', {
+      leadId,
+      leadNome: leadData?.nome ?? '',
+    });
+  } catch (e) {
+    console.warn('[Roleta] SSE/cache notify falhou (não crítico):', e);
+  }
+
   console.log(`[Roleta] Lead ${leadId} distribuído para corretor ${corretorId}`);
   
   return corretorId;

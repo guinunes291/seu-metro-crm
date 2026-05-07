@@ -54,6 +54,7 @@ import { ModalAgendaGestor } from "@/components/ModalAgendaGestor";
 import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
 import { useSolicitarPermissaoNotificacao } from "@/hooks/useNotificacaoLead";
 import { PushNotificationBanner } from "@/components/PushNotificationBanner";
+import { useLeadEvents } from "@/hooks/useLeadEvents";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -521,7 +522,10 @@ function DashboardContent({
   const [location, setLocation] = useLocation();
   // Sistema de bloqueio gamificado
   const { total, concluidos, percentual, desbloqueado, showPlusOne, escolhaDiariaFeita, aceitouFollowUp, refetch: refetchFollowUp } = useFollowUpProgress();
-  
+
+  // SSE — recebe evento imediato quando um lead é distribuído para este corretor
+  useLeadEvents();
+
   // Verificar se o perfil está completo (para priorizar bloqueio de onboarding sobre follow-up)
   const { data: verificacaoOnboarding } = trpc.onboarding.verificar.useQuery(undefined, {
     refetchOnMount: true,
@@ -530,10 +534,11 @@ function DashboardContent({
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
 
   // Leads prioritários para badge, banner e modal agenda
+  // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 3 * 60 * 1000,
-    staleTime: 2 * 60 * 1000,
+    refetchInterval: 30 * 1000,
+    staleTime: 0,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +
