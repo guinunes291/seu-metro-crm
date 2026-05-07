@@ -137,15 +137,15 @@ const menuGroups = [
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users, label: "Gestão de Equipes", path: "/gestao-equipes", roles: ["admin", "superintendente"] },
-      { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["admin", "superintendente"] },
-      { icon: Target, label: "Controle de Limites", path: "/controle-limites", roles: ["admin", "superintendente"] },
-      { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["admin", "superintendente"] },
-      { icon: Target, label: "Projeto Foco do Mês", path: "/projeto-foco", roles: ["admin", "superintendente"] },
-      { icon: History, label: "Histórico", path: "/historico-distribuicao", roles: ["admin", "superintendente"] },
-      { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["admin", "superintendente"] },
-      { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["admin", "superintendente"] },
+      { icon: UserCircle, label: "Distribuição", path: "/controle-distribuicao", roles: ["admin"] },
+      { icon: Target, label: "Controle de Limites", path: "/controle-limites", roles: ["admin"] },
+      { icon: Shuffle, label: "Roleta de Leads", path: "/roleta", roles: ["admin"] },
+      { icon: Target, label: "Projeto Foco do Mês", path: "/projeto-foco", roles: ["admin"] },
+      { icon: History, label: "Histórico", path: "/historico-distribuicao", roles: ["admin"] },
+      { icon: FileSpreadsheet, label: "Importar Leads", path: "/importar-sheets", roles: ["admin"] },
+      { icon: Trash2, label: "Lixeira", path: "/lixeira", roles: ["admin"] },
       { icon: TrendingUp, label: "Comissões", path: "/comissoes", roles: ["corretor", "gestor", "admin", "superintendente"] },
-      { icon: Settings, label: "Templates de Comissão", path: "/templates-comissao", roles: ["admin", "superintendente"] },
+      { icon: Settings, label: "Templates de Comissão", path: "/templates-comissao", roles: ["admin"] },
     ],
   },
   {
@@ -156,11 +156,11 @@ const menuGroups = [
       { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
       { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync", roles: ["gestor", "admin", "superintendente"] },
       { icon: Database, label: "Sincronização BI", path: "/sincronizacao-bi", roles: ["gestor", "admin", "superintendente"] },
-      { icon: Trash, label: "Limpeza de Duplicatas", path: "/limpeza-duplicatas", roles: ["admin", "superintendente"] },
-      { icon: Database, label: "Atualizar Projetos", path: "/atualizar-projetos", roles: ["admin", "superintendente"] },
-      { icon: Trash, label: "Limpar Projetos Órfãos", path: "/limpar-projetos", roles: ["admin", "superintendente"] },
+      { icon: Trash, label: "Limpeza de Duplicatas", path: "/limpeza-duplicatas", roles: ["admin"] },
+      { icon: Database, label: "Atualizar Projetos", path: "/atualizar-projetos", roles: ["admin"] },
+      { icon: Trash, label: "Limpar Projetos Órfãos", path: "/limpar-projetos", roles: ["admin"] },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
-      { icon: FileText, label: "Log de Transferências", path: "/log-transferencias", roles: ["admin", "superintendente"] },
+      { icon: FileText, label: "Log de Transferências", path: "/log-transferencias", roles: ["admin"] },
     ],
   },
 ];
@@ -326,6 +326,63 @@ const menuGroupsAdmin = [
       { icon: Settings, label: "Templates Comissão", path: "/templates-comissao" },
       { icon: Trash2, label: "Lixeira", path: "/lixeira" },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
+    ],
+  },
+];
+
+// Menu para superintendente — visão da equipe, sem distribuição ou sistema
+// Hierarquia: ADMIN → SUPT → Gestores → Corretores
+const menuGroupsSuperintendente = [
+  {
+    id: "inicio",
+    label: "Início",
+    icon: Home,
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
+    ],
+  },
+  {
+    id: "equipe",
+    label: "Minha Equipe",
+    icon: Users2,
+    items: [
+      { icon: UserCog, label: "Gestão de Equipes", path: "/gestao-equipes" },
+      { icon: Users2, label: "Corretores", path: "/corretores" },
+      { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor" },
+      { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups" },
+    ],
+  },
+  {
+    id: "leads",
+    label: "Leads",
+    icon: Users,
+    items: [
+      { icon: Users, label: "Todos os Leads", path: "/leads" },
+      { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
+      { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor" },
+    ],
+  },
+  {
+    id: "desempenho",
+    label: "Desempenho",
+    icon: TrendingUp,
+    items: [
+      { icon: Trophy, label: "Ranking TV", path: "/ranking-tv" },
+      { icon: Tv, label: "Performance TV", path: "/performance-tv" },
+      { icon: Target, label: "Metas Mensais", path: "/metas" },
+      { icon: Target, label: "Metas Diárias", path: "/metas-diarias" },
+      { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+      { icon: TrendingUp, label: "Comissões", path: "/comissoes" },
+    ],
+  },
+  {
+    id: "projetos",
+    label: "Projetos",
+    icon: Building2,
+    items: [
+      { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos" },
     ],
   },
 ];
@@ -673,12 +730,15 @@ function DashboardContent({
   };
 
   // Filtrar grupos baseado no role do usuário
+  // Hierarquia: ADMIN (tudo) → SUPTD (equipe, sem distribuição/sistema) → gestor → corretor
   const activeMenuGroups = isCorretor
     ? menuGroupsCorretor
     : user?.role === 'gestor'
     ? menuGroupsGestor
-    : (user?.role === 'admin' || user?.role === 'superintendente')
+    : user?.role === 'admin'
     ? menuGroupsAdmin
+    : user?.role === 'superintendente'
+    ? menuGroupsSuperintendente
     : menuGroups;
   const filteredGroups = activeMenuGroups.filter(group => {
     if ((group as any).roles && !(group as any).roles.includes(user?.role || "")) {
