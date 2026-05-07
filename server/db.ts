@@ -12158,3 +12158,91 @@ export async function getMotivosPerda(corretoresIds?: number[]) {
     }));
 }
 
+// ============================================================================
+// DOCUMENTAÇÃO DE CLIENTES — busca por telefone para webhook Google Forms
+// ============================================================================
+
+/**
+ * Busca um lead pelo telefone (normalizado).
+ * Usado pelo webhook de documentação para identificar o lead a atualizar.
+ */
+export async function buscarLeadPorTelefone(telefone: string): Promise<{
+  id: number;
+  nome: string;
+  telefone: string;
+  status: string;
+  corretorId: number | null;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  let tel = telefone.replace(/\D/g, '');
+  if (tel.startsWith('55') && tel.length > 11) tel = tel.slice(2);
+
+  const [lead] = await db
+    .select({
+      id: leads.id,
+      nome: leads.nome,
+      telefone: leads.telefone,
+      status: leads.status,
+      corretorId: leads.corretorId,
+    })
+    .from(leads)
+    .where(
+      sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+55', '') = ${tel}`
+    )
+    .limit(1);
+
+  return lead ?? null;
+}
+
+/**
+ * Atualiza o status de um lead para 'analise_credito' via webhook de documentação.
+ * Registra transição de status e histórico de interação.
+ */
+export async function atualizarLeadParaAnaliseCredito(
+  leadId: number,
+  tipoRegime: 'autonomo' | 'clt',
+  nomeCorretor?: string
+): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  const leadAtual = await getLeadById(leadId);
+  if (!leadAtual) throw new Error(`Lead ${leadId} não encontrado`);
+
+  const statusAvancados = ['analise_credito', 'contrato_fechado', 'pos_venda'];
+  if (statusAvancados.includes(leadAtual.status)) {
+    console.log(`[Webhook Docs] Lead ${leadId} já está em ${leadAtual.status}, pulando`);
+    return;
+  }
+
+  const statusAnterior = leadAtual.status;
+  const corretorId = leadAtual.corretorId ?? 0;
+  const regimeLabel = tipoRegime === 'autonomo' ? 'Autônomo' : 'CLT';
+
+  await db.update(leads)
+    .set({ status: 'analise_credito', ultimaInteracao: new Date(), updatedAt: new Date() })
+    .where(eq(leads.id, leadId));
+
+  await registrarTransicaoStatus({
+    leadId,
+    corretorId,
+    statusAnterior,
+    statusNovo: 'analise_credito',
+    observacao: `Documentação enviada via Google Forms (${regimeLabel})${nomeCorretor ? ` pelo corretor ${nomeCorretor}` : ''}`,
+  });
+
+  await db.insert(leadHistory).values({
+    leadId,
+    corretorId,
+    tipo: 'outro',
+    resultado: 'outro',
+    observacoes: `Documentacao ${regimeLabel} enviada via Google Forms. Lead avancado para Analise de Credito.`,
+    statusAnterior,
+    statusNovo: 'analise_credito',
+  });
+
+  console.log(`[Webhook Docs] Lead ${leadId} -> analise_credito (${regimeLabel})`);
+}
+

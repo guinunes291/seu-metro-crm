@@ -4,7 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { 
   Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, Sparkles, ChevronDown, ChevronUp, RefreshCw
+  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, Sparkles, ChevronDown, ChevronUp, RefreshCw,
+  FolderOpen, Briefcase, User as UserIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,14 @@ import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 import { ExecutandoComIA } from "@/components/ExecutandoComIA";
 import { CarteiraAtivaQuickButton } from "@/pages/CarteiraAtiva";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -1602,6 +1611,52 @@ export default function Leads() {
                             <FileText className="h-4 w-4 mr-1" />
                             Enviar para Análise
                           </Button>
+                        )}
+
+                        {/* Botão de Documentação — abre Google Forms com dados pré-preenchidos */}
+                        {selectedLead.status !== 'perdido' && selectedLead.status !== 'contrato_fechado' && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                                <FolderOpen className="h-4 w-4 mr-1" />
+                                Enviar Documentação
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Regime de Trabalho</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  // Autônomo: entry.3cc060c4=Corretor, entry.0f929fa2=NomeCliente, entry.39c16c71=Telefone
+                                  const nome = encodeURIComponent(selectedLead.nome || '');
+                                  const tel = encodeURIComponent(selectedLead.telefone || '');
+                                  const corretor = encodeURIComponent(user?.name || '');
+                                  window.open(
+                                    `https://docs.google.com/forms/d/e/1FAIpQLSfTVPeCOqZtu5J3oaIq1kFIzGkij2uvF8TEEnWZymRJ1VHvaw/viewform?usp=pp_url&entry.3cc060c4=${corretor}&entry.0f929fa2=${nome}&entry.39c16c71=${tel}`,
+                                    '_blank'
+                                  );
+                                }}
+                              >
+                                <UserIcon className="h-4 w-4 mr-2" />
+                                Autônomo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  // CLT: entry.6cf60b1d=Corretor, entry.3dab385a=NomeCliente, entry.2f291cec=Telefone
+                                  const nome = encodeURIComponent(selectedLead.nome || '');
+                                  const tel = encodeURIComponent(selectedLead.telefone || '');
+                                  const corretor = encodeURIComponent(user?.name || '');
+                                  window.open(
+                                    `https://docs.google.com/forms/d/e/1FAIpQLSd7R0I0trmb2aHjfUn9lISSd6ZUSMUb06tXc6935u0U2JNWPw/viewform?usp=pp_url&entry.6cf60b1d=${corretor}&entry.3dab385a=${nome}&entry.2f291cec=${tel}`,
+                                    '_blank'
+                                  );
+                                }}
+                              >
+                                <Briefcase className="h-4 w-4 mr-2" />
+                                CLT
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                         
                         {/* Análise de Crédito → Contrato Fechado */}

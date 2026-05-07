@@ -715,5 +715,76 @@ router.post('/lead/:token', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * Webhook de Documentação — chamado pelo Google Apps Script após envio do formulário
+ *
+ * Endpoint: POST /api/webhook/documentacao
+ *
+ * Headers obrigatórios:
+ *   x-docs-token: <DOCS_WEBHOOK_TOKEN configurado nas secrets>
+ *
+ * Body: { "telefone": "11999999999", "nomeCliente": "João", "tipoRegime": "autonomo"|"clt", "nomeCorretor": "..." }
+ */
+router.post('/documentacao', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers['x-docs-token'] as string;
+    const tokenEsperado = process.env.DOCS_WEBHOOK_TOKEN;
+
+    if (!tokenEsperado) {
+      console.error('[Webhook Docs] DOCS_WEBHOOK_TOKEN não configurado');
+      return res.status(500).json({ success: false, error: 'Webhook não configurado no servidor' });
+    }
+
+    if (!token || token !== tokenEsperado) {
+      console.warn('[Webhook Docs] Token inválido');
+      return res.status(401).json({ success: false, error: 'Token inválido' });
+    }
+
+    const { telefone, nomeCliente, tipoRegime, nomeCorretor } = req.body;
+
+    if (!telefone) {
+      return res.status(400).json({ success: false, error: 'Campo "telefone" é obrigatório' });
+    }
+
+    if (!tipoRegime || !['autonomo', 'clt'].includes(tipoRegime)) {
+      return res.status(400).json({ success: false, error: 'Campo "tipoRegime" deve ser "autonomo" ou "clt"' });
+    }
+
+    console.log(`[Webhook Docs] Recebido — cliente: ${maskPII(nomeCliente)}, telefone: ${maskPII(telefone)}, regime: ${tipoRegime}`);
+
+    const lead = await db.buscarLeadPorTelefone(telefone);
+
+    if (!lead) {
+      console.warn(`[Webhook Docs] Lead não encontrado para telefone: ${maskPII(telefone)}`);
+      return res.status(404).json({
+        success: false,
+        error: 'Lead não encontrado',
+        message: 'Nenhum lead encontrado com o telefone informado',
+      });
+    }
+
+    console.log(`[Webhook Docs] Lead encontrado: id=${lead.id}, status=${lead.status}`);
+
+    await db.atualizarLeadParaAnaliseCredito(lead.id, tipoRegime as 'autonomo' | 'clt', nomeCorretor);
+
+    return res.status(200).json({
+      success: true,
+      leadId: lead.id,
+      leadNome: lead.nome,
+      statusAnterior: lead.status,
+      statusNovo: 'analise_credito',
+      message: 'Lead atualizado para Análise de Crédito com sucesso',
+    });
+
+  } catch (error: any) {
+    console.error('[Webhook Docs] Erro:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro interno ao processar documentação',
+      message: error.message,
+    });
+  }
+});
+
 export default router;
 
