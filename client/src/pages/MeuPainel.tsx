@@ -29,8 +29,9 @@ import {
   TrendingUp, Target, Trophy, Users, Clock, CheckCircle2, Edit3,
   Camera, Flame, Award, BarChart3, Zap, Phone, MessageSquare,
   Calendar, Eye, FileText, DollarSign, RefreshCw, ClipboardList,
-  XCircle, AlertTriangle, ArrowRight, UserCheck,
+  XCircle, AlertTriangle, ArrowRight, UserCheck, Copy,
 } from "lucide-react";
+import { ModalRegistroRapido } from "@/components/ModalRegistroRapido";
 import { toast } from "sonner";
 
 // ============================================================================
@@ -375,9 +376,20 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
     enabled: isGestor,
   });
 
-  const { data: prioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
+  const { data: prioritarios, refetch: refetchPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     staleTime: 30_000,
     refetchInterval: 3 * 60 * 1000,
+  });
+
+  const [modalRegistro, setModalRegistro] = useState<{ leadId: number; leadNome: string } | null>(null);
+
+  const naoAtendeuMutation = trpc.leads.addInteraction.useMutation({
+    onSuccess: () => { refetchPrioritarios(); toast.success("Tentativa registrada"); },
+    onError: () => toast.error("Erro ao registrar"),
+  });
+  const iniciarAtendimentoMutation = trpc.leads.update.useMutation({
+    onSuccess: () => { refetchPrioritarios(); toast.success("Atendimento iniciado"); },
+    onError: () => toast.error("Erro ao iniciar atendimento"),
   });
 
   if (isLoading) {
@@ -465,14 +477,32 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <Badge className="bg-red-500 text-white">{prioritarios.followUpsVencidos.length}</Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 space-y-1">
+                <CardContent className="px-4 pb-3 space-y-1.5">
                   {prioritarios.followUpsVencidos.slice(0, 3).map(l => (
-                    <Link key={l.id} href="/leads">
-                      <div className="flex items-center justify-between text-sm hover:text-red-700 cursor-pointer">
-                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
-                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                    <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
+                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
-                    </Link>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => setModalRegistro({ leadId: l.id, leadNome: l.nome })}
+                          className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/70 transition-colors"
+                        >
+                          Atendeu
+                        </button>
+                        <button
+                          onClick={() => naoAtendeuMutation.mutate({ leadId: l.id, tipo: "ligacao", resultado: "nao_atendeu" })}
+                          disabled={naoAtendeuMutation.isPending}
+                          className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
+                          title="Não atendeu"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {prioritarios.followUpsVencidos.length > 3 && (
                     <Link href="/leads">
@@ -496,14 +526,32 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <Badge className="bg-orange-500 text-white">{prioritarios.leadsQuentes.length}</Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 space-y-1">
+                <CardContent className="px-4 pb-3 space-y-1.5">
                   {prioritarios.leadsQuentes.slice(0, 3).map(l => (
-                    <Link key={l.id} href="/leads">
-                      <div className="flex items-center justify-between text-sm hover:text-orange-700 cursor-pointer">
-                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
-                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                    <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
+                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
-                    </Link>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => setModalRegistro({ leadId: l.id, leadNome: l.nome })}
+                          className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 hover:bg-orange-200 transition-colors"
+                        >
+                          Atendeu
+                        </button>
+                        <button
+                          onClick={() => naoAtendeuMutation.mutate({ leadId: l.id, tipo: "ligacao", resultado: "nao_atendeu" })}
+                          disabled={naoAtendeuMutation.isPending}
+                          className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
+                          title="Não atendeu"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {prioritarios.leadsQuentes.length > 3 && (
                     <Link href="/leads">
@@ -527,14 +575,23 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <Badge className="bg-yellow-500 text-white">{prioritarios.semPrimeiroContato.length}</Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 space-y-1">
+                <CardContent className="px-4 pb-3 space-y-1.5">
                   {prioritarios.semPrimeiroContato.slice(0, 3).map(l => (
-                    <Link key={l.id} href="/leads">
-                      <div className="flex items-center justify-between text-sm hover:text-yellow-700 cursor-pointer">
-                        <span className="truncate max-w-[160px] font-medium">{l.nome}</span>
-                        <span className="text-xs text-muted-foreground">{l.telefone}</span>
+                    <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
+                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                          <Copy className="h-3 w-3" />
+                        </button>
                       </div>
-                    </Link>
+                      <button
+                        onClick={() => iniciarAtendimentoMutation.mutate({ id: l.id, data: { status: "em_atendimento" } })}
+                        disabled={iniciarAtendimentoMutation.isPending}
+                        className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        Iniciar
+                      </button>
+                    </div>
                   ))}
                   {prioritarios.semPrimeiroContato.length > 3 && (
                     <Link href="/leads">
@@ -570,6 +627,17 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de registro rápido de contato */}
+      {modalRegistro && (
+        <ModalRegistroRapido
+          open={true}
+          onClose={() => setModalRegistro(null)}
+          leadId={modalRegistro.leadId}
+          leadNome={modalRegistro.leadNome}
+          onSuccess={() => { setModalRegistro(null); refetchPrioritarios(); }}
+        />
       )}
 
       {/* Score */}
