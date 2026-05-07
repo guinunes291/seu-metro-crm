@@ -11,6 +11,8 @@ import webhookRoutes from "../webhookRoutes";
 import uploadRoutes from "../uploadRoutes";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { sdk } from "./sdk";
+import { addSSEConnection, removeSSEConnection } from "../sseManager";
 
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -68,7 +70,33 @@ async function startServer() {
   
   // Upload routes (requer autenticação via cookie)
   app.use('/api', uploadRoutes);
-  
+
+  // SSE endpoint — notificações em tempo real para corretores
+  app.get('/api/events/corretor', async (req, res) => {
+    let user;
+    try {
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      res.status(401).end();
+      return;
+    }
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering
+    res.flushHeaders();
+
+    // Initial ping to confirm connection
+    res.write('event: ping\ndata: {}\n\n');
+
+    addSSEConnection(user.id, res);
+
+    req.on('close', () => {
+      removeSSEConnection(user.id, res);
+    });
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
