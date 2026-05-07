@@ -93,8 +93,9 @@ export function usePushNotifications() {
       });
 
       // Salvar subscription no backend
+      const subJson = subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
       await subscribeMutation.mutateAsync({
-        subscription: subscription.toJSON() as any,
+        subscription: subJson,
         userAgent: navigator.userAgent,
       });
       
