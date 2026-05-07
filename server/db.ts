@@ -12245,12 +12245,12 @@ export async function criarLeadDocumentacao(dados: {
   tipoRegime: 'autonomo' | 'clt';
   nomeCorretor?: string;
   empreendimento?: string;
+  corretorId?: number;
+  projectId?: number;
 }): Promise<{ id: number; nome: string; status: string; criado: true }> {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
-
   const regimeLabel = dados.tipoRegime === 'autonomo' ? 'Autônomo' : 'CLT';
-
   const result = await db.insert(leads).values({
     nome: dados.nome || 'Cliente (via Formulário)',
     telefone: dados.telefone,
@@ -12258,25 +12258,24 @@ export async function criarLeadDocumentacao(dados: {
     origem: 'outro',
     status: 'analise_credito',
     projetoCustom: dados.empreendimento || null,
+    corretorId: dados.corretorId || null,
+    projectId: dados.projectId || null,
     observacoes: `Lead criado automaticamente via Google Forms — Documentação ${regimeLabel}${dados.nomeCorretor ? ` (Corretor: ${dados.nomeCorretor})` : ''}`,
     ultimaInteracao: new Date(),
   });
-
   const leadId = Number(result[0].insertId);
-
+  const corretorIdHist = dados.corretorId || 0;
   // Registrar histórico
   await db.insert(leadHistory).values({
     leadId,
-    corretorId: 0,
+    corretorId: corretorIdHist,
     tipo: 'outro',
     resultado: 'outro',
     observacoes: `Lead criado via Google Forms — Documentação ${regimeLabel} enviada. Status inicial: Análise de Crédito.`,
     statusAnterior: 'novo',
     statusNovo: 'analise_credito',
   });
-
-  console.log(`[Webhook Docs] Lead criado automaticamente: id=${leadId}, nome=${dados.nome}, regime=${regimeLabel}`);
-
+  console.log(`[Webhook Docs] Lead criado automaticamente: id=${leadId}, nome=${dados.nome}, regime=${regimeLabel}, corretorId=${dados.corretorId || 'N/A'}, projectId=${dados.projectId || 'N/A'}`);
   return { id: leadId, nome: dados.nome || 'Cliente (via Formulário)', status: 'analise_credito', criado: true };
 }
 
@@ -12330,3 +12329,47 @@ export async function atualizarLeadParaAnaliseCredito(
   console.log(`[Webhook Docs] Lead ${leadId} -> analise_credito (${regimeLabel})`);
 }
 
+
+/**
+ * Busca um corretor pelo nome (busca parcial, case-insensitive).
+ * Retorna o primeiro usuário cujo nome contenha o texto informado.
+ */
+export async function buscarCorretorPorNome(nomeCorretor: string): Promise<{ id: number; name: string; role: string } | null> {
+  const db = await getDb();
+  if (!db || !nomeCorretor?.trim()) return null;
+  const nomeLimpo = nomeCorretor.trim();
+  // Busca exata primeiro
+  const exato = await db.select({ id: users.id, name: users.name, role: users.role })
+    .from(users)
+    .where(sql`LOWER(${users.name}) = LOWER(${nomeLimpo})`)
+    .limit(1);
+  if (exato.length > 0) return exato[0];
+  // Busca parcial (nome contém)
+  const parcial = await db.select({ id: users.id, name: users.name, role: users.role })
+    .from(users)
+    .where(sql`LOWER(${users.name}) LIKE LOWER(${`%${nomeLimpo}%`})`)
+    .limit(1);
+  return parcial.length > 0 ? parcial[0] : null;
+}
+
+/**
+ * Busca um projeto pelo nome (busca parcial, case-insensitive).
+ * Retorna o primeiro projeto cujo nome contenha o texto informado.
+ */
+export async function buscarProjetoPorNome(nomeEmpreendimento: string): Promise<{ id: number; nome: string } | null> {
+  const db = await getDb();
+  if (!db || !nomeEmpreendimento?.trim()) return null;
+  const nomeLimpo = nomeEmpreendimento.trim();
+  // Busca exata primeiro
+  const exato = await db.select({ id: projects.id, nome: projects.nome })
+    .from(projects)
+    .where(sql`LOWER(${projects.nome}) = LOWER(${nomeLimpo})`)
+    .limit(1);
+  if (exato.length > 0) return exato[0];
+  // Busca parcial
+  const parcial = await db.select({ id: projects.id, nome: projects.nome })
+    .from(projects)
+    .where(sql`LOWER(${projects.nome}) LIKE LOWER(${`%${nomeLimpo}%`})`)
+    .limit(1);
+  return parcial.length > 0 ? parcial[0] : null;
+}

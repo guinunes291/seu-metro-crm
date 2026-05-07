@@ -755,6 +755,26 @@ router.post('/documentacao', async (req: Request, res: Response) => {
     const regimeLabel = tipoRegime === 'autonomo' ? 'Autônomo' : 'CLT';
     console.log(`[Webhook Docs] Recebido — cliente: ${maskPII(nomeCliente)}, telefone: ${maskPII(telefone)}, regime: ${tipoRegime}`);
 
+    // Resolver corretorId e projectId pelo nome informado no formulário
+    let corretorResolvido: { id: number; name: string } | null = null;
+    let projetoResolvido: { id: number; nome: string } | null = null;
+    if (nomeCorretor) {
+      corretorResolvido = await db.buscarCorretorPorNome(nomeCorretor);
+      if (corretorResolvido) {
+        console.log(`[Webhook Docs] Corretor resolvido: ${corretorResolvido.name} (id=${corretorResolvido.id})`);
+      } else {
+        console.warn(`[Webhook Docs] Corretor não encontrado pelo nome: "${nomeCorretor}"`);
+      }
+    }
+    if (empreendimento) {
+      projetoResolvido = await db.buscarProjetoPorNome(empreendimento);
+      if (projetoResolvido) {
+        console.log(`[Webhook Docs] Projeto resolvido: ${projetoResolvido.nome} (id=${projetoResolvido.id})`);
+      } else {
+        console.warn(`[Webhook Docs] Projeto não encontrado pelo nome: "${empreendimento}"`);
+      }
+    }
+
     // Buscar lead pelo telefone com normalização inteligente
     let lead = await db.buscarLeadPorTelefone(telefone);
     let leadCriado = false;
@@ -795,6 +815,8 @@ router.post('/documentacao', async (req: Request, res: Response) => {
         tipoRegime: tipoRegime as 'autonomo' | 'clt',
         nomeCorretor,
         empreendimento,
+        corretorId: corretorResolvido?.id,
+        projectId: projetoResolvido?.id,
       });
 
       leadCriado = true;
@@ -834,6 +856,17 @@ router.post('/documentacao', async (req: Request, res: Response) => {
 
     console.log(`[Webhook Docs] Lead encontrado: id=${lead.id}, status=${lead.status}`);
     const statusAnterior = lead.status;
+
+    // Atualizar corretorId e projectId no lead existente se resolvidos e não preenchidos
+    if (corretorResolvido?.id || projetoResolvido?.id) {
+      const updates: Record<string, unknown> = {};
+      if (corretorResolvido?.id && !lead.corretorId) updates.corretorId = corretorResolvido.id;
+      if (projetoResolvido?.id && !lead.projectId) updates.projectId = projetoResolvido.id;
+      if (Object.keys(updates).length > 0) {
+        await db.updateLead(lead.id, updates as any);
+        console.log(`[Webhook Docs] Lead ${lead.id} atualizado com:`, updates);
+      }
+    }
 
     await db.atualizarLeadParaAnaliseCredito(lead.id, tipoRegime as 'autonomo' | 'clt', nomeCorretor);
 
