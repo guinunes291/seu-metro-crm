@@ -3699,6 +3699,21 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
         } catch (zapierError) {
           console.error('[Webhook] Erro ao notificar via Zapier:', zapierError);
         }
+
+        // Enviar push notification (funciona mesmo com aba fechada)
+        try {
+          const { sendPushNotification } = await import('./pushNotifications');
+          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
+          await sendPushNotification(corretor.id, {
+            title: '🔥 Novo Lead!',
+            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
+            url: `/leads?leadId=${leadCriado.id}`,
+            tag: `lead-novo-${leadCriado.id}`,
+            requireInteraction: true,
+          });
+        } catch (pushError) {
+          console.error('[Webhook] Erro ao enviar push notification:', pushError);
+        }
       }
     } catch (error) {
       console.error('[Webhook] Erro ao notificar corretor:', error);
@@ -3859,11 +3874,26 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
         } catch (zapierError) {
           console.error('[Webhook Foco] Erro ao notificar via Zapier:', zapierError);
         }
+
+        // Enviar push notification (funciona mesmo com aba fechada)
+        try {
+          const { sendPushNotification } = await import('./pushNotifications');
+          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
+          await sendPushNotification(corretor.id, {
+            title: '🔥 Novo Lead!',
+            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
+            url: `/leads?leadId=${leadCriado.id}`,
+            tag: `lead-novo-${leadCriado.id}`,
+            requireInteraction: true,
+          });
+        } catch (pushError) {
+          console.error('[Webhook Foco] Erro ao enviar push notification:', pushError);
+        }
       }
     } catch (error) {
       console.error('[Webhook Foco] Erro ao notificar corretor:', error);
     }
-    
+
     console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
   }
   

@@ -52,6 +52,7 @@ import { LockedTabOverlay } from "./LockedTabOverlay";
 import { ModalEscolhaFollowUp } from "@/components/ModalEscolhaFollowUp";
 import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
 import { useSolicitarPermissaoNotificacao } from "@/hooks/useNotificacaoLead";
+import { PushNotificationBanner } from "@/components/PushNotificationBanner";
 
 // Estrutura de menu agrupado
 const menuGroups = [
@@ -729,6 +730,7 @@ function DashboardContent({
           <ThemeToggle />
         </header>
         <main className="flex-1 overflow-auto relative">
+          <PushNotificationBanner />
           {children}
           {/* Overlay de bloqueio se não atingiu follow-ups E perfil está completo E não está em páginas liberadas (APENAS CORRETORES) */}
           {/* Quando perfil está incompleto, NÃO mostra overlay de follow-up para permitir acesso à página de configurações */}

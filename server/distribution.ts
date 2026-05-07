@@ -379,6 +379,20 @@ export async function distribuirLeadAutomatico(
       console.error("Erro ao enviar notificação:", error);
     }
 
+    // Enviar push notification (funciona mesmo com aba fechada)
+    try {
+      const { sendPushNotification } = await import('./pushNotifications');
+      await sendPushNotification(result.corretorId, {
+        title: '🔥 Novo Lead!',
+        body: result.nome,
+        url: `/leads?leadId=${leadId}`,
+        tag: `lead-novo-${leadId}`,
+        requireInteraction: true,
+      });
+    } catch (pushError) {
+      console.error("Erro ao enviar push notification:", pushError);
+    }
+
     return { success: true, corretorId: result.corretorId };
   } catch (error: any) {
     return { success: false, message: error.message };
