@@ -49,7 +49,7 @@ import { Badge } from "./ui/badge";
 import { toast } from "sonner";
 import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
-import { ModalEscolhaFollowUp } from "@/components/ModalEscolhaFollowUp";
+import { ModalAgendaDia } from "@/components/ModalAgendaDia";
 import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
 import { useSolicitarPermissaoNotificacao } from "@/hooks/useNotificacaoLead";
 import { PushNotificationBanner } from "@/components/PushNotificationBanner";
@@ -164,6 +164,51 @@ const menuGroups = [
   },
 ];
 
+// Menu simplificado para corretores — 4 grupos, ~13 itens
+const menuGroupsCorretor = [
+  {
+    id: "inicio",
+    label: "Início",
+    icon: Home,
+    items: [
+      { icon: Home, label: "Início", path: "/meu-painel" },
+      { icon: ClipboardList, label: "Tarefas do Dia", path: "/tarefas-do-dia", showAlert: true },
+    ],
+  },
+  {
+    id: "leads",
+    label: "Leads",
+    icon: Users,
+    items: [
+      { icon: Users, label: "Meus Leads", path: "/leads", showLeadsBadge: true },
+      { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
+      { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda" },
+      { icon: FileText, label: "Propostas", path: "/propostas" },
+      { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
+    ],
+  },
+  {
+    id: "trabalho",
+    label: "Trabalho",
+    icon: Zap,
+    items: [
+      { icon: Zap, label: "Modo Blitz", path: "/modo-blitz" },
+      { icon: Bell, label: "Notificações", path: "/notificacoes", showBadge: true },
+    ],
+  },
+  {
+    id: "meu-negocio",
+    label: "Meu Negócio",
+    icon: Briefcase,
+    items: [
+      { icon: Phone, label: "Follow-up", path: "/meu-negocio/followup" },
+      { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes" },
+      { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise" },
+      { icon: Building2, label: "Catálogo", path: "/projetos" },
+    ],
+  },
+];
+
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const MENU_GROUPS_KEY = "menu-groups-state";
 const DEFAULT_WIDTH = 280;
@@ -267,6 +312,15 @@ function NotificationBadge() {
   );
 }
 
+function LeadsActionsBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+      {count > 9 ? '9+' : count}
+    </span>
+  );
+}
+
 function DashboardContent({
   children,
   sidebarWidth,
@@ -287,6 +341,47 @@ function DashboardContent({
     refetchOnWindowFocus: false,
   });
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
+
+  // Leads prioritários para badge, banner e modal agenda
+  const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
+    enabled: user?.role === 'corretor',
+    refetchInterval: 3 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+  });
+  const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
+    (leadsPrioritarios?.leadsQuentes?.length ?? 0) +
+    (leadsPrioritarios?.semPrimeiroContato?.length ?? 0);
+  const leadsAguardandoCount = leadsPrioritarios?.semPrimeiroContato?.length ?? 0;
+  const agendamentosHojeCount = leadsPrioritarios?.agendamentosHoje?.length ?? 0;
+
+  // Estado localStorage para modal agenda diária
+  const [agendaDiariaFeitaHoje, setAgendaDiariaFeitaHoje] = useState(() => {
+    if (!user?.id) return false;
+    const today = new Date().toISOString().split('T')[0];
+    return localStorage.getItem(`agendaDia:${user.id}:${today}`) !== null;
+  });
+  const marcarAgendaDiariaFeita = () => {
+    const today = new Date().toISOString().split('T')[0];
+    if (user?.id) localStorage.setItem(`agendaDia:${user.id}:${today}`, '1');
+    setAgendaDiariaFeitaHoje(true);
+  };
+
+  // Estado sessionStorage para dispensar banner de lead aguardando
+  const [bannersDispensados, setBannersDispensados] = useState<Set<number>>(() => {
+    try { return new Set(JSON.parse(sessionStorage.getItem('bannersDispensados') || '[]')); } catch { return new Set(); }
+  });
+  const dispensarBanner = (leadId: number) => {
+    const next = new Set(bannersDispensados).add(leadId);
+    setBannersDispensados(next);
+    sessionStorage.setItem('bannersDispensados', JSON.stringify([...next]));
+  };
+  const atenderLeadMutation = trpc.leads.update.useMutation({
+    onSuccess: () => { utils.dashboard.leadsPrioritarios.invalidate(); },
+  });
+  const primeiroLeadAguardando = leadsPrioritarios?.semPrimeiroContato?.find(
+    (l) => !bannersDispensados.has(l.id)
+  );
+
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isMobile = useIsMobile();
@@ -423,13 +518,14 @@ function DashboardContent({
   }, [isResizing, setSidebarWidth]);
 
   // Filtrar grupos baseado no role do usuário
-  const filteredGroups = menuGroups.filter(group => {
-    if (group.roles && !group.roles.includes(user?.role || "")) {
+  const activeMenuGroups = isCorretor ? menuGroupsCorretor : menuGroups;
+  const filteredGroups = activeMenuGroups.filter(group => {
+    if ((group as any).roles && !(group as any).roles.includes(user?.role || "")) {
       return false;
     }
     // Verificar se há pelo menos um item visível no grupo
-    const visibleItems = group.items.filter(item => 
-      !item.roles || item.roles.includes(user?.role || "")
+    const visibleItems = group.items.filter(item =>
+      !(item as any).roles || (item as any).roles.includes(user?.role || "")
     );
     return visibleItems.length > 0;
   });
@@ -523,8 +619,8 @@ function DashboardContent({
           {/* Menu Agrupado */}
           <div className="px-2 py-1 space-y-1">
             {filteredGroups.map((group) => {
-              const visibleItems = group.items.filter(item => 
-                !item.roles || item.roles.includes(user?.role || "")
+              const visibleItems = group.items.filter(item =>
+                !(item as any).roles || (item as any).roles.includes(user?.role || "")
               );
               const hasActiveItem = visibleItems.some(item => location === item.path);
               const GroupIcon = group.icon;
@@ -546,6 +642,7 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                               {(item as any).showBadge && <NotificationBadge />}
+                              {(item as any).showLeadsBadge && isCorretor && <LeadsActionsBadge count={totalAcoesLeads} />}
                               {(item as any).showAlert && !desbloqueado && (
                                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -596,6 +693,7 @@ function DashboardContent({
                             <div className="relative">
                               <item.icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                               {(item as any).showBadge && <NotificationBadge />}
+                              {(item as any).showLeadsBadge && isCorretor && <LeadsActionsBadge count={totalAcoesLeads} />}
                               {(item as any).showAlert && !desbloqueado && (
                                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -733,6 +831,40 @@ function DashboardContent({
           <div className="px-4 pt-4">
             <PushNotificationBanner />
           </div>
+          {/* Banner de lead aguardando primeiro contato */}
+          {isCorretor && primeiroLeadAguardando && (
+            <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-red-600 px-4 py-2.5 text-white shadow-md">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg">🔥</span>
+                <div className="min-w-0">
+                  <span className="font-semibold text-sm">Novo lead aguardando: </span>
+                  <span className="text-sm">{primeiroLeadAguardando.nome}</span>
+                  {leadsPrioritarios!.semPrimeiroContato.length > 1 && (
+                    <span className="ml-1 text-xs text-red-200">+{leadsPrioritarios!.semPrimeiroContato.length - 1} mais</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => {
+                    atenderLeadMutation.mutate({ id: primeiroLeadAguardando.id, data: { status: 'em_atendimento' } });
+                    dispensarBanner(primeiroLeadAguardando.id);
+                  }}
+                  disabled={atenderLeadMutation.isPending}
+                  className="rounded-md bg-white/20 px-3 py-1 text-xs font-semibold hover:bg-white/30 transition-colors disabled:opacity-50"
+                >
+                  ✅ Atender Agora
+                </button>
+                <button
+                  onClick={() => dispensarBanner(primeiroLeadAguardando.id)}
+                  className="rounded p-1 hover:bg-white/20 transition-colors"
+                  title="Dispensar"
+                >
+                  <span className="text-sm leading-none">×</span>
+                </button>
+              </div>
+            </div>
+          )}
           {children}
           {/* Overlay de bloqueio se não atingiu follow-ups E perfil está completo E não está em páginas liberadas (APENAS CORRETORES) */}
           {/* Quando perfil está incompleto, NÃO mostra overlay de follow-up para permitir acesso à página de configurações */}
@@ -748,12 +880,16 @@ function DashboardContent({
         <TimezoneFooter />
       </SidebarInset>
       
-      {/* Modal de escolha diária de follow-up (aparece ACIMA do bloqueio, z-100) */}
-      {/* Só mostra para corretores com follow-ups pendentes que ainda não fizeram a escolha do dia */}
-      {isCorretor && !perfilIncompleto && total > 0 && !escolhaDiariaFeita && !desbloqueado && (
-        <ModalEscolhaFollowUp
+      {/* Modal de agenda diária (aparece ACIMA do bloqueio, z-100) */}
+      {/* Mostra para corretores que têm qualquer tarefa hoje e ainda não fizeram a escolha */}
+      {isCorretor && !perfilIncompleto && !agendaDiariaFeitaHoje && !escolhaDiariaFeita &&
+        (total > 0 || leadsAguardandoCount > 0 || agendamentosHojeCount > 0) && (
+        <ModalAgendaDia
           totalFollowUps={total}
-          onEscolhaFeita={() => refetchFollowUp()}
+          leadsAguardando={leadsAguardandoCount}
+          agendamentosHoje={agendamentosHojeCount}
+          onEscolhaFeita={() => { marcarAgendaDiariaFeita(); refetchFollowUp(); }}
+          onDismiss={() => marcarAgendaDiariaFeita()}
         />
       )}
       

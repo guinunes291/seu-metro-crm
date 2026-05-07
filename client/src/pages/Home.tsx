@@ -15,7 +15,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      setLocation("/dashboard");
+      setLocation(user?.role === 'corretor' ? "/meu-painel" : "/dashboard");
     }
   }, [loading, isAuthenticated, setLocation]);
 

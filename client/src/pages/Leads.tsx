@@ -566,7 +566,7 @@ export default function Leads() {
     <DashboardLayout>
       <div className="container py-8">
         {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Meus Leads</h1>
             <p className="text-muted-foreground mt-2">
@@ -612,6 +612,32 @@ export default function Leads() {
             )}
           </div>
         </div>
+
+        {/* View toggle para corretores: Lista / Kanban / Carteira Ativa */}
+        {!isGestor && (
+          <div className="flex gap-1 mb-4 p-1 rounded-lg bg-muted w-fit">
+            <button
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium bg-background shadow-sm text-foreground"
+            >
+              <List className="h-4 w-4" />
+              Lista
+            </button>
+            <button
+              onClick={() => setLocation("/kanban")}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Kanban
+            </button>
+            <button
+              onClick={() => setLocation("/carteira-ativa")}
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              Carteira Ativa
+            </button>
+          </div>
+        )}
 
         {/* Filtros e Busca */}
         <Card className="mb-6">
