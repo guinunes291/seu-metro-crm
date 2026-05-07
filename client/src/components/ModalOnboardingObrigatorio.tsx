@@ -61,7 +61,7 @@ export default function ModalOnboardingObrigatorio() {
 
   return (
     <Dialog open={aberto} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[500px]" hideClose>
+      <DialogContent className="sm:max-w-[500px]" showCloseButton={false}>
         <DialogHeader>
           <div className="flex items-center justify-center mb-4">
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
