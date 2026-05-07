@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { Target, Users, Zap, Loader2, Plus, Copy, Trash2, Power, PowerOff, Package } from "lucide-react";
+import { Target, Users, Zap, Loader2, Plus, Copy, Trash2, Power, PowerOff, Package, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -113,11 +112,26 @@ export default function ProjetoFoco() {
     }
   }, [config]);
   
+  // Corretores na fila em ordem (índice 0 = próximo a receber)
+  const corretoresNaFila = useMemo(
+    () =>
+      corretoresSelecionados
+        .map((id) => corretores?.find((c) => c.id === id))
+        .filter((c): c is NonNullable<typeof c> => Boolean(c)),
+    [corretoresSelecionados, corretores]
+  );
+
+  // Corretores ainda não adicionados à fila
+  const corretoresForaDaFila = useMemo(
+    () => corretores?.filter((c) => !corretoresSelecionados.includes(c.id)) || [],
+    [corretores, corretoresSelecionados]
+  );
+
   const handleToggleCorretor = (corretorId: number) => {
     setCorretoresSelecionados(prev =>
       prev.includes(corretorId)
         ? prev.filter(id => id !== corretorId)
-        : [...prev, corretorId]
+        : [...prev, corretorId]  // adiciona ao final da fila
     );
   };
   
@@ -276,7 +290,7 @@ export default function ProjetoFoco() {
                 Fila de Corretores
               </CardTitle>
               <CardDescription>
-                Ordem de distribuição dos leads. O primeiro da fila recebe o próximo lead.
+                Ordem de distribuição. Quem recebe um lead vai para o final. O <strong>1º</strong> recebe o próximo lead.
               </CardDescription>
             </div>
             <Button
@@ -293,56 +307,95 @@ export default function ProjetoFoco() {
               )}
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="space-y-3">
-                {corretores?.map((corretor, index) => {
-                  const isSelected = corretoresSelecionados.includes(corretor.id);
-                  const posicao = corretoresSelecionados.indexOf(corretor.id) + 1;
-                  
-                  return (
-                    <div
-                      key={corretor.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                        isSelected ? 'bg-accent border-primary' : 'hover:bg-accent/50'
-                      }`}
-                    >
-                      {isSelected && (
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold">
-                          {posicao}
+              <>
+                {/* Fila atual em ordem visual */}
+                {corretoresNaFila.length === 0 ? (
+                  <div className="text-center py-6 text-muted-foreground text-sm">
+                    Nenhum corretor na fila. Adicione corretores abaixo.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {corretoresNaFila.map((corretor, index) => (
+                      <div
+                        key={corretor.id}
+                        className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                          index === 0
+                            ? 'bg-yellow-50 border-yellow-300 dark:bg-yellow-950/30 dark:border-yellow-700'
+                            : corretor.status === 'presente'
+                            ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800'
+                            : 'bg-muted/30 border-border'
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 text-sm ${
+                          index === 0 ? 'bg-yellow-500 text-white' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
                         </div>
-                      )}
-                      
-                      <Checkbox
-                        id={`corretor-${corretor.id}`}
-                        checked={isSelected}
-                        onCheckedChange={() => handleToggleCorretor(corretor.id)}
-                      />
-                      
-                      <div className="flex-1">
-                        <div className="font-medium">{corretor.name}</div>
-                        <div className="text-sm text-muted-foreground">{corretor.email}</div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{corretor.name}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              corretor.status === 'presente'
+                                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                                : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {corretor.status === 'presente' ? 'Presente' : 'Ausente'}
+                            </span>
+                            {index === 0 && (
+                              <span className="text-xs bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium">
+                                Próximo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleToggleCorretor(corretor.id)}
+                          className="text-muted-foreground hover:text-destructive shrink-0 p-1 rounded"
+                          title="Remover da fila"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {corretor.status === "presente" ? (
-                          <span className="text-xs bg-green-500/10 text-green-500 px-3 py-1 rounded-full font-medium">
-                            Presente
+                    ))}
+                  </div>
+                )}
+
+                {/* Adicionar à fila */}
+                {corretoresForaDaFila.length > 0 && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-3">Adicionar à fila</p>
+                    <div className="space-y-2">
+                      {corretoresForaDaFila.map((corretor) => (
+                        <div
+                          key={corretor.id}
+                          className="flex items-center gap-4 p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer"
+                          onClick={() => handleToggleCorretor(corretor.id)}
+                        >
+                          <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{corretor.name}</div>
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            corretor.status === 'presente'
+                              ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                              : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {corretor.status === 'presente' ? 'Presente' : 'Ausente'}
                           </span>
-                        ) : (
-                          <span className="text-xs bg-gray-500/10 text-gray-500 px-3 py-1 rounded-full font-medium">
-                            Ausente
-                          </span>
-                        )}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

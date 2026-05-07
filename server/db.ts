@@ -3506,9 +3506,13 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     })
     .where(eq(leads.id, leadId));
   
-  // Mover corretor para o final da fila
-  await moverCorretorParaFinalFila(corretorId);
-  
+  // Mover corretor para o final da fila correta
+  if (tipoFilaUsada === 'foco') {
+    await moverCorretorParaFinalFilaFoco(corretorId);
+  } else {
+    await moverCorretorParaFinalFila(corretorId);
+  }
+
   // Registrar log de distribuição
   await db.insert(distributionLog).values({
     leadId,
@@ -3840,9 +3844,9 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
       })
       .where(eq(leads.id, leadCriado.id));
     
-    // Mover corretor para o final da fila
-    await moverCorretorParaFinalFila(corretorId);
-    
+    // Mover corretor para o final da fila foco (rotação correta)
+    await moverCorretorParaFinalFilaFoco(corretorId);
+
     // Registrar log de distribuição
     await db.insert(distributionLog).values({
       leadId: leadCriado.id,
@@ -8332,63 +8336,55 @@ export async function toggleProjetoFoco(ativo: boolean) {
 }
 
 /**
- * Busca o próximo corretor da fila do projeto foco (round-robin)
+ * Busca o próximo corretor da fila foco (primeiro presente no array, sem alterar estado).
+ * A rotação é feita por moverCorretorParaFinalFilaFoco() após a distribuição.
  */
 export async function getProximoCorretorFilaFoco(): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
-  
-  // Buscar configuração do projeto foco
+
   const config = await getConfiguracaoProjetoFoco();
-  
   if (!config || !config.ativo || !config.corretoresIds || config.corretoresIds.length === 0) {
-    return null; // Projeto foco não configurado ou inativo
+    return null;
   }
-  
+
   const corretoresIds = config.corretoresIds as number[];
-  const posicaoAtual = config.posicaoAtual || 0;
-  
-  // Buscar corretores da fila foco que estão presentes
-  const corretoresPresentes = await db.select({
-    id: users.id,
-    status: users.status,
-  })
+
+  const corretoresPresentes = await db
+    .select({ id: users.id })
     .from(users)
-    .where(and(
-      inArray(users.id, corretoresIds),
-      eq(users.status, 'presente')
-    ));
-  
-  if (corretoresPresentes.length === 0) {
-    return null; // Nenhum corretor presente na fila foco
+    .where(and(inArray(users.id, corretoresIds), eq(users.status, 'presente')));
+
+  if (corretoresPresentes.length === 0) return null;
+
+  const presentesSet = new Set(corretoresPresentes.map((c) => c.id));
+
+  // Retorna o primeiro da fila que estiver presente (posição 0 = próximo)
+  for (const corretorId of corretoresIds) {
+    if (presentesSet.has(corretorId)) return corretorId;
   }
-  
-  // Encontrar próximo corretor a partir da posição atual (round-robin)
-  let tentativas = 0;
-  let proximaPosicao = posicaoAtual;
-  
-  while (tentativas < corretoresIds.length) {
-    const corretorId = corretoresIds[proximaPosicao];
-    
-    // Verificar se o corretor está presente
-    const corretorPresente = corretoresPresentes.find(c => c.id === corretorId);
-    
-    if (corretorPresente) {
-      // Atualizar posição para o próximo
-      const novaPosicao = (proximaPosicao + 1) % corretoresIds.length;
-      await db.update(configuracaoProjetoFoco)
-        .set({ posicaoAtual: novaPosicao })
-        .where(eq(configuracaoProjetoFoco.id, config.id));
-      
-      return corretorId;
-    }
-    
-    // Próxima posição
-    proximaPosicao = (proximaPosicao + 1) % corretoresIds.length;
-    tentativas++;
-  }
-  
-  return null; // Nenhum corretor disponível
+
+  return null;
+}
+
+/**
+ * Move o corretor que recebeu um lead para o final da fila foco.
+ * Equivalente a moverCorretorParaFinalFila() para a fila geral.
+ */
+export async function moverCorretorParaFinalFilaFoco(corretorId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  const config = await getConfiguracaoProjetoFoco();
+  if (!config || !config.corretoresIds) return;
+
+  const ids = config.corretoresIds as number[];
+  const newOrder = [...ids.filter((id) => id !== corretorId), corretorId];
+
+  await db
+    .update(configuracaoProjetoFoco)
+    .set({ corretoresIds: newOrder, posicaoAtual: 0 })
+    .where(eq(configuracaoProjetoFoco.id, config.id));
 }
 
 
