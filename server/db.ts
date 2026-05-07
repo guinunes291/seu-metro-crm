@@ -2011,6 +2011,18 @@ export async function notifyLeadDistribuido(corretorId: number, leadId: number, 
   } catch (pushErr) {
     console.error("[Push] Erro ao importar pushNotifications (distribuicao):", pushErr);
   }
+  // SSE: notificar o novo corretor instantaneamente via lead_transferido
+  try {
+    const { cacheInvalidate } = await import('./_core/cache');
+    await cacheInvalidate(`dashboard.leadsPrioritarios:${corretorId}`);
+    const { notifySSEUser } = await import('./sseManager');
+    notifySSEUser(corretorId, 'lead_transferido', {
+      leadId,
+      leadNome,
+    });
+  } catch (sseErr) {
+    console.warn('[notifyLeadDistribuido] SSE/cache notify falhou (não crítico):', sseErr);
+  }
   return result;
 }
 // Função para criar notificação quando lead é distribuído
