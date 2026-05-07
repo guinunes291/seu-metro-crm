@@ -12,7 +12,7 @@
  */
 
 import { getDb } from "./db";
-import { agendamentos, leads, users, projects } from "../drizzle/schema";
+import { agendamentos, leads, users, projects, whatsappLogs } from "../drizzle/schema";
 import { and, eq, gte, lt, inArray } from "drizzle-orm";
 import {
   isEvolutionApiConfigured,
@@ -103,6 +103,7 @@ async function enviarLembretesDia1() {
           month: "long",
         });
         const projeto = ag.projetoNome || ag.projetoCustom || undefined;
+        const mensagemLembrete = `Olá ${ag.leadNome}! Lembrete: você tem um agendamento amanhã (${dataFormatada} às ${ag.horaAgendamento})${projeto ? ` no empreendimento ${projeto}` : ''}. Qualquer dúvida, estou à disposição!`;
         await enviarLembreteAgendamento({
           telefoneCliente: ag.leadTelefone,
           nomeCliente: ag.leadNome,
@@ -111,6 +112,16 @@ async function enviarLembretesDia1() {
           hora: ag.horaAgendamento,
           projeto,
         });
+        try {
+          await db.insert(whatsappLogs).values({
+            leadId: ag.leadId ?? undefined,
+            corretorId: ag.corretorId ?? undefined,
+            tipo: "lembrete_agendamento",
+            mensagem: mensagemLembrete,
+            telefone: formatPhoneNumber(ag.leadTelefone),
+            status: "enviado",
+          });
+        } catch { /* log silencioso */ }
         enviados++;
         // Pequena pausa entre envios para não sobrecarregar a API
         await new Promise((r) => setTimeout(r, 500));
@@ -169,12 +180,23 @@ async function enviarBoasVindasNovosLeads() {
       if (!lead.telefone) continue;
       try {
         const projeto = lead.projetoNome || lead.projetoCustom || undefined;
+        const mensagemBV = `Olá ${lead.nome}! Seja bem-vindo(a)! Sou ${lead.corretorNome || 'seu corretor'} e estou aqui para te ajudar a encontrar o imóvel ideal${projeto ? ` no ${projeto}` : ''}. Como posso te ajudar?`;
         await enviarBoasVindasLead({
           telefoneCliente: lead.telefone,
           nomeCliente: lead.nome,
           nomeCorretor: lead.corretorNome || "Corretor",
           projeto,
         });
+        try {
+          await db.insert(whatsappLogs).values({
+            leadId: lead.id,
+            corretorId: lead.corretorId ?? undefined,
+            tipo: "boas_vindas",
+            mensagem: mensagemBV,
+            telefone: formatPhoneNumber(lead.telefone),
+            status: "enviado",
+          });
+        } catch { /* log silencioso */ }
         if (lead.id > maxId) maxId = lead.id;
         await new Promise((r) => setTimeout(r, 500));
       } catch {

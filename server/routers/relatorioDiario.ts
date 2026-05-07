@@ -11,6 +11,7 @@ import {
   propostas,
   contratos,
   users,
+  whatsappLogs,
 } from "../../drizzle/schema";
 import { eq, and, gte, lte, sql, desc, between } from "drizzle-orm";
 
@@ -359,6 +360,160 @@ export const relatorioDiarioRouter = router({
         carteira,
         scoreProdutividade,
         checklist,
+      };
+    }),
+
+  // Relatório de leads por origem (canal de captação) — apenas gestores/admins
+  leadsPorOrigem: protectedProcedure
+    .input(
+      z.object({
+        inicio: z.date(),
+        fim: z.date(),
+        equipeId: z.number().optional(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!isGestorLevel(ctx.user.role)) {
+        throw new Error("Acesso negado");
+      }
+      const db = await getDb();
+      const { inicio, fim } = input;
+
+      // Leads por origem no período
+      const [origemRows] = await db.execute(sql`
+        SELECT
+          COALESCE(origem, 'outro') AS origem,
+          COUNT(*) AS total,
+          SUM(CASE WHEN status = 'contrato_fechado' THEN 1 ELSE 0 END) AS convertidos,
+          SUM(CASE WHEN status IN ('perdido', 'descartado') THEN 1 ELSE 0 END) AS perdidos,
+          SUM(CASE WHEN status = 'aguardando_atendimento' THEN 1 ELSE 0 END) AS aguardando
+        FROM leads
+        WHERE createdAt >= ${inicio}
+          AND createdAt <= ${fim}
+          AND naLixeira = 0
+        GROUP BY origem
+        ORDER BY total DESC
+      `);
+
+      // Leads por UTM source (campanhas pagas)
+      const [utmRows] = await db.execute(sql`
+        SELECT
+          COALESCE(utmSource, 'organico') AS utmSource,
+          COALESCE(utmCampaign, '') AS utmCampaign,
+          COUNT(*) AS total,
+          SUM(CASE WHEN status = 'contrato_fechado' THEN 1 ELSE 0 END) AS convertidos
+        FROM leads
+        WHERE createdAt >= ${inicio}
+          AND createdAt <= ${fim}
+          AND naLixeira = 0
+          AND utmSource IS NOT NULL
+        GROUP BY utmSource, utmCampaign
+        ORDER BY total DESC
+        LIMIT 20
+      `);
+
+      // Evolução diária de leads por origem (últimos 30 dias)
+      const [evolucaoRows] = await db.execute(sql`
+        SELECT
+          DATE(createdAt) AS dia,
+          COALESCE(origem, 'outro') AS origem,
+          COUNT(*) AS total
+        FROM leads
+        WHERE createdAt >= ${inicio}
+          AND createdAt <= ${fim}
+          AND naLixeira = 0
+        GROUP BY dia, origem
+        ORDER BY dia ASC
+      `);
+
+      return {
+        porOrigem: (origemRows as any[]).map((r) => ({
+          origem: r.origem as string,
+          total: Number(r.total),
+          convertidos: Number(r.convertidos),
+          perdidos: Number(r.perdidos),
+          aguardando: Number(r.aguardando),
+          taxaConversao: r.total > 0 ? Math.round((Number(r.convertidos) / Number(r.total)) * 100) : 0,
+        })),
+        porUtm: (utmRows as any[]).map((r) => ({
+          utmSource: r.utmSource as string,
+          utmCampaign: r.utmCampaign as string,
+          total: Number(r.total),
+          convertidos: Number(r.convertidos),
+          taxaConversao: r.total > 0 ? Math.round((Number(r.convertidos) / Number(r.total)) * 100) : 0,
+        })),
+        evolucao: (evolucaoRows as any[]).map((r) => ({
+          dia: String(r.dia),
+          origem: r.origem as string,
+          total: Number(r.total),
+        })),
+      };
+    }),
+
+  // Logs de mensagens WhatsApp enviadas — apenas gestores/admins
+  logsWhatsapp: protectedProcedure
+    .input(
+      z.object({
+        inicio: z.date(),
+        fim: z.date(),
+        tipo: z.enum(["boas_vindas", "lembrete_agendamento", "followup_vencido", "manual"]).optional(),
+        page: z.number().default(1),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (!isGestorLevel(ctx.user.role)) {
+        throw new Error("Acesso negado");
+      }
+      const db = await getDb();
+      const { inicio, fim, tipo, page } = input;
+      const limit = 50;
+      const offset = (page - 1) * limit;
+
+      const conditions = [
+        gte(whatsappLogs.createdAt, inicio),
+        lte(whatsappLogs.createdAt, fim),
+      ];
+      if (tipo) conditions.push(eq(whatsappLogs.tipo, tipo));
+
+      const logs = await db
+        .select({
+          id: whatsappLogs.id,
+          leadId: whatsappLogs.leadId,
+          corretorId: whatsappLogs.corretorId,
+          tipo: whatsappLogs.tipo,
+          mensagem: whatsappLogs.mensagem,
+          telefone: whatsappLogs.telefone,
+          status: whatsappLogs.status,
+          erroDetalhe: whatsappLogs.erroDetalhe,
+          createdAt: whatsappLogs.createdAt,
+          leadNome: leads.nome,
+          corretorNome: users.name,
+        })
+        .from(whatsappLogs)
+        .leftJoin(leads, eq(whatsappLogs.leadId, leads.id))
+        .leftJoin(users, eq(whatsappLogs.corretorId, users.id))
+        .where(and(...conditions))
+        .orderBy(desc(whatsappLogs.createdAt))
+        .limit(limit)
+        .offset(offset);
+
+      // Resumo por tipo e status
+      const [resumoRows] = await db.execute(sql`
+        SELECT tipo, status, COUNT(*) AS total
+        FROM whatsapp_logs
+        WHERE createdAt >= ${inicio} AND createdAt <= ${fim}
+        GROUP BY tipo, status
+      `);
+
+      return {
+        logs,
+        resumo: (resumoRows as any[]).map((r) => ({
+          tipo: r.tipo as string,
+          status: r.status as string,
+          total: Number(r.total),
+        })),
+        page,
+        hasMore: logs.length === limit,
       };
     }),
 

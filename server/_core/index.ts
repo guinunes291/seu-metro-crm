@@ -192,6 +192,14 @@ async function startServer() {
     }).catch(err => {
       console.error("[Job] Erro ao inicializar job de lembretes WhatsApp:", err);
     });
+
+    // Inicializar job de avisos de follow-up vencido (diário às 09h SP)
+    import("../followupVencidoJob").then(({ startFollowupVencidoJob }) => {
+      startFollowupVencidoJob();
+      console.log("[Job] Avisos de follow-up vencido inicializados (diário às 09h SP)");
+    }).catch(err => {
+      console.error("[Job] Erro ao inicializar job de follow-up vencido:", err);
+    });
   });
 }
 

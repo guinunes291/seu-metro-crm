@@ -2546,3 +2546,30 @@ export const objecoesPlaybook = mysqlTable("objecoes_playbook", {
 }));
 export type ObjecaoPlaybook = typeof objecoesPlaybook.$inferSelect;
 export type InsertObjecaoPlaybook = typeof objecoesPlaybook.$inferInsert;
+
+// ============================================================================
+// WhatsApp Logs — registro de mensagens enviadas via Evolution API
+// ============================================================================
+export const whatsappLogs = mysqlTable("whatsapp_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId"),
+  corretorId: int("corretorId"),
+  tipo: mysqlEnum("tipo", [
+    "boas_vindas",
+    "lembrete_agendamento",
+    "followup_vencido",
+    "manual",
+  ]).notNull(),
+  mensagem: text("mensagem").notNull(),
+  telefone: varchar("telefone", { length: 30 }),
+  status: mysqlEnum("status", ["enviado", "erro", "ignorado"]).default("enviado").notNull(),
+  erroDetalhe: text("erroDetalhe"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  wlogLeadIdx: index("wlog_lead_idx").on(table.leadId),
+  wlogCorretorIdx: index("wlog_corretor_idx").on(table.corretorId),
+  wlogTipoIdx: index("wlog_tipo_idx").on(table.tipo),
+  wlogCreatedIdx: index("wlog_created_idx").on(table.createdAt),
+}));
+export type WhatsappLog = typeof whatsappLogs.$inferSelect;
+export type InsertWhatsappLog = typeof whatsappLogs.$inferInsert;
