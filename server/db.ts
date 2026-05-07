@@ -12163,37 +12163,121 @@ export async function getMotivosPerda(corretoresIds?: number[]) {
 // ============================================================================
 
 /**
- * Busca um lead pelo telefone (normalizado).
- * Usado pelo webhook de documentação para identificar o lead a atualizar.
+ * Normaliza um número de telefone para comparação:
+ * Remove todos os caracteres não-numéricos, prefixo +55 e código de país 55.
+ * Suporta todos os formatos: (11) 99999-9999, 11999999999, 11 999999999, +5511999999999, etc.
+ */
+export function normalizarTelefoneDocumentacao(telefone: string): string {
+  // Remove todos os caracteres não-numéricos (parênteses, traços, espaços, pontos, +)
+  let tel = telefone.replace(/\D/g, '');
+  // Remove prefixo internacional do Brasil: 55 + DDD (>11 dígitos = tem código de país)
+  if (tel.startsWith('55') && tel.length > 11) tel = tel.slice(2);
+  // Remove zero inicial de DDD se tiver (ex: 011 -> 11)
+  if (tel.length === 12 && tel.startsWith('0')) tel = tel.slice(1);
+  return tel;
+}
+
+/**
+ * Busca um lead pelo telefone com normalização inteligente.
+ * Suporta todos os formatos: (11) 99999-9999, 11999999999, 11 999999999, +5511999999999, etc.
+ * Também faz busca com e sem o 9 extra (celulares antigos de 8 dígitos).
  */
 export async function buscarLeadPorTelefone(telefone: string): Promise<{
   id: number;
   nome: string;
   telefone: string;
+  email: string | null;
   status: string;
   corretorId: number | null;
+  projectId: number | null;
+  projetoCustom: string | null;
 } | null> {
   const db = await getDb();
   if (!db) return null;
 
-  let tel = telefone.replace(/\D/g, '');
-  if (tel.startsWith('55') && tel.length > 11) tel = tel.slice(2);
+  const tel = normalizarTelefoneDocumentacao(telefone);
+  if (!tel || tel.length < 8) return null;
+
+  // Expressão SQL para normalizar o telefone armazenado no banco
+  const normalizeExpr = sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+55', ''), '+', '')`;
+
+  // Variações do número: com e sem o 9 extra (para celulares antigos de 8 dígitos)
+  const variacoes: string[] = [tel];
+  // Se tem DDD (10+ dígitos) e começa com 9 após o DDD, adicionar versão sem o 9
+  if (tel.length === 11) {
+    const semNoveExtra = tel.slice(0, 2) + tel.slice(3); // remove o 9 extra
+    variacoes.push(semNoveExtra);
+  } else if (tel.length === 10) {
+    // Número antigo de 8 dígitos — adicionar versão com 9 extra
+    const comNoveExtra = tel.slice(0, 2) + '9' + tel.slice(2);
+    variacoes.push(comNoveExtra);
+  }
 
   const [lead] = await db
     .select({
       id: leads.id,
       nome: leads.nome,
       telefone: leads.telefone,
+      email: leads.email,
       status: leads.status,
       corretorId: leads.corretorId,
+      projectId: leads.projectId,
+      projetoCustom: leads.projetoCustom,
     })
     .from(leads)
     .where(
-      sql`REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${leads.telefone}, '(', ''), ')', ''), '-', ''), ' ', ''), '+55', '') = ${tel}`
+      sql`${normalizeExpr} IN (${sql.join(variacoes.map(v => sql`${v}`), sql`, `)})`
     )
+    .orderBy(sql`FIELD(${leads.status}, 'analise_credito', 'proposta_enviada', 'visita_realizada', 'agendado', 'qualificado', 'em_atendimento', 'aguardando_atendimento', 'novo') DESC`)
     .limit(1);
 
   return lead ?? null;
+}
+
+/**
+ * Cria um lead automaticamente quando não encontrado no sistema via webhook de documentação.
+ * O lead é criado com status 'analise_credito' e origem 'outro'.
+ */
+export async function criarLeadDocumentacao(dados: {
+  nome: string;
+  telefone: string;
+  email?: string;
+  tipoRegime: 'autonomo' | 'clt';
+  nomeCorretor?: string;
+  empreendimento?: string;
+}): Promise<{ id: number; nome: string; status: string; criado: true }> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+
+  const regimeLabel = dados.tipoRegime === 'autonomo' ? 'Autônomo' : 'CLT';
+
+  const result = await db.insert(leads).values({
+    nome: dados.nome || 'Cliente (via Formulário)',
+    telefone: dados.telefone,
+    email: dados.email || null,
+    origem: 'outro',
+    status: 'analise_credito',
+    projetoCustom: dados.empreendimento || null,
+    observacoes: `Lead criado automaticamente via Google Forms — Documentação ${regimeLabel}${dados.nomeCorretor ? ` (Corretor: ${dados.nomeCorretor})` : ''}`,
+    ultimaInteracao: new Date(),
+  });
+
+  const leadId = Number(result[0].insertId);
+
+  // Registrar histórico
+  await db.insert(leadHistory).values({
+    leadId,
+    corretorId: 0,
+    tipo: 'outro',
+    resultado: 'outro',
+    observacoes: `Lead criado via Google Forms — Documentação ${regimeLabel} enviada. Status inicial: Análise de Crédito.`,
+    statusAnterior: 'novo',
+    statusNovo: 'analise_credito',
+  });
+
+  console.log(`[Webhook Docs] Lead criado automaticamente: id=${leadId}, nome=${dados.nome}, regime=${regimeLabel}`);
+
+  return { id: leadId, nome: dados.nome || 'Cliente (via Formulário)', status: 'analise_credito', criado: true };
 }
 
 /**

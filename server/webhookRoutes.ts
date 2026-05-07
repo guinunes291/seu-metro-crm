@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import * as db from './db';
+import { notifyOwner } from './_core/notification';
+import { ENV } from './_core/env';
 
 const router = Router();
 
@@ -740,7 +742,7 @@ router.post('/documentacao', async (req: Request, res: Response) => {
       return res.status(401).json({ success: false, error: 'Token inválido' });
     }
 
-    const { telefone, nomeCliente, tipoRegime, nomeCorretor } = req.body;
+    const { telefone, nomeCliente, tipoRegime, nomeCorretor, emailCliente, empreendimento } = req.body;
 
     if (!telefone) {
       return res.status(400).json({ success: false, error: 'Campo "telefone" é obrigatório' });
@@ -750,29 +752,138 @@ router.post('/documentacao', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'Campo "tipoRegime" deve ser "autonomo" ou "clt"' });
     }
 
+    const regimeLabel = tipoRegime === 'autonomo' ? 'Autônomo' : 'CLT';
     console.log(`[Webhook Docs] Recebido — cliente: ${maskPII(nomeCliente)}, telefone: ${maskPII(telefone)}, regime: ${tipoRegime}`);
 
-    const lead = await db.buscarLeadPorTelefone(telefone);
+    // Buscar lead pelo telefone com normalização inteligente
+    let lead = await db.buscarLeadPorTelefone(telefone);
+    let leadCriado = false;
 
     if (!lead) {
-      console.warn(`[Webhook Docs] Lead não encontrado para telefone: ${maskPII(telefone)}`);
-      return res.status(404).json({
-        success: false,
-        error: 'Lead não encontrado',
-        message: 'Nenhum lead encontrado com o telefone informado',
+      // Tentar buscar por email se fornecido
+      if (emailCliente) {
+        const db2 = await import('./db');
+        // Busca por email não existe como função separada, usar checkLeadDuplicado
+        const check = await db.checkLeadDuplicado(undefined, emailCliente);
+        if (check.isDuplicate && check.leadId) {
+          const leadPorEmail = await db.getLeadById(check.leadId);
+          if (leadPorEmail) {
+            lead = {
+              id: leadPorEmail.id,
+              nome: leadPorEmail.nome,
+              telefone: leadPorEmail.telefone,
+              email: leadPorEmail.email,
+              status: leadPorEmail.status,
+              corretorId: leadPorEmail.corretorId,
+              projectId: leadPorEmail.projectId,
+              projetoCustom: leadPorEmail.projetoCustom,
+            };
+            console.log(`[Webhook Docs] Lead encontrado por email: id=${lead.id}`);
+          }
+        }
+      }
+    }
+
+    if (!lead) {
+      // Lead não encontrado — criar automaticamente
+      console.log(`[Webhook Docs] Lead não encontrado. Criando automaticamente para: ${maskPII(nomeCliente || 'N/A')}`);
+
+      const novoLead = await db.criarLeadDocumentacao({
+        nome: nomeCliente || 'Cliente (via Formulário)',
+        telefone,
+        email: emailCliente || undefined,
+        tipoRegime: tipoRegime as 'autonomo' | 'clt',
+        nomeCorretor,
+        empreendimento,
+      });
+
+      leadCriado = true;
+
+      // Notificar gestor sobre novo lead criado via formulário
+      try {
+        await notifyOwner({
+          title: `📄 Novo Lead via Formulário de Documentação (${regimeLabel})`,
+          content: [
+            `Um novo lead foi criado automaticamente após envio de documentação via Google Forms.`,
+            ``,
+            `👤 **Cliente:** ${nomeCliente || 'Não informado'}`,
+            `📞 **Telefone:** ${telefone}`,
+            emailCliente ? `📧 **E-mail:** ${emailCliente}` : '',
+            empreendimento ? `🏢 **Empreendimento:** ${empreendimento}` : '',
+            `💼 **Regime:** ${regimeLabel}`,
+            nomeCorretor ? `🧑‍💼 **Corretor:** ${nomeCorretor}` : '',
+            ``,
+            `✅ Status: Análise de Crédito`,
+            `⚠️ Lead criado automaticamente (não existia no sistema).`,
+          ].filter(Boolean).join('\n'),
+        });
+      } catch (notifErr) {
+        console.warn('[Webhook Docs] Falha ao notificar gestor (lead criado):', notifErr);
+      }
+
+      return res.status(201).json({
+        success: true,
+        leadId: novoLead.id,
+        leadNome: novoLead.nome,
+        statusAnterior: null,
+        statusNovo: 'analise_credito',
+        leadCriado: true,
+        message: 'Lead criado e já em Análise de Crédito',
       });
     }
 
     console.log(`[Webhook Docs] Lead encontrado: id=${lead.id}, status=${lead.status}`);
+    const statusAnterior = lead.status;
 
     await db.atualizarLeadParaAnaliseCredito(lead.id, tipoRegime as 'autonomo' | 'clt', nomeCorretor);
+
+    // Notificar gestor sobre documentação enviada
+    try {
+      const statusLabel: Record<string, string> = {
+        novo: 'Novo',
+        aguardando_atendimento: 'Aguardando Atendimento',
+        em_atendimento: 'Em Atendimento',
+        qualificado: 'Qualificado',
+        agendado: 'Agendado',
+        visita_realizada: 'Visita Realizada',
+        proposta_enviada: 'Proposta Enviada',
+        analise_credito: 'Análise de Crédito',
+        contrato_fechado: 'Contrato Fechado',
+        pos_venda: 'Pós-Venda',
+        perdido: 'Perdido',
+      };
+
+      const statusAnteriorLabel = statusLabel[statusAnterior] || statusAnterior;
+      const jaEstaEmAnalise = statusAnterior === 'analise_credito';
+
+      await notifyOwner({
+        title: `📄 Documentação Enviada — ${lead.nome} (${regimeLabel})`,
+        content: [
+          `Documentação enviada via Google Forms para análise de crédito.`,
+          ``,
+          `👤 **Cliente:** ${lead.nome}`,
+          `📞 **Telefone:** ${lead.telefone}`,
+          lead.email ? `📧 **E-mail:** ${lead.email}` : '',
+          lead.projetoCustom ? `🏢 **Empreendimento:** ${lead.projetoCustom}` : '',
+          `💼 **Regime:** ${regimeLabel}`,
+          nomeCorretor ? `🧑‍💼 **Corretor:** ${nomeCorretor}` : '',
+          ``,
+          jaEstaEmAnalise
+            ? `ℹ️ Lead já estava em Análise de Crédito.`
+            : `🔄 Status: ${statusAnteriorLabel} → Análise de Crédito`,
+        ].filter(Boolean).join('\n'),
+      });
+    } catch (notifErr) {
+      console.warn('[Webhook Docs] Falha ao notificar gestor:', notifErr);
+    }
 
     return res.status(200).json({
       success: true,
       leadId: lead.id,
       leadNome: lead.nome,
-      statusAnterior: lead.status,
+      statusAnterior,
       statusNovo: 'analise_credito',
+      leadCriado: false,
       message: 'Lead atualizado para Análise de Crédito com sucesso',
     });
 
