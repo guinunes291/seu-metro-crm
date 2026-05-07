@@ -11,8 +11,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart3, TrendingUp, TrendingDown, Users, Target, AlertTriangle,
   CalendarX, ArrowRight, ChevronDown, ChevronUp, Filter,
-  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle, CalendarCheck
+  Building2, Layers, PieChart, Activity, Zap, CheckCircle2, XCircle, CalendarCheck,
+  Settings2
 } from "lucide-react";
+import { CustomReportBuilder } from "@/components/CustomReportBuilder";
 
 // ============================================================================
 // HELPERS
@@ -61,7 +63,7 @@ function getProgressColor(percentual: number): string {
 // FILTROS
 // ============================================================================
 
-type PeriodoPreset = "mes_atual" | "mes_anterior" | "trimestre" | "semestre" | "ano";
+type PeriodoPreset = "mes_atual" | "mes_anterior" | "trimestre" | "semestre" | "ano" | "personalizado";
 
 function getPeriodoDatas(preset: PeriodoPreset): { dataInicio: Date; dataFim: Date; mes: number; ano: number } {
   const hoje = new Date();
@@ -125,8 +127,18 @@ export default function Relatorios() {
   const { user } = useAuth();
   const [periodo, setPeriodo] = useState<PeriodoPreset>("mes_atual");
   const [abaAtiva, setAbaAtiva] = useState("producao");
+  const [dataInicioCustom, setDataInicioCustom] = useState<string>("");
+  const [dataFimCustom, setDataFimCustom] = useState<string>("");
 
-  const datas = useMemo(() => getPeriodoDatas(periodo), [periodo]);
+  const datas = useMemo(() => {
+    if (periodo === "personalizado" && dataInicioCustom && dataFimCustom) {
+      const inicio = new Date(dataInicioCustom);
+      const fim = new Date(dataFimCustom + "T23:59:59");
+      return { dataInicio: inicio, dataFim: fim, mes: inicio.getMonth() + 1, ano: inicio.getFullYear() };
+    }
+    return getPeriodoDatas(periodo as Exclude<PeriodoPreset, "personalizado">);
+  }, [periodo, dataInicioCustom, dataFimCustom]);
+
   const inputDatas = useMemo(() => ({
     dataInicio: datas.dataInicio.toISOString(),
     dataFim: datas.dataFim.toISOString(),
@@ -185,7 +197,7 @@ export default function Relatorios() {
             <p className="text-muted-foreground mt-1 text-sm">Visão estratégica completa da operação</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
               <Filter className="h-4 w-4 text-muted-foreground ml-2" />
               <Select value={periodo} onValueChange={(v) => setPeriodo(v as PeriodoPreset)}>
@@ -198,9 +210,27 @@ export default function Relatorios() {
                   <SelectItem value="trimestre">Último Trimestre</SelectItem>
                   <SelectItem value="semestre">Último Semestre</SelectItem>
                   <SelectItem value="ano">Ano Inteiro</SelectItem>
+                  <SelectItem value="personalizado">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {periodo === "personalizado" && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={dataInicioCustom}
+                  onChange={(e) => setDataInicioCustom(e.target.value)}
+                  className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+                <span className="text-muted-foreground text-sm">até</span>
+                <input
+                  type="date"
+                  value={dataFimCustom}
+                  onChange={(e) => setDataFimCustom(e.target.value)}
+                  className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -239,6 +269,9 @@ export default function Relatorios() {
             <TabsTrigger value="show_rate" className="gap-1.5 text-xs sm:text-sm">
               <CalendarCheck className="h-3.5 w-3.5" /> Show Rate
             </TabsTrigger>
+            <TabsTrigger value="personalizado" className="gap-1.5 text-xs sm:text-sm">
+              <Settings2 className="h-3.5 w-3.5" /> Personalizado
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="producao" className="mt-4">
@@ -271,6 +304,13 @@ export default function Relatorios() {
 
           <TabsContent value="show_rate" className="mt-4">
             <AbaShowRate data={showRate.data} isLoading={showRate.isLoading} />
+          </TabsContent>
+
+          <TabsContent value="personalizado" className="mt-4">
+            <CustomReportBuilder
+              defaultDataInicio={datas.dataInicio}
+              defaultDataFim={datas.dataFim}
+            />
           </TabsContent>
         </Tabs>
       </div>
