@@ -3,11 +3,11 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { 
-  Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle, 
+import {
+  Building2, Users, CheckCircle, TrendingUp, Clock, AlertCircle,
   Calendar, DollarSign, Eye, FileCheck, XCircle, Hourglass,
   CalendarDays, CalendarRange, BarChart3, TrendingDown, Download, Pencil, Plus, FileText,
-  ArrowLeftRight, RefreshCw
+  ArrowLeftRight, RefreshCw, UserX, AlertTriangle, ArrowRight, Phone,
 } from "lucide-react";
 import { ExportCSVButton } from "@/components/ExportCSVButton";
 import EditarContratoDialog from "@/components/EditarContratoDialog";
@@ -188,6 +188,12 @@ export default function Dashboard() {
 
   // Diagnóstico — apenas para admin, chamado manualmente
   const diagQuery = trpc.dashboard.diagnostico.useQuery(undefined, { enabled: false });
+
+  // Alertas em tempo real da equipe — usados no bloco "Situação Agora"
+  const { data: alertasEquipe } = trpc.alertasGestor.lista.useQuery(undefined, {
+    ...gestorBase,
+    refetchInterval: 2 * 60 * 1000,
+  });
 
   // ── Tier 1: KPIs principais (carregam imediatamente) ─────────────────────
   const { data: metrics, isLoading: metricsLoading } = trpc.dashboard.metrics.useQuery(dateFilter, gestorBase);
@@ -690,6 +696,103 @@ export default function Dashboard() {
             </Button>
           )}
         </div>
+
+        {/* Bloco: Situação Agora — alertas da equipe em tempo real */}
+        {alertasEquipe && (
+          alertasEquipe.corretoresSemAtividade.length > 0 ||
+          alertasEquipe.leadsSemPrimeiroContato.length > 0 ||
+          alertasEquipe.followUpsVencidos.length > 0 ||
+          alertasEquipe.agendamentosSemConfirmacao.length > 0
+        ) && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+                Situação Agora
+              </h2>
+              <Link href="/central-alertas">
+                <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 hover:underline">
+                  Ver Central de Alertas <ArrowRight className="h-3 w-3" />
+                </button>
+              </Link>
+            </div>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+              {/* Corretores sem atividade */}
+              <Link href="/minha-equipe">
+                <div className={`rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] ${
+                  alertasEquipe.corretoresSemAtividade.length > 0
+                    ? 'border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800'
+                    : 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <UserX className={`h-5 w-5 ${alertasEquipe.corretoresSemAtividade.length > 0 ? 'text-red-500' : 'text-green-500'}`} />
+                    <span className={`text-2xl font-bold ${alertasEquipe.corretoresSemAtividade.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {alertasEquipe.corretoresSemAtividade.length}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground leading-tight">Corretores sem atividade hoje</p>
+                  {alertasEquipe.corretoresSemAtividade.length > 0 && (
+                    <p className="text-[11px] text-red-600/70 dark:text-red-400/70 mt-1 truncate">
+                      {alertasEquipe.corretoresSemAtividade.slice(0, 2).map(c => c.nome).join(', ')}
+                      {alertasEquipe.corretoresSemAtividade.length > 2 && ` +${alertasEquipe.corretoresSemAtividade.length - 2}`}
+                    </p>
+                  )}
+                </div>
+              </Link>
+
+              {/* Leads aguardando > 30min */}
+              <Link href="/leads">
+                <div className={`rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] ${
+                  alertasEquipe.leadsSemPrimeiroContato.length > 0
+                    ? 'border-orange-200 bg-orange-50 dark:bg-orange-950/20 dark:border-orange-800'
+                    : 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <Clock className={`h-5 w-5 ${alertasEquipe.leadsSemPrimeiroContato.length > 0 ? 'text-orange-500' : 'text-green-500'}`} />
+                    <span className={`text-2xl font-bold ${alertasEquipe.leadsSemPrimeiroContato.length > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {alertasEquipe.leadsSemPrimeiroContato.length}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground leading-tight">Leads aguardando &gt;30min</p>
+                </div>
+              </Link>
+
+              {/* Follow-ups vencidos */}
+              <Link href="/monitoramento-followups">
+                <div className={`rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] ${
+                  alertasEquipe.followUpsVencidos.length > 0
+                    ? 'border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800'
+                    : 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <Phone className={`h-5 w-5 ${alertasEquipe.followUpsVencidos.length > 0 ? 'text-amber-500' : 'text-green-500'}`} />
+                    <span className={`text-2xl font-bold ${alertasEquipe.followUpsVencidos.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {alertasEquipe.followUpsVencidos.length}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground leading-tight">Follow-ups vencidos</p>
+                </div>
+              </Link>
+
+              {/* Agendamentos sem confirmação */}
+              <Link href="/agendamentos">
+                <div className={`rounded-xl border-2 p-4 cursor-pointer hover:shadow-md transition-all hover:scale-[1.02] ${
+                  alertasEquipe.agendamentosSemConfirmacao.length > 0
+                    ? 'border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-800'
+                    : 'border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <Calendar className={`h-5 w-5 ${alertasEquipe.agendamentosSemConfirmacao.length > 0 ? 'text-blue-500' : 'text-green-500'}`} />
+                    <span className={`text-2xl font-bold ${alertasEquipe.agendamentosSemConfirmacao.length > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {alertasEquipe.agendamentosSemConfirmacao.length}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground leading-tight">Agendamentos amanhã sem confirmar</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {metricsLoading ? (
           <div className="text-center py-8 text-muted-foreground">

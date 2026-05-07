@@ -50,6 +50,7 @@ import { toast } from "sonner";
 import { useFollowUpProgress } from "@/hooks/useFollowUpProgress";
 import { LockedTabOverlay } from "./LockedTabOverlay";
 import { ModalAgendaDia } from "@/components/ModalAgendaDia";
+import { ModalAgendaGestor } from "@/components/ModalAgendaGestor";
 import { ContadorLeadsFacebook } from "@/components/ContadorLeadsFacebook";
 import { useSolicitarPermissaoNotificacao } from "@/hooks/useNotificacaoLead";
 import { PushNotificationBanner } from "@/components/PushNotificationBanner";
@@ -209,6 +210,126 @@ const menuGroupsCorretor = [
   },
 ];
 
+// Menu simplificado para gestores — 5 grupos, ~14 itens
+const menuGroupsGestor = [
+  {
+    id: "inicio",
+    label: "Início",
+    icon: Home,
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
+    ],
+  },
+  {
+    id: "equipe",
+    label: "Minha Equipe",
+    icon: Users2,
+    items: [
+      { icon: Users2, label: "Minha Equipe", path: "/minha-equipe" },
+      { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor" },
+      { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups" },
+    ],
+  },
+  {
+    id: "leads",
+    label: "Leads",
+    icon: Users,
+    items: [
+      { icon: Users, label: "Todos os Leads", path: "/leads" },
+      { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
+      { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
+    ],
+  },
+  {
+    id: "desempenho",
+    label: "Desempenho",
+    icon: TrendingUp,
+    items: [
+      { icon: ClipboardList, label: "Meu Painel", path: "/meu-painel" },
+      { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+      { icon: TrendingUp, label: "Comissões", path: "/comissoes" },
+    ],
+  },
+  {
+    id: "operacoes",
+    label: "Operações",
+    icon: Building2,
+    items: [
+      { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Import, label: "Importar Projetos", path: "/importar-projetos" },
+      { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos" },
+      { icon: Settings, label: "Configurações", path: "/configuracoes" },
+    ],
+  },
+];
+
+// Menu para admin e superintendente — 5 grupos, ~18 itens
+const menuGroupsAdmin = [
+  {
+    id: "inicio",
+    label: "Início",
+    icon: Home,
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
+    ],
+  },
+  {
+    id: "leads-equipes",
+    label: "Leads & Equipes",
+    icon: Users,
+    items: [
+      { icon: Users, label: "Todos os Leads", path: "/leads" },
+      { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor" },
+      { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
+      { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor" },
+      { icon: Users2, label: "Corretores", path: "/corretores" },
+      { icon: UserCog, label: "Gestão de Equipes", path: "/gestao-equipes" },
+      { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups" },
+    ],
+  },
+  {
+    id: "distribuicao",
+    label: "Distribuição",
+    icon: Shuffle,
+    items: [
+      { icon: Shuffle, label: "Roleta de Leads", path: "/roleta" },
+      { icon: Target, label: "Projeto Foco", path: "/projeto-foco" },
+      { icon: UserCircle, label: "Controle Distribuição", path: "/controle-distribuicao" },
+      { icon: Target, label: "Controle de Limites", path: "/controle-limites" },
+      { icon: History, label: "Histórico Distribuição", path: "/historico-distribuicao" },
+    ],
+  },
+  {
+    id: "desempenho",
+    label: "Desempenho",
+    icon: TrendingUp,
+    items: [
+      { icon: Trophy, label: "Ranking TV", path: "/ranking-tv" },
+      { icon: Tv, label: "Performance TV", path: "/performance-tv" },
+      { icon: Target, label: "Metas Mensais", path: "/metas" },
+      { icon: Target, label: "Metas Diárias", path: "/metas-diarias" },
+      { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
+      { icon: TrendingUp, label: "Comissões", path: "/comissoes" },
+    ],
+  },
+  {
+    id: "sistema",
+    label: "Sistema",
+    icon: Settings,
+    items: [
+      { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Import, label: "Importar Leads", path: "/importar-sheets" },
+      { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync" },
+      { icon: Database, label: "Sincronização BI", path: "/sincronizacao-bi" },
+      { icon: Settings, label: "Templates Comissão", path: "/templates-comissao" },
+      { icon: Trash2, label: "Lixeira", path: "/lixeira" },
+      { icon: Settings, label: "Configurações", path: "/configuracoes" },
+    ],
+  },
+];
+
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const MENU_GROUPS_KEY = "menu-groups-state";
 const DEFAULT_WIDTH = 280;
@@ -316,6 +437,15 @@ function LeadsActionsBadge({ count }: { count: number }) {
   if (count === 0) return null;
   return (
     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+      {count > 9 ? '9+' : count}
+    </span>
+  );
+}
+
+function AlertasBadge({ count }: { count: number }) {
+  if (count === 0) return null;
+  return (
+    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-medium text-white">
       {count > 9 ? '9+' : count}
     </span>
   );
@@ -517,8 +647,39 @@ function DashboardContent({
     };
   }, [isResizing, setSidebarWidth]);
 
+  // Alertas da equipe (para badge no menu de gestores)
+  const isGestorOuSuperior = user?.role === 'gestor' || user?.role === 'admin' || user?.role === 'superintendente';
+  const { data: alertasGestor } = trpc.alertasGestor.lista.useQuery(undefined, {
+    enabled: isGestorOuSuperior,
+    refetchInterval: 3 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+  });
+  const totalAlertasEquipe = isGestorOuSuperior ? (
+    (alertasGestor?.followUpsVencidos?.length ?? 0) +
+    (alertasGestor?.corretoresSemAtividade?.length ?? 0) +
+    (alertasGestor?.leadsSemPrimeiroContato?.length ?? 0)
+  ) : 0;
+
+  // Agenda do gestor — localStorage flag para modal matinal
+  const [agendaGestorFeitaHoje, setAgendaGestorFeitaHoje] = useState(() => {
+    if (!user?.id || !isGestorOuSuperior) return true;
+    const today = new Date().toISOString().split('T')[0];
+    return localStorage.getItem(`agendaGestor:${user.id}:${today}`) !== null;
+  });
+  const marcarAgendaGestorFeita = () => {
+    const today = new Date().toISOString().split('T')[0];
+    if (user?.id) localStorage.setItem(`agendaGestor:${user.id}:${today}`, '1');
+    setAgendaGestorFeitaHoje(true);
+  };
+
   // Filtrar grupos baseado no role do usuário
-  const activeMenuGroups = isCorretor ? menuGroupsCorretor : menuGroups;
+  const activeMenuGroups = isCorretor
+    ? menuGroupsCorretor
+    : user?.role === 'gestor'
+    ? menuGroupsGestor
+    : (user?.role === 'admin' || user?.role === 'superintendente')
+    ? menuGroupsAdmin
+    : menuGroups;
   const filteredGroups = activeMenuGroups.filter(group => {
     if ((group as any).roles && !(group as any).roles.includes(user?.role || "")) {
       return false;
@@ -643,6 +804,7 @@ function DashboardContent({
                               <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
                               {(item as any).showBadge && <NotificationBadge />}
                               {(item as any).showLeadsBadge && isCorretor && <LeadsActionsBadge count={totalAcoesLeads} />}
+                              {(item as any).showAlertasBadge && isGestorOuSuperior && <AlertasBadge count={totalAlertasEquipe} />}
                               {(item as any).showAlert && !desbloqueado && (
                                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -694,6 +856,7 @@ function DashboardContent({
                               <item.icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
                               {(item as any).showBadge && <NotificationBadge />}
                               {(item as any).showLeadsBadge && isCorretor && <LeadsActionsBadge count={totalAcoesLeads} />}
+                              {(item as any).showAlertasBadge && isGestorOuSuperior && <AlertasBadge count={totalAlertasEquipe} />}
                               {(item as any).showAlert && !desbloqueado && (
                                 <span className="absolute -top-1 -right-1 flex h-3 w-3">
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -891,6 +1054,19 @@ function DashboardContent({
         />
       )}
       
+      {/* Modal de agenda matinal do gestor — aparece uma vez por dia quando há alertas */}
+      {isGestorOuSuperior && !perfilIncompleto && !agendaGestorFeitaHoje && alertasGestor && (
+        alertasGestor.followUpsVencidos.length > 0 ||
+        alertasGestor.corretoresSemAtividade.length > 0 ||
+        alertasGestor.leadsSemPrimeiroContato.length > 0 ||
+        alertasGestor.agendamentosSemConfirmacao.length > 0
+      ) && (
+        <ModalAgendaGestor
+          alertas={alertasGestor}
+          onDismiss={marcarAgendaGestorFeita}
+        />
+      )}
+
       {/* Widget flutuante de contador de leads Facebook (apenas para corretores) */}
       <ContadorLeadsFacebook isCorretor={isCorretor} />
 
