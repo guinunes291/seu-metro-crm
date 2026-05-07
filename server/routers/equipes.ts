@@ -82,12 +82,19 @@ export const equipesRouter = router({
       };
     }),
     
-    // Listar todas as equipes (admin) ou equipe do gestor
+    // Listar equipes:
+    // - Admin vê todas
+    // - Superintendente vê apenas as equipes sob sua gestão
+    // - Gestor vê apenas sua equipe
     list: gestorProcedure.query(async ({ ctx }) => {
-      const { listarEquipes, getEquipeByGestor } = await import('../equipes');
+      const { listarEquipes, getEquipeByGestor, listarEquipesPorSuperintendente } = await import('../equipes');
       
-      if (isAdminLevel(ctx.user.role)) {
+      if (ctx.user.role === 'admin') {
         return await listarEquipes();
+      }
+      
+      if (ctx.user.role === 'superintendente') {
+        return await listarEquipesPorSuperintendente(ctx.user.id);
       }
       
       // Gestor vê apenas sua equipe
@@ -99,11 +106,19 @@ export const equipesRouter = router({
     getById: gestorProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input, ctx }) => {
-        const { getEquipeById, getEquipeByGestor } = await import('../equipes');
+        const { getEquipeById, getEquipeByGestor, listarEquipesPorSuperintendente } = await import('../equipes');
         
-        // Admin/Superintendente pode ver qualquer equipe
-        if (isAdminLevel(ctx.user.role)) {
+        // Admin pode ver qualquer equipe
+        if (ctx.user.role === 'admin') {
           return await getEquipeById(input.id);
+        }
+        
+        // Superintendente só pode ver equipes sob sua gestão
+        if (ctx.user.role === 'superintendente') {
+          const equipesSup = await listarEquipesPorSuperintendente(ctx.user.id);
+          const equipe = equipesSup.find(e => e.id === input.id);
+          if (!equipe) throw new TRPCError({ code: 'FORBIDDEN', message: 'Acesso negado' });
+          return equipe;
         }
         
         // Gestor só pode ver sua própria equipe

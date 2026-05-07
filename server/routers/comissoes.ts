@@ -3,17 +3,24 @@ import { router, protectedProcedure, adminProcedure } from '../_core/trpc';
 import * as db from '../db';
 
 export const comissoesRouter = router({
-  // Listar comissões (corretor vê apenas as suas, admin vê todas)
+  // Listar comissões:
+  // - Admin vê todas
+  // - Superintendente vê apenas suas próprias (tipo 'superintendente')
+  // - Gestor/Corretor vê apenas as suas
   listar: protectedProcedure
     .input(z.object({
       status: z.string().optional(),
       tipo: z.string().optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
+      const isAdmin = ctx.user.role === 'admin';
+      const isSuperintendente = ctx.user.role === 'superintendente';
       return await db.getComissoes({
-        usuarioId: (ctx.user.role === 'admin' || ctx.user.role === 'superintendente') ? undefined : ctx.user.id,
+        // Admin vê todas; demais filtram pelo próprio ID
+        usuarioId: isAdmin ? undefined : ctx.user.id,
         status: input?.status,
-        tipo: input?.tipo,
+        // Superintendente sempre filtra pelo tipo 'superintendente' (ignora filtro manual)
+        tipo: isSuperintendente ? 'superintendente' : input?.tipo,
       });
     }),
   
