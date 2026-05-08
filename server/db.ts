@@ -9942,57 +9942,37 @@ export async function createContrato(data: InsertContrato): Promise<Contrato | n
 // ============================================================================
 
 /**
- * Buscar ou criar meta global para um mês/ano
+ * Buscar meta global para um mês/ano (sem auto-inserir defaults).
+ * Deduplica silenciosamente se houver registros duplicados.
  */
 export async function getMetaGlobal(mes: number, ano: number) {
   const db = await getDb();
   if (!db) return null;
-  
+
   const existing = await db.select()
     .from(metasGlobais)
-    .where(and(
-      eq(metasGlobais.mes, mes),
-      eq(metasGlobais.ano, ano)
-    ))
-    .limit(1);
-  
-  if (existing.length > 0) return existing[0];
-  
-  // Criar meta padrão se não existir
-  // Usar INSERT IGNORE para evitar duplicatas em caso de chamadas concorrentes
-  // (a UNIQUE constraint em (mes, ano) garante que não haja duplicatas)
-  try {
-    await db.insert(metasGlobais).values({
-      mes,
-      ano,
-      metaVGV: '50000000', // R$ 500.000 padrão
-      metaContratos: 10,
-      metaLeads: 200,
-      metaAgendamentos: 50,
-      metaVisitas: 30,
-    });
-  } catch (err: any) {
-    // Ignorar erro de duplicate key (UNIQUE constraint violation)
-    if (!err.message?.includes('Duplicate entry') && !err.code?.includes('ER_DUP')) {
-      throw err;
+    .where(and(eq(metasGlobais.mes, mes), eq(metasGlobais.ano, ano)))
+    .orderBy(desc(metasGlobais.id));
+
+  if (existing.length === 0) return null;
+
+  // Auto-healing: limpar duplicatas deixadas por chamadas concorrentes antigas
+  if (existing.length > 1) {
+    const idsParaDeletar = existing.slice(1).map(r => r.id);
+    try {
+      await db.delete(metasGlobais).where(inArray(metasGlobais.id, idsParaDeletar));
+    } catch {
+      // Não crítico — apenas limpeza
     }
   }
-  
-  const created = await db.select()
-    .from(metasGlobais)
-    .where(and(
-      eq(metasGlobais.mes, mes),
-      eq(metasGlobais.ano, ano)
-    ))
-    .limit(1);
-  
-  return created[0] || null;
+
+  return existing[0];
 }
 
 /**
- * Atualizar meta global
+ * Criar ou atualizar meta global por mês/ano (upsert seguro sem duplicatas)
  */
-export async function updateMetaGlobal(id: number, data: {
+export async function upsertMetaGlobal(mes: number, ano: number, data: {
   metaVGV?: string;
   metaContratos?: number;
   metaLeads?: number;
@@ -10001,17 +9981,17 @@ export async function updateMetaGlobal(id: number, data: {
 }) {
   const db = await getDb();
   if (!db) return null;
-  
-  await db.update(metasGlobais)
-    .set(data)
-    .where(eq(metasGlobais.id, id));
-  
-  const updated = await db.select()
-    .from(metasGlobais)
-    .where(eq(metasGlobais.id, id))
-    .limit(1);
-  
-  return updated[0] || null;
+
+  const existing = await getMetaGlobal(mes, ano);
+  if (existing) {
+    await db.update(metasGlobais)
+      .set(data)
+      .where(eq(metasGlobais.id, existing.id));
+    return { ...existing, ...data };
+  }
+
+  const result = await db.insert(metasGlobais).values({ mes, ano, ...data });
+  return { id: Number((result as any)[0]?.insertId ?? 0), mes, ano, ...data };
 }
 
 /**
@@ -10164,8 +10144,8 @@ export async function getDashboardPerformance(mes: number, ano: number, equipeId
   // Ordenar por VGV (maior primeiro)
   corretoresAtivos.sort((a, b) => b.vgv - a.vgv);
   
-  // Calcular percentuais
-  const metaVGVGlobal = Number(metaGlobal?.metaVGV || 0);
+  // Calcular percentuais — tratar null como zeros (meta não definida)
+  const metaVGVGlobal = metaGlobal ? Number(metaGlobal.metaVGV || 0) : 0;
   const percentualAtingimento = metaVGVGlobal > 0 ? Math.round((totalVGV / metaVGVGlobal) * 10000) / 100 : 0;
   const gapMeta = metaVGVGlobal - totalVGV;
   

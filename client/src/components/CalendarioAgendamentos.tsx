@@ -17,9 +17,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  ChevronLeft,
+  ChevronRight,
   Calendar as CalendarIcon,
   Clock,
   User,
@@ -40,7 +40,6 @@ import {
   addWeeks,
   subWeeks,
   isToday,
-  parseISO,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -56,6 +55,9 @@ type Agendamento = {
   status: string;
   observacoes: string | null;
   createdAt: Date;
+  leadNome?: string | null;
+  corretorNome?: string | null;
+  projetoNome?: string | null;
 };
 
 type Corretor = {
@@ -74,6 +76,25 @@ const STATUS_COLORS: Record<string, string> = {
   reagendado: "bg-orange-500",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  pendente: "Pendente",
+  confirmado: "Confirmado",
+  realizado: "Realizado",
+  cancelado: "Cancelado",
+  reagendado: "Reagendado",
+};
+
+const CORRETOR_COLORS = [
+  { border: "border-l-blue-500", dot: "bg-blue-500", text: "text-blue-600" },
+  { border: "border-l-violet-500", dot: "bg-violet-500", text: "text-violet-600" },
+  { border: "border-l-emerald-500", dot: "bg-emerald-500", text: "text-emerald-600" },
+  { border: "border-l-orange-500", dot: "bg-orange-500", text: "text-orange-600" },
+  { border: "border-l-pink-500", dot: "bg-pink-500", text: "text-pink-600" },
+  { border: "border-l-cyan-500", dot: "bg-cyan-500", text: "text-cyan-600" },
+  { border: "border-l-amber-500", dot: "bg-amber-500", text: "text-amber-600" },
+  { border: "border-l-rose-500", dot: "bg-rose-500", text: "text-rose-600" },
+];
+
 interface CalendarioAgendamentosProps {
   onCreateAgendamento?: (date: Date) => void;
   onSelectAgendamento?: (agendamento: Agendamento) => void;
@@ -85,11 +106,12 @@ export default function CalendarioAgendamentos({
 }: CalendarioAgendamentosProps) {
   const { user } = useAuth();
   const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
-  
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [selectedCorretorId, setSelectedCorretorId] = useState<string>("all");
-  
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+
   // Calcular range de datas para a query
   const dateRange = useMemo(() => {
     if (viewMode === "month") {
@@ -102,9 +124,9 @@ export default function CalendarioAgendamentos({
       return { start, end };
     }
   }, [currentDate, viewMode]);
-  
+
   // Buscar agendamentos
-  const { data: agendamentos, isLoading } = isGestor
+  const { data: agendamentosRaw, isLoading } = isGestor
     ? trpc.agendamentos.listAll.useQuery({
         dataInicio: dateRange.start.toISOString(),
         dataFim: dateRange.end.toISOString(),
@@ -114,24 +136,36 @@ export default function CalendarioAgendamentos({
         dataInicio: dateRange.start.toISOString(),
         dataFim: dateRange.end.toISOString(),
       });
-  
+
+  // Filtrar por status selecionados
+  const agendamentos = useMemo(() => {
+    const raw = (agendamentosRaw || []) as Agendamento[];
+    if (selectedStatus.length === 0) return raw;
+    return raw.filter(ag => selectedStatus.includes(ag.status));
+  }, [agendamentosRaw, selectedStatus]);
+
   // Buscar corretores (apenas para gestor)
   const { data: corretores } = trpc.users.corretores.useQuery(undefined, {
     enabled: isGestor,
   });
-  
+
+  // Mapa de cores por corretor (determinístico por id)
+  const corretorColorMap = useMemo(() => {
+    const sorted = [...(corretores ?? [])].sort((a: Corretor, b: Corretor) => a.id - b.id);
+    return new Map(sorted.map((c: Corretor, i: number) => [c.id, CORRETOR_COLORS[i % CORRETOR_COLORS.length]]));
+  }, [corretores]);
+
+  const getCorretorColor = (id: number) => corretorColorMap.get(id) ?? CORRETOR_COLORS[0];
+
   // Agrupar agendamentos por dia
   const agendamentosPorDia = useMemo(() => {
     const map = new Map<string, Agendamento[]>();
-    
-    (agendamentos || []).forEach((ag: Agendamento) => {
-      // Usar a data diretamente sem conversão de timezone
-      // Se vier como string, extrair apenas a parte da data (YYYY-MM-DD)
+
+    agendamentos.forEach((ag: Agendamento) => {
       let dateKey: string;
       if (typeof ag.dataAgendamento === 'string') {
-        dateKey = ag.dataAgendamento.split('T')[0];
+        dateKey = (ag.dataAgendamento as string).split('T')[0];
       } else {
-        // Se vier como Date, formatar sem aplicar timezone
         const date = new Date(ag.dataAgendamento);
         dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       }
@@ -140,15 +174,14 @@ export default function CalendarioAgendamentos({
       }
       map.get(dateKey)!.push(ag);
     });
-    
-    // Ordenar por hora
+
     map.forEach((ags) => {
       ags.sort((a, b) => a.horaAgendamento.localeCompare(b.horaAgendamento));
     });
-    
+
     return map;
   }, [agendamentos]);
-  
+
   // Gerar dias do calendário
   const calendarDays = useMemo(() => {
     if (viewMode === "month") {
@@ -161,63 +194,66 @@ export default function CalendarioAgendamentos({
       return eachDayOfInterval({ start, end });
     }
   }, [currentDate, viewMode]);
-  
-  // Navegação
+
   const goToPrevious = () => {
-    if (viewMode === "month") {
-      setCurrentDate(subMonths(currentDate, 1));
-    } else {
-      setCurrentDate(subWeeks(currentDate, 1));
-    }
+    if (viewMode === "month") setCurrentDate(subMonths(currentDate, 1));
+    else setCurrentDate(subWeeks(currentDate, 1));
   };
-  
+
   const goToNext = () => {
-    if (viewMode === "month") {
-      setCurrentDate(addMonths(currentDate, 1));
-    } else {
-      setCurrentDate(addWeeks(currentDate, 1));
-    }
+    if (viewMode === "month") setCurrentDate(addMonths(currentDate, 1));
+    else setCurrentDate(addWeeks(currentDate, 1));
   };
-  
-  const goToToday = () => {
-    setCurrentDate(new Date());
+
+  const goToToday = () => setCurrentDate(new Date());
+
+  const toggleStatus = (status: string) => {
+    setSelectedStatus(prev =>
+      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
+    );
   };
-  
-  // Buscar nome do corretor
-  const getCorretorNome = (corretorId: number) => {
-    const corretor = corretores?.find((c: Corretor) => c.id === corretorId);
-    return corretor?.name || "Corretor";
-  };
-  
-  // Renderizar um agendamento
+
+  // Renderizar um agendamento no calendário
   const renderAgendamento = (ag: Agendamento, compact = false) => {
     const statusColor = STATUS_COLORS[ag.status] || STATUS_COLORS.pendente;
-    
+    const corretorColor = getCorretorColor(ag.corretorId);
+    const projetoDisplay = ag.projetoNome || ag.projetoCustom;
+    const corretorDisplay = ag.corretorNome?.split(' ')[0] || 'Corretor';
+    const leadDisplay = ag.leadNome;
+
     if (compact) {
       return (
         <TooltipProvider key={ag.id}>
           <Tooltip>
             <TooltipTrigger asChild>
               <div
-                className={`${statusColor} text-white text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity`}
+                className={`bg-muted border-l-4 ${corretorColor.border} text-foreground text-xs px-1.5 py-0.5 rounded-r truncate cursor-pointer hover:bg-muted/80 transition-colors`}
                 onClick={() => onSelectAgendamento?.(ag)}
               >
-                {ag.horaAgendamento}
+                <span className="font-semibold">{ag.horaAgendamento}</span>
+                {isGestor && <span className={`ml-1 ${corretorColor.text} font-medium`}>{corretorDisplay}</span>}
+                {leadDisplay && <span className="ml-1 text-muted-foreground truncate"> — {leadDisplay}</span>}
               </div>
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-xs">
               <div className="space-y-1">
                 <div className="font-medium">{ag.horaAgendamento}</div>
-                {ag.projetoCustom && (
+                {leadDisplay && (
+                  <div className="text-sm flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {leadDisplay}
+                  </div>
+                )}
+                {projetoDisplay && (
                   <div className="text-sm flex items-center gap-1">
                     <Building2 className="h-3 w-3" />
-                    {ag.projetoCustom}
+                    {projetoDisplay}
                   </div>
                 )}
                 {isGestor && (
-                  <div className="text-sm flex items-center gap-1">
+                  <div className={`text-sm flex items-center gap-1 ${corretorColor.text}`}>
                     <User className="h-3 w-3" />
-                    {getCorretorNome(ag.corretorId)}
+                    {ag.corretorNome || corretorDisplay}
                   </div>
                 )}
                 <Badge className={`${statusColor} text-white text-xs`}>
@@ -229,41 +265,43 @@ export default function CalendarioAgendamentos({
         </TooltipProvider>
       );
     }
-    
+
     return (
       <div
         key={ag.id}
-        className={`${statusColor} text-white text-xs p-2 rounded cursor-pointer hover:opacity-80 transition-opacity`}
+        className={`bg-muted border-l-4 ${corretorColor.border} text-foreground text-xs p-2 rounded-r cursor-pointer hover:bg-muted/80 transition-colors`}
         onClick={() => onSelectAgendamento?.(ag)}
       >
-        <div className="font-medium flex items-center gap-1">
+        <div className="font-semibold flex items-center gap-1">
           <Clock className="h-3 w-3" />
           {ag.horaAgendamento}
+          <span className={`ml-1 ${corretorColor.text} font-medium`}>{corretorDisplay}</span>
         </div>
-        {ag.projetoCustom && (
-          <div className="truncate mt-1">{ag.projetoCustom}</div>
+        {leadDisplay && (
+          <div className="truncate mt-0.5 text-foreground/80">{leadDisplay}</div>
         )}
-        {isGestor && (
-          <div className="text-xs opacity-80 mt-1">
-            {getCorretorNome(ag.corretorId)}
-          </div>
+        {projetoDisplay && (
+          <div className="truncate text-muted-foreground">{projetoDisplay}</div>
         )}
+        <Badge className={`${statusColor} text-white text-[10px] mt-1`}>
+          {ag.status}
+        </Badge>
       </div>
     );
   };
-  
+
   // Renderizar célula do dia
   const renderDayCell = (day: Date) => {
     const dateKey = format(day, "yyyy-MM-dd");
     const dayAgendamentos = agendamentosPorDia.get(dateKey) || [];
     const isCurrentMonth = isSameMonth(day, currentDate);
     const isDayToday = isToday(day);
-    
+
     return (
       <div
         key={dateKey}
         className={`
-          min-h-[100px] border border-border p-1 
+          min-h-[100px] border border-border p-1
           ${!isCurrentMonth && viewMode === "month" ? "bg-muted/30" : "bg-background"}
           ${isDayToday ? "ring-2 ring-primary ring-inset" : ""}
           hover:bg-muted/50 transition-colors cursor-pointer
@@ -286,10 +324,9 @@ export default function CalendarioAgendamentos({
             </Badge>
           )}
         </div>
-        
+
         <div className="space-y-1">
           {viewMode === "month" ? (
-            // Visualização mensal - compacta
             <>
               {dayAgendamentos.slice(0, 3).map((ag) => renderAgendamento(ag, true))}
               {dayAgendamentos.length > 3 && (
@@ -299,11 +336,10 @@ export default function CalendarioAgendamentos({
               )}
             </>
           ) : (
-            // Visualização semanal - expandida
             dayAgendamentos.map((ag) => renderAgendamento(ag, false))
           )}
         </div>
-        
+
         {dayAgendamentos.length === 0 && (
           <div className="h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
             <Plus className="h-4 w-4 text-muted-foreground" />
@@ -312,7 +348,7 @@ export default function CalendarioAgendamentos({
       </div>
     );
   };
-  
+
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -321,7 +357,7 @@ export default function CalendarioAgendamentos({
             <CalendarIcon className="h-5 w-5" />
             Calendário de Agendamentos
           </CardTitle>
-          
+
           <div className="flex flex-wrap items-center gap-2">
             {/* Filtro de corretor (apenas para gestor) */}
             {isGestor && corretores && (
@@ -342,7 +378,7 @@ export default function CalendarioAgendamentos({
                 </SelectContent>
               </Select>
             )}
-            
+
             {/* Toggle de visualização */}
             <div className="flex border rounded-md">
               <Button
@@ -364,7 +400,56 @@ export default function CalendarioAgendamentos({
             </div>
           </div>
         </div>
-        
+
+        {/* Filtros de status */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {Object.entries(STATUS_LABELS).map(([status, label]) => {
+            const active = selectedStatus.includes(status);
+            return (
+              <button
+                key={status}
+                onClick={() => toggleStatus(status)}
+                className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  active
+                    ? `${STATUS_COLORS[status]} text-white border-transparent`
+                    : "bg-background text-muted-foreground border-border hover:border-foreground/30"
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${active ? 'bg-white/70' : STATUS_COLORS[status]}`} />
+                {label}
+              </button>
+            );
+          })}
+          {selectedStatus.length > 0 && (
+            <button
+              onClick={() => setSelectedStatus([])}
+              className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Limpar
+            </button>
+          )}
+        </div>
+
+        {/* Legenda de corretores (apenas para gestor, quando há dados) */}
+        {isGestor && corretores && agendamentos.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {[...(corretores as Corretor[])].sort((a, b) => a.id - b.id).map((c, i) => {
+              const color = CORRETOR_COLORS[i % CORRETOR_COLORS.length];
+              const count = (agendamentos as Agendamento[]).filter(ag => ag.corretorId === c.id).length;
+              if (count === 0) return null;
+              return (
+                <span
+                  key={c.id}
+                  className="flex items-center gap-1 text-xs text-muted-foreground bg-muted rounded-full px-2.5 py-1"
+                >
+                  <span className={`w-2 h-2 rounded-full ${color.dot}`} />
+                  {c.name?.split(' ')[0] || 'Corretor'} ({count})
+                </span>
+              );
+            })}
+          </div>
+        )}
+
         {/* Navegação */}
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
@@ -378,18 +463,18 @@ export default function CalendarioAgendamentos({
               Hoje
             </Button>
           </div>
-          
+
           <h3 className="text-lg font-semibold">
             {viewMode === "month"
               ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
               : `Semana de ${format(startOfWeek(currentDate, { locale: ptBR }), "d 'de' MMMM", { locale: ptBR })}`
             }
           </h3>
-          
-          <div className="w-[100px]" /> {/* Spacer para centralizar o título */}
+
+          <div className="w-[100px]" />
         </div>
       </CardHeader>
-      
+
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -408,36 +493,22 @@ export default function CalendarioAgendamentos({
                 </div>
               ))}
             </div>
-            
+
             {/* Grid do calendário */}
             <div className={`grid grid-cols-7 ${viewMode === "week" ? "min-h-[400px]" : ""}`}>
               {calendarDays.map((day) => renderDayCell(day))}
             </div>
           </div>
         )}
-        
-        {/* Legenda */}
+
+        {/* Legenda de status */}
         <div className="flex flex-wrap gap-4 mt-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-yellow-500"></div>
-            <span>Pendente</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500"></div>
-            <span>Confirmado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-green-500"></div>
-            <span>Realizado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-500"></div>
-            <span>Cancelado</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-orange-500"></div>
-            <span>Reagendado</span>
-          </div>
+          {Object.entries(STATUS_LABELS).map(([status, label]) => (
+            <div key={status} className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded ${STATUS_COLORS[status]}`} />
+              <span className="text-muted-foreground">{label}</span>
+            </div>
+          ))}
         </div>
       </CardContent>
     </Card>
