@@ -4468,10 +4468,11 @@ export const appRouter = router({
         return await db.getMetaGlobal(input.mes, input.ano);
       }),
     
-    // Atualizar meta global
+    // Criar ou atualizar meta global por mês/ano (upsert)
     update: adminProcedure
       .input(z.object({
-        id: z.number(),
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
         metaVGV: z.string().optional(),
         metaContratos: z.number().optional(),
         metaLeads: z.number().optional(),
@@ -4479,8 +4480,8 @@ export const appRouter = router({
         metaVisitas: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
-        const { id, ...data } = input;
-        return await db.updateMetaGlobal(id, data);
+        const { mes, ano, ...data } = input;
+        return await db.upsertMetaGlobal(mes, ano, data);
       }),
   }),
 
