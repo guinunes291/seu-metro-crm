@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   CheckCircle2,
   XCircle,
@@ -34,6 +36,7 @@ import {
   Timer,
   TrendingUp,
   Star,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -117,6 +120,7 @@ function ScriptDinamico({ status }: { status: string }) {
               onClick={copiar}
               className="absolute top-0 right-0 p-1 text-gray-400 hover:text-indigo-600 transition-colors"
               title="Copiar script"
+              aria-label="Copiar script"
             >
               {copiado ? (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -353,8 +357,15 @@ function BlocoFocoLigacoes() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-56 w-full rounded-xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -366,7 +377,7 @@ function BlocoFocoLigacoes() {
     const taxa = processedCount > 0 ? (atendimentos / processedCount) * 100 : 0;
     const media = processedCount > 0 ? duracaoMin / processedCount : 0;
     // Salvar sessão automaticamente (uma vez)
-    if (processedCount > 0 && !salvarSessao.isSuccess && !salvarSessao.isLoading) {
+    if (processedCount > 0 && !salvarSessao.isSuccess && !salvarSessao.isPending) {
       salvarSessao.mutate({
         tipoBloco: 'ligacoes',
         iniciadaEm: sessaoIniciadaEm.current,
@@ -442,7 +453,7 @@ function BlocoFocoLigacoes() {
           </div>
           <Progress value={progress} className="h-2" />
         </div>
-        <Button variant="ghost" size="sm" onClick={() => refetch()}>
+        <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Atualizar leads">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -592,7 +603,7 @@ function BlocoFocoLigacoes() {
               size="lg"
               className="h-16 bg-green-600 hover:bg-green-700 text-white flex-col gap-1"
               onClick={() => handleRegistrar("ligacao", "contato_realizado", "em_atendimento")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <div className="flex items-center gap-2">
                 <PhoneCall className="h-5 w-5" />
@@ -606,7 +617,7 @@ function BlocoFocoLigacoes() {
               variant="destructive"
               className="h-16 flex-col gap-1"
               onClick={() => handleRegistrar("ligacao", "nao_atendeu")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <div className="flex items-center gap-2">
                 <PhoneOff className="h-5 w-5" />
@@ -619,7 +630,7 @@ function BlocoFocoLigacoes() {
               size="lg"
               className="h-16 bg-purple-600 hover:bg-purple-700 text-white flex-col gap-1"
               onClick={() => handleRegistrar("ligacao", "agendamento", "agendado")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <div className="flex items-center gap-2">
                 <CalendarCheck className="h-5 w-5" />
@@ -632,7 +643,7 @@ function BlocoFocoLigacoes() {
               size="lg"
               className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex-col gap-1"
               onClick={() => handleRegistrar("whatsapp", "contato_realizado", "em_atendimento")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5" />
@@ -648,7 +659,7 @@ function BlocoFocoLigacoes() {
               size="sm"
               className="flex-1"
               onClick={() => handleRegistrar("ligacao", "proposta_enviada", "analise_credito")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <Send className="h-4 w-4 mr-1" />
               Proposta Enviada
@@ -658,7 +669,7 @@ function BlocoFocoLigacoes() {
               size="sm"
               className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
               onClick={() => handleRegistrar("ligacao", "recusou", "perdido")}
-              disabled={registrarInteracao.isLoading}
+              disabled={registrarInteracao.isPending}
             >
               <ThumbsDown className="h-4 w-4 mr-1" />
               Desistiu
@@ -818,8 +829,13 @@ function BlocoFollowUp() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -869,19 +885,20 @@ function BlocoFollowUp() {
       {showFiltros && (
         <Card className="p-4">
           <label className="text-xs font-medium mb-1 block">Ordenação</label>
-          <select
+          <Select
             value={ordenacao}
-            onChange={(e) => {
-              setOrdenacao(e.target.value as any);
-              setCurrentIndex(0);
-            }}
-            className="w-full border rounded-md text-sm p-1.5"
+            onValueChange={(v) => { setOrdenacao(v as any); setCurrentIndex(0); }}
           >
-            <option value="mais_antigos">Mais antigos</option>
-            <option value="mais_recentes">Mais recentes</option>
-            <option value="menos_tentativas">Menos tentativas</option>
-            <option value="mais_tentativas">Mais tentativas</option>
-          </select>
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mais_antigos">Mais antigos</SelectItem>
+              <SelectItem value="mais_recentes">Mais recentes</SelectItem>
+              <SelectItem value="menos_tentativas">Menos tentativas</SelectItem>
+              <SelectItem value="mais_tentativas">Mais tentativas</SelectItem>
+            </SelectContent>
+          </Select>
         </Card>
       )}
 
@@ -931,9 +948,9 @@ function BlocoFollowUp() {
                 size="lg"
                 className="h-20 text-lg"
                 onClick={() => handleRegistrar("respondeu")}
-                disabled={registrarFollowUp.isLoading}
+                disabled={registrarFollowUp.isPending}
               >
-                <CheckCircle2 className="h-6 w-6 mr-2" />
+                {registrarFollowUp.isPending ? <Loader2 className="h-6 w-6 mr-2 animate-spin" /> : <CheckCircle2 className="h-6 w-6 mr-2" />}
                 Respondeu
                 <kbd className="ml-auto px-2 py-1 text-xs bg-background/50 rounded">1</kbd>
               </Button>
@@ -942,9 +959,9 @@ function BlocoFollowUp() {
                 variant="destructive"
                 className="h-20 text-lg"
                 onClick={() => handleRegistrar("nao_atendeu")}
-                disabled={registrarFollowUp.isLoading}
+                disabled={registrarFollowUp.isPending}
               >
-                <XCircle className="h-6 w-6 mr-2" />
+                {registrarFollowUp.isPending ? <Loader2 className="h-6 w-6 mr-2 animate-spin" /> : <XCircle className="h-6 w-6 mr-2" />}
                 Não Respondeu
                 <kbd className="ml-auto px-2 py-1 text-xs bg-background/50 rounded">2</kbd>
               </Button>
@@ -1004,8 +1021,11 @@ function BlocoHistorico() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-48">
-        <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
       </div>
     );
   }
