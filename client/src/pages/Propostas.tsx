@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen, FileDown } from "lucide-react";
+import { FileText, Plus, Eye, Send, Copy, ExternalLink, Loader2, Search, Building2, User, DollarSign, Calendar, Upload, Table, Pencil, Trash2, ImageIcon, BookOpen, FileDown, X } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,6 +56,8 @@ export default function Propostas() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingPropostaId, setEditingPropostaId] = useState<number | null>(null);
   const [searchLead, setSearchLead] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("todos");
+  const [searchCliente, setSearchCliente] = useState("");
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("dados");
   const [parcelas, setParcelas] = useState<ParcelaPagamento[]>(PARCELAS_PADRAO);
@@ -740,6 +742,44 @@ export default function Propostas() {
           </Dialog>
         </div>
 
+        {/* Filtros da lista */}
+        {!isLoading && propostas && propostas.length > 0 && (
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                value={searchCliente}
+                onChange={(e) => setSearchCliente(e.target.value)}
+                placeholder="Buscar por cliente..."
+                className="pl-10 pr-10 bg-slate-800 border-slate-600 text-white"
+              />
+              {searchCliente && (
+                <button
+                  onClick={() => setSearchCliente("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  aria-label="Limpar busca"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48 bg-slate-800 border-slate-600 text-white">
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-700 border-slate-600">
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="rascunho">Rascunho</SelectItem>
+                <SelectItem value="enviada">Enviada</SelectItem>
+                <SelectItem value="visualizada">Visualizada</SelectItem>
+                <SelectItem value="aceita">Aceita</SelectItem>
+                <SelectItem value="recusada">Recusada</SelectItem>
+                <SelectItem value="expirada">Expirada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         {/* Lista de Propostas */}
         <div className="grid gap-4">
           {isLoading ? (
@@ -747,7 +787,9 @@ export default function Propostas() {
               <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
             </div>
           ) : propostas && propostas.length > 0 ? (
-            propostas.map((proposta) => (
+            propostas
+              .filter((p) => (statusFilter === "todos" || p.status === statusFilter) && (!searchCliente || p.nomeCliente.toLowerCase().includes(searchCliente.toLowerCase())))
+              .map((proposta) => (
               <Card key={proposta.id} className="bg-slate-800 border-slate-600 shadow-lg hover:border-slate-500 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
@@ -799,6 +841,8 @@ export default function Propostas() {
                         size="sm"
                         onClick={() => copyLink(proposta.token)}
                         className="text-slate-400 hover:text-white"
+                        title="Copiar link"
+                        aria-label="Copiar link da proposta"
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -807,6 +851,8 @@ export default function Propostas() {
                         size="sm"
                         onClick={() => window.open(`/proposta/${proposta.token}`, '_blank')}
                         className="text-slate-400 hover:text-white"
+                        title="Abrir proposta"
+                        aria-label="Abrir proposta em nova aba"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
@@ -817,6 +863,7 @@ export default function Propostas() {
                         disabled={gerarPDF.isPending}
                         className="text-slate-400 hover:text-green-400"
                         title="Baixar PDF"
+                        aria-label="Baixar PDF da proposta"
                       >
                         {gerarPDF.isPending ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -829,6 +876,8 @@ export default function Propostas() {
                         size="sm"
                         onClick={() => handleEditProposta(proposta)}
                         className="text-slate-400 hover:text-blue-400"
+                        title="Editar proposta"
+                        aria-label="Editar proposta"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -838,6 +887,8 @@ export default function Propostas() {
                             variant="ghost"
                             size="sm"
                             className="text-slate-400 hover:text-red-400"
+                            title="Excluir proposta"
+                            aria-label="Excluir proposta"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>

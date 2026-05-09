@@ -9,7 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Calendar, Clock, Link2, Plus, Trash2, Copy, ExternalLink, CalendarOff, Loader2, MessageCircle, Search, User, Phone, Mail, Timer } from "lucide-react";
+import { Calendar, Clock, Link2, Plus, Trash2, Copy, ExternalLink, CalendarOff, Loader2, MessageCircle, Search, User, Phone, Mail, Timer, X } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -40,6 +44,8 @@ export default function MinhaAgenda() {
   const [selectedLead, setSelectedLead] = useState<{ id: number; nome: string; telefone: string; email?: string | null } | null>(null);
   const [linkExclusivo, setLinkExclusivo] = useState(false);
   const [tipoExpiracao, setTipoExpiracao] = useState<'15min' | '30min' | '1hora' | '24horas' | 'indeterminado'>('indeterminado');
+  const [deleteLinkDialogOpen, setDeleteLinkDialogOpen] = useState(false);
+  const [linkToDelete, setLinkToDelete] = useState<{ id: number; titulo: string | null } | null>(null);
 
   // Opções de expiração
   const OPCOES_EXPIRACAO = [
@@ -615,8 +621,17 @@ export default function MinhaAgenda() {
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           placeholder="Buscar por nome, telefone ou email..."
-                          className="bg-slate-700 border-slate-600 text-white pl-10"
+                          className="bg-slate-700 border-slate-600 text-white pl-10 pr-10"
                         />
+                        {searchTerm && (
+                          <button
+                            onClick={() => { setSearchTerm(""); setSelectedLead(null); }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                            aria-label="Limpar busca"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                       
                       {/* Resultados da busca */}
@@ -838,6 +853,7 @@ export default function MinhaAgenda() {
                               onClick={() => shareWhatsApp(link.token, link.titulo)}
                               className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
                               title="Compartilhar via WhatsApp"
+                              aria-label="Compartilhar via WhatsApp"
                             >
                               <MessageCircle className="h-4 w-4" />
                             </Button>
@@ -847,6 +863,7 @@ export default function MinhaAgenda() {
                               onClick={() => copyLink(link.token)}
                               className="text-slate-300 hover:text-white"
                               title="Copiar link"
+                              aria-label="Copiar link de agendamento"
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -856,6 +873,7 @@ export default function MinhaAgenda() {
                               onClick={() => window.open(`/agendar/${link.token}`, '_blank')}
                               className="text-slate-300 hover:text-white"
                               title="Abrir link"
+                              aria-label="Abrir link de agendamento"
                             >
                               <ExternalLink className="h-4 w-4" />
                             </Button>
@@ -864,16 +882,13 @@ export default function MinhaAgenda() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => {
-                            if (confirm('Tem certeza que deseja excluir este link?')) {
-                              deleteLink.mutate({ id: link.id });
-                            }
-                          }}
+                          onClick={() => { setLinkToDelete({ id: link.id, titulo: link.titulo }); setDeleteLinkDialogOpen(true); }}
                           disabled={deleteLink.isPending}
                           className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                           title="Excluir link"
+                          aria-label="Excluir link"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {deleteLink.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -890,6 +905,32 @@ export default function MinhaAgenda() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={deleteLinkDialogOpen} onOpenChange={setDeleteLinkDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir link de agendamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o link <strong>{linkToDelete?.titulo}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (linkToDelete) {
+                  deleteLink.mutate({ id: linkToDelete.id });
+                  setDeleteLinkDialogOpen(false);
+                  setLinkToDelete(null);
+                }
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
