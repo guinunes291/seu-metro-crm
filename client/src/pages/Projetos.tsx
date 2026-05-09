@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map as MapIcon, List, Pencil, Trash2 } from "lucide-react";
+import { Building2, MapPin, Plus, Search, Filter, Check, X, Lightbulb, FileText, Upload, Clock, CheckCircle, XCircle, Map as MapIcon, List, Pencil, Trash2, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lazy, Suspense } from "react";
 const ProjetosMapView = lazy(() => import("./ProjetosMapView"));
@@ -32,6 +39,8 @@ export default function Projetos() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
   const [editFormData, setEditFormData] = useState<any>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<any>(null);
   const { data: mySuggestions = [] } = trpc.projects.mySuggestions.useQuery();
   const { addProject, removeProject, isSelected, canAddMore } = useCompare();
 
@@ -247,15 +256,23 @@ export default function Projetos() {
     }
   };
 
-  const handleDeleteProject = async (project: any, e: React.MouseEvent) => {
+  const handleDeleteProject = (project: any, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm(`Tem certeza que deseja excluir o projeto "${project.nome}"? Esta ação não pode ser desfeita.`)) return;
+    setProjectToDelete(project);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (!projectToDelete) return;
     try {
-      await deleteProjectMutation.mutateAsync({ id: project.id });
+      await deleteProjectMutation.mutateAsync({ id: projectToDelete.id });
       toast.success("Projeto excluído com sucesso!");
       refetch();
-    } catch (error) {
+    } catch {
       toast.error("Erro ao excluir projeto");
+    } finally {
+      setDeleteDialogOpen(false);
+      setProjectToDelete(null);
     }
   };
 
@@ -271,12 +288,33 @@ export default function Projetos() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Building2 className="h-12 w-12 animate-pulse mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">Carregando projetos...</p>
+      <DashboardLayout>
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+          </div>
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i}>
+                <Skeleton className="h-48 w-full rounded-t-lg" />
+                <CardContent className="p-4 space-y-3">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -353,42 +391,44 @@ export default function Projetos() {
                       
                       <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                          <Label htmlFor="suggest-zona">Zona</Label>
-                          <select
-                            id="suggest-zona"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          <Label>Zona</Label>
+                          <Select
                             value={suggestFormData.zona || ""}
-                            onChange={(e) => setSuggestFormData({ ...suggestFormData, zona: e.target.value as any || undefined })}
+                            onValueChange={(v) => setSuggestFormData({ ...suggestFormData, zona: v as any || undefined })}
                           >
-                            <option value="">Selecione...</option>
-                            <option value="norte">Zona Norte</option>
-                            <option value="sul">Zona Sul</option>
-                            <option value="leste">Zona Leste</option>
-                            <option value="oeste">Zona Oeste</option>
-                            <option value="centro">Centro</option>
-                          </select>
+                            <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">Selecione...</SelectItem>
+                              <SelectItem value="norte">Zona Norte</SelectItem>
+                              <SelectItem value="sul">Zona Sul</SelectItem>
+                              <SelectItem value="leste">Zona Leste</SelectItem>
+                              <SelectItem value="oeste">Zona Oeste</SelectItem>
+                              <SelectItem value="centro">Centro</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        
+
                         <div className="grid gap-2">
-                          <Label htmlFor="suggest-tipo">Tipo</Label>
-                          <select
-                            id="suggest-tipo"
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          <Label>Tipo</Label>
+                          <Select
                             value={suggestFormData.tipo}
-                            onChange={(e) => setSuggestFormData({ ...suggestFormData, tipo: e.target.value as any })}
+                            onValueChange={(v) => setSuggestFormData({ ...suggestFormData, tipo: v as any })}
                           >
-                            <option value="mcmv">MCMV</option>
-                            <option value="sfh">SFH</option>
-                            <option value="outro">Outro</option>
-                          </select>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mcmv">MCMV</SelectItem>
+                              <SelectItem value="sfh">SFH</SelectItem>
+                              <SelectItem value="outro">Outro</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
                       
                       <div className="grid gap-2">
                         <Label htmlFor="suggest-descricao">Descrição</Label>
-                        <textarea
+                        <Textarea
                           id="suggest-descricao"
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          className="min-h-[80px]"
                           value={suggestFormData.descricao}
                           onChange={(e) => setSuggestFormData({ ...suggestFormData, descricao: e.target.value })}
                         />
@@ -521,44 +561,46 @@ export default function Projetos() {
                       </div>
                       
                       <div className="grid gap-2">
-                        <Label htmlFor="zona">Zona</Label>
-                        <select
-                          id="zona"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        <Label>Zona</Label>
+                        <Select
                           value={formData.zona || ""}
-                          onChange={(e) => setFormData({ ...formData, zona: e.target.value as any })}
+                          onValueChange={(v) => setFormData({ ...formData, zona: v as any })}
                         >
-                          <option value="">Selecione...</option>
-                          <option value="norte">Zona Norte</option>
-                          <option value="sul">Zona Sul</option>
-                          <option value="leste">Zona Leste</option>
-                          <option value="oeste">Zona Oeste</option>
-                          <option value="centro">Centro</option>
-                        </select>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Selecione...</SelectItem>
+                            <SelectItem value="norte">Zona Norte</SelectItem>
+                            <SelectItem value="sul">Zona Sul</SelectItem>
+                            <SelectItem value="leste">Zona Leste</SelectItem>
+                            <SelectItem value="oeste">Zona Oeste</SelectItem>
+                            <SelectItem value="centro">Centro</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      
+
                       <div className="grid gap-2">
-                        <Label htmlFor="enquadramento">Enquadramento</Label>
-                        <select
-                          id="enquadramento"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        <Label>Enquadramento</Label>
+                        <Select
                           value={formData.enquadramento || ""}
-                          onChange={(e) => setFormData({ ...formData, enquadramento: e.target.value as any })}
+                          onValueChange={(v) => setFormData({ ...formData, enquadramento: v as any })}
                         >
-                          <option value="">Selecione...</option>
-                          <option value="HIS1">HIS1</option>
-                          <option value="HIS2">HIS2</option>
-                          <option value="HMP">HMP</option>
-                          <option value="R2V">R2V</option>
-                        </select>
+                          <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Selecione...</SelectItem>
+                            <SelectItem value="HIS1">HIS1</SelectItem>
+                            <SelectItem value="HIS2">HIS2</SelectItem>
+                            <SelectItem value="HMP">HMP</SelectItem>
+                            <SelectItem value="R2V">R2V</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    
+
                     <div className="grid gap-2">
                       <Label htmlFor="descricao">Descrição</Label>
-                      <textarea
+                      <Textarea
                         id="descricao"
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        className="min-h-[80px]"
                         value={formData.descricao}
                         onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                       />
@@ -608,17 +650,18 @@ export default function Projetos() {
                       </div>
                       
                       <div className="grid gap-2">
-                        <Label htmlFor="status">Status</Label>
-                        <select
-                          id="status"
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                        <Label>Status</Label>
+                        <Select
                           value={formData.status}
-                          onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                          onValueChange={(v) => setFormData({ ...formData, status: v as any })}
                         >
-                          <option value="ativo">Ativo</option>
-                          <option value="inativo">Inativo</option>
-                          <option value="esgotado">Esgotado</option>
-                        </select>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ativo">Ativo</SelectItem>
+                            <SelectItem value="inativo">Inativo</SelectItem>
+                            <SelectItem value="esgotado">Esgotado</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
@@ -693,7 +736,7 @@ export default function Projetos() {
               Filtros
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -701,81 +744,107 @@ export default function Projetos() {
                   placeholder="Buscar por nome, construtora, bairro..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 pr-9"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                    aria-label="Limpar busca"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={zonaFilter}
-                onChange={(e) => setZonaFilter(e.target.value)}
-              >
-                <option value="todas">Todas as Zonas</option>
-                <option value="norte">Zona Norte</option>
-                <option value="sul">Zona Sul</option>
-                <option value="leste">Zona Leste</option>
-                <option value="oeste">Zona Oeste</option>
-                <option value="centro">Centro</option>
-              </select>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="todos">Todos os Status</option>
-                <option value="ativo">Ativo</option>
-                <option value="inativo">Inativo</option>
-                <option value="esgotado">Esgotado</option>
-              </select>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={dormitoriosFilter}
-                onChange={(e) => setDormitoriosFilter(e.target.value)}
-              >
-                <option value="todos">Todos os Dormitórios</option>
-                <option value="1">1 Dormitório</option>
-                <option value="2">2 Dormitórios</option>
-                <option value="3">3 Dormitórios</option>
-                <option value="4">4+ Dormitórios</option>
-              </select>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={enquadramentoFilter}
-                onChange={(e) => setEnquadramentoFilter(e.target.value)}
-              >
-                <option value="todos">Todos os Enquadramentos</option>
-                <option value="HIS1">HIS1</option>
-                <option value="HIS2">HIS2</option>
-                <option value="HMP">HMP</option>
-                <option value="R2V">R2V</option>
-              </select>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={vagasFilter}
-                onChange={(e) => setVagasFilter(e.target.value)}
-              >
-                <option value="todos">Vagas: Todos</option>
-                <option value="com">Com Vaga</option>
-                <option value="sem">Sem Vaga</option>
-              </select>
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={construtoraFilter}
-                onChange={(e) => setConstrutoraFilter(e.target.value)}
-              >
-                <option value="todas">Todas as Construtoras</option>
-                {construtorasComProjetos.map(construtora => (
-                  <option key={construtora.id} value={construtora.nome}>
-                    {construtora.nome} ({construtora.totalProjetos})
-                  </option>
-                ))}
-              </select>
+
+              <Select value={zonaFilter} onValueChange={setZonaFilter}>
+                <SelectTrigger><SelectValue placeholder="Todas as Zonas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as Zonas</SelectItem>
+                  <SelectItem value="norte">Zona Norte</SelectItem>
+                  <SelectItem value="sul">Zona Sul</SelectItem>
+                  <SelectItem value="leste">Zona Leste</SelectItem>
+                  <SelectItem value="oeste">Zona Oeste</SelectItem>
+                  <SelectItem value="centro">Centro</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger><SelectValue placeholder="Todos os Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Status</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                  <SelectItem value="esgotado">Esgotado</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={dormitoriosFilter} onValueChange={setDormitoriosFilter}>
+                <SelectTrigger><SelectValue placeholder="Todos os Dormitórios" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Dormitórios</SelectItem>
+                  <SelectItem value="1">1 Dormitório</SelectItem>
+                  <SelectItem value="2">2 Dormitórios</SelectItem>
+                  <SelectItem value="3">3 Dormitórios</SelectItem>
+                  <SelectItem value="4">4+ Dormitórios</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={enquadramentoFilter} onValueChange={setEnquadramentoFilter}>
+                <SelectTrigger><SelectValue placeholder="Todos os Enquadramentos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Enquadramentos</SelectItem>
+                  <SelectItem value="HIS1">HIS1</SelectItem>
+                  <SelectItem value="HIS2">HIS2</SelectItem>
+                  <SelectItem value="HMP">HMP</SelectItem>
+                  <SelectItem value="R2V">R2V</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={vagasFilter} onValueChange={setVagasFilter}>
+                <SelectTrigger><SelectValue placeholder="Vagas: Todos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Vagas: Todos</SelectItem>
+                  <SelectItem value="com">Com Vaga</SelectItem>
+                  <SelectItem value="sem">Sem Vaga</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={construtoraFilter} onValueChange={setConstrutoraFilter}>
+                <SelectTrigger><SelectValue placeholder="Todas as Construtoras" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas as Construtoras</SelectItem>
+                  {construtorasComProjetos.map(construtora => (
+                    <SelectItem key={construtora.id} value={construtora.nome}>
+                      {construtora.nome} ({construtora.totalProjetos})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+
+            {(searchTerm || zonaFilter !== "todas" || statusFilter !== "todos" || dormitoriosFilter !== "todos" || enquadramentoFilter !== "todos" || vagasFilter !== "todos" || construtoraFilter !== "todas") && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{filteredProjects.length} resultado(s)</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setSearchTerm("");
+                    setZonaFilter("todas");
+                    setStatusFilter("todos");
+                    setDormitoriosFilter("todos");
+                    setEnquadramentoFilter("todos");
+                    setVagasFilter("todos");
+                    setConstrutoraFilter("todas");
+                  }}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Limpar filtros
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1001,43 +1070,45 @@ export default function Projetos() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-zona">Zona</Label>
-                  <select
-                    id="edit-zona"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  <Label>Zona</Label>
+                  <Select
                     value={editFormData.zona || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, zona: e.target.value || undefined })}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, zona: v || undefined })}
                   >
-                    <option value="">Selecione...</option>
-                    <option value="norte">Zona Norte</option>
-                    <option value="sul">Zona Sul</option>
-                    <option value="leste">Zona Leste</option>
-                    <option value="oeste">Zona Oeste</option>
-                    <option value="centro">Centro</option>
-                  </select>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Selecione...</SelectItem>
+                      <SelectItem value="norte">Zona Norte</SelectItem>
+                      <SelectItem value="sul">Zona Sul</SelectItem>
+                      <SelectItem value="leste">Zona Leste</SelectItem>
+                      <SelectItem value="oeste">Zona Oeste</SelectItem>
+                      <SelectItem value="centro">Centro</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-enquadramento">Enquadramento</Label>
-                  <select
-                    id="edit-enquadramento"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  <Label>Enquadramento</Label>
+                  <Select
                     value={editFormData.enquadramento || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, enquadramento: e.target.value || undefined })}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, enquadramento: v || undefined })}
                   >
-                    <option value="">Selecione...</option>
-                    <option value="HIS1">HIS1</option>
-                    <option value="HIS2">HIS2</option>
-                    <option value="HMP">HMP</option>
-                    <option value="R2V">R2V</option>
-                  </select>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">Selecione...</SelectItem>
+                      <SelectItem value="HIS1">HIS1</SelectItem>
+                      <SelectItem value="HIS2">HIS2</SelectItem>
+                      <SelectItem value="HMP">HMP</SelectItem>
+                      <SelectItem value="R2V">R2V</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="edit-descricao">Descrição</Label>
-                <textarea
+                <Textarea
                   id="edit-descricao"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  className="min-h-[80px]"
                   value={editFormData.descricao || ""}
                   onChange={(e) => setEditFormData({ ...editFormData, descricao: e.target.value })}
                 />
@@ -1084,17 +1155,18 @@ export default function Projetos() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-status">Status</Label>
-                  <select
-                    id="edit-status"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                  <Label>Status</Label>
+                  <Select
                     value={editFormData.status || "ativo"}
-                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, status: v })}
                   >
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
-                    <option value="esgotado">Esgotado</option>
-                  </select>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ativo">Ativo</SelectItem>
+                      <SelectItem value="inativo">Inativo</SelectItem>
+                      <SelectItem value="esgotado">Esgotado</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1110,6 +1182,29 @@ export default function Projetos() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{projectToDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteProject}
+              disabled={deleteProjectMutation.isPending}
+            >
+              {deleteProjectMutation.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Excluindo...</>
+              ) : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
