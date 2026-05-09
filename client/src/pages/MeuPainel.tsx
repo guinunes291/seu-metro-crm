@@ -29,7 +29,7 @@ import {
   TrendingUp, Target, Trophy, Users, Clock, CheckCircle2, Edit3,
   Camera, Flame, Award, BarChart3, Zap, Phone, MessageSquare,
   Calendar, Eye, FileText, DollarSign, RefreshCw, ClipboardList,
-  XCircle, AlertTriangle, ArrowRight, UserCheck, Copy,
+  XCircle, AlertTriangle, ArrowRight, UserCheck, Copy, Loader2, X,
 } from "lucide-react";
 import { ModalRegistroRapido } from "@/components/ModalRegistroRapido";
 import { toast } from "sonner";
@@ -334,7 +334,7 @@ function ModalDefinirMeta({ mes, ano, metaAtual, onSaved }: {
             })}
             disabled={definirMeta.isPending}
           >
-            {definirMeta.isPending ? "Salvando..." : "Salvar Metas"}
+            {definirMeta.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : "Salvar Metas"}
           </Button>
         </div>
       </DialogContent>
@@ -442,13 +442,13 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
           </Select>
           {periodo === "personalizado" && (
             <>
-              <input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
-              <input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm" />
+              <Input type="date" value={customInicio} onChange={(e) => setCustomInicio(e.target.value)}
+                className="h-9 text-sm w-36" aria-label="Data de início" />
+              <Input type="date" value={customFim} onChange={(e) => setCustomFim(e.target.value)}
+                className="h-9 text-sm w-36" aria-label="Data de fim" />
             </>
           )}
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" onClick={() => refetch()} aria-label="Atualizar dados">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -482,7 +482,7 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
                       <div className="flex items-center gap-1 min-w-0">
                         <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
-                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                        <button onClick={() => { navigator.clipboard.writeText(l.telefone); toast.success("Telefone copiado!"); }} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone" aria-label="Copiar telefone">
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
@@ -498,8 +498,9 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                           disabled={naoAtendeuMutation.isPending}
                           className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
                           title="Não atendeu"
+                          aria-label="Registrar não atendeu"
                         >
-                          ✕
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
@@ -531,7 +532,7 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
                       <div className="flex items-center gap-1 min-w-0">
                         <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
-                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                        <button onClick={() => { navigator.clipboard.writeText(l.telefone); toast.success("Telefone copiado!"); }} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone" aria-label="Copiar telefone">
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
@@ -547,8 +548,9 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                           disabled={naoAtendeuMutation.isPending}
                           className="rounded px-1.5 py-0.5 text-[11px] font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors disabled:opacity-50"
                           title="Não atendeu"
+                          aria-label="Registrar não atendeu"
                         >
-                          ✕
+                          <X className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
@@ -580,7 +582,7 @@ function AbaHoje({ isGestor }: { isGestor: boolean }) {
                     <div key={l.id} className="flex items-center justify-between gap-1 text-sm">
                       <div className="flex items-center gap-1 min-w-0">
                         <span className="truncate max-w-[110px] font-medium">{l.nome}</span>
-                        <button onClick={() => navigator.clipboard.writeText(l.telefone)} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone">
+                        <button onClick={() => { navigator.clipboard.writeText(l.telefone); toast.success("Telefone copiado!"); }} className="shrink-0 text-muted-foreground hover:text-foreground" title="Copiar telefone" aria-label="Copiar telefone">
                           <Copy className="h-3 w-3" />
                         </button>
                       </div>
@@ -895,9 +897,10 @@ function AbaMetasDoMes({ user, refetchUser }: { user: any; refetchUser?: () => v
                 disabled={uploading}
                 className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                 title="Alterar foto"
+                aria-label="Alterar foto de perfil"
               >
                 {uploading ? (
-                  <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-gray-300 border-t-primary" />
+                  <Loader2 className="h-3.5 w-3.5 text-primary animate-spin" />
                 ) : (
                   <Camera className="h-3.5 w-3.5 text-gray-700" />
                 )}
