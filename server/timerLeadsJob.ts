@@ -243,6 +243,17 @@ export async function verificarTimerLeads() {
             `[Timer Job] Lead ${lead.id} redistribuído para corretor ${proximoCorretorId} (fila ${tipoFila})`
           );
 
+          // Notificar novo corretor via SSE para atualização em tempo real no browser
+          try {
+            const { notifySSEUser } = await import('./sseManager');
+            notifySSEUser(proximoCorretorId, 'novo_lead', {
+              leadId: lead.id,
+              leadNome: lead.nome ?? '',
+            });
+          } catch (sseErr) {
+            console.warn(`[Timer Job] SSE notify falhou (não crítico):`, sseErr);
+          }
+
           // Enviar email ao corretor notificando sobre o lead redistribuído
           try {
             const corretor = await getUserById(proximoCorretorId);

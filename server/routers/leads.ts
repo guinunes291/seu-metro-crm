@@ -10,6 +10,13 @@ import { sendPushNotification } from '../pushNotifications';
 // HELPERS DE ROLE (replicados do routers.ts para independência)
 // ============================================================================
 
+// Timer é exclusivo para leads de Facebook ADS
+const _ORIGENS_ADS = ['webhook', 'facebook', 'fb', 'ads'];
+function isLeadOrigemADS(origem: string | null | undefined): boolean {
+  if (!origem) return false;
+  return _ORIGENS_ADS.some(kw => origem.toLowerCase().includes(kw));
+}
+
 function isGestorLevel(role: string): boolean {
   return role === 'gestor' || role === 'admin' || role === 'superintendente';
 }
@@ -372,6 +379,7 @@ export const leadsRouter = router({
 
       const corretorAnteriorId = lead.corretorId;
       const agora = new Date();
+      const adsTransferir = isLeadOrigemADS(lead.origem);
 
       if (corretorAnteriorId) {
         await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
@@ -384,7 +392,8 @@ export const leadsRouter = router({
       await db.updateLead(input.leadId, {
         corretorId: input.novoCorretorId,
         status: 'aguardando_atendimento',
-        timerAtivo,
+        timerAtivo: adsTransferir,
+        timestampRecebimento: adsTransferir ? agora : undefined,
         corretorAnteriorId: corretorAnteriorId ?? undefined,
       });
 
@@ -428,6 +437,7 @@ export const leadsRouter = router({
 
       const corretorAnteriorId = lead.corretorId;
       const statusAtual = lead.status;
+      const adsReatribuir = isLeadOrigemADS(lead.origem);
 
       if (corretorAnteriorId) {
         await db.cancelarFollowUpsPorTransferencia(input.leadId, corretorAnteriorId);
@@ -435,8 +445,13 @@ export const leadsRouter = router({
 
       await db.updateLead(input.leadId, {
         corretorId: input.novoCorretorId,
-        // Se o lead tinha timer ativo, reiniciar o cronômetro para o novo corretor
-        ...(lead.timerAtivo ? { timestampRecebimento: new Date() } : {}),
+        // Lead ADS: sempre reativar timer e voltar para aguardando
+        // Outro lead com timer ativo: apenas resetar timestamp
+        ...(adsReatribuir
+          ? { timerAtivo: true, timestampRecebimento: new Date(), status: 'aguardando_atendimento' }
+          : lead.timerAtivo
+          ? { timestampRecebimento: new Date() }
+          : {}),
       });
 
       await db.createLeadHistory({
@@ -487,14 +502,12 @@ export const leadsRouter = router({
             await db.cancelarFollowUpsPorTransferencia(leadId, corretorAnteriorId);
           }
 
-          // Timer segue o lead se ele tem menos de 5 dias no sistema
-          const cincodiasMs2 = 5 * 24 * 60 * 60 * 1000;
-          const leadIdade2 = Date.now() - new Date(lead.createdAt).getTime();
-          const timerAtivoLote = lead.timerAtivo && leadIdade2 < cincodiasMs2;
+          const adsLote = isLeadOrigemADS(lead.origem);
           await db.updateLead(leadId, {
             corretorId: input.novoCorretorId,
             status: 'aguardando_atendimento',
-            timerAtivo: timerAtivoLote,
+            timerAtivo: adsLote,
+            timestampRecebimento: adsLote ? new Date() : undefined,
             corretorAnteriorId: corretorAnteriorId ?? undefined,
           });
 
@@ -550,15 +563,13 @@ export const leadsRouter = router({
       }
 
       const novoStatus = lead.status === 'novo' ? 'aguardando_atendimento' : lead.status;
+      const deveAtivarTimer = novoStatus === 'aguardando_atendimento' && isLeadOrigemADS(lead.origem);
 
-      // Timer segue o lead se ele tem menos de 5 dias no sistema
-      const cincodiasMs3 = 5 * 24 * 60 * 60 * 1000;
-      const leadIdade3 = Date.now() - new Date(lead.createdAt).getTime();
-      const timerAtivoAtrib = lead.timerAtivo && leadIdade3 < cincodiasMs3;
       await db.updateLead(input.leadId, {
         corretorId: input.corretorId,
         status: novoStatus,
-        timerAtivo: timerAtivoAtrib,
+        timerAtivo: deveAtivarTimer,
+        timestampRecebimento: deveAtivarTimer ? new Date() : undefined,
       });
 
       await db.criarFollowUpsAutomaticos();

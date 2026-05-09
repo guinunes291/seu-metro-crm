@@ -79,11 +79,11 @@ export function agendarDistribuicaoAutomatica() {
     executarTimerLeads().catch(console.error);
   }, 90000);
 
-  // Timer de leads: a cada 5 minutos (era 2 minutos — reduz 2.5x a carga)
+  // Timer de leads: a cada 1 minuto — garante redistribuição em ≤ 1 min após vencimento do timer de 5 min
   setInterval(() => {
     executarTimerLeads().catch(console.error);
-  }, 5 * 60 * 1000);
-  
-  console.log("[Job] Verificação de timer de leads agendada para executar a cada 5 minutos");
+  }, 1 * 60 * 1000);
+
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 1 minuto");
   
 }

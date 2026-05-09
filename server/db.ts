@@ -3480,7 +3480,11 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
   // Buscar dados do lead para verificar o projeto
   const leadInfo = await getLeadById(leadId);
   if (!leadInfo) return null;
-  
+
+  // Timer e notificações SSE são exclusivos para leads de Facebook ADS
+  const _ORIGENS_ADS = ['webhook', 'facebook', 'fb', 'ads'];
+  const isLeadADS = _ORIGENS_ADS.some(kw => (leadInfo.origem ?? '').toLowerCase().includes(kw));
+
   // Verificar se o lead é do projeto foco
   const config = await getConfiguracaoProjetoFoco();
   const isProjetoFoco = config && config.ativo && config.projetoId === leadInfo.projectId;
@@ -3507,13 +3511,13 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     return null;
   }
   
-  // Atribuir lead ao corretor, ativar timer de 15 minutos e registrar fila de origem
+  // Atribuir lead ao corretor; timer ativo apenas para leads Facebook ADS
   await db.update(leads)
-    .set({ 
+    .set({
       corretorId,
       status: 'aguardando_atendimento',
-      timerAtivo: true,
-      timestampRecebimento: new Date(),
+      timerAtivo: isLeadADS,
+      timestampRecebimento: isLeadADS ? new Date() : null,
       tipoFilaOrigem: tipoFilaUsada,
     })
     .where(eq(leads.id, leadId));
@@ -3546,15 +3550,17 @@ export async function distribuirLeadPelaRoleta(leadId: number): Promise<number |
     await notifyLeadDistribuido(corretorId, leadId, leadData.nome);
   }
 
-  // Invalidar cache e notificar via SSE para resposta imediata no browser
+  // Invalidar cache; notificação SSE apenas para leads Facebook ADS
   try {
     const { cacheInvalidate } = await import('./_core/cache');
     await cacheInvalidate(`dashboard.leadsPrioritarios:${corretorId}`);
-    const { notifySSEUser } = await import('./sseManager');
-    notifySSEUser(corretorId, 'novo_lead', {
-      leadId,
-      leadNome: leadData?.nome ?? '',
-    });
+    if (isLeadADS) {
+      const { notifySSEUser } = await import('./sseManager');
+      notifySSEUser(corretorId, 'novo_lead', {
+        leadId,
+        leadNome: leadData?.nome ?? '',
+      });
+    }
   } catch (e) {
     console.warn('[Roleta] SSE/cache notify falhou (não crítico):', e);
   }
