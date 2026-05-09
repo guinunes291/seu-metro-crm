@@ -3,6 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -216,18 +217,20 @@ export default function Relatorios() {
             </div>
             {periodo === "personalizado" && (
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   type="date"
                   value={dataInicioCustom}
                   onChange={(e) => setDataInicioCustom(e.target.value)}
-                  className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="h-8 text-sm w-36"
+                  aria-label="Data de início"
                 />
                 <span className="text-muted-foreground text-sm">até</span>
-                <input
+                <Input
                   type="date"
                   value={dataFimCustom}
                   onChange={(e) => setDataFimCustom(e.target.value)}
-                  className="flex h-8 rounded-md border border-input bg-background px-2 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  className="h-8 text-sm w-36"
+                  aria-label="Data de fim"
                 />
               </div>
             )}

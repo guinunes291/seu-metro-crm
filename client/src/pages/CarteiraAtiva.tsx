@@ -26,7 +26,10 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
+  Loader2,
+  Copy,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -214,10 +217,16 @@ function CarteiraCard({ item, onRefresh }: { item: any; onRefresh: () => void })
             </div>
             <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
               {item.leadTelefone && (
-                <span className="flex items-center gap-1">
+                <button
+                  className="flex items-center gap-1 hover:text-foreground group transition-colors"
+                  onClick={() => { navigator.clipboard.writeText(item.leadTelefone); toast.success("Telefone copiado!"); }}
+                  title="Copiar telefone"
+                  aria-label="Copiar telefone"
+                >
                   <Phone className="h-3 w-3" />
                   {item.leadTelefone}
-                </span>
+                  <Copy className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100" />
+                </button>
               )}
               {item.leadProjeto && (
                 <span className="truncate max-w-[150px]">{item.leadProjeto}</span>
@@ -240,7 +249,7 @@ function CarteiraCard({ item, onRefresh }: { item: any; onRefresh: () => void })
                   onClick={() => renovarMutation.mutate({ carteiraId: item.id })}
                   disabled={renovarMutation.isPending}
                 >
-                  <RefreshCw className="h-3 w-3 mr-1" />
+                  {renovarMutation.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                   Renovar +3 dias
                 </Button>
               </div>
@@ -451,7 +460,7 @@ function CarteiraCard({ item, onRefresh }: { item: any; onRefresh: () => void })
               }}
               disabled={criarTarefaMutation.isPending}
             >
-              Criar tarefa
+              {criarTarefaMutation.isPending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Criando...</> : "Criar tarefa"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -495,8 +504,11 @@ function VisaoGestor() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
       </div>
     );
   }
@@ -615,7 +627,7 @@ export function CarteiraAtivaQuickButton({ leadId, leadNome }: { leadId: number;
         onClick={() => adicionarMutation.mutate({ leadId })}
         disabled={adicionarMutation.isPending}
       >
-        <Shield className="h-4 w-4 mr-1" />
+        {adicionarMutation.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Shield className="h-4 w-4 mr-1" />}
         {adicionarMutation.isPending ? "Adicionando..." : "Adicionar à Carteira Ativa"}
       </Button>
     </div>
@@ -760,8 +772,8 @@ export default function CarteiraAtiva() {
 
             {/* Lista de leads */}
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)}
               </div>
             ) : !carteira || carteira.length === 0 ? (
               <Card className="p-12 text-center">
