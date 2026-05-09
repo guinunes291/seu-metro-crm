@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { trpc } from '@/lib/trpc';
-import { DollarSign, TrendingUp, Clock, CheckCircle, Upload, Building2, AlertCircle, XCircle, Undo2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, CheckCircle, Upload, Building2, AlertCircle, XCircle, Undo2, Loader2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -273,7 +274,7 @@ function ComissoesContent() {
               onClick={() => gerarEmLoteMutation.mutate()}
               disabled={gerarEmLoteMutation.isPending}
             >
-              <TrendingUp className="w-4 h-4 mr-2" />
+              {gerarEmLoteMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <TrendingUp className="w-4 h-4 mr-2" />}
               {gerarEmLoteMutation.isPending ? 'Gerando...' : 'Gerar Comissões em Lote'}
             </Button>
             <Dialog open={dialogImportOpen} onOpenChange={setDialogImportOpen}>
@@ -710,7 +711,7 @@ function ComissoesContent() {
                             onClick={() => desfazerDistrato.mutate({ contratoId: d.id })}
                             disabled={desfazerDistrato.isPending}
                           >
-                            <Undo2 className="h-3 w-3 mr-1" />
+                            {desfazerDistrato.isPending ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Undo2 className="h-3 w-3 mr-1" />}
                             Desfazer
                           </Button>
                         </TableCell>
@@ -771,7 +772,7 @@ function ComissoesContent() {
                 }
               }}
             >
-              {registrarDistrato.isPending ? 'Registrando...' : 'Confirmar Distrato'}
+              {registrarDistrato.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Registrando...</> : 'Confirmar Distrato'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -814,9 +815,17 @@ function ComissoesContent() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground">Carregando...</div>
+            <div className="space-y-2 py-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
           ) : !comissoes || comissoes.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma comissão encontrada</div>
+            <div className="text-center py-12 flex flex-col items-center gap-3">
+              <DollarSign className="h-12 w-12 text-muted-foreground/40" />
+              <p className="text-muted-foreground font-medium">Nenhuma comissão encontrada</p>
+              <p className="text-sm text-muted-foreground">Ajuste os filtros ou aguarde novas vendas</p>
+            </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -863,7 +872,7 @@ function ComissoesContent() {
                               onClick={() => marcarComoPagaMutation.mutate({ id: comissao.id })}
                               disabled={marcarComoPagaMutation.isPending}
                             >
-                              Marcar como Paga
+                              {marcarComoPagaMutation.isPending ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Salvando...</> : 'Marcar como Paga'}
                             </Button>
                           )}
                         </TableCell>
