@@ -5,7 +5,8 @@ import {
   Trophy, TrendingUp, Target, DollarSign, FileCheck,
   Calendar, Maximize, RefreshCw, Users, Phone, MessageSquare,
   CalendarCheck, Eye, FileText, Briefcase, Activity, ChevronDown,
-  Settings, Save, ArrowUp, ArrowDown, Minus, Minimize, Star
+  Settings, Save, ArrowUp, ArrowDown, Minus, Minimize, Star,
+  Play, Pause, BarChart2, List, X,
 } from "lucide-react";
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -32,12 +33,13 @@ import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, end
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
-// Keyframe animation style tag (injected once)
 const TICKER_STYLE = `
 @keyframes ticker { from { transform: translateX(0) } to { transform: translateX(-50%) } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px) } to { opacity: 1; transform: translateY(0) } }
 @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 10px rgba(6,182,212,0.3) } 50% { box-shadow: 0 0 25px rgba(6,182,212,0.7) } }
 @keyframes celebration { 0% { transform: translateY(0) scale(1); opacity: 1 } 100% { transform: translateY(-200px) scale(0.5); opacity: 0 } }
+@keyframes slideIn { from { opacity:0; transform:translateX(-8px) } to { opacity:1; transform:translateX(0) } }
+@keyframes fadeOutBadge { 0%,70% { opacity:1 } 100% { opacity:0 } }
 `;
 
 type PeriodOption =
@@ -88,6 +90,20 @@ function getInitials(name: string | null | undefined): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
+// Returns Tailwind class string for heat-map coloring based on quartile position
+function getHeatColor(value: number, values: number[]): string {
+  if (values.length === 0 || value === 0) return 'text-gray-400';
+  const sorted = [...values].filter(v => v > 0).sort((a, b) => a - b);
+  if (sorted.length === 0) return 'text-gray-400';
+  const q1 = sorted[Math.floor(sorted.length * 0.25)] ?? sorted[0];
+  const median = sorted[Math.floor(sorted.length * 0.5)] ?? sorted[0];
+  const q3 = sorted[Math.floor(sorted.length * 0.75)] ?? sorted[sorted.length - 1];
+  if (value >= q3) return 'bg-emerald-900/50 text-emerald-300';
+  if (value >= median) return 'bg-emerald-900/20 text-emerald-400';
+  if (value >= q1) return 'bg-amber-900/20 text-amber-300';
+  return 'bg-red-900/20 text-red-400';
+}
+
 // ============================================================================
 // HOOK: Contador animado (count-up com ease-out cubic)
 // ============================================================================
@@ -118,7 +134,7 @@ function useCountUp(target: number, duration = 1000): number {
 }
 
 // ============================================================================
-// LiveClock — relógio ao vivo no header
+// LiveClock
 // ============================================================================
 function LiveClock() {
   const [now, setNow] = useState(new Date());
@@ -139,7 +155,7 @@ function LiveClock() {
 }
 
 // ============================================================================
-// MetaProgressBanner — barra dramática de progresso com marcos
+// MetaProgressBanner
 // ============================================================================
 function MetaProgressBanner({ realizado, meta }: { realizado: number; meta: number }) {
   const pct = meta > 0 ? Math.min((realizado / meta) * 100, 105) : 0;
@@ -150,7 +166,6 @@ function MetaProgressBanner({ realizado, meta }: { realizado: number; meta: numb
   return (
     <div className="px-4 py-3">
       <div className="relative h-9 bg-slate-800/80 rounded-full overflow-visible border border-slate-700/50 mb-6">
-        {/* Barra preenchida */}
         <div
           className="h-full rounded-full transition-all duration-1000 ease-out"
           style={{
@@ -159,7 +174,6 @@ function MetaProgressBanner({ realizado, meta }: { realizado: number; meta: numb
             boxShadow: pct >= 100 ? `0 0 20px ${color}50, 0 0 40px ${color}30` : 'none',
           }}
         />
-        {/* Marcos */}
         {milestones.map(m => (
           <div
             key={m}
@@ -170,7 +184,6 @@ function MetaProgressBanner({ realizado, meta }: { realizado: number; meta: numb
             <span className="absolute -bottom-5 text-[10px] font-medium" style={{ color: pct >= m ? '#e2e8f0' : '#64748b' }}>{m}%</span>
           </div>
         ))}
-        {/* Texto no centro */}
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-sm font-bold text-white drop-shadow-sm">
             {meta > 0
@@ -184,7 +197,7 @@ function MetaProgressBanner({ realizado, meta }: { realizado: number; meta: numb
 }
 
 // ============================================================================
-// SalesTickerBanner — faixa de ranking rolando na parte inferior
+// SalesTickerBanner
 // ============================================================================
 function SalesTickerBanner({ ranking }: { ranking: any[] }) {
   const items = ranking.filter(r => (r.vgvTotal || 0) > 0)
@@ -206,7 +219,7 @@ function SalesTickerBanner({ ranking }: { ranking: any[] }) {
 }
 
 // ============================================================================
-// MetaAtingidaOverlay — celebração quando meta >= 100%
+// MetaAtingidaOverlay
 // ============================================================================
 function MetaAtingidaOverlay({ show, onDone }: { show: boolean; onDone: () => void }) {
   useEffect(() => {
@@ -219,7 +232,6 @@ function MetaAtingidaOverlay({ show, onDone }: { show: boolean; onDone: () => vo
   if (!show) return null;
   return (
     <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center overflow-hidden">
-      {/* Partículas */}
       {Array.from({ length: 30 }).map((_, i) => (
         <div
           key={i}
@@ -234,7 +246,6 @@ function MetaAtingidaOverlay({ show, onDone }: { show: boolean; onDone: () => vo
           }}
         />
       ))}
-      {/* Banner central */}
       <div className="text-center" style={{ animation: 'fadeInUp 0.5s ease-out' }}>
         <div
           className="text-5xl font-black text-emerald-400 mb-3"
@@ -249,12 +260,12 @@ function MetaAtingidaOverlay({ show, onDone }: { show: boolean; onDone: () => vo
 }
 
 // ============================================================================
-// KPICard — card de indicador com animação de número
+// KPICard — com suporte a delta vs período anterior
 // ============================================================================
-function KPICard({ label, value, numericValue, icon: Icon, variant = "default", subValue, highlight = false }: {
+function KPICard({ label, value, numericValue, icon: Icon, variant = "default", subValue, highlight = false, delta }: {
   label: string; value: string; numericValue?: number; icon: any;
   variant?: "default" | "success" | "warning" | "danger" | "info" | "accent";
-  subValue?: string; highlight?: boolean;
+  subValue?: string; highlight?: boolean; delta?: number;
 }) {
   const variants: Record<string, string> = {
     default: "bg-slate-800/60 border-slate-600/50",
@@ -288,6 +299,12 @@ function KPICard({ label, value, numericValue, icon: Icon, variant = "default", 
           <p className={`text-[11px] uppercase tracking-wider font-semibold mb-1 ${labelColors[variant]}`}>{label}</p>
           <p className="text-2xl font-bold text-white leading-tight tabular-nums">{displayValue}</p>
           {subValue && <p className="text-[11px] text-gray-300 mt-0.5 font-medium">{subValue}</p>}
+          {delta !== undefined && delta !== 0 && (
+            <p className={`text-[10px] font-semibold mt-1 tabular-nums flex items-center gap-0.5 ${delta > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {delta > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+              {delta > 0 ? '+' : ''}{value.startsWith('R$') ? formatCurrency(Math.abs(delta)) : Math.abs(delta)} vs mês ant.
+            </p>
+          )}
         </div>
         <div className={`p-2 rounded-lg bg-white/10 shrink-0 ${iconColors[variant]}`}>
           <Icon className="w-5 h-5" />
@@ -327,7 +344,6 @@ function GaugeChart({ percentage, label, metaDefined = true }: { percentage: num
           <circle cx="90" cy="90" r={radius} fill="none" stroke={getColor(clampedPct)}
             strokeWidth={strokeWidth} strokeDasharray={`${filledLength} ${circumference}`}
             strokeLinecap="round" style={{ transition: 'stroke-dasharray 1.2s ease-out, stroke 0.5s ease' }} />
-          {/* Anel de milestone a 50% */}
           <circle cx="90" cy="90" r={radius + 8} fill="none" stroke="rgba(100,116,139,0.2)"
             strokeWidth={2} strokeDasharray={`${arcLength * 0.5} ${circumference}`} strokeLinecap="round" />
         </svg>
@@ -350,7 +366,81 @@ function GaugeChart({ percentage, label, metaDefined = true }: { percentage: num
 }
 
 // ============================================================================
-// EvolucaoMensalChart — gráfico de barras CSS com tooltips
+// FunilConversao — SVG funnel Leads → Agend → Visitas → Contratos
+// ============================================================================
+function FunilConversao({ leads, agendamentos, visitas, contratos }: {
+  leads: number; agendamentos: number; visitas: number; contratos: number;
+}) {
+  const steps = [
+    { label: 'Leads Recebidos', value: leads, icon: '📥' },
+    { label: 'Agendamentos', value: agendamentos, icon: '📅' },
+    { label: 'Visitas', value: visitas, icon: '👁' },
+    { label: 'Contratos', value: contratos, icon: '🏆' },
+  ];
+
+  const maxVal = Math.max(leads, 1);
+
+  function conversionRate(current: number, previous: number): number {
+    if (previous <= 0) return 0;
+    return Math.round((current / previous) * 100);
+  }
+
+  function barColor(rate: number): string {
+    if (rate >= 60) return 'from-emerald-500 to-emerald-400';
+    if (rate >= 30) return 'from-amber-500 to-amber-400';
+    return 'from-red-500 to-red-400';
+  }
+
+  function rateColor(rate: number): string {
+    if (rate >= 60) return 'text-emerald-400';
+    if (rate >= 30) return 'text-amber-400';
+    return 'text-red-400';
+  }
+
+  return (
+    <div className="space-y-3">
+      {steps.map((step, i) => {
+        const widthPct = maxVal > 0 ? Math.max((step.value / maxVal) * 100, 4) : 4;
+        const rate = i === 0 ? 100 : conversionRate(step.value, steps[i - 1].value);
+        const prevLabel = i === 0 ? null : steps[i - 1].label;
+        return (
+          <div key={i} className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-300 font-medium flex items-center gap-1.5">
+                <span>{step.icon}</span>{step.label}
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-white font-bold tabular-nums">{step.value.toLocaleString('pt-BR')}</span>
+                {prevLabel && (
+                  <span className={`font-bold tabular-nums ${rateColor(rate)}`}>
+                    {rate}% de {prevLabel.split(' ')[0].toLowerCase()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div
+              className="h-7 rounded-lg overflow-hidden bg-slate-800/60"
+              style={{ width: '100%' }}
+            >
+              <div
+                className={`h-full rounded-lg bg-gradient-to-r ${barColor(i === 0 ? 100 : rate)} transition-all duration-700`}
+                style={{ width: `${widthPct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <div className="flex gap-3 mt-2 text-[10px] text-gray-500">
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> {'>'}60% conversão</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> 30-60%</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> {'<'}30%</span>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// EvolucaoMensalChart
 // ============================================================================
 function EvolucaoMensalChart({ data }: { data: any[] }) {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
@@ -419,7 +509,7 @@ function EvolucaoMensalChart({ data }: { data: any[] }) {
 }
 
 // ============================================================================
-// AtingimentoMensalChart — barras de desvio em relação a 100%
+// AtingimentoMensalChart
 // ============================================================================
 function AtingimentoMensalChart({ data }: { data: any[] }) {
   if (!data || data.length === 0) {
@@ -456,120 +546,169 @@ function AtingimentoMensalChart({ data }: { data: any[] }) {
 }
 
 // ============================================================================
-// FaturamentoPorVendedorChart — barras horizontais CSS
+// CorretoresMetaViz — unifica gráfico + tabela com toggle (Melhoria 8)
 // ============================================================================
-function FaturamentoPorVendedorChart({ corretores }: { corretores: any[] }) {
+function CorretoresMetaViz({ corretores, onCorretorClick }: { corretores: any[]; onCorretorClick?: (id: number) => void }) {
+  const [vizMode, setVizMode] = useState<'chart' | 'table'>('chart');
+
   if (!corretores || corretores.length === 0) {
-    return <div className="flex items-center justify-center h-48 text-gray-500 text-sm">Sem dados</div>;
+    return <div className="flex items-center justify-center h-32 text-gray-500 text-sm">Sem dados de vendedores</div>;
   }
+
   const top10 = corretores.slice(0, 10);
-  const maxVal = Math.max(...top10.map(c => (c.vgv || 0)), 1);
+  const maxVal = Math.max(...top10.map(c => Math.max(c.vgv || 0, c.metaVGV || 0)), 1);
+  const totalVGV = corretores.reduce((acc, c) => acc + (c.vgv || 0), 0);
+  const totalMeta = corretores.reduce((acc, c) => acc + (c.metaVGV || 0), 0);
+  const totalDiff = totalVGV - totalMeta;
+  const totalPct = totalMeta > 0 ? ((totalVGV / totalMeta) * 100) : 0;
+
   const colors = [
     'from-purple-600 to-purple-400', 'from-indigo-600 to-indigo-400', 'from-blue-600 to-blue-400',
     'from-sky-600 to-sky-400', 'from-cyan-600 to-cyan-400', 'from-teal-600 to-teal-400',
     'from-emerald-600 to-emerald-400', 'from-lime-600 to-lime-400', 'from-yellow-600 to-yellow-400',
     'from-orange-600 to-orange-400',
   ];
-  return (
-    <div className="space-y-3">
-      {top10.map((c, i) => {
-        const val = c.vgv || 0;
-        const pct = (val / maxVal) * 100;
-        return (
-          <div key={c.id || i} className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-300 font-medium truncate max-w-[140px]">{c.nome?.split(' ')[0] || 'Corretor'}</span>
-              <span className="text-white font-semibold tabular-nums">{formatCurrency(val)}</span>
-            </div>
-            <div className="h-5 bg-slate-800/60 rounded-md overflow-hidden">
-              <div className={`h-full rounded-md bg-gradient-to-r ${colors[i] || colors[0]} transition-all duration-700`}
-                style={{ width: `${Math.max(pct, 2)}%` }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
-// ============================================================================
-// TabelaVendedoresMeta — tabela Real x Meta
-// ============================================================================
-function TabelaVendedoresMeta({ corretores }: { corretores: any[] }) {
-  if (!corretores || corretores.length === 0) {
-    return <div className="flex items-center justify-center h-32 text-gray-500 text-sm">Sem dados de vendedores</div>;
-  }
-  const totalVGV = corretores.reduce((acc, c) => acc + (c.vgv || 0), 0);
-  const totalMeta = corretores.reduce((acc, c) => acc + (c.metaVGV || 0), 0);
-  const totalDiff = totalVGV - totalMeta;
-  const totalPct = totalMeta > 0 ? ((totalVGV / totalMeta) * 100) : 0;
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-gray-400 border-b border-slate-700/50 text-xs uppercase tracking-wider">
-            <th className="text-left py-3 px-3">Vendedor</th>
-            <th className="text-right py-3 px-3">Faturamento</th>
-            <th className="text-right py-3 px-3">Meta</th>
-            <th className="text-center py-3 px-3">Diferença</th>
-            <th className="text-right py-3 px-3">% Real x Meta</th>
-          </tr>
-        </thead>
-        <tbody>
-          {corretores.map((corretor, index) => {
-            const vgv = corretor.vgv || 0;
-            const meta = corretor.metaVGV || 0;
-            const diff = vgv - meta;
-            const pct = meta > 0 ? ((vgv / meta) * 100 - 100) : 0;
-            const isPositive = diff >= 0;
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs text-gray-400 uppercase tracking-wider flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-purple-400" /> Faturamento por Vendedor — Real x Meta
+        </h3>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setVizMode('chart')}
+            className={`p-1.5 rounded-md transition-colors ${vizMode === 'chart' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white hover:bg-slate-700/50'}`}
+            title="Gráfico"
+          >
+            <BarChart2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setVizMode('table')}
+            className={`p-1.5 rounded-md transition-colors ${vizMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white hover:bg-slate-700/50'}`}
+            title="Tabela"
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {vizMode === 'chart' ? (
+        <div className="space-y-3">
+          {top10.map((c, i) => {
+            const val = c.vgv || 0;
+            const meta = c.metaVGV || 0;
+            const valPct = (val / maxVal) * 100;
+            const metaPct = meta > 0 ? (meta / maxVal) * 100 : 0;
             return (
-              <tr key={corretor.id || index} className="border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors">
-                <td className="py-2.5 px-3">
+              <div key={c.id || i} className="space-y-1 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => onCorretorClick && c.id && onCorretorClick(c.id)}>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-300 font-medium truncate max-w-[140px]">{c.nome?.split(' ')[0] || 'Corretor'}</span>
                   <div className="flex items-center gap-2">
-                    <Avatar className="w-7 h-7">
-                      <AvatarImage src={corretor.fotoUrl || undefined} />
-                      <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(corretor.nome)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-white font-medium">{corretor.nome || 'Corretor'}</span>
+                    {meta > 0 && <span className="text-gray-500 tabular-nums">{formatCurrency(meta)}</span>}
+                    <span className="text-white font-semibold tabular-nums">{formatCurrency(val)}</span>
                   </div>
-                </td>
-                <td className="py-2.5 px-3 text-right text-white font-semibold tabular-nums">{formatCurrencyReais(vgv)}</td>
-                <td className="py-2.5 px-3 text-right text-gray-400 tabular-nums">{meta > 0 ? formatCurrencyReais(meta) : '—'}</td>
-                <td className="py-2.5 px-3 text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    {isPositive ? <ArrowUp className="w-3.5 h-3.5 text-emerald-400" /> : diff === 0 ? <Minus className="w-3.5 h-3.5 text-gray-400" /> : <ArrowDown className="w-3.5 h-3.5 text-red-400" />}
-                    <span className={`tabular-nums text-sm ${isPositive ? 'text-emerald-400' : diff === 0 ? 'text-gray-400' : 'text-red-400'}`}>{formatCurrencyReais(Math.abs(diff))}</span>
-                  </div>
-                </td>
-                <td className={`py-2.5 px-3 text-right font-bold tabular-nums ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {meta > 0 ? `${isPositive ? '+' : ''}${pct.toFixed(2)}%` : '—'}
-                </td>
-              </tr>
+                </div>
+                <div className="h-5 bg-slate-800/60 rounded-md overflow-hidden relative">
+                  <div className={`h-full rounded-md bg-gradient-to-r ${colors[i] || colors[0]} transition-all duration-700`}
+                    style={{ width: `${Math.max(valPct, 2)}%` }} />
+                  {metaPct > 0 && (
+                    <div
+                      className="absolute top-0 bottom-0 w-0.5 bg-white/60"
+                      style={{ left: `${metaPct}%` }}
+                    />
+                  )}
+                </div>
+              </div>
             );
           })}
-        </tbody>
-        <tfoot>
-          <tr className="border-t-2 border-slate-600 bg-slate-800/30">
-            <td className="py-3 px-3 text-white font-bold">Total</td>
-            <td className="py-3 px-3 text-right text-white font-bold tabular-nums">{formatCurrencyReais(totalVGV)}</td>
-            <td className="py-3 px-3 text-right text-gray-400 font-bold tabular-nums">{totalMeta > 0 ? formatCurrencyReais(totalMeta) : '—'}</td>
-            <td className="py-3 px-3 text-center">
-              <span className={`font-bold tabular-nums ${totalDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrencyReais(Math.abs(totalDiff))}</span>
-            </td>
-            <td className={`py-3 px-3 text-right font-bold tabular-nums ${totalPct >= 100 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {totalMeta > 0 ? `${totalPct >= 100 ? '+' : ''}${(totalPct - 100).toFixed(2)}%` : '—'}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+          <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-1">
+            <span className="w-3 h-px bg-white/60 inline-block" /> Linha branca = meta individual
+          </div>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-400 border-b border-slate-700/50 text-xs uppercase tracking-wider">
+                <th className="text-left py-3 px-3">Vendedor</th>
+                <th className="text-right py-3 px-3">Faturamento</th>
+                <th className="text-right py-3 px-3">Meta</th>
+                <th className="text-center py-3 px-3">Diferença</th>
+                <th className="text-right py-3 px-3">% Real x Meta</th>
+              </tr>
+            </thead>
+            <tbody>
+              {corretores.map((corretor, index) => {
+                const vgv = corretor.vgv || 0;
+                const meta = corretor.metaVGV || 0;
+                const diff = vgv - meta;
+                const pct = meta > 0 ? ((vgv / meta) * 100 - 100) : 0;
+                const isPositive = diff >= 0;
+                const barW = meta > 0 ? Math.min((vgv / meta) * 100, 100) : 0;
+                return (
+                  <tr key={corretor.id || index}
+                    className={`border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors ${onCorretorClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onCorretorClick && corretor.id && onCorretorClick(corretor.id)}>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-7 h-7">
+                          <AvatarImage src={corretor.fotoUrl || undefined} />
+                          <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(corretor.nome)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <span className="text-white font-medium">{corretor.nome || 'Corretor'}</span>
+                          {meta > 0 && (
+                            <div className="w-24 h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-700 ${isPositive ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                style={{ width: `${barW}%` }} />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-white font-semibold tabular-nums">{formatCurrencyReais(vgv)}</td>
+                    <td className="py-2.5 px-3 text-right text-gray-400 tabular-nums">{meta > 0 ? formatCurrencyReais(meta) : '—'}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {isPositive ? <ArrowUp className="w-3.5 h-3.5 text-emerald-400" /> : diff === 0 ? <Minus className="w-3.5 h-3.5 text-gray-400" /> : <ArrowDown className="w-3.5 h-3.5 text-red-400" />}
+                        <span className={`tabular-nums text-sm ${isPositive ? 'text-emerald-400' : diff === 0 ? 'text-gray-400' : 'text-red-400'}`}>{formatCurrencyReais(Math.abs(diff))}</span>
+                      </div>
+                    </td>
+                    <td className={`py-2.5 px-3 text-right font-bold tabular-nums ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {meta > 0 ? `${isPositive ? '+' : ''}${pct.toFixed(2)}%` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-600 bg-slate-800/30">
+                <td className="py-3 px-3 text-white font-bold">Total</td>
+                <td className="py-3 px-3 text-right text-white font-bold tabular-nums">{formatCurrencyReais(totalVGV)}</td>
+                <td className="py-3 px-3 text-right text-gray-400 font-bold tabular-nums">{totalMeta > 0 ? formatCurrencyReais(totalMeta) : '—'}</td>
+                <td className="py-3 px-3 text-center">
+                  <span className={`font-bold tabular-nums ${totalDiff >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{formatCurrencyReais(Math.abs(totalDiff))}</span>
+                </td>
+                <td className={`py-3 px-3 text-right font-bold tabular-nums ${totalPct >= 100 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {totalMeta > 0 ? `${totalPct >= 100 ? '+' : ''}${(totalPct - 100).toFixed(2)}%` : '—'}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
 
 // ============================================================================
-// PodiumVisual — pódio dos top 6
+// PodiumVisual — com badges de conquista (Melhoria 3) + click (Melhoria 4)
 // ============================================================================
-function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" | "produtividade" }) {
+function PodiumVisual({ ranking, type = "vgv", onCorretorClick }: {
+  ranking: any[]; type?: "vgv" | "produtividade"; onCorretorClick?: (id: number) => void;
+}) {
   if (ranking.length === 0) return <div className="flex items-center justify-center h-48 text-gray-500"><p>Nenhum corretor no ranking</p></div>;
   const top6 = ranking.slice(0, 6);
   const podiumOrder = [
@@ -577,6 +716,18 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
     { data: top6[0], position: 1 }, { data: top6[2], position: 3 },
     { data: top6[4], position: 5 }, { data: top6[5], position: 6 },
   ].filter(item => item.data);
+
+  // Badge helpers
+  const maxPontos = Math.max(...ranking.map(r => r.pontuacaoTotal || 0), 0);
+
+  function getBadges(corretor: any, position: number): string[] {
+    const badges: string[] = [];
+    if (position === 1) badges.push('👑');
+    else if (position <= 3) badges.push(position === 2 ? '🥈' : '🥉');
+    if (type === 'vgv' && (corretor.metaVGV || 0) > 0 && (corretor.vgvTotal || 0) >= (corretor.metaVGV || 0)) badges.push('🎯');
+    if (type === 'produtividade' && (corretor.pontuacaoTotal || 0) >= maxPontos && maxPontos > 0) badges.push('⚡');
+    return badges;
+  }
 
   const getStyles = (position: number) => {
     switch (position) {
@@ -595,8 +746,16 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
           if (!corretor) return null;
           const styles = getStyles(position);
           const displayValue = type === "vgv" ? formatCurrency(corretor.vgvTotal || 0) : `${corretor.pontuacaoTotal || 0} pts`;
+          const badges = getBadges(corretor, position);
           return (
-            <div key={corretor.corretorId || position} className={`flex flex-col items-center transition-all duration-300 hover:scale-105 ${position === 1 ? 'z-10' : ''}`}>
+            <div
+              key={corretor.corretorId || position}
+              className={`flex flex-col items-center transition-all duration-300 hover:scale-105 ${position === 1 ? 'z-10' : ''} ${onCorretorClick ? 'cursor-pointer' : ''}`}
+              onClick={() => onCorretorClick && corretor.corretorId && onCorretorClick(corretor.corretorId)}
+            >
+              {badges.length > 0 && (
+                <div className="flex gap-0.5 mb-1 text-sm">{badges.join('')}</div>
+              )}
               <div className={`relative ${position === 1 ? 'mb-3' : 'mb-2'}`}>
                 <div className={`absolute -top-2 -right-2 z-10 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold bg-gradient-to-br ${styles.bgGradient} text-white shadow-lg border-2 border-white/20`}>{position}</div>
                 <Avatar className={`${styles.size} ${styles.border} ${styles.glow} ${styles.ring}`}>
@@ -615,9 +774,12 @@ function PodiumVisual({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" 
 }
 
 // ============================================================================
-// RankingLateral
+// RankingLateral — com sobe/desce (Melhoria 9) + click (Melhoria 4)
 // ============================================================================
-function RankingLateral({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv" | "produtividade" }) {
+function RankingLateral({ ranking, type = "vgv", positionChanges, onCorretorClick }: {
+  ranking: any[]; type?: "vgv" | "produtividade";
+  positionChanges?: Map<number, number>; onCorretorClick?: (id: number) => void;
+}) {
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-12 gap-2 text-[10px] text-gray-500 uppercase tracking-wider px-2 pb-2 border-b border-slate-700/50">
@@ -626,21 +788,38 @@ function RankingLateral({ ranking, type = "vgv" }: { ranking: any[]; type?: "vgv
         <div className="col-span-4 text-right">{type === "vgv" ? "VGV" : "Pontos"}</div>
       </div>
       <div className="space-y-1 max-h-[380px] overflow-y-auto pr-1">
-        {ranking.map((item, index) => (
-          <div key={item.corretorId || index} className={`grid grid-cols-12 gap-2 items-center py-2 px-2 rounded-lg ${index < 3 ? 'bg-slate-800/40' : 'hover:bg-slate-800/20'} transition-colors`}>
-            <div className={`col-span-1 font-bold text-sm ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-amber-400' : 'text-gray-500'}`}>{index + 1}º</div>
-            <div className="col-span-7 flex items-center gap-2">
-              <Avatar className="w-7 h-7">
-                <AvatarImage src={item.corretorFoto || undefined} />
-                <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(item.corretorNome)}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-white truncate">{item.corretorNome || 'Corretor'}</span>
+        {ranking.map((item, index) => {
+          const change = positionChanges?.get(item.corretorId);
+          return (
+            <div
+              key={item.corretorId || index}
+              className={`grid grid-cols-12 gap-2 items-center py-2 px-2 rounded-lg ${index < 3 ? 'bg-slate-800/40' : 'hover:bg-slate-800/20'} transition-colors ${onCorretorClick ? 'cursor-pointer' : ''}`}
+              onClick={() => onCorretorClick && item.corretorId && onCorretorClick(item.corretorId)}
+            >
+              <div className="col-span-1 flex items-center gap-1">
+                <span className={`font-bold text-sm ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-amber-400' : 'text-gray-500'}`}>{index + 1}º</span>
+                {change !== undefined && change !== 0 && (
+                  <span
+                    className={`text-[9px] font-bold ${change > 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                    style={{ animation: 'slideIn 0.3s ease-out, fadeOutBadge 10s ease-out forwards' }}
+                  >
+                    {change > 0 ? `↑${change}` : `↓${Math.abs(change)}`}
+                  </span>
+                )}
+              </div>
+              <div className="col-span-7 flex items-center gap-2">
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src={item.corretorFoto || undefined} />
+                  <AvatarFallback className="text-[10px] bg-slate-700 text-white">{getInitials(item.corretorNome)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-white truncate">{item.corretorNome || 'Corretor'}</span>
+              </div>
+              <div className={`col-span-4 text-right text-sm font-semibold tabular-nums ${index === 0 ? 'text-yellow-300' : index === 1 ? 'text-gray-200' : index === 2 ? 'text-amber-300' : 'text-cyan-300'}`}>
+                {type === "vgv" ? formatFullCurrency(item.vgvTotal || 0) : `${item.pontuacaoTotal || 0} pts`}
+              </div>
             </div>
-            <div className={`col-span-4 text-right text-sm font-semibold tabular-nums ${index === 0 ? 'text-yellow-300' : index === 1 ? 'text-gray-200' : index === 2 ? 'text-amber-300' : 'text-cyan-300'}`}>
-              {type === "vgv" ? formatFullCurrency(item.vgvTotal || 0) : `${item.pontuacaoTotal || 0} pts`}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -679,7 +858,105 @@ function BarChartWithTrend({ data, type = "vgv" }: { data: any[]; type?: "vgv" |
 }
 
 // ============================================================================
-// MetasConfigModal — corrigido para usar mes+ano (upsert)
+// CorretorDrillDownModal — Melhoria 4
+// ============================================================================
+function CorretorDrillDownModal({ corretorId, corretoresDashboard, rankingFormatado, onClose }: {
+  corretorId: number | null; corretoresDashboard: any[]; rankingFormatado: any[]; onClose: () => void;
+}) {
+  if (!corretorId) return null;
+
+  const corretor = corretoresDashboard.find(c => c.id === corretorId);
+  const rankingItem = rankingFormatado.find(r => r.corretorId === corretorId);
+  if (!corretor && !rankingItem) return null;
+
+  const nome = corretor?.nome || rankingItem?.corretorNome || 'Corretor';
+  const foto = corretor?.fotoUrl || rankingItem?.corretorFoto;
+  const vgv = corretor?.vgv ?? rankingItem?.vgvTotal ?? 0;
+  const metaVGV = corretor?.metaVGV ?? 0;
+  const contratos = corretor?.contratos ?? rankingItem?.contratosFechados ?? 0;
+  const leads = corretor?.leads ?? 0;
+  const agendamentos = corretor?.agendamentos ?? 0;
+  const visitas = corretor?.visitas ?? 0;
+  const posicao = rankingItem?.posicao ?? null;
+  const pctMeta = metaVGV > 0 ? Math.min((vgv / metaVGV) * 100, 100) : 0;
+  const metaColor = pctMeta >= 100 ? '#10b981' : pctMeta >= 75 ? '#22c55e' : pctMeta >= 50 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        className="bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl max-w-sm w-full mx-4"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-14 h-14 border-2 border-slate-600">
+              <AvatarImage src={foto || undefined} />
+              <AvatarFallback className="bg-slate-700 text-white font-bold text-lg">{getInitials(nome)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="text-white font-bold text-lg leading-tight">{nome}</h3>
+              {posicao && (
+                <div className={`text-sm font-semibold ${posicao === 1 ? 'text-yellow-400' : posicao === 2 ? 'text-gray-300' : posicao === 3 ? 'text-amber-400' : 'text-cyan-300'}`}>
+                  📍 {posicao}º no ranking
+                </div>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* VGV vs Meta */}
+        <div className="bg-slate-800/50 rounded-xl p-4 mb-4">
+          <div className="flex justify-between items-baseline mb-2">
+            <div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider">VGV Realizado</div>
+              <div className="text-2xl font-bold text-white tabular-nums">{formatCurrency(vgv)}</div>
+            </div>
+            {metaVGV > 0 && (
+              <div className="text-right">
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Meta</div>
+                <div className="text-lg font-semibold text-gray-300 tabular-nums">{formatCurrency(metaVGV)}</div>
+              </div>
+            )}
+          </div>
+          {metaVGV > 0 && (
+            <>
+              <div className="h-2 bg-slate-700 rounded-full overflow-hidden mb-1">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${pctMeta}%`, background: metaColor }}
+                />
+              </div>
+              <div className="text-xs font-semibold" style={{ color: metaColor }}>{pctMeta.toFixed(1)}% da meta</div>
+            </>
+          )}
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { label: 'Leads', value: leads, icon: '📥', color: 'text-blue-300' },
+            { label: 'Agend.', value: agendamentos, icon: '📅', color: 'text-purple-300' },
+            { label: 'Visitas', value: visitas, icon: '👁', color: 'text-amber-300' },
+            { label: 'Contratos', value: contratos, icon: '🏆', color: 'text-emerald-300' },
+          ].map(stat => (
+            <div key={stat.label} className="bg-slate-800/50 rounded-lg p-2">
+              <div className="text-lg">{stat.icon}</div>
+              <div className={`text-lg font-bold ${stat.color} tabular-nums`}>{stat.value}</div>
+              <div className="text-[10px] text-gray-500">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MetasConfigModal
 // ============================================================================
 function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
   const { user } = useAuth();
@@ -783,6 +1060,9 @@ function MetasConfigModal({ mes, ano }: { mes: number; ano: number }) {
 // COMPONENTE PRINCIPAL
 // ============================================================================
 
+const TABS = ['realxmeta', 'vgv', 'produtividade'] as const;
+type TabType = typeof TABS[number];
+
 export default function PerformanceTV() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -796,9 +1076,21 @@ export default function PerformanceTV() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [tempRange, setTempRange] = useState<DateRange>({ from: undefined, to: undefined });
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'realxmeta' | 'vgv' | 'produtividade'>('realxmeta');
+  const [activeTab, setActiveTab] = useState<TabType>('realxmeta');
   const [showCelebration, setShowCelebration] = useState(false);
   const celebrationShownRef = useRef(false);
+
+  // Melhoria 6: Auto-rotação de abas
+  const [autoRotate, setAutoRotate] = useState(false);
+  const [rotationDot, setRotationDot] = useState(0); // which dot is active
+  const autoRotateRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Melhoria 4: Drill-down modal
+  const [selectedCorretorId, setSelectedCorretorId] = useState<number | null>(null);
+
+  // Melhoria 9: Position change tracking
+  const prevPositionsRef = useRef<Map<number, number>>(new Map());
+  const [positionChanges, setPositionChanges] = useState<Map<number, number>>(new Map());
 
   const [selectedMes, setSelectedMes] = useState(() => new Date().getMonth() + 1);
   const [selectedAno, setSelectedAno] = useState(() => new Date().getFullYear());
@@ -821,12 +1113,45 @@ export default function PerformanceTV() {
     ano: selectedAno, equipeId: selectedEquipeId,
   });
 
+  // Melhoria 5: Dados do mês anterior para delta
+  const mesPrev = selectedMes === 1 ? 12 : selectedMes - 1;
+  const anoPrev = selectedMes === 1 ? selectedAno - 1 : selectedAno;
+  const { data: dashboardPrev } = trpc.dashboardPerformance.getData.useQuery(
+    { mes: mesPrev, ano: anoPrev, equipeId: selectedEquipeId },
+    { staleTime: 5 * 60 * 1000 }
+  );
+
+  // Melhoria 2: Show Rate
+  const showRateInput = useMemo(() => ({
+    dataInicio: (dateRange.from ?? new Date(selectedAno, selectedMes - 1, 1)).toISOString(),
+    dataFim: (dateRange.to ?? new Date(selectedAno, selectedMes, 0)).toISOString(),
+  }), [dateRange.from?.getTime(), dateRange.to?.getTime(), selectedMes, selectedAno]);
+
+  const { data: showRateData } = trpc.relatoriosGestor.showRate.useQuery(showRateInput, {
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => {
     const interval = setInterval(() => {
       refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao();
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [refetchVGV, refetchPeriodo, refetchDashboard, refetchEvolucao]);
+
+  // Melhoria 6: Auto-rotação
+  useEffect(() => {
+    if (autoRotate) {
+      let dotIdx = TABS.indexOf(activeTab);
+      autoRotateRef.current = setInterval(() => {
+        dotIdx = (dotIdx + 1) % TABS.length;
+        setActiveTab(TABS[dotIdx]);
+        setRotationDot(dotIdx);
+      }, 30000);
+    } else {
+      if (autoRotateRef.current) clearInterval(autoRotateRef.current);
+    }
+    return () => { if (autoRotateRef.current) clearInterval(autoRotateRef.current); };
+  }, [autoRotate]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); setIsFullscreen(true); }
@@ -876,6 +1201,26 @@ export default function PerformanceTV() {
     })) || []
   , [rankingPeriodo]);
 
+  // Melhoria 9: Track position changes on each fetch
+  useEffect(() => {
+    if (rankingFormatado.length === 0) return;
+    const currentPositions = new Map<number, number>(rankingFormatado.map((item: any) => [item.corretorId, item.posicao]));
+    if (prevPositionsRef.current.size > 0) {
+      const changes = new Map<number, number>();
+      currentPositions.forEach((pos, id) => {
+        const prevPos = prevPositionsRef.current.get(id);
+        if (prevPos !== undefined && prevPos !== pos) {
+          changes.set(id, prevPos - pos); // positive = moved up
+        }
+      });
+      if (changes.size > 0) {
+        setPositionChanges(changes);
+        setTimeout(() => setPositionChanges(new Map()), 10000);
+      }
+    }
+    prevPositionsRef.current = currentPositions;
+  }, [rankingFormatado]);
+
   const { totalVGV, totalContratos, totalCorretores } = useMemo(() => ({
     totalVGV: rankingFormatado.reduce((acc: number, item: any) => acc + (item.vgvTotal || 0), 0),
     totalContratos: rankingFormatado.reduce((acc: number, item: any) => acc + (item.contratosFechados || 0), 0),
@@ -900,7 +1245,21 @@ export default function PerformanceTV() {
   const corretoresDashboard = useMemo(() => dashboardData?.corretores || [], [dashboardData?.corretores]);
   const evolucaoData = useMemo(() => evolucaoMensal || [], [evolucaoMensal]);
 
-  // Mostrar celebração quando meta for atingida (apenas uma vez por sessão por mês selecionado)
+  // Melhoria 5: Delta vs mês anterior
+  const resumoPrev = dashboardPrev?.resumo;
+  const deltaContratos = resumoPrev ? (resumo?.totalContratos || 0) - (resumoPrev.totalContratos || 0) : undefined;
+  const deltaVGV = resumoPrev ? faturamento - (resumoPrev.totalVGV || 0) : undefined;
+
+  // Melhoria 2: Show Rate aggregated
+  const showRateGeral = useMemo(() => {
+    if (!showRateData || showRateData.length === 0) return null;
+    const totalRealizados = showRateData.reduce((acc: number, c: any) => acc + (c.realizados || 0), 0);
+    const totalTotal = showRateData.reduce((acc: number, c: any) => acc + (c.total || 0), 0);
+    const taxa = totalTotal > 0 ? Math.round((totalRealizados / totalTotal) * 100) : 0;
+    const sorted = [...showRateData].sort((a: any, b: any) => (b.taxaShow || 0) - (a.taxaShow || 0));
+    return { taxa, totalRealizados, totalTotal, top3: sorted.slice(0, 3), bottom1: sorted.slice(-1) };
+  }, [showRateData]);
+
   useEffect(() => {
     if (percentualAtingimento >= 100 && !celebrationShownRef.current && faturamento > 0) {
       celebrationShownRef.current = true;
@@ -920,20 +1279,34 @@ export default function PerformanceTV() {
 
   const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
+  // Heat map column values for produtividade table (Melhoria 7)
+  const heatCols = useMemo(() => ({
+    tel: rankingProdutividade.map(r => r.ligacoesRealizadas),
+    wpp: rankingProdutividade.map(r => r.whatsappEnviados),
+    agd: rankingProdutividade.map(r => r.agendamentosConfirmados),
+    vis: rankingProdutividade.map(r => r.visitasRealizadas),
+    doc: rankingProdutividade.map(r => r.analiseCreditoEnviadas),
+    pts: rankingProdutividade.map(r => r.pontuacaoTotal),
+  }), [rankingProdutividade]);
+
   return (
     <div className={`min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white ${isFullscreen ? 'overflow-hidden' : 'pb-10'}`}>
-      {/* CSS animations injected once */}
       <style>{TICKER_STYLE}</style>
 
-      {/* Celebration overlay */}
       <MetaAtingidaOverlay show={showCelebration} onDone={() => setShowCelebration(false)} />
+
+      {/* Melhoria 4: Drill-down modal */}
+      <CorretorDrillDownModal
+        corretorId={selectedCorretorId}
+        corretoresDashboard={corretoresDashboard}
+        rankingFormatado={rankingFormatado}
+        onClose={() => setSelectedCorretorId(null)}
+      />
 
       {/* Header */}
       <div className="border-b border-slate-800/50 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-blue-950/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 space-y-2">
-          {/* Linha 1: Logo + Tabs + Clock + Ações */}
           <div className="flex items-center justify-between gap-3">
-            {/* Logo + título + live badge */}
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
                 <Trophy className="w-5 h-5 text-white" />
@@ -952,9 +1325,9 @@ export default function PerformanceTV() {
               </div>
             </div>
 
-            {/* Tabs centralizadas */}
-            <div className="flex-1 flex justify-center">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            {/* Tabs + Melhoria 6: dots de rotação */}
+            <div className="flex-1 flex flex-col items-center gap-1">
+              <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as TabType); setAutoRotate(false); }}>
                 <TabsList className="bg-slate-800/60 border border-slate-700/50">
                   <TabsTrigger value="realxmeta" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300 text-xs sm:text-sm">
                     <Target className="w-4 h-4 mr-1.5" /> Real x Meta
@@ -967,12 +1340,29 @@ export default function PerformanceTV() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              {autoRotate && (
+                <div className="flex gap-1.5">
+                  {TABS.map((tab, i) => (
+                    <div key={tab} className={`w-1.5 h-1.5 rounded-full transition-colors ${activeTab === tab ? 'bg-cyan-400' : 'bg-slate-600'}`} />
+                  ))}
+                </div>
+              )}
             </div>
 
-            {/* Relógio + ações */}
             <div className="flex items-center gap-3 shrink-0">
               <LiveClock />
               <div className="flex items-center gap-1.5">
+                {/* Melhoria 6: Auto-rotação button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAutoRotate(v => !v)}
+                  className={`gap-1.5 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white ${autoRotate ? 'bg-cyan-900/40 border-cyan-500/50' : 'bg-slate-800/50'}`}
+                  title={autoRotate ? 'Pausar rotação' : 'Rotação automática (30s)'}
+                >
+                  {autoRotate ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  <span className="text-xs hidden sm:inline">{autoRotate ? 'Pausar' : 'Auto'}</span>
+                </Button>
                 <Button variant="outline" size="icon" onClick={() => { refetchVGV(); refetchPeriodo(); refetchDashboard(); refetchEvolucao(); }} className="bg-slate-800/50 border-slate-700/50 text-white hover:bg-slate-700/50 hover:text-white" title="Atualizar">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
@@ -983,9 +1373,8 @@ export default function PerformanceTV() {
             </div>
           </div>
 
-          {/* Linha 2: Filtros */}
+          {/* Filtros */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Filtro de Equipe (admin/superintendente) */}
             {(user?.role === 'admin' || user?.role === 'superintendente') && equipes && equipes.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1009,7 +1398,6 @@ export default function PerformanceTV() {
               </DropdownMenu>
             )}
 
-            {/* Filtro de período — conteúdo muda por aba */}
             {activeTab === 'realxmeta' ? (
               <>
                 <DropdownMenu>
@@ -1057,7 +1445,7 @@ export default function PerformanceTV() {
         </div>
       </div>
 
-      {/* Calendar picker modal */}
+      {/* Calendar picker */}
       {isCalendarOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setIsCalendarOpen(false)}>
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -1078,7 +1466,6 @@ export default function PerformanceTV() {
         {/* ABA REAL x META */}
         {activeTab === 'realxmeta' && (
           <>
-            {/* Barra de progresso dramática */}
             <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 mb-5">
               <MetaProgressBanner realizado={faturamento} meta={metaVGV} />
             </div>
@@ -1095,6 +1482,12 @@ export default function PerformanceTV() {
                     <div className="bg-slate-800/50 rounded-xl p-3">
                       <div className="text-xs text-gray-400 mb-1">Realizado</div>
                       <div className="text-lg font-bold text-purple-300 tabular-nums">{formatCurrency(faturamento)}</div>
+                      {deltaVGV !== undefined && deltaVGV !== 0 && (
+                        <div className={`text-[10px] font-semibold ${deltaVGV > 0 ? 'text-emerald-400' : 'text-red-400'} flex items-center justify-center gap-0.5`}>
+                          {deltaVGV > 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                          {deltaVGV > 0 ? '+' : ''}{formatCurrency(deltaVGV)} vs ant.
+                        </div>
+                      )}
                     </div>
                     <div className="bg-slate-800/50 rounded-xl p-3">
                       <div className="text-xs text-gray-400 mb-1">Meta</div>
@@ -1124,43 +1517,53 @@ export default function PerformanceTV() {
                 <AtingimentoMensalChart data={evolucaoData} />
               </div>
 
-              {/* KPIs do mês */}
-              <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
-                <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              {/* KPIs do mês + Show Rate (Melhoria 2) */}
+              <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5 space-y-4">
+                <h3 className="text-xs text-gray-400 uppercase tracking-wider flex items-center gap-2">
                   <Star className="w-4 h-4 text-purple-400" /> Indicadores do Mês
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <KPICard label="Contratos" value={(resumo?.totalContratos || 0).toString()} numericValue={resumo?.totalContratos || 0} icon={FileCheck} variant="success" />
+                  <KPICard label="Contratos" value={(resumo?.totalContratos || 0).toString()} numericValue={resumo?.totalContratos || 0} icon={FileCheck} variant="success" delta={deltaContratos} />
                   <KPICard label="Leads" value={(resumo?.totalLeads || 0).toString()} numericValue={resumo?.totalLeads || 0} icon={Users} variant="info" />
                   <KPICard label="Agendamentos" value={(resumo?.totalAgendamentos || 0).toString()} numericValue={resumo?.totalAgendamentos || 0} icon={CalendarCheck} variant="accent" />
                   <KPICard label="Visitas" value={(resumo?.totalVisitas || 0).toString()} numericValue={resumo?.totalVisitas || 0} icon={Eye} variant="warning" />
                 </div>
-                <div className="mt-3">
-                  <KPICard label="Corretores Ativos" value={(resumo?.totalCorretores || 0).toString()} numericValue={resumo?.totalCorretores || 0} icon={Users} variant="info" />
-                </div>
+                {/* Show Rate card */}
+                {showRateGeral && (
+                  <div className={`rounded-xl border p-3 ${showRateGeral.taxa >= 70 ? 'bg-emerald-900/30 border-emerald-500/40' : showRateGeral.taxa >= 50 ? 'bg-amber-900/30 border-amber-500/40' : 'bg-red-900/30 border-red-500/40'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-300">Show Rate</span>
+                      <span className={`text-xl font-bold tabular-nums ${showRateGeral.taxa >= 70 ? 'text-emerald-300' : showRateGeral.taxa >= 50 ? 'text-amber-300' : 'text-red-300'}`}>
+                        {showRateGeral.taxa}%
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-gray-400 mb-2">{showRateGeral.totalRealizados} de {showRateGeral.totalTotal} agendamentos compareceram</div>
+                    {showRateGeral.top3.length > 0 && (
+                      <div className="space-y-1">
+                        {showRateGeral.top3.map((c: any, i: number) => (
+                          <div key={i} className="flex justify-between text-[10px]">
+                            <span className="text-gray-400 truncate max-w-[120px]">{c.corretorNome?.split(' ')[0]}</span>
+                            <span className="text-emerald-400 font-semibold">{Math.round((c.taxaShow || 0) * 100)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
               <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
-                <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-purple-400" /> Faturamento por Vendedor
-                </h3>
-                <FaturamentoPorVendedorChart corretores={corretoresDashboard} />
-              </div>
-              <div className="lg:col-span-2 bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
-                <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-purple-400" /> Evolução Faturamento × Meta
                 </h3>
                 <EvolucaoMensalChart data={evolucaoData} />
               </div>
-            </div>
-
-            <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
-              <h3 className="text-xs text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-purple-400" /> Faturamento por Vendedor — Real x Meta
-              </h3>
-              <TabelaVendedoresMeta corretores={corretoresDashboard} />
+              {/* Melhoria 8: CorretoresMetaViz unificado */}
+              <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
+                <CorretoresMetaViz corretores={corretoresDashboard} onCorretorClick={setSelectedCorretorId} />
+              </div>
             </div>
           </>
         )}
@@ -1170,11 +1573,11 @@ export default function PerformanceTV() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-5">
               <KPICard label="Meta" value={metaDefined ? formatCurrency(metaVGV) : 'Não definida'} icon={Target} variant="info" />
-              <KPICard label="Faturamento" value={formatCurrency(totalVGV)} numericValue={totalVGV} icon={DollarSign} variant="success" highlight />
+              <KPICard label="Faturamento" value={formatCurrency(totalVGV)} numericValue={totalVGV} icon={DollarSign} variant="success" highlight delta={deltaVGV} />
               <KPICard label="Realizado" value={`${metaDefined && totalVGV > 0 ? Math.round((totalVGV / metaVGV) * 100) : 0}%`} numericValue={metaDefined && totalVGV > 0 ? Math.round((totalVGV / metaVGV) * 100) : 0} icon={TrendingUp} variant={totalVGV >= metaVGV && metaDefined ? "success" : totalVGV >= metaVGV * 0.5 ? "warning" : "danger"} />
               <KPICard label="Gap da Meta" value={formatCurrency(Math.abs(metaVGV - totalVGV))} subValue={metaVGV - totalVGV > 0 ? "faltam" : "excedido"} icon={Target} variant={metaVGV - totalVGV > 0 ? "warning" : "success"} />
               <KPICard label="Tendência" value={`${tendenciaMes}%`} numericValue={tendenciaMes} subValue="projeção do mês" icon={TrendingUp} variant={tendenciaMes >= 100 ? "success" : tendenciaMes >= 70 ? "accent" : "warning"} />
-              <KPICard label="Contratos" value={totalContratos.toString()} numericValue={totalContratos} icon={FileCheck} variant="success" />
+              <KPICard label="Contratos" value={totalContratos.toString()} numericValue={totalContratos} icon={FileCheck} variant="success" delta={deltaContratos} />
               <KPICard label="Corretores" value={totalCorretores.toString()} numericValue={totalCorretores} icon={Users} variant="info" />
             </div>
 
@@ -1182,7 +1585,7 @@ export default function PerformanceTV() {
               <div className="lg:col-span-2 space-y-5">
                 <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
                   <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" /> TOP PERFORMERS — VGV</h2>
-                  <PodiumVisual ranking={rankingFormatado} type="vgv" />
+                  <PodiumVisual ranking={rankingFormatado} type="vgv" onCorretorClick={setSelectedCorretorId} />
                 </div>
                 <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
                   <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-cyan-400" /> RANKING DE EQUIPES</h2>
@@ -1191,7 +1594,7 @@ export default function PerformanceTV() {
               </div>
               <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-cyan-400" /> RANKING VGV</h2>
-                <RankingLateral ranking={rankingFormatado} type="vgv" />
+                <RankingLateral ranking={rankingFormatado} type="vgv" positionChanges={positionChanges} onCorretorClick={setSelectedCorretorId} />
               </div>
             </div>
           </>
@@ -1212,12 +1615,32 @@ export default function PerformanceTV() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <div className="lg:col-span-2 space-y-5">
+                {/* Melhoria 1: Funil de conversão */}
+                <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
+                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><Activity className="w-5 h-5 text-cyan-400" /> FUNIL DE CONVERSÃO</h2>
+                  <FunilConversao
+                    leads={resumo?.totalLeads || 0}
+                    agendamentos={resumo?.totalAgendamentos || 0}
+                    visitas={resumo?.totalVisitas || 0}
+                    contratos={resumo?.totalContratos || 0}
+                  />
+                </div>
+
                 <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
                   <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" /> TOP PERFORMERS — PRODUTIVIDADE</h2>
-                  <PodiumVisual ranking={rankingProdutividade} type="produtividade" />
+                  <PodiumVisual ranking={rankingProdutividade} type="produtividade" onCorretorClick={setSelectedCorretorId} />
                 </div>
+
+                {/* Melhoria 7: Heat Map na tabela */}
                 <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5 overflow-x-auto">
-                  <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400" /> ATIVIDADES DO PERÍODO</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400" /> ATIVIDADES DO PERÍODO</h2>
+                    <div className="flex gap-2 text-[10px] text-gray-500">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-emerald-900/50 border border-emerald-500/40 inline-block" /> Top 25%</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-amber-900/20 border border-amber-500/30 inline-block" /> Médio</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded bg-red-900/20 border border-red-500/30 inline-block" /> Bottom</span>
+                    </div>
+                  </div>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-gray-400 border-b border-slate-700/50 text-xs uppercase tracking-wider">
@@ -1234,14 +1657,18 @@ export default function PerformanceTV() {
                     </thead>
                     <tbody>
                       {rankingProdutividade.slice(0, 10).map((item: any, index: number) => (
-                        <tr key={item.corretorId || index} className={`border-b border-slate-800/30 ${index < 3 ? 'bg-slate-800/20' : ''}`}>
+                        <tr
+                          key={item.corretorId || index}
+                          className={`border-b border-slate-800/30 ${index < 3 ? 'bg-slate-800/20' : ''} cursor-pointer hover:bg-slate-800/30 transition-colors`}
+                          onClick={() => item.corretorId && setSelectedCorretorId(item.corretorId)}
+                        >
                           <td className={`py-2 px-2 font-bold ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-amber-400' : 'text-gray-500'}`}>{index + 1}º</td>
                           <td className="py-2 px-2 text-white">{item.corretorNome?.split(' ')[0] || 'Corretor'}</td>
-                          <td className="py-2 px-2 text-center text-blue-300 tabular-nums">{item.ligacoesRealizadas}</td>
-                          <td className="py-2 px-2 text-center text-green-300 tabular-nums">{item.whatsappEnviados}</td>
-                          <td className="py-2 px-2 text-center text-purple-300 tabular-nums">{item.agendamentosConfirmados}</td>
-                          <td className="py-2 px-2 text-center text-amber-300 tabular-nums">{item.visitasRealizadas}</td>
-                          <td className="py-2 px-2 text-center text-cyan-300 tabular-nums">{item.analiseCreditoEnviadas}</td>
+                          <td className={`py-2 px-2 text-center tabular-nums rounded ${getHeatColor(item.ligacoesRealizadas, heatCols.tel)}`}>{item.ligacoesRealizadas}</td>
+                          <td className={`py-2 px-2 text-center tabular-nums rounded ${getHeatColor(item.whatsappEnviados, heatCols.wpp)}`}>{item.whatsappEnviados}</td>
+                          <td className={`py-2 px-2 text-center tabular-nums rounded ${getHeatColor(item.agendamentosConfirmados, heatCols.agd)}`}>{item.agendamentosConfirmados}</td>
+                          <td className={`py-2 px-2 text-center tabular-nums rounded ${getHeatColor(item.visitasRealizadas, heatCols.vis)}`}>{item.visitasRealizadas}</td>
+                          <td className={`py-2 px-2 text-center tabular-nums rounded ${getHeatColor(item.analiseCreditoEnviadas, heatCols.doc)}`}>{item.analiseCreditoEnviadas}</td>
                           <td className="py-2 px-2 text-center">
                             {item.vendasFechadas > 0 ? (
                               <span className="inline-flex items-center gap-0.5 font-bold text-emerald-400">
@@ -1251,7 +1678,7 @@ export default function PerformanceTV() {
                               <span className="text-gray-600">—</span>
                             )}
                           </td>
-                          <td className={`py-2 px-2 text-right font-bold tabular-nums ${index === 0 ? 'text-yellow-300' : index === 1 ? 'text-gray-200' : index === 2 ? 'text-amber-300' : 'text-white'}`}>{item.pontuacaoTotal}</td>
+                          <td className={`py-2 px-2 text-right font-bold tabular-nums rounded ${getHeatColor(item.pontuacaoTotal, heatCols.pts)}`}>{item.pontuacaoTotal}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1260,14 +1687,13 @@ export default function PerformanceTV() {
               </div>
               <div className="bg-slate-900/60 rounded-2xl border border-slate-800/50 p-5">
                 <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-emerald-400" /> RANKING PONTUAÇÃO</h2>
-                <RankingLateral ranking={rankingProdutividade} type="produtividade" />
+                <RankingLateral ranking={rankingProdutividade} type="produtividade" positionChanges={positionChanges} onCorretorClick={setSelectedCorretorId} />
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Ticker de vendas (fixo no bottom, não aparece em fullscreen pois é sobreposto pelo overlay) */}
       {!isFullscreen && <SalesTickerBanner ranking={rankingFormatado} />}
     </div>
   );
