@@ -54,6 +54,7 @@ export default function Projetos() {
   const [enquadramentoFilter, setEnquadramentoFilter] = useState<string>("todos");
   const [vagasFilter, setVagasFilter] = useState<string>("todos");
   const [construtoraFilter, setConstrutoraFilter] = useState<string>("todas");
+  const [tipoFilter, setTipoFilter] = useState<string>("todos");
 
   const [suggestFormData, setSuggestFormData] = useState({
     nome: "",
@@ -111,13 +112,14 @@ export default function Projetos() {
         (vagasFilter === "com" && project.vagas && project.vagas > 0) ||
         (vagasFilter === "sem" && (!project.vagas || project.vagas === 0));
       // Filtrar por nome da construtora (vindo do JOIN com tabela construtoras)
-      const matchesConstrutora = construtoraFilter === "todas" || 
-        project.construtoraName === construtoraFilter || 
+      const matchesConstrutora = construtoraFilter === "todas" ||
+        project.construtoraName === construtoraFilter ||
         project.construtora === construtoraFilter;
+      const matchesTipo = tipoFilter === "todos" || project.tipo === tipoFilter;
 
-      return matchesSearch && matchesZona && matchesStatus && matchesDormitorios && matchesEnquadramento && matchesVagas && matchesConstrutora;
+      return matchesSearch && matchesZona && matchesStatus && matchesDormitorios && matchesEnquadramento && matchesVagas && matchesConstrutora && matchesTipo;
     });
-  }, [projects, searchTerm, zonaFilter, statusFilter, dormitoriosFilter, enquadramentoFilter, vagasFilter, construtoraFilter]);
+  }, [projects, searchTerm, zonaFilter, statusFilter, dormitoriosFilter, enquadramentoFilter, vagasFilter, construtoraFilter, tipoFilter]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -483,8 +485,13 @@ export default function Projetos() {
                       <Button type="button" variant="outline" onClick={() => setSuggestDialogOpen(false)}>
                         Cancelar
                       </Button>
-                      <Button type="submit" disabled={suggestProjectMutation.isPending}>
-                        {suggestProjectMutation.isPending ? "Enviando..." : "Enviar Sugestão"}
+                      <Button type="submit" disabled={suggestProjectMutation.isPending} className="gap-2">
+                        {suggestProjectMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : "Enviar Sugestão"}
                       </Button>
                     </div>
                   </form>
@@ -670,7 +677,19 @@ export default function Projetos() {
                     <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                       Cancelar
                     </Button>
-                    <Button type="submit">Criar Projeto</Button>
+                    <Button type="submit" disabled={createProjectMutation.isPending} className="gap-2">
+                      {createProjectMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Criando...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4" />
+                          Criar Projeto
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </form>
               </DialogContent>
@@ -821,9 +840,19 @@ export default function Projetos() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                <SelectTrigger><SelectValue placeholder="Todos os Tipos" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os Tipos</SelectItem>
+                  <SelectItem value="mcmv">MCMV</SelectItem>
+                  <SelectItem value="sfh">SFH</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {(searchTerm || zonaFilter !== "todas" || statusFilter !== "todos" || dormitoriosFilter !== "todos" || enquadramentoFilter !== "todos" || vagasFilter !== "todos" || construtoraFilter !== "todas") && (
+            {(searchTerm || zonaFilter !== "todas" || statusFilter !== "todos" || dormitoriosFilter !== "todos" || enquadramentoFilter !== "todos" || vagasFilter !== "todos" || construtoraFilter !== "todas" || tipoFilter !== "todos") && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{filteredProjects.length} resultado(s)</span>
                 <Button
@@ -838,6 +867,7 @@ export default function Projetos() {
                     setEnquadramentoFilter("todos");
                     setVagasFilter("todos");
                     setConstrutoraFilter("todas");
+                    setTipoFilter("todos");
                   }}
                 >
                   <X className="h-3 w-3 mr-1" />
@@ -879,6 +909,7 @@ export default function Projetos() {
                         onClick={(e) => openEditDialog(project, e)}
                         className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
                         title="Editar projeto"
+                        aria-label="Editar projeto"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -888,6 +919,7 @@ export default function Projetos() {
                         onClick={(e) => handleDeleteProject(project, e)}
                         className="h-8 w-8 p-0 bg-white/90 hover:bg-red-50 hover:text-red-600"
                         title="Excluir projeto"
+                        aria-label="Excluir projeto"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -901,6 +933,8 @@ export default function Projetos() {
                       handleToggleCompare(project);
                     }}
                     className="h-8 w-8 p-0"
+                    aria-label={isSelected(project.id) ? "Remover da comparação" : "Adicionar à comparação"}
+                    title={isSelected(project.id) ? "Remover da comparação" : "Adicionar à comparação"}
                   >
                     {isSelected(project.id) ? (
                       <Check className="h-4 w-4" />
@@ -954,25 +988,41 @@ export default function Projetos() {
                     
                     <div className="flex flex-wrap gap-2">
                       <Badge variant={project.status === "ativo" ? "default" : project.status === "esgotado" ? "destructive" : "secondary"}>
-                        {project.status}
+                        {project.status === "ativo" ? "Ativo" : project.status === "inativo" ? "Inativo" : "Esgotado"}
                       </Badge>
-                      
+
+                      {project.tipo && (
+                        <Badge variant="outline" className="font-semibold">
+                          {project.tipo === "mcmv" ? "MCMV" : project.tipo === "sfh" ? "SFH" : "Outro"}
+                        </Badge>
+                      )}
+
                       {project.zona && (
                         <Badge variant="outline">
                           Zona {project.zona.charAt(0).toUpperCase() + project.zona.slice(1)}
                         </Badge>
                       )}
-                      
+
                       {project.enquadramento && (
                         <Badge variant="outline">{project.enquadramento}</Badge>
                       )}
-                      
+
                       {project.dormitorios && (
                         <Badge variant="outline">{project.dormitorios} dorm</Badge>
                       )}
-                      
+
                       {project.vagas && project.vagas > 0 && (
                         <Badge variant="outline">{project.vagas} vaga{project.vagas > 1 ? 's' : ''}</Badge>
+                      )}
+
+                      {(project.metragemMinima || project.metragemMaxima) && (
+                        <Badge variant="outline">
+                          {project.metragemMinima && project.metragemMaxima
+                            ? `${project.metragemMinima}–${project.metragemMaxima} m²`
+                            : project.metragemMinima
+                            ? `≥ ${project.metragemMinima} m²`
+                            : `≤ ${project.metragemMaxima} m²`}
+                        </Badge>
                       )}
                     </div>
                     
@@ -996,7 +1046,7 @@ export default function Projetos() {
         </TabsContent>
 
         <TabsContent value="mapa">
-          <Suspense fallback={<div className="flex items-center justify-center h-[600px] bg-card rounded-lg border"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+          <Suspense fallback={<div className="flex items-center justify-center h-[600px] bg-card rounded-lg border"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
             <ProjetosMapView
               filtroConstrutora={construtoraFilter}
               filtroZona={zonaFilter}
@@ -1175,8 +1225,13 @@ export default function Projetos() {
               <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={updateProjectMutation.isPending}>
-                {updateProjectMutation.isPending ? "Salvando..." : "Salvar Alterações"}
+              <Button type="submit" disabled={updateProjectMutation.isPending} className="gap-2">
+                {updateProjectMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : "Salvar Alterações"}
               </Button>
             </div>
           </form>

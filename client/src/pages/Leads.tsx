@@ -45,6 +45,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CopilotQuickActions } from "@/components/CopilotQuickActions";
 import { SMQCopilotButton } from "@/components/SMQCopilotChat";
 import { useCopilot } from "@/contexts/CopilotContext";
@@ -202,11 +213,15 @@ export default function Leads() {
   // Estados para seleção múltipla
   const [selectedLeadIds, setSelectedLeadIds] = useState<number[]>([]);
   const [transferirEmLoteDialog, setTransferirEmLoteDialog] = useState(false);
+  const [bulkStatusDialog, setBulkStatusDialog] = useState<{ open: boolean; novoStatus: string | null }>({ open: false, novoStatus: null });
 
   const utils = trpc.useUtils();
   const updateLeadMutation = trpc.leads.update.useMutation({
     onSuccess: () => {
       utils.leads.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao atualizar lead: ${error.message}`);
     },
   });
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
@@ -215,10 +230,16 @@ export default function Leads() {
       // Invalidar o histórico para que ele seja recarregado após registrar interação
       utils.leads.getHistory.invalidate();
     },
+    onError: (error) => {
+      toast.error(`Erro ao registrar interação: ${error.message}`);
+    },
   });
   const createLeadMutation = trpc.leads.createByCorretor.useMutation({
     onSuccess: () => {
       utils.leads.list.invalidate();
+    },
+    onError: (error) => {
+      toast.error(`Erro ao criar lead: ${error.message}`);
     },
   });
   
@@ -259,7 +280,6 @@ export default function Leads() {
 
   // Estado para o dialog de agendamento
   const [agendamentoDialog, setAgendamentoDialog] = useState(false);
-  const [isSubmittingAgendamento, setIsSubmittingAgendamento] = useState(false);
   const [expandedAds, setExpandedAds] = useState<Set<number>>(new Set());
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [agendamentoForm, setAgendamentoForm] = useState({
@@ -276,7 +296,6 @@ export default function Leads() {
   const createAgendamentoMutation = trpc.agendamentos.create.useMutation({
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
-      setIsSubmittingAgendamento(false);
       setAgendamentoDialog(false);
       setAgendamentoForm({
         projectId: "",
@@ -295,13 +314,11 @@ export default function Leads() {
     onError: (error) => {
       console.error("Erro ao criar agendamento:", error);
       toast.error(error.message || "Erro ao criar agendamento. Tente novamente.");
-      setIsSubmittingAgendamento(false);
     },
   });
   
   const handleCreateAgendamento = () => {
-    // Prevenir múltiplas submissões
-    if (isSubmittingAgendamento || createAgendamentoMutation.isPending) {
+    if (createAgendamentoMutation.isPending) {
       return;
     }
     
@@ -337,9 +354,6 @@ export default function Leads() {
       toast.error("Selecione um projeto ou digite manualmente");
       return;
     }
-    
-    // Marcar como submetendo antes de fazer a mutation
-    setIsSubmittingAgendamento(true);
     
     createAgendamentoMutation.mutate({
       leadId: selectedLead.id,
@@ -678,8 +692,8 @@ export default function Leads() {
                 </Button>
                 <Select
                   onValueChange={(novoStatus) => {
-                    if (novoStatus && window.confirm(`Alterar ${selectedLeadIds.length} lead(s) para "${statusLabels[novoStatus] ?? novoStatus}"?`)) {
-                      bulkUpdateStatusMutation.mutate({ ids: selectedLeadIds, novoStatus: novoStatus as any });
+                    if (novoStatus) {
+                      setBulkStatusDialog({ open: true, novoStatus });
                     }
                   }}
                 >
@@ -900,9 +914,33 @@ export default function Leads() {
 
         {/* Lista de leads */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Carregando leads...</p>
+          <div className="grid gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    <Skeleton className="h-6 w-28 rounded-full" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-36" />
+                      <Skeleton className="h-4 w-44" />
+                      <Skeleton className="h-4 w-28" />
+                    </div>
+                    <div className="flex gap-2">
+                      <Skeleton className="h-9 w-32 rounded-md" />
+                      <Skeleton className="h-9 w-9 rounded-md" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         ) : filteredLeads.length > 0 ? (
           viewMode === "cards" ? (
@@ -998,6 +1036,7 @@ export default function Leads() {
                             </button>
                             <button
                               title="Copiar número"
+                              aria-label="Copiar número"
                               onClick={() => {
                                 navigator.clipboard.writeText(lead.telefone.replace(/\D/g, ''));
                                 toast.success('Número copiado!');
@@ -1009,8 +1048,16 @@ export default function Leads() {
                           </div>
                           {lead.email && (
                             <div className="flex items-center gap-2 text-sm">
-                              <Mail className="h-4 w-4 text-muted-foreground" />
-                              <a href={`mailto:${lead.email}`} className="hover:underline">{lead.email}</a>
+                              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <a href={`mailto:${lead.email}`} className="hover:underline truncate">{lead.email}</a>
+                              <button
+                                title="Copiar e-mail"
+                                aria-label="Copiar e-mail"
+                                onClick={() => { navigator.clipboard.writeText(lead.email!); toast.success('E-mail copiado!'); }}
+                                className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
                             </div>
                           )}
                           {(project || lead.projetoCustom) && (
@@ -1233,8 +1280,9 @@ export default function Leads() {
                             {lead.telefone && (
                               <button
                                 title="Copiar telefone"
+                                aria-label="Copiar telefone"
                                 className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded"
-                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(lead.telefone); }}
+                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(lead.telefone); toast.success('Número copiado!'); }}
                               >
                                 <Copy className="h-3 w-3" />
                               </button>
@@ -1319,6 +1367,7 @@ export default function Leads() {
                             <Button
                               variant="outline"
                               size="sm"
+                              aria-label="Registrar interação"
                               onClick={() => {
                                 setSelectedLead(lead);
                                 setInteractionDialog(true);
@@ -1329,6 +1378,7 @@ export default function Leads() {
                             <Button
                               variant="outline"
                               size="sm"
+                              aria-label="Ver detalhes"
                               onClick={() => openDetails(lead)}
                             >
                               <Eye className="h-4 w-4" />
@@ -2466,18 +2516,16 @@ export default function Leads() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Data</Label>
-                  <input
+                  <Input
                     type="date"
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={agendamentoForm.dataAgendamento}
                     onChange={(e) => setAgendamentoForm(prev => ({ ...prev, dataAgendamento: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Hora</Label>
-                  <input
+                  <Input
                     type="time"
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     value={agendamentoForm.horaAgendamento}
                     onChange={(e) => setAgendamentoForm(prev => ({ ...prev, horaAgendamento: e.target.value }))}
                   />
@@ -2499,12 +2547,12 @@ export default function Leads() {
               <Button variant="outline" onClick={() => setAgendamentoDialog(false)}>
                 Cancelar
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateAgendamento}
-                disabled={isSubmittingAgendamento || createAgendamentoMutation.isPending}
+                disabled={createAgendamentoMutation.isPending}
                 className="gap-2"
               >
-                {(isSubmittingAgendamento || createAgendamentoMutation.isPending) ? (
+                {createAgendamentoMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Criando...
@@ -2543,6 +2591,36 @@ export default function Leads() {
           setSelectedLeadIds([]);
         }}
       />
+
+      {/* AlertDialog para confirmação de alteração de status em massa */}
+      <AlertDialog
+        open={bulkStatusDialog.open}
+        onOpenChange={(open) => !open && setBulkStatusDialog({ open: false, novoStatus: null })}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterar status em massa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Alterar {selectedLeadIds.length} lead{selectedLeadIds.length !== 1 ? 's' : ''} para{' '}
+              <strong>"{statusLabels[bulkStatusDialog.novoStatus ?? ''] ?? bulkStatusDialog.novoStatus}"</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (bulkStatusDialog.novoStatus) {
+                  bulkUpdateStatusMutation.mutate({ ids: selectedLeadIds, novoStatus: bulkStatusDialog.novoStatus as any });
+                }
+                setBulkStatusDialog({ open: false, novoStatus: null });
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }
@@ -2726,24 +2804,25 @@ function ScriptsLeadTab({ leadStatus }: { leadStatus?: string }) {
     <div className="space-y-3">
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 min-w-32">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <input
-            className="w-full pl-8 pr-3 py-1.5 text-sm border rounded-md bg-background"
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            className="pl-8 h-8 text-sm"
             placeholder="Buscar..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
         </div>
-        <select
-          className="text-sm border rounded-md px-2 py-1.5 bg-background"
-          value={categoriaSelecionada}
-          onChange={(e) => setCategoriaSelecionada(e.target.value)}
-        >
-          <option value="todas">Todas</option>
-          {Object.entries(CATEGORIA_LABELS).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
+        <Select value={categoriaSelecionada} onValueChange={setCategoriaSelecionada}>
+          <SelectTrigger className="w-auto h-8 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todas">Todas</SelectItem>
+            {Object.entries(CATEGORIA_LABELS).map(([v, l]) => (
+              <SelectItem key={v} value={v}>{l}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       {categoriaContexto && categoriaSelecionada !== "todas" && (
         <p className="text-xs text-muted-foreground flex items-center gap-1">
