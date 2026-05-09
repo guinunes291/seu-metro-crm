@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { gerarLinkWhatsApp } from "@/lib/whatsapp";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,13 +38,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { 
-  Plus, 
-  Calendar, 
-  Clock, 
-  Phone, 
-  User, 
-  Building2, 
+import {
+  Plus,
+  Calendar,
+  Clock,
+  Phone,
+  User,
+  Building2,
   Search,
   CheckCircle,
   XCircle,
@@ -55,7 +56,9 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
-  X
+  X,
+  MessageCircle,
+  Filter,
 } from "lucide-react";
 import CalendarioAgendamentos from "@/components/CalendarioAgendamentos";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -128,9 +131,11 @@ export default function AgendamentosPage() {
   const MINUTES = ["00", "15", "30", "45"];
 
   // Queries
+  const [statusFiltro, setStatusFiltro] = useState<string>("todos");
   const { data: agendamentos, isLoading } = trpc.agendamentos.list.useQuery();
   const { data: agendamentosHoje } = trpc.agendamentos.hoje.useQuery();
-  const { data: leads } = trpc.leads.list.useQuery();
+  // Busca leads somente quando o modal de criação está aberto
+  const { data: leads } = trpc.leads.list.useQuery(undefined, { enabled: isModalOpen });
   const { data: projetos } = trpc.projects.list.useQuery();
 
   // Mutations
@@ -168,8 +173,11 @@ export default function AgendamentosPage() {
     lead.telefone.includes(searchTerm)
   );
 
-  // Agrupar agendamentos por data
-  const agendamentosPorData = (agendamentos || []).reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
+  // Agrupar agendamentos por data (respeitando filtro de status)
+  const agendamentosFiltrados = (agendamentos || []).filter(
+    (ag: Agendamento) => statusFiltro === "todos" || ag.status === statusFiltro
+  );
+  const agendamentosPorData = agendamentosFiltrados.reduce((acc: Record<string, Agendamento[]>, ag: Agendamento) => {
     // ag.dataAgendamento já vem como Date do backend, não precisa parseISO
     const data = format(new Date(ag.dataAgendamento), "yyyy-MM-dd");
     if (!acc[data]) acc[data] = [];
@@ -271,7 +279,7 @@ export default function AgendamentosPage() {
           </div>
 
           {/* Botão Criar Agendamento */}
-          <Dialog>
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -522,6 +530,31 @@ export default function AgendamentosPage() {
 
           {/* Visualização em Lista */}
           <TabsContent value="list" className="mt-4 space-y-6">
+            {/* Filtro de Status */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              {[
+                { value: "todos", label: "Todos" },
+                { value: "pendente", label: "Pendentes" },
+                { value: "confirmado", label: "Confirmados" },
+                { value: "realizado", label: "Realizados" },
+                { value: "cancelado", label: "Cancelados" },
+                { value: "nao_compareceu", label: "Não Compareceu" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setStatusFiltro(opt.value)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    statusFiltro === opt.value
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
             {/* Agendamentos de Hoje */}
             {agendamentosHoje && agendamentosHoje.length > 0 && (
               <Card className="border-primary/50 bg-primary/5">
@@ -667,7 +700,21 @@ function AgendamentoCard({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-muted-foreground">Telefone:</span>
-                <div className="font-medium">{lead?.telefone || "-"}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{lead?.telefone || "-"}</span>
+                  {lead?.telefone && (
+                    <button
+                      className="text-green-600 hover:text-green-700 transition-colors"
+                      title="Abrir WhatsApp"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, agendamento.projetoCustom || undefined), '_blank');
+                      }}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <span className="text-muted-foreground">Corretor:</span>

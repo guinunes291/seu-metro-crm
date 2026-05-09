@@ -445,10 +445,10 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-6">
             <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
+              Acesso Restrito
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              Faça login para continuar acessando o sistema.
             </p>
           </div>
           <Button
@@ -458,7 +458,7 @@ export default function DashboardLayout({
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Continue
+            Entrar
           </Button>
         </div>
       </div>
@@ -515,8 +515,8 @@ function DashboardContent({
   setSidebarWidth,
 }: {
   children: React.ReactNode;
-  sidebarWidth: string;
-  setSidebarWidth: (width: string) => void;
+  sidebarWidth: number;
+  setSidebarWidth: (width: number) => void;
 }) {
   const { user, isLoading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
@@ -605,6 +605,25 @@ function DashboardContent({
   useEffect(() => {
     localStorage.setItem(MENU_GROUPS_KEY, JSON.stringify(openGroups));
   }, [openGroups]);
+
+  // Auto-abrir grupo que contém o item ativo quando a rota muda
+  useEffect(() => {
+    const role = user?.role || "";
+    const groups = role === 'corretor' ? menuGroupsCorretor
+      : role === 'gestor' ? menuGroupsGestor
+      : role === 'admin' ? menuGroupsAdmin
+      : role === 'superintendente' ? menuGroupsSuperintendente
+      : menuGroups;
+    for (const group of groups) {
+      const items = group.items.filter(item =>
+        !(item as any).roles || (item as any).roles.includes(role)
+      );
+      if (items.some(item => item.path === location)) {
+        setOpenGroups(prev => prev[group.id] ? prev : { ...prev, [group.id]: true });
+        break;
+      }
+    }
+  }, [location, user?.role]);
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
