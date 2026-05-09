@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { UserPlus, Edit, Trash2, UserCheck, UserX, Mail, Phone, Search, MapPin, Calendar, FileText, Eye } from "lucide-react";
+import { UserPlus, Edit, Trash2, UserCheck, UserX, Mail, Phone, Search, MapPin, Calendar, FileText, Eye, Copy, MessageCircle, Loader2, X, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -302,9 +303,23 @@ export default function Corretores() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="container py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-muted-foreground">Carregando corretores...</div>
+        <div className="container py-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <Skeleton className="h-10 w-36" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Card key={i}><CardContent className="pt-6 space-y-2"><Skeleton className="h-4 w-24" /><Skeleton className="h-9 w-16" /></CardContent></Card>
+            ))}
+          </div>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}><CardContent className="p-6"><div className="flex items-center gap-4"><Skeleton className="h-12 w-12 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-5 w-48" /><Skeleton className="h-4 w-72" /></div></div></CardContent></Card>
+            ))}
           </div>
         </div>
       </DashboardLayout>
@@ -535,7 +550,7 @@ export default function Corretores() {
           <div>
             <h1 className="text-3xl font-bold">Gestão de Corretores</h1>
             <p className="text-muted-foreground mt-1">
-              Gerencie sua equipe de corretores com ficha completa
+              {corretores.length} corretor{corretores.length !== 1 ? "es" : ""} cadastrado{corretores.length !== 1 ? "s" : ""}
             </p>
           </div>
           <Button onClick={() => { resetForm(); setIsCreateDialogOpen(true); }}>
@@ -546,63 +561,49 @@ export default function Corretores() {
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Corretores
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{corretores.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Ativos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{ativosCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Presentes Agora
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{presentesCount}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Inativos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-400">{inativosCount}</div>
-            </CardContent>
-          </Card>
+          {[
+            { label: "Total de Corretores", value: corretores.length, color: "" },
+            { label: "Ativos", value: ativosCount, color: "text-green-600" },
+            { label: "Presentes Agora", value: presentesCount, color: "text-blue-600" },
+            { label: "Inativos", value: inativosCount, color: "text-muted-foreground" },
+          ].map(({ label, value, color }) => (
+            <Card key={label}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-3xl font-bold ${color}`}>{value}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Busca */}
         <Card className="mb-6">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar por nome, email, telefone, CPF ou CRECI..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 pr-10"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Limpar busca"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+            {searchTerm && (
+              <p className="text-sm text-muted-foreground">
+                {filteredCorretores.length} resultado{filteredCorretores.length !== 1 ? "s" : ""} encontrado{filteredCorretores.length !== 1 ? "s" : ""}
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -610,9 +611,13 @@ export default function Corretores() {
         <div className="grid grid-cols-1 gap-4">
           {filteredCorretores.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
+              <CardContent className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+                <Users className="h-12 w-12 text-muted-foreground/40" />
+                <p className="text-lg font-medium">
                   {searchTerm ? "Nenhum corretor encontrado" : "Nenhum corretor cadastrado"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm ? "Tente ajustar o termo de busca" : "Clique em \"Novo Corretor\" para começar"}
                 </p>
               </CardContent>
             </Card>
@@ -651,16 +656,26 @@ export default function Corretores() {
 
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                           {corretor.email && (
-                            <div className="flex items-center gap-1">
+                            <button
+                              className="flex items-center gap-1 hover:text-foreground transition-colors group"
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(corretor.email!); toast.success("Email copiado!"); }}
+                              title="Clique para copiar"
+                            >
                               <Mail className="h-4 w-4" />
                               {corretor.email}
-                            </div>
+                              <Copy className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                            </button>
                           )}
                           {corretor.telefone && (
-                            <div className="flex items-center gap-1">
+                            <button
+                              className="flex items-center gap-1 hover:text-foreground transition-colors group"
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(corretor.telefone!); toast.success("Telefone copiado!"); }}
+                              title="Clique para copiar"
+                            >
                               <Phone className="h-4 w-4" />
                               {corretor.telefone}
-                            </div>
+                              <Copy className="h-3 w-3 opacity-0 group-hover:opacity-100" />
+                            </button>
                           )}
                           {corretor.creci && (
                             <div className="flex items-center gap-1">
@@ -679,11 +694,31 @@ export default function Corretores() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {corretor.telefone && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          asChild
+                          title="Abrir WhatsApp"
+                          aria-label="Abrir WhatsApp"
+                        >
+                          <a
+                            href={`https://wa.me/55${corretor.telefone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleView(corretor)}
                         title="Ver detalhes"
+                        aria-label="Ver detalhes"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -692,6 +727,8 @@ export default function Corretores() {
                         size="icon"
                         onClick={() => toggleStatus(corretor)}
                         title={corretor.status === "presente" ? "Marcar como ausente" : "Marcar como presente"}
+                        aria-label={corretor.status === "presente" ? "Marcar como ausente" : "Marcar como presente"}
+                        disabled={updateStatusMutation.isPending}
                       >
                         {corretor.status === "presente" ? (
                           <UserX className="h-4 w-4" />
@@ -704,6 +741,7 @@ export default function Corretores() {
                         size="icon"
                         onClick={() => handleEdit(corretor)}
                         title="Editar"
+                        aria-label="Editar corretor"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -712,6 +750,7 @@ export default function Corretores() {
                         size="icon"
                         onClick={() => handleDelete(corretor)}
                         title="Excluir"
+                        aria-label="Excluir corretor"
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -741,7 +780,7 @@ export default function Corretores() {
                 Cancelar
               </Button>
               <Button onClick={handleCreate} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Cadastrando..." : "Cadastrar"}
+                {createMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cadastrando...</> : "Cadastrar"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -764,7 +803,7 @@ export default function Corretores() {
                 Cancelar
               </Button>
               <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? "Salvando..." : "Salvar"}
+                {updateMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : "Salvar"}
               </Button>
             </DialogFooter>
           </DialogContent>
