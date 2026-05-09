@@ -6,7 +6,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2, FileCheck, FileText, Search, X } from "lucide-react";
+import { Loader2, Phone, Mail, GripVertical, MessageCircle, CheckCircle2, FileCheck, FileText, Search, X, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import LeadTimer from "@/components/LeadTimer";
@@ -43,6 +44,7 @@ type Lead = {
 
 export default function Kanban() {
   const { user } = useAuth();
+  const utils = trpc.useUtils();
   
   // Kanban mostra apenas de "Em Atendimento" em diante (sem Novos e Aguardando)
   const visibleColumns = KANBAN_COLUMNS.filter(
@@ -76,7 +78,7 @@ export default function Kanban() {
   const isLoading = Object.values(queriesByStatus).some(q => q.isLoading);
   
   const refetchAll = () => {
-    Object.values(queriesByStatus).forEach(q => q.refetch());
+    utils.leads.list.invalidate();
   };
   
   // Mutation para atualizar status do lead
@@ -172,7 +174,7 @@ export default function Kanban() {
       // Verificar se o novo status exige dados adicionais
       if (newStatus === "agendado") {
         // Para agendado, impedir drag direto e mostrar toast
-        alert("Para agendar uma visita, use o botão 'Agendar Visita' no card do lead.");
+        toast.info("Para agendar uma visita, use o botão 'Agendar Visita' no card do lead.");
         setDraggedLead(null);
         return;
       } else if (newStatus === "visita_realizada") {
@@ -225,10 +227,24 @@ export default function Kanban() {
             <h1 className="text-3xl font-bold">Kanban de Leads</h1>
             <p className="text-muted-foreground mt-1">
               Arraste os leads entre as colunas para atualizar o status
+              {totalFound > 0 && !searchNorm && (
+                <span className="ml-2 font-medium text-foreground">
+                  · {Object.values(allLeadsByStatus).flat().length} leads no quadro
+                </span>
+              )}
             </p>
           </div>
-          {/* Campo de busca */}
-          <div className="relative w-full sm:w-80">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetchAll}
+              title="Atualizar dados"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            {/* Campo de busca */}
+            <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Buscar por nome, telefone ou corretor..."
@@ -245,6 +261,7 @@ export default function Kanban() {
                 <X className="h-4 w-4" />
               </button>
             )}
+            </div>
           </div>
         </div>
 

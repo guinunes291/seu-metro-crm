@@ -21,7 +21,8 @@ import DistribuirSemCorretorButton from "@/components/DistribuirSemCorretorButto
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -134,6 +135,7 @@ function formatDateShort(dateStr: string): string {
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
   const isGestor = user?.role === "gestor" || user?.role === "admin" || user?.role === "superintendente";
   const isAdmin = user?.role === "admin" || user?.role === "superintendente";
   const isAdminExport = user?.role === "admin"; // Apenas admin pode exportar leads
@@ -225,10 +227,10 @@ export default function Dashboard() {
 
   const forceSyncMutation = trpc.ranking.forceSyncMetricas.useMutation({
     onSuccess: () => {
-      alert('Métricas ressincronizadas com sucesso!');
+      toast.success('Métricas ressincronizadas com sucesso!');
     },
     onError: () => {
-      alert('Erro ao ressincronizar métricas. Tente novamente.');
+      toast.error('Erro ao ressincronizar métricas. Tente novamente.');
     },
   });
   // Painel de redistribuições de leads ADS
@@ -335,88 +337,52 @@ export default function Dashboard() {
             <>
               {/* Cards de métricas por status - Primeira linha */}
               <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 mb-8">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Total de Leads</CardTitle>
-                    <Users className="h-4 w-4 text-blue-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.total || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Aguardando</CardTitle>
-                    <Hourglass className="h-4 w-4 text-slate-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.aguardando || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Em Atendimento</CardTitle>
-                    <Clock className="h-4 w-4 text-yellow-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.emAtendimento || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Agendado</CardTitle>
-                    <Calendar className="h-4 w-4 text-cyan-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.agendado || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Visita Realizada</CardTitle>
-                    <Eye className="h-4 w-4 text-orange-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.visitaRealizada || 0}</div>
-                  </CardContent>
-                </Card>
+                {[
+                  { label: "Total de Leads", value: corretorMetrics?.total || 0, icon: Users, color: "text-blue-500", status: "all" },
+                  { label: "Aguardando", value: corretorMetrics?.aguardando || 0, icon: Hourglass, color: "text-slate-500", status: "aguardando_atendimento" },
+                  { label: "Em Atendimento", value: corretorMetrics?.emAtendimento || 0, icon: Clock, color: "text-yellow-500", status: "em_atendimento" },
+                  { label: "Agendado", value: corretorMetrics?.agendado || 0, icon: Calendar, color: "text-cyan-500", status: "agendado" },
+                  { label: "Visita Realizada", value: corretorMetrics?.visitaRealizada || 0, icon: Eye, color: "text-orange-500", status: "visita_realizada" },
+                ].map(({ label, value, icon: Icon, color, status }) => (
+                  <Card
+                    key={label}
+                    className="cursor-pointer hover:shadow-md hover:border-primary/40 transition-all"
+                    onClick={() => setLocation(status === "all" ? "/leads" : `/leads?status=${status}`)}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">{label}</CardTitle>
+                      <Icon className={`h-4 w-4 ${color}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{value}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Ver leads →</p>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
 
               {/* Cards de métricas - Segunda linha */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Análise de Crédito</CardTitle>
-                    <FileCheck className="h-4 w-4 text-purple-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.analiseCredito || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Contrato Fechado</CardTitle>
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.contratoFechado || 0}</div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Perdidos</CardTitle>
-                    <XCircle className="h-4 w-4 text-red-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">{corretorMetrics?.perdido || 0}</div>
-                  </CardContent>
-                </Card>
+                {[
+                  { label: "Análise de Crédito", value: corretorMetrics?.analiseCredito || 0, icon: FileCheck, color: "text-purple-500", status: "analise_credito" },
+                  { label: "Contrato Fechado", value: corretorMetrics?.contratoFechado || 0, icon: CheckCircle, color: "text-green-500", status: "contrato_fechado" },
+                  { label: "Perdidos", value: corretorMetrics?.perdido || 0, icon: XCircle, color: "text-red-500", status: "perdido" },
+                ].map(({ label, value, icon: Icon, color, status }) => (
+                  <Card
+                    key={label}
+                    className="cursor-pointer hover:shadow-md hover:border-primary/40 transition-all"
+                    onClick={() => setLocation(`/leads?status=${status}`)}
+                  >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">{label}</CardTitle>
+                      <Icon className={`h-4 w-4 ${color}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{value}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Ver leads →</p>
+                    </CardContent>
+                  </Card>
+                ))}
 
                 <Card className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-green-200 dark:border-green-800">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
