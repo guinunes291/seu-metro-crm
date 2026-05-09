@@ -1,12 +1,20 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { 
-  Phone, Mail, Building2, Calendar, MessageSquare, Search, Filter,
+import {
+  Phone, Mail, Building2, Calendar, MessageSquare, Search,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
   Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, Sparkles, ChevronDown, ChevronUp, RefreshCw,
-  FolderOpen, Briefcase, User as UserIcon
+  FolderOpen, Briefcase, User as UserIcon, MoreHorizontal, Zap, SlidersHorizontal
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
@@ -55,14 +63,6 @@ import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
 import { ExecutandoComIA } from "@/components/ExecutandoComIA";
 import { CarteiraAtivaQuickButton } from "@/pages/CarteiraAtiva";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const statusLabels: Record<string, string> = {
   novo: "Novo",
@@ -260,6 +260,8 @@ export default function Leads() {
   // Estado para o dialog de agendamento
   const [agendamentoDialog, setAgendamentoDialog] = useState(false);
   const [isSubmittingAgendamento, setIsSubmittingAgendamento] = useState(false);
+  const [expandedAds, setExpandedAds] = useState<Set<number>>(new Set());
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [agendamentoForm, setAgendamentoForm] = useState({
     projectId: "",
     projetoCustom: "",
@@ -571,6 +573,83 @@ export default function Leads() {
     setDetailsDialog(true);
   };
 
+  // ── Helpers visuais ──────────────────────────────────────────────────────
+
+  // Melhoria 7: Badge honesto de inatividade (sem falso "será descartado")
+  function getInactivityBadge(lead: any) {
+    const statusAtivo = !['contrato_fechado', 'perdido', 'novo', 'aguardando_atendimento'].includes(lead.status);
+    if (!statusAtivo || !lead.ultimaInteracao) return null;
+    const dias = Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / 86_400_000);
+    if (dias < 2) return null;
+    if (dias >= 15) return <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300"><AlertCircle className="h-3 w-3" /> {dias} dias sem contato — verifique urgência</span>;
+    if (dias >= 7)  return <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200"><Clock className="h-3 w-3" /> {dias} dias sem contato</span>;
+    if (dias >= 4)  return <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-200"><Clock className="h-3 w-3" /> {dias} dias parado</span>;
+    return <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200"><Clock className="h-3 w-3" /> {dias} dias sem interação</span>;
+  }
+
+  // Melhoria 9: Badge de origem com ícone e cor
+  function OrigemBadge({ origem }: { origem: string }) {
+    const config: Record<string, { icon: string; label: string; cls: string }> = {
+      facebook:                  { icon: '📘', label: 'Facebook',           cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+      google_sheets:             { icon: '📊', label: 'Google Sheets',       cls: 'bg-green-50 text-green-700 border-green-200' },
+      site:                      { icon: '🌐', label: 'Site',                cls: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+      indicacao:                 { icon: '👥', label: 'Indicação',           cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+      captacao_corretor:         { icon: '🎯', label: 'Captação Própria',    cls: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+      whatsapp:                  { icon: '💬', label: 'WhatsApp',            cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+      telefone:                  { icon: '📞', label: 'Telefone',            cls: 'bg-teal-50 text-teal-700 border-teal-200' },
+      plantao:                   { icon: '🏠', label: 'Plantão',             cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+      agendamento_self_service:  { icon: '🗓', label: 'Self-Service',        cls: 'bg-violet-50 text-violet-700 border-violet-200' },
+      chatbot:                   { icon: '🤖', label: 'Chatbot',             cls: 'bg-slate-50 text-slate-700 border-slate-200' },
+      outro:                     { icon: '❓', label: 'Outro',               cls: 'bg-gray-50 text-gray-600 border-gray-200' },
+    };
+    const cfg = config[origem] || config['outro'];
+    return (
+      <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.cls}`}>
+        <span>{cfg.icon}</span>{cfg.label}
+      </span>
+    );
+  }
+
+  // Melhoria 6: Badge de próximo follow-up
+  function FollowUpBadge({ lead }: { lead: any }) {
+    const hasFollowUp = lead.proximoFollowup || lead.proximaTarefaData;
+    const streak = lead.diasFollowupConsecutivos;
+    if (!hasFollowUp && !(streak >= 2)) return null;
+    const followDate = hasFollowUp ? new Date(hasFollowUp) : null;
+    const isOverdue = followDate && followDate < new Date();
+    return (
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {followDate && (
+          <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
+            isOverdue ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+          }`}>
+            📅 {isOverdue ? 'Follow-up atrasado: ' : 'Follow-up: '}
+            {format(followDate, "dd/MM HH:mm", { locale: ptBR })}
+          </span>
+        )}
+        {streak >= 2 && (
+          <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200">
+            🔥 {streak} dias de cadência
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Melhoria 1: Pipeline de status com contagens da lista atual
+  const statusCounts = leads.reduce((acc: Record<string, number>, l) => {
+    acc[l.status] = (acc[l.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const leadsParados = leads.filter(l => {
+    if (!['em_atendimento', 'qualificado', 'agendado', 'visita_realizada'].includes(l.status)) return false;
+    if (!l.ultimaInteracao) return false;
+    return Math.floor((Date.now() - new Date(l.ultimaInteracao).getTime()) / 86_400_000) >= 3;
+  }).length;
+  const activeFiltersCount = [
+    origemFilter !== 'all', temperaturaFilter !== 'all', dateRangePreset !== 'all', corretorFilter !== 'all'
+  ].filter(Boolean).length;
+
   return (
     <DashboardLayout>
       <div className="container py-8">
@@ -622,233 +701,201 @@ export default function Leads() {
           </div>
         </div>
 
-        {/* View toggle para corretores: Lista / Kanban / Carteira Ativa */}
-        {!isGestor && (
-          <div className="flex gap-1 mb-4 p-1 rounded-lg bg-muted w-fit">
+        {/* Melhoria 2: Navegação unificada — Lista (cards/tabela), Kanban, Carteira Ativa */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <div className="flex gap-1 p-1 rounded-lg bg-muted">
             <button
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium bg-background shadow-sm text-foreground"
-            >
-              <List className="h-4 w-4" />
-              Lista
-            </button>
-            <button
-              onClick={() => setLocation("/kanban")}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+              onClick={() => setViewMode("cards")}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'cards' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
             >
               <LayoutGrid className="h-4 w-4" />
-              Kanban
+              Cards
             </button>
             <button
-              onClick={() => setLocation("/carteira-ativa")}
-              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors"
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'table' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-background/50'}`}
             >
-              <Shield className="h-4 w-4" />
-              Carteira Ativa
+              <List className="h-4 w-4" />
+              Tabela
             </button>
           </div>
-        )}
+          {!isGestor && (
+            <>
+              <button
+                onClick={() => setLocation("/kanban")}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-transparent hover:border-border"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                Kanban
+              </button>
+              <button
+                onClick={() => setLocation("/carteira-ativa")}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors border border-transparent hover:border-border"
+              >
+                <Shield className="h-4 w-4" />
+                Carteira Ativa
+              </button>
+            </>
+          )}
+        </div>
 
-        {/* Filtros e Busca */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Filtros</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`grid gap-4 ${isGestor ? 'md:grid-cols-6' : 'md:grid-cols-4'}`}>
-              <div className="space-y-2">
-                <Label htmlFor="search">Buscar</Label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    placeholder="Nome, telefone, email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
+        {/* Melhoria 2+3: Filtros compactos com status pills */}
+        <Card className="mb-4">
+          <CardContent className="pt-4 pb-3">
+            {/* Linha 1: Busca + Projeto + botão Mais Filtros */}
+            <div className="flex gap-2 flex-wrap items-end mb-3">
+              <div className="relative flex-1 min-w-[180px]">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Nome, telefone, email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="min-w-[160px]">
+                <FilterProjectCombobox
+                  projects={projects || []}
+                  value={projectFilter}
+                  onChange={setProjectFilter}
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedFilters(v => !v)}
+                className="gap-2 shrink-0"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Mais filtros
+                {activeFiltersCount > 0 && (
+                  <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">{activeFiltersCount}</span>
+                )}
+                {showAdvancedFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              </Button>
+            </div>
+
+            {/* Melhoria 3: Status pills */}
+            <div className="flex gap-1.5 flex-wrap">
+              {[
+                { value: 'all', label: 'Todos', count: totalLeads },
+                { value: 'aguardando_atendimento', label: 'Aguardando', count: statusCounts['aguardando_atendimento'] || 0 },
+                { value: 'novo', label: 'Novo', count: statusCounts['novo'] || 0 },
+                { value: 'em_atendimento', label: 'Em Atendimento', count: statusCounts['em_atendimento'] || 0 },
+                { value: 'agendado', label: 'Agendados', count: statusCounts['agendado'] || 0 },
+                { value: 'visita_realizada', label: 'Visita', count: statusCounts['visita_realizada'] || 0 },
+                { value: 'analise_credito', label: 'Análise', count: statusCounts['analise_credito'] || 0 },
+                { value: 'proposta_enviada', label: 'Proposta', count: statusCounts['proposta_enviada'] || 0 },
+                { value: 'contrato_fechado', label: '✅ Fechados', count: statusCounts['contrato_fechado'] || 0 },
+                { value: 'perdido', label: '❌ Perdidos', count: statusCounts['perdido'] || 0 },
+              ].map(pill => (
+                <button
+                  key={pill.value}
+                  onClick={() => { setStatusFilter(pill.value); setCurrentPage(1); }}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    statusFilter === pill.value
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {pill.label}
+                  {pill.count > 0 && <span className={`ml-0.5 ${statusFilter === pill.value ? 'opacity-80' : 'opacity-60'}`}>({pill.count})</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Filtros avançados colapsáveis */}
+            {showAdvancedFilters && (
+              <div className={`grid gap-3 mt-3 pt-3 border-t ${isGestor ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
+                <div className="space-y-1">
+                  <Label className="text-xs">Origem</Label>
+                  <Select value={origemFilter} onValueChange={setOrigemFilter}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as origens</SelectItem>
+                      {Object.entries(origemLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {isGestor && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Corretor</Label>
+                    <Select value={corretorFilter} onValueChange={setCorretorFilter}>
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Todos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {corretores?.map((corretor) => (
+                          <SelectItem key={corretor.id} value={corretor.id.toString()}>{corretor.nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <Label className="text-xs">Temperatura</Label>
+                  <Select value={temperaturaFilter} onValueChange={(v) => { setTemperaturaFilter(v); setCurrentPage(1); }}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Todas" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      <SelectItem value="quente"><span className="flex items-center gap-1"><Flame className="h-3 w-3 text-red-500" /> Quente</span></SelectItem>
+                      <SelectItem value="morno"><span className="flex items-center gap-1"><Thermometer className="h-3 w-3 text-orange-400" /> Morno</span></SelectItem>
+                      <SelectItem value="frio"><span className="flex items-center gap-1"><Snowflake className="h-3 w-3 text-blue-400" /> Frio</span></SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Período</Label>
+                  <DateRangeFilter
+                    value={dateRangePreset}
+                    customStart={customDateStart}
+                    customEnd={customDateEnd}
+                    onChange={(preset, start, end) => {
+                      setDateRangePreset(preset);
+                      setCustomDateStart(start);
+                      setCustomDateEnd(end);
+                    }}
                   />
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    {Object.entries(statusLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="project">Projeto</Label>
-              <FilterProjectCombobox
-                projects={projects || []}
-                value={projectFilter}
-                onChange={setProjectFilter}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="origem">Origem</Label>
-              <Select value={origemFilter} onValueChange={setOrigemFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as origens" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as origens</SelectItem>
-                  {Object.entries(origemLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtro de Corretor (apenas para gestor) */}
-            {isGestor && (
-              <div className="space-y-2">
-                <Label htmlFor="corretor">Corretor</Label>
-                <Select value={corretorFilter} onValueChange={setCorretorFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os corretores" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os corretores</SelectItem>
-                    {corretores?.map((corretor) => (
-                      <SelectItem key={corretor.id} value={corretor.id.toString()}>
-                        {corretor.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             )}
-
-            {/* Filtro de Temperatura — Fase 2 */}
-            <div className="space-y-2">
-              <Label>Temperatura</Label>
-              <Select value={temperaturaFilter} onValueChange={(v) => { setTemperaturaFilter(v); setCurrentPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as temperaturas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as temperaturas</SelectItem>
-                  <SelectItem value="quente">
-                    <span className="flex items-center gap-1"><Flame className="h-3 w-3 text-red-500" /> Quente</span>
-                  </SelectItem>
-                  <SelectItem value="morno">
-                    <span className="flex items-center gap-1"><Thermometer className="h-3 w-3 text-orange-400" /> Morno</span>
-                  </SelectItem>
-                  <SelectItem value="frio">
-                    <span className="flex items-center gap-1"><Snowflake className="h-3 w-3 text-blue-400" /> Frio</span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Filtro de Período */}
-            <div className="space-y-2">
-              <Label>Período</Label>
-              <DateRangeFilter
-                value={dateRangePreset}
-                customStart={customDateStart}
-                customEnd={customDateEnd}
-                onChange={(preset, start, end) => {
-                  setDateRangePreset(preset);
-                  setCustomDateStart(start);
-                  setCustomDateEnd(end);
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-1 mt-4">
-            <div className="space-y-2">
-                <Label>Visualização</Label>
-                <div className="flex gap-2">
-                  <Button
-                    variant={viewMode === "cards" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("cards")}
-                    className="flex-1"
-                  >
-                    <LayoutGrid className="h-4 w-4 mr-2" />
-                    Cards
-                  </Button>
-                  <Button
-                    variant={viewMode === "table" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setViewMode("table")}
-                    className="flex-1"
-                  >
-                    <List className="h-4 w-4 mr-2" />
-                    Tabela
-                  </Button>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
-        {/* Estatísticas Rápidas - Mostra total filtrado */}
-        <div className="grid gap-4 md:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Leads {(searchTerm || statusFilter !== 'all' || projectFilter !== 'all' || origemFilter !== 'all') && '(filtrados)'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalLeads}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Nesta Página
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {filteredLeads.length}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Página Atual
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {currentPage} de {totalPages}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Leads por Página
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-muted-foreground">
-                {pageSize}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Melhoria 1: Pipeline de status com contagens acionáveis */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-5">
+          {[
+            { status: 'aguardando_atendimento', label: 'Aguardando', color: 'text-red-600', bg: 'bg-red-50 border-red-200', icon: '⏳', extra: null },
+            { status: 'em_atendimento',         label: 'Em Atendimento', color: 'text-blue-600', bg: 'bg-blue-50 border-blue-200', icon: '📞', extra: leadsParados > 0 ? `${leadsParados} parados` : null },
+            { status: 'agendado',               label: 'Agendados',     color: 'text-purple-600', bg: 'bg-purple-50 border-purple-200', icon: '📅', extra: null },
+            { status: 'visita_realizada',        label: 'Visita',        color: 'text-teal-600',   bg: 'bg-teal-50 border-teal-200',   icon: '🏠', extra: null },
+            { status: 'contrato_fechado',        label: 'Fechados',      color: 'text-emerald-600',bg: 'bg-emerald-50 border-emerald-200',icon:'✅', extra: null },
+            { status: 'perdido',                 label: 'Perdidos',      color: 'text-gray-500',   bg: 'bg-gray-50 border-gray-200',   icon: '❌', extra: null },
+          ].map(({ status, label, color, bg, icon, extra }) => {
+            const count = statusCounts[status] || 0;
+            const isActive = statusFilter === status;
+            return (
+              <button
+                key={status}
+                onClick={() => { setStatusFilter(isActive ? 'all' : status); setCurrentPage(1); }}
+                className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
+                  isActive ? `${bg} ${color} ring-2 ring-offset-1 ring-current` : 'bg-card border-border hover:border-primary/30 hover:bg-muted/50'
+                }`}
+              >
+                <span className="text-lg mb-0.5">{icon}</span>
+                <span className={`text-xl font-bold ${isActive ? color : ''}`}>{count}</span>
+                <span className={`text-[10px] font-medium ${isActive ? color : 'text-muted-foreground'}`}>{label}</span>
+                {extra && <span className="text-[9px] text-red-500 font-semibold mt-0.5">{extra}</span>}
+              </button>
+            );
+          })}
         </div>
 
         {/* Lista de leads */}
@@ -884,7 +931,6 @@ export default function Leads() {
                                 {lead.corretorNome}
                               </Badge>
                             )}
-                            {/* Badge de Temperatura — Fase 2 */}
                             {lead.temperatura === 'quente' && (
                               <Badge className="bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
                                 <Flame className="h-3 w-3" /> Quente
@@ -905,19 +951,13 @@ export default function Leads() {
                                 🔥 FACEBOOK ADS - URGENTE
                               </Badge>
                             )}
-                            {mostrarAlertaInatividade && (
-                              <Badge 
-                                variant="outline" 
-                                className="text-orange-600 border-orange-600"
-                              >
-                                <AlertCircle className="h-3 w-3 mr-1" />
-                                Lead será descartado hoje às 00:00 por falta de interação
-                              </Badge>
-                            )}
+                            {/* Melhoria 7: Badge honesto de inatividade */}
+                            {getInactivityBadge(lead)}
                           </div>
-                          <CardDescription className="mt-1">
-                            {lead.origem && `Origem: ${lead.origem}`}
-                          </CardDescription>
+                          {/* Melhoria 9: OrigemBadge com ícone */}
+                          <div className="mt-1">
+                            {lead.origem && <OrigemBadge origem={lead.origem} />}
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <Badge variant={getStatusVariant(lead.status)} className="flex items-center gap-1">
@@ -943,8 +983,9 @@ export default function Leads() {
                     <CardContent>
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
+                          {/* Melhoria 8: Telefone com botão copiar */}
                           <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
                             <button
                               onClick={() => {
                                 const projeto = project?.nome || lead.projetoCustom;
@@ -955,13 +996,21 @@ export default function Leads() {
                               {lead.telefone}
                               <MessageCircle className="h-3 w-3" />
                             </button>
+                            <button
+                              title="Copiar número"
+                              onClick={() => {
+                                navigator.clipboard.writeText(lead.telefone.replace(/\D/g, ''));
+                                toast.success('Número copiado!');
+                              }}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              <Copy className="h-3 w-3" />
+                            </button>
                           </div>
                           {lead.email && (
                             <div className="flex items-center gap-2 text-sm">
                               <Mail className="h-4 w-4 text-muted-foreground" />
-                              <a href={`mailto:${lead.email}`} className="hover:underline">
-                                {lead.email}
-                              </a>
+                              <a href={`mailto:${lead.email}`} className="hover:underline">{lead.email}</a>
                             </div>
                           )}
                           {(project || lead.projetoCustom) && (
@@ -973,189 +1022,116 @@ export default function Leads() {
                           {lead.ultimoContato && (
                             <div className="flex items-center gap-2 text-sm">
                               <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span>
-                                Último contato: {format(new Date(lead.ultimoContato), "dd/MM/yyyy", { locale: ptBR })}
-                              </span>
+                              <span>Último contato: {format(new Date(lead.ultimoContato), "dd/MM/yyyy", { locale: ptBR })}</span>
                             </div>
                           )}
-                          {/* Campos do Facebook Lead Ads */}
-                          {lead.campanha && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                              <span><strong>Campanha:</strong> {lead.campanha}</span>
-                            </div>
-                          )}
-                          {lead.faixaRenda && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="h-4 w-4 text-muted-foreground font-bold">R$</span>
-                              <span><strong>Faixa de Renda:</strong> {lead.faixaRenda.replace(/_/g, ' ')}</span>
-                            </div>
-                          )}
-                          {lead.prefereContatoPor && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                              <span><strong>Prefere contato por:</strong> {lead.prefereContatoPor}</span>
-                            </div>
-                          )}
-                          {lead.finalidadeImovel && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
-                              <span><strong>Finalidade:</strong> {lead.finalidadeImovel}</span>
+                          {/* Melhoria 6: Follow-up e streak */}
+                          <FollowUpBadge lead={lead} />
+                          {/* Melhoria 5: Campos ADS colapsáveis */}
+                          {lead.origemWebhook && (lead.campanha || lead.faixaRenda || lead.prefereContatoPor || lead.finalidadeImovel) && (
+                            <div>
+                              <button
+                                onClick={() => setExpandedAds(prev => {
+                                  const next = new Set(prev);
+                                  next.has(lead.id) ? next.delete(lead.id) : next.add(lead.id);
+                                  return next;
+                                })}
+                                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                📘 Dados do Facebook ADS
+                                {expandedAds.has(lead.id) ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                              </button>
+                              {expandedAds.has(lead.id) && (
+                                <div className="mt-1.5 pl-2 border-l-2 border-blue-200 space-y-1">
+                                  {lead.campanha && <p className="text-xs text-muted-foreground"><span className="font-medium">Campanha:</span> {lead.campanha}</p>}
+                                  {lead.faixaRenda && <p className="text-xs text-muted-foreground"><span className="font-medium">Renda:</span> {lead.faixaRenda.replace(/_/g, ' ')}</p>}
+                                  {lead.prefereContatoPor && <p className="text-xs text-muted-foreground"><span className="font-medium">Contato via:</span> {lead.prefereContatoPor}</p>}
+                                  {lead.finalidadeImovel && <p className="text-xs text-muted-foreground"><span className="font-medium">Finalidade:</span> {lead.finalidadeImovel}</p>}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
                         
+                        {/* Melhoria 4: 3-button pattern — primário + WhatsApp + "..." */}
                         <div className="flex flex-col gap-2">
-                          {/* Badge de Status (read-only) */}
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="text-sm">
-                              {statusLabels[lead.status as keyof typeof statusLabels] || lead.status}
-                            </Badge>
-                          </div>
-                          
-                          {/* Botões de Ação Contextuais */}
-                          <div className="flex flex-wrap gap-2">
-                            {/* Aguardando Atendimento → Em Atendimento */}
+                          <div className="flex gap-2 items-center flex-wrap">
+                            {/* Ação primária contextual */}
                             {(lead.status === 'aguardando_atendimento' || lead.status === 'novo') && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(lead.id, 'em_atendimento', lead.status)}
-                              >
-                                <Phone className="h-4 w-4 mr-1" />
-                                Iniciar Atendimento
+                              <Button size="sm" onClick={() => handleUpdateStatus(lead.id, 'em_atendimento', lead.status)}>
+                                <Phone className="h-4 w-4 mr-1" /> Iniciar Atendimento
                               </Button>
                             )}
-                            
-                            {/* Em Atendimento → Agendado (via criar agendamento) */}
                             {lead.status === 'em_atendimento' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                onClick={() => {
-                  setSelectedLead(lead);
-                  setAgendamentoForm({
-                    projectId: "",
-                    projetoCustom: "",
-                    construtora: "",
-                    dataAgendamento: "",
-                    horaAgendamento: "",
-                    observacoes: "",
-                    useCustomProject: false,
-                  });
-                  setAgendamentoDialog(true);
-                }}
-                              >
-                                <Calendar className="h-4 w-4 mr-1" />
-                                Criar Agendamento
+                              <Button size="sm" onClick={() => { setSelectedLead(lead); setAgendamentoForm({ projectId: "", projetoCustom: "", construtora: "", dataAgendamento: "", horaAgendamento: "", observacoes: "", useCustomProject: false }); setAgendamentoDialog(true); }}>
+                                <Calendar className="h-4 w-4 mr-1" /> Criar Agendamento
                               </Button>
                             )}
-                            
-                            {/* Visita Realizada → Análise de Crédito */}
                             {lead.status === 'visita_realizada' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(lead.id, 'analise_credito')}
-                              >
-                                <FileText className="h-4 w-4 mr-1" />
-                                Enviar para Análise
+                              <Button size="sm" onClick={() => handleUpdateStatus(lead.id, 'analise_credito')}>
+                                <FileText className="h-4 w-4 mr-1" /> Enviar para Análise
                               </Button>
                             )}
-                            
-                            {/* Análise de Crédito → Contrato Fechado */}
                             {lead.status === 'analise_credito' && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(lead.id, 'contrato_fechado')}
-                              >
-                                <CheckCircle2 className="h-4 w-4 mr-1" />
-                                Fechar Contrato
+                              <Button size="sm" onClick={() => handleUpdateStatus(lead.id, 'contrato_fechado')}>
+                                <CheckCircle2 className="h-4 w-4 mr-1" /> Fechar Contrato
                               </Button>
                             )}
-                            
-                            {/* Marcar como Perdido (sempre disponível, exceto se já for perdido) */}
-                            {lead.status !== 'perdido' && lead.status !== 'contrato_fechado' && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => handleUpdateStatus(lead.id, 'perdido', lead.status)}
-                              >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Marcar como Perdido
-                              </Button>
-                            )}
-                          </div>
-                          
-                          <div className="flex gap-2">
                             {isGestor && !lead.corretorId && (
-                              <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedLead(lead);
-                                  setAtribuirDialog(true);
-                                }}
-                              >
-                                <UserPlus className="h-4 w-4 mr-1" />
-                                Atribuir
+                              <Button size="sm" onClick={() => { setSelectedLead(lead); setAtribuirDialog(true); }}>
+                                <UserPlus className="h-4 w-4 mr-1" /> Atribuir
                               </Button>
                             )}
+                            {/* WhatsApp sempre visível */}
                             {lead.telefone && (
                               <Button
-                                variant="outline"
-                                size="sm"
-                                className="bg-green-500 hover:bg-green-600 border-green-500 text-white"
-                                onClick={() => {
-                                  const projeto = projects?.find(p => p.id === lead.projectId)?.nome || lead.projetoCustom;
-                                  window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, projeto), '_blank');
-                                }}
+                                variant="outline" size="sm"
+                                className="bg-green-500 hover:bg-green-600 border-green-500 text-white px-2"
+                                onClick={() => { const p = projects?.find((p: any) => p.id === lead.projectId)?.nome || lead.projetoCustom; window.open(gerarLinkWhatsApp(lead.telefone, lead.nome, p), '_blank'); }}
                               >
-                                <MessageCircle className="h-4 w-4 mr-1" />
-                                WhatsApp
+                                <MessageCircle className="h-4 w-4" />
                               </Button>
                             )}
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setInteractionDialog(true);
-                              }}
-                            >
-                              <MessageSquare className="h-4 w-4 mr-2" />
-                              Registrar
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              onClick={() => {
-                setSelectedLead(lead);
-                                // Preencher projeto do lead se existir
-                                if (lead.projectId) {
-                                  setAgendamentoForm(prev => ({
-                                    ...prev,
-                                    projectId: lead.projectId?.toString() || "",
-                                    useCustomProject: false,
-                                  }));
-                                }
-                                setAgendamentoDialog(true);
-                              }}
-                            >
-                              <CalendarPlus className="h-4 w-4 mr-1" />
-                              Agendar
-                            </Button>
-                            
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openDetails(lead)}
-                            >
+                            {/* "..." overflow com ações secundárias */}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className="px-2">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => openDetails(lead)}>
+                                  <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelectedLead(lead); setInteractionDialog(true); }}>
+                                  <MessageSquare className="h-4 w-4 mr-2" /> Registrar Interação
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setSelectedLead(lead); if (lead.projectId) setAgendamentoForm(prev => ({ ...prev, projectId: lead.projectId?.toString() || "", useCustomProject: false })); setAgendamentoDialog(true); }}>
+                                  <CalendarPlus className="h-4 w-4 mr-2" /> Agendar Visita
+                                </DropdownMenuItem>
+                                {corretores && corretores.length > 0 && isGestor && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => { setSelectedLead(lead); }}>
+                                      <UserPlus className="h-4 w-4 mr-2" /> Transferir / Reatribuir
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {lead.status !== 'perdido' && lead.status !== 'contrato_fechado' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onClick={() => handleUpdateStatus(lead.id, 'perdido', lead.status)}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-2" /> Marcar como Perdido
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            {/* Botão detalhes como fallback visível */}
+                            <Button variant="outline" size="sm" onClick={() => openDetails(lead)}>
                               <Eye className="h-4 w-4" />
                             </Button>
                           </div>
@@ -1251,7 +1227,20 @@ export default function Leads() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{lead.telefone}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <span>{lead.telefone}</span>
+                            {lead.telefone && (
+                              <button
+                                title="Copiar telefone"
+                                className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded"
+                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(lead.telefone); }}
+                              >
+                                <Copy className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{project?.nome || lead.projetoCustom || "-"}</TableCell>
                         {isGestor && <TableCell>{lead.corretorNome || "-"}</TableCell>}
                         <TableCell>
@@ -1488,6 +1477,29 @@ export default function Leads() {
                         Criado em: {format(new Date(selectedLead.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                       </span>
                     </div>
+                    {(selectedLead as any).tempoAtePrimeiroContato != null && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Zap className={`h-4 w-4 ${
+                          (selectedLead as any).tempoAtePrimeiroContato <= 5 ? 'text-green-500' :
+                          (selectedLead as any).tempoAtePrimeiroContato <= 30 ? 'text-yellow-500' :
+                          'text-red-500'
+                        }`} />
+                        <span>
+                          SLA de atendimento:{" "}
+                          <strong className={
+                            (selectedLead as any).tempoAtePrimeiroContato <= 5 ? 'text-green-600' :
+                            (selectedLead as any).tempoAtePrimeiroContato <= 30 ? 'text-yellow-600' :
+                            'text-red-600'
+                          }>
+                            {(selectedLead as any).tempoAtePrimeiroContato < 60
+                              ? `${(selectedLead as any).tempoAtePrimeiroContato} min`
+                              : `${Math.round((selectedLead as any).tempoAtePrimeiroContato / 60)}h`}
+                          </strong>
+                          {(selectedLead as any).tempoAtePrimeiroContato <= 5 && <span className="ml-1 text-green-600 text-xs">⚡ Excelente</span>}
+                          {(selectedLead as any).tempoAtePrimeiroContato > 60 && <span className="ml-1 text-red-600 text-xs">⚠ Tardio</span>}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
