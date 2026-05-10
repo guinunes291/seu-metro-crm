@@ -4490,9 +4490,11 @@ export const appRouter = router({
       .input(z.object({ projetoId: z.number() }))
       .query(async ({ input }) => {
         const { tipologias } = await import('../drizzle/schema');
-        const { db } = await import('./db');
+        const { getDb } = await import('./db');
         const { eq, asc } = await import('drizzle-orm');
-        const result = await db
+        const drizzleDb = await getDb();
+        if (!drizzleDb) return [];
+        const result = await drizzleDb
           .select()
           .from(tipologias)
           .where(eq(tipologias.projetoId, input.projetoId))
