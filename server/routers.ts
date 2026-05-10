@@ -4403,6 +4403,61 @@ export const appRouter = router({
         return { success: true, message: 'Processamento em lote iniciado' };
       }),
 
+    // Verificar acesso a pasta do Drive (testa service account)
+    testDriveFolder: adminProcedure
+      .input(z.object({ folderUrl: z.string() }))
+      .mutation(async ({ input }) => {
+        const { extractFolderIdFromUrl, testFolderAccess, listAllPdfsRecursive } = await import('./driveClient');
+        const folderId = extractFolderIdFromUrl(input.folderUrl);
+        if (!folderId) throw new TRPCError({ code: 'BAD_REQUEST', message: 'URL de pasta inválida' });
+
+        const access = await testFolderAccess(folderId);
+        if (!access.ok) throw new TRPCError({ code: 'FORBIDDEN', message: access.error });
+
+        const files = await listAllPdfsRecursive(folderId);
+        return { folderId, files };
+      }),
+
+    // Importar todos os PDFs de uma pasta do Google Drive
+    importFromDriveFolder: adminProcedure
+      .input(z.object({
+        folderUrl: z.string(),
+        mes: z.number().min(1).max(12),
+        ano: z.number().min(2020).max(2030),
+        arquivos: z.array(z.object({
+          driveFileId: z.string(),
+          nomeArquivo: z.string(),
+          construtoraId: z.number(),
+        })),
+      }))
+      .mutation(async ({ input }) => {
+        const { downloadFileFromDrive } = await import('./driveClient');
+        const { processTabelaoFromBuffer } = await import('./pdfProcessor');
+
+        let iniciados = 0;
+        const erros: string[] = [];
+
+        for (const arq of input.arquivos) {
+          try {
+            console.log(`[Drive Import] Baixando: ${arq.nomeArquivo}`);
+            const buffer = await downloadFileFromDrive(arq.driveFileId);
+            await processTabelaoFromBuffer(arq.construtoraId, buffer, input.mes, input.ano);
+            iniciados++;
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error(`[Drive Import] Erro em ${arq.nomeArquivo}:`, msg);
+            erros.push(`${arq.nomeArquivo}: ${msg}`);
+          }
+        }
+
+        return {
+          success: true,
+          iniciados,
+          erros,
+          message: `${iniciados} tabelão(ões) baixados e em processamento${erros.length ? ` (${erros.length} erro(s))` : ''}`,
+        };
+      }),
+
     // Criar tabelão (legado — mantido para compatibilidade)
     create: adminProcedure
       .input(z.object({
