@@ -2,12 +2,12 @@ import { useState, useRef } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   FileText, Upload, Link2, RefreshCw, Loader2, CheckCircle2,
-  XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Building2,
+  XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, Building2, Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -305,7 +305,40 @@ function ConstrutoraCard({
   );
 }
 
+function NovaConstrutora({ onSuccess }: { onSuccess: () => void }) {
+  const [nome, setNome] = useState('');
+  const createMutation = trpc.construtoras.create.useMutation({
+    onSuccess: () => {
+      toast.success('Construtora cadastrada');
+      setNome('');
+      onSuccess();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        placeholder="Nome da construtora (ex: Cyrela, MRV, Tenda...)"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && nome.trim() && createMutation.mutate({ nome: nome.trim() })}
+        className="text-sm"
+      />
+      <Button
+        onClick={() => nome.trim() && createMutation.mutate({ nome: nome.trim() })}
+        disabled={!nome.trim() || createMutation.isPending}
+        size="sm"
+        className="shrink-0"
+      >
+        {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
+
 export default function GerenciarTabeloes() {
+  const [showNovaConstrutora, setShowNovaConstrutora] = useState(false);
   const construtorasQuery = trpc.construtoras.list.useQuery({ apenasAtivas: true });
   const tabeloesQuery = trpc.tabeloes.list.useQuery({});
   const processAllMutation = trpc.tabeloes.processAll.useMutation({
@@ -334,10 +367,14 @@ export default function GerenciarTabeloes() {
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={refetchAll} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setShowNovaConstrutora(!showNovaConstrutora)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nova construtora
           </Button>
           <Button
             size="sm"
@@ -350,6 +387,16 @@ export default function GerenciarTabeloes() {
           </Button>
         </div>
       </div>
+
+      {/* Nova construtora inline form */}
+      {showNovaConstrutora && (
+        <Card className="border-purple-200 bg-purple-50">
+          <CardContent className="pt-4 pb-4">
+            <p className="text-sm font-medium text-purple-900 mb-2">Cadastrar nova construtora</p>
+            <NovaConstrutora onSuccess={() => { construtorasQuery.refetch(); setShowNovaConstrutora(false); }} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Instructions */}
       <Card className="border-blue-200 bg-blue-50">
@@ -406,11 +453,17 @@ export default function GerenciarTabeloes() {
           ))}
           {(construtorasQuery.data ?? []).length === 0 && (
             <Card>
-              <CardContent className="py-12 text-center">
-                <Building2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">Nenhuma construtora cadastrada.</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Cadastre construtoras antes de importar tabelões.
+              <CardContent className="py-8 px-6">
+                <div className="text-center mb-5">
+                  <Building2 className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium">Nenhuma construtora cadastrada.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Cadastre as construtoras para começar a importar tabelões.
+                  </p>
+                </div>
+                <NovaConstrutora onSuccess={() => construtorasQuery.refetch()} />
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Pressione Enter ou clique no botão para cadastrar. Você pode adicionar quantas precisar.
                 </p>
               </CardContent>
             </Card>
