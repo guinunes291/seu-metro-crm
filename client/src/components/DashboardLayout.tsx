@@ -326,7 +326,9 @@ const menuGroupsAdmin = [
     icon: Settings,
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
       { icon: Import, label: "Importar Leads", path: "/importar-sheets" },
+      { icon: FileText, label: "Tabelões", path: "/gerenciar-tabeloes" },
       { icon: FileSpreadsheet, label: "Google Sheets", path: "/google-sheets-sync" },
       { icon: Database, label: "Sincronização BI", path: "/sincronizacao-bi" },
       { icon: Settings, label: "Templates Comissão", path: "/templates-comissao" },
@@ -389,6 +391,7 @@ const menuGroupsSuperintendente = [
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
       { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
+      { icon: FileText, label: "Tabelões", path: "/gerenciar-tabeloes" },
       { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos" },
     ],
   },
