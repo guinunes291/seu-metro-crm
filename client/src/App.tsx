@@ -65,6 +65,7 @@ import CarteiraAtiva from "@/pages/CarteiraAtiva";
 import ScriptsVendas from "@/pages/ScriptsVendas";
 import CentralAlertas from "@/pages/CentralAlertas";
 import BuscadorProjetos from "@/pages/BuscadorProjetos";
+import GerenciarTabeloes from "@/pages/GerenciarTabeloes";
 import MeuDashboard from "@/pages/meu-negocio/MeuDashboard";
 import MeuFollowUp from "@/pages/meu-negocio/MeuFollowUp";
 import PreAnaliseMcmv from "@/pages/meu-negocio/PreAnaliseMcmv";
@@ -136,6 +137,7 @@ function Router() {
       <Route path="/scripts" component={ScriptsVendas} />
       <Route path="/central-alertas" component={CentralAlertas} />
       <Route path="/buscador-projetos" component={BuscadorProjetos} />
+      <Route path="/gerenciar-tabeloes" component={GerenciarTabeloes} />
       {/* Módulo Meu Negócio */}
       <Route path="/meu-negocio/dashboard" component={MeuDashboard} />
       <Route path="/meu-negocio/followup" component={MeuFollowUp} />

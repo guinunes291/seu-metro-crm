@@ -102,4 +102,49 @@ router.post("/upload", upload.single('file'), async (req: Request, res: Response
   }
 });
 
+// Multer para tabelões — aceita PDF até 50MB
+const uploadTabelao = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Apenas arquivos PDF são aceitos para tabelões'));
+  },
+});
+
+// Upload de PDF de tabelão — retorna S3 URL para uso posterior
+router.post('/upload-tabelao', uploadTabelao.single('file'), async (req: Request, res: Response) => {
+  try {
+    let user;
+    try {
+      user = await sdk.authenticateRequest(req);
+    } catch {
+      return res.status(401).json({ error: 'Não autenticado' });
+    }
+
+    if (!['admin', 'gestor', 'superintendente'].includes(user.role || '')) {
+      return res.status(403).json({ error: 'Permissão negada' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+
+    const { processTabelaoFromBuffer } = await import('./pdfProcessor');
+    const construtoraId = parseInt(req.body.construtoraId, 10);
+    const mes = parseInt(req.body.mes, 10);
+    const ano = parseInt(req.body.ano, 10);
+
+    if (!construtoraId || !mes || !ano) {
+      return res.status(400).json({ error: 'construtoraId, mes e ano são obrigatórios' });
+    }
+
+    const tabelaoId = await processTabelaoFromBuffer(construtoraId, req.file.buffer, mes, ano);
+    return res.json({ tabelaoId, message: 'PDF recebido — processamento iniciado em background' });
+  } catch (error) {
+    console.error('[Upload Tabelão]', error);
+    return res.status(500).json({ error: error instanceof Error ? error.message : 'Erro ao processar tabelão' });
+  }
+});
+
 export default router;
