@@ -224,11 +224,26 @@ export default function Leads() {
       toast.error(`Erro ao atualizar lead: ${error.message}`);
     },
   });
+  const analisarLeadMutation = trpc.ia.analisarLeadPosInteracao.useMutation({
+    onSuccess: (data) => {
+      const tempLabel: Record<string, string> = { quente: '🔥 Quente', morno: '🌡 Morno', frio: '❄️ Frio' };
+      toast.success(
+        `IA: temperatura → ${tempLabel[data.temperatura] ?? data.temperatura} • ${data.proximaAcao}`,
+        { duration: 6000 }
+      );
+      utils.leads.list.invalidate();
+    },
+  });
+
   const addInteractionMutation = trpc.leads.addInteraction.useMutation({
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       utils.leads.list.invalidate();
       // Invalidar o histórico para que ele seja recarregado após registrar interação
       utils.leads.getHistory.invalidate();
+      // Agente 1: analisar lead em background após registrar interação
+      if (variables.leadId) {
+        analisarLeadMutation.mutate({ leadId: variables.leadId });
+      }
     },
     onError: (error) => {
       toast.error(`Erro ao registrar interação: ${error.message}`);

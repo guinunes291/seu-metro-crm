@@ -1,5 +1,6 @@
 import { distribuirTodosLeadsNaoDistribuidos, distribuirLeadsDoEstoque } from "./distribution";
 import { verificarTimerLeads } from "./timerLeadsJob";
+import { agendarPriorizacaoDiaria } from "./agentePriorizacaoJob";
 
 // Flag para evitar execuções concorrentes dos jobs
 let distribuicaoEmExecucao = false;
@@ -85,5 +86,7 @@ export function agendarDistribuicaoAutomatica() {
   }, 1 * 60 * 1000);
 
   console.log("[Job] Verificação de timer de leads agendada para executar a cada 1 minuto");
-  
+
+  // Agente de Priorização Diária: executa às 7h SP
+  agendarPriorizacaoDiaria();
 }

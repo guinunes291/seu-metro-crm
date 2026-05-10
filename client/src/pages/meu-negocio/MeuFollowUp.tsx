@@ -9,8 +9,12 @@ import { trpc } from "@/lib/trpc";
 
 import {
   Phone, MessageSquare, CheckCircle2, XCircle, Clock,
-  ChevronDown, ChevronUp, Copy, User, Calendar, AlertCircle
+  ChevronDown, ChevronUp, Copy, User, Calendar, AlertCircle,
+  Bot, Sparkles, Loader2,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 
 // ============================================================================
 // ROTEIROS POR STATUS
@@ -135,13 +139,35 @@ Qualquer documento adicional que solicitarem, pode me enviar que encaminho para 
 // ============================================================================
 
 export default function MeuFollowUp() {
-  
+
   const [expandido, setExpandido] = useState<number | null>(null);
   const [registrandoId, setRegistrandoId] = useState<number | null>(null);
   const [observacao, setObservacao] = useState("");
   const [respondeu, setRespondeu] = useState<boolean | null>(null);
+  const [mensagemIADialog, setMensagemIADialog] = useState<{
+    open: boolean;
+    leadNome: string;
+    principal: string;
+    variacao: string;
+    orientacao: string;
+    diasSemContato: number;
+  } | null>(null);
 
   const { data: leads, refetch } = trpc.meuNegocio.getLeadsFollowUp.useQuery();
+  const gerarMensagemIAMutation = trpc.ia.gerarMensagemFollowup.useMutation({
+    onSuccess: (data, variables) => {
+      const lead = leads?.find((l: any) => l.id === variables.leadId);
+      setMensagemIADialog({
+        open: true,
+        leadNome: lead?.nome ?? '',
+        principal: data.principal,
+        variacao: data.variacao,
+        orientacao: data.orientacao,
+        diasSemContato: data.diasSemContato,
+      });
+    },
+    onError: (e) => toast.error(`Erro ao gerar mensagem: ${e.message}`),
+  });
   const registrarMutation = trpc.meuNegocio.registrarFollowUp.useMutation({
     onSuccess: () => {
       toast.success("Follow-up registrado!");
@@ -250,6 +276,22 @@ export default function MeuFollowUp() {
                         <MessageSquare className="h-4 w-4" />
                         Roteiros sugeridos
                       </h3>
+                      {/* Botão Gerar Mensagem IA */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:text-purple-300"
+                        onClick={() => gerarMensagemIAMutation.mutate({ leadId: lead.id })}
+                        disabled={gerarMensagemIAMutation.isPending && gerarMensagemIAMutation.variables?.leadId === lead.id}
+                      >
+                        {gerarMensagemIAMutation.isPending && gerarMensagemIAMutation.variables?.leadId === lead.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Bot className="h-3.5 w-3.5" />
+                        )}
+                        Gerar mensagem personalizada com IA
+                      </Button>
+
                       <div className="space-y-2">
                         {roteiros.map((r, i) => (
                           <div key={i} className="rounded-lg border bg-background p-3">
@@ -343,6 +385,62 @@ export default function MeuFollowUp() {
         </div>
       )}
     </div>
+
+    {/* Dialog de Mensagem IA */}
+    {mensagemIADialog && (
+      <Dialog open={mensagemIADialog.open} onOpenChange={(open) => !open && setMensagemIADialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-purple-600" />
+              Mensagem IA — {mensagemIADialog.leadNome}
+            </DialogTitle>
+            <DialogDescription>
+              {mensagemIADialog.diasSemContato} dia(s) sem contato • Gerado com a fórmula G.P.V.A.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Mensagem principal</p>
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm whitespace-pre-wrap leading-relaxed">
+                {mensagemIADialog.principal}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-1 h-7 text-xs gap-1"
+                onClick={() => { navigator.clipboard.writeText(mensagemIADialog.principal); toast.success("Mensagem copiada!"); }}
+              >
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+            </div>
+
+            {mensagemIADialog.variacao && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Variação alternativa</p>
+                <div className="rounded-lg border bg-muted/20 p-3 text-sm whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                  {mensagemIADialog.variacao}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-7 text-xs gap-1"
+                  onClick={() => { navigator.clipboard.writeText(mensagemIADialog.variacao); toast.success("Variação copiada!"); }}
+                >
+                  <Copy className="h-3 w-3" /> Copiar variação
+                </Button>
+              </div>
+            )}
+
+            {mensagemIADialog.orientacao && (
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 text-xs text-blue-800 dark:text-blue-300">
+                💡 {mensagemIADialog.orientacao}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    )}
     </DashboardLayout>
   );
 }
