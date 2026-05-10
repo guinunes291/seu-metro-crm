@@ -4334,7 +4334,76 @@ export const appRouter = router({
         return result;
       }),
     
-    // Criar tabelão (apenas admin)
+    // Criar tabelão a partir de URL do Drive e iniciar processamento
+    createAndProcess: adminProcedure
+      .input(z.object({
+        construtoraId: z.number(),
+        mes: z.number().min(1).max(12),
+        ano: z.number(),
+        driveUrl: z.string().url('URL inválida'),
+      }))
+      .mutation(async ({ input }) => {
+        const { tabeloes } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, and } = await import('drizzle-orm');
+        const { processCatalog } = await import('./pdfProcessor');
+
+        // Criar ou reutilizar registro do tabelão
+        const [existing] = await db
+          .select({ id: tabeloes.id })
+          .from(tabeloes)
+          .where(and(eq(tabeloes.construtoraId, input.construtoraId), eq(tabeloes.mes, input.mes), eq(tabeloes.ano, input.ano)))
+          .limit(1);
+
+        let tabelaoId: number;
+        if (existing) {
+          await db.update(tabeloes).set({
+            drivePdfUrl: input.driveUrl,
+            s3PdfUrl: null,
+            fileKey: null,
+            statusProcessamento: 'pendente',
+            mensagemErro: null,
+          }).where(eq(tabeloes.id, existing.id));
+          tabelaoId = existing.id;
+        } else {
+          const [result] = await db.insert(tabeloes).values({
+            construtoraId: input.construtoraId,
+            mes: input.mes,
+            ano: input.ano,
+            drivePdfUrl: input.driveUrl,
+            statusProcessamento: 'pendente',
+          }).$returningId();
+          tabelaoId = result.id;
+        }
+
+        processCatalog(tabelaoId).catch(err =>
+          console.error(`[Tabelão] Erro processando ${tabelaoId}:`, err),
+        );
+        return { id: tabelaoId, message: 'Processamento iniciado em background' };
+      }),
+
+    // Processar tabelão já existente (reprocessar)
+    process: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { processCatalog } = await import('./pdfProcessor');
+        processCatalog(input.id).catch(err =>
+          console.error(`[Tabelão] Erro processando ${input.id}:`, err),
+        );
+        return { success: true, message: 'Reprocessamento iniciado' };
+      }),
+
+    // Processar todos os tabelões pendentes
+    processAll: adminProcedure
+      .mutation(async () => {
+        const { processAllPendingCatalogs } = await import('./pdfProcessor');
+        processAllPendingCatalogs().catch(err =>
+          console.error('[Tabelão] Erro no processamento em lote:', err),
+        );
+        return { success: true, message: 'Processamento em lote iniciado' };
+      }),
+
+    // Criar tabelão (legado — mantido para compatibilidade)
     create: adminProcedure
       .input(z.object({
         construtoraId: z.number(),
@@ -4345,7 +4414,6 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         const { tabeloes } = await import('../drizzle/schema');
         const { db } = await import('./db');
-        
         const [result] = await db.insert(tabeloes).values({
           construtoraId: input.construtoraId,
           mes: input.mes,
@@ -4353,51 +4421,7 @@ export const appRouter = router({
           drivePdfUrl: input.drivePdfUrl,
           statusProcessamento: 'pendente',
         }).$returningId();
-        
         return { id: result.id };
-      }),
-    
-    // Processar tabelão (apenas admin)
-    process: adminProcedure
-      .input(z.object({
-        id: z.number(),
-      }))
-      .mutation(async ({ input }) => {
-        const { processCatalog } = await import('./pdfProcessor');
-        
-        // Processar em background (não bloquear a resposta)
-        processCatalog(input.id).catch(error => {
-          console.error(`Erro ao processar tabelão ${input.id}:`, error);
-        });
-        
-        return { success: true, message: 'Processamento iniciado' };
-      }),
-    
-    // Processar todos os tabelões pendentes (apenas admin)
-    processAll: adminProcedure
-      .mutation(async () => {
-        const { processAllPendingCatalogs } = await import('./pdfProcessor');
-        
-        // Processar em background
-        processAllPendingCatalogs().catch(error => {
-          console.error('Erro ao processar tabelões:', error);
-        });
-        
-        return { success: true, message: 'Processamento de todos os tabelões iniciado' };
-      }),
-    
-    // Importar tabelões do Google Drive (apenas admin)
-    import: adminProcedure
-      .mutation(async () => {
-        const { importAllTabeloes } = await import('./importadorTabeloes');
-        
-        const result = await importAllTabeloes();
-        
-        return {
-          success: true,
-          message: `Importação concluída: ${result.tabeloes} tabelões, ${result.construtoras} construtoras`,
-          ...result,
-        };
       }),
   }),
 
