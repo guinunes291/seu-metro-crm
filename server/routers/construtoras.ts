@@ -1,5 +1,4 @@
 import { z } from "zod";
-import * as db from "../db";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 
@@ -27,29 +26,28 @@ export const construtorasRouter = router({
       }))
       .query(async ({ input }) => {
         const { construtoras } = await import('../../drizzle/schema');
-        const { db } = await import('../../server/db');
+        const { getDb } = await import('../../server/db');
         const { eq } = await import('drizzle-orm');
-        
-        let query = db.select().from(construtoras);
-        
+
+        const db = await getDb();
+        if (!db) return [];
+
         if (input.apenasAtivas) {
-          query = query.where(eq(construtoras.ativo, 1));
+          return db.select().from(construtoras).where(eq(construtoras.ativo, 1));
         }
-        
-        const result = await query;
-        return result;
+        return db.select().from(construtoras);
       }),
-    
+
     // Listar construtoras com projetos (para filtro)
     listWithProjects: publicProcedure
       .query(async () => {
         const { construtoras, projects } = await import('../../drizzle/schema');
         const { getDb } = await import('../../server/db');
         const { eq, isNotNull, sql } = await import('drizzle-orm');
-        
+
         const db = await getDb();
         if (!db) return [];
-        
+
         // Buscar construtoras que têm pelo menos 1 projeto associado
         const result = await db
           .select({
@@ -63,10 +61,10 @@ export const construtorasRouter = router({
           .where(isNotNull(projects.id))
           .groupBy(construtoras.id, construtoras.nome, construtoras.logoUrl)
           .orderBy(construtoras.nome);
-        
+
         return result;
       }),
-    
+
     // Criar construtora (apenas admin)
     create: adminProcedure
       .input(z.object({
@@ -75,17 +73,20 @@ export const construtorasRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { construtoras } = await import('../../drizzle/schema');
-        const { db } = await import('../../server/db');
-        
+        const { getDb } = await import('../../server/db');
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Banco de dados indisponível' });
+
         const [result] = await db.insert(construtoras).values({
           nome: input.nome,
           logoUrl: input.logoUrl,
           ativo: 1,
         }).$returningId();
-        
+
         return { id: result.id };
       }),
-    
+
     // Atualizar construtora (apenas admin)
     update: adminProcedure
       .input(z.object({
@@ -96,15 +97,18 @@ export const construtorasRouter = router({
       }))
       .mutation(async ({ input }) => {
         const { construtoras } = await import('../../drizzle/schema');
-        const { db } = await import('../../server/db');
+        const { getDb } = await import('../../server/db');
         const { eq } = await import('drizzle-orm');
-        
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Banco de dados indisponível' });
+
         const { id, ...data } = input;
-        
+
         await db.update(construtoras)
           .set(data)
           .where(eq(construtoras.id, id));
-        
+
         return { success: true };
       }),
 });
