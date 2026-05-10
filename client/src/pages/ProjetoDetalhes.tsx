@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink, Pencil, Trash2, FileText, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Building2, Home, Car, ExternalLink, Pencil, Trash2, FileText, Upload, Loader2, CalendarClock } from "lucide-react";
 import { MapView } from "@/components/Map";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -21,6 +21,10 @@ export default function ProjetoDetalhes() {
   
   const { data: projects = [], isLoading, refetch } = trpc.projects.list.useQuery();
   const project = projects.find((p) => p.id === projectId);
+  const { data: tipologiasData = [] } = trpc.tipologias.byProject.useQuery(
+    { projetoId: projectId },
+    { enabled: projectId > 0 },
+  );
   
   const updateProjectMutation = trpc.projects.update.useMutation();
   const deleteProjectMutation = trpc.projects.delete.useMutation();
@@ -447,6 +451,74 @@ export default function ProjetoDetalhes() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Tipologias */}
+            {tipologiasData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    Tipologias
+                  </CardTitle>
+                  {(project as any)?.dataEntrega && (
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                      <CalendarClock className="h-4 w-4" />
+                      Entrega: {(project as any).dataEntrega}
+                    </div>
+                  )}
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
+                        <tr>
+                          <th className="text-left px-4 py-2">Tipo</th>
+                          <th className="text-right px-4 py-2">m²</th>
+                          <th className="text-right px-4 py-2">Dorms</th>
+                          <th className="text-right px-4 py-2">Vagas</th>
+                          <th className="text-right px-4 py-2">Preço</th>
+                          <th className="text-right px-4 py-2">Avaliação</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {tipologiasData.map((t: any) => (
+                          <tr key={t.id} className={`hover:bg-muted/30 ${t.disponivel === 0 ? 'opacity-50' : ''}`}>
+                            <td className="px-4 py-2 font-medium">
+                              {t.nome}
+                              {t.enquadramento && (
+                                <Badge variant="outline" className="ml-1.5 text-xs py-0">{t.enquadramento}</Badge>
+                              )}
+                              {t.disponivel === 0 && (
+                                <Badge variant="secondary" className="ml-1.5 text-xs py-0">Vendido</Badge>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-right text-muted-foreground">
+                              {t.metragem ? `${parseFloat(t.metragem).toFixed(0)}m²` : '—'}
+                            </td>
+                            <td className="px-4 py-2 text-right text-muted-foreground">
+                              {t.dormitorios != null ? (t.dormitorios === 0 ? 'Studio' : `${t.dormitorios}`) : '—'}
+                            </td>
+                            <td className="px-4 py-2 text-right text-muted-foreground">
+                              {t.vagas != null ? (t.vagas === 0 ? 'Sem vaga' : `${t.vagas}`) : '—'}
+                            </td>
+                            <td className="px-4 py-2 text-right font-semibold text-primary">
+                              {t.valorFinal
+                                ? `R$ ${(t.valorFinal / 100).toLocaleString('pt-BR')}`
+                                : t.valorTabela
+                                ? `R$ ${(t.valorTabela / 100).toLocaleString('pt-BR')}`
+                                : '—'}
+                            </td>
+                            <td className="px-4 py-2 text-right text-muted-foreground">
+                              {t.valorAvaliacao ? `R$ ${(t.valorAvaliacao / 100).toLocaleString('pt-BR')}` : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Book do Projeto */}
             <Card>

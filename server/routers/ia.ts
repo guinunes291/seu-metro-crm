@@ -605,6 +605,26 @@ Regras: precoMaximo sempre em reais inteiros (ex: 300000). vagasMax=0 significa 
         console.log(`[Buscador IA] Anexando ${fileContents.length} PDFs para análise`);
       }
 
+      // Etapa 3.5: Enriquecer projetos com tipologias do banco
+      const projetoIds = projetosValidos.map(p => p.id);
+      let tipologiasPorProjeto: Record<number, any[]> = {};
+      if (projetoIds.length > 0) {
+        try {
+          const { tipologias: tipologiasTable } = await import('../../drizzle/schema');
+          const { inArray: inArr } = await import('drizzle-orm');
+          const allTips = await db
+            .select()
+            .from(tipologiasTable)
+            .where(inArr(tipologiasTable.projetoId, projetoIds));
+          for (const t of allTips) {
+            if (!tipologiasPorProjeto[t.projetoId]) tipologiasPorProjeto[t.projetoId] = [];
+            tipologiasPorProjeto[t.projetoId].push(t);
+          }
+        } catch {
+          // tipologias table may not exist yet (migration pending) — graceful fallback
+        }
+      }
+
       // Etapa 4: Ranquear e explicar com LLM
       const catalogoTexto = projetosValidos.length > 0
         ? projetosValidos.map(p => {
@@ -613,7 +633,14 @@ Regras: precoMaximo sempre em reais inteiros (ex: 300000). vagasMax=0 significa 
             const metragem = p.metragemMinima
               ? `${p.metragemMinima}${p.metragemMaxima ? `-${p.metragemMaxima}` : ''}m²`
               : 'N/I';
-            return `ID:${p.id} | ${p.nome} | ${p.construtora || 'N/I'} | Zona:${p.zona || 'N/I'} | ${p.tipo?.toUpperCase() || ''} | Dorms:${p.dormitorios || 'N/I'} | Vagas:${p.vagas ?? 'N/I'} | ${precoMin}${precoMax} | ${metragem} | Bairro:${p.bairro || 'N/I'}`;
+            const tips = tipologiasPorProjeto[p.id] ?? [];
+            const tipsStr = tips.length
+              ? ` | Tipologias: ${tips.slice(0, 4).map((t: any) => {
+                  const preco = t.valorFinal ?? t.valorTabela;
+                  return `${t.nome}${t.metragem ? ` ${parseFloat(t.metragem).toFixed(0)}m²` : ''}${t.vagas != null ? ` ${t.vagas}v` : ''}${preco ? ` R$${(preco / 100).toLocaleString('pt-BR')}` : ''}`;
+                }).join(', ')}`
+              : '';
+            return `ID:${p.id} | ${p.nome} | ${p.construtora || 'N/I'} | Zona:${p.zona || 'N/I'} | ${p.tipo?.toUpperCase() || ''} | Dorms:${p.dormitorios || 'N/I'} | Vagas:${p.vagas ?? 'N/I'} | ${precoMin}${precoMax} | ${metragem} | Bairro:${p.bairro || 'N/I'}${tipsStr}`;
           }).join('\n')
         : 'Nenhum projeto encontrado com os filtros aplicados.';
 

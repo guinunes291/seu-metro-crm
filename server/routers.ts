@@ -4484,6 +4484,72 @@ export const appRouter = router({
   // PORTAL DE PROJETOS IMOBILIÁRIOS - MATERIAIS
   // ============================================================================
 
+  // Tipologias individuais de cada projeto (extraídas dos tabelões)
+  tipologias: router({
+    byProject: publicProcedure
+      .input(z.object({ projetoId: z.number() }))
+      .query(async ({ input }) => {
+        const { tipologias } = await import('../drizzle/schema');
+        const { db } = await import('./db');
+        const { eq, asc } = await import('drizzle-orm');
+        const result = await db
+          .select()
+          .from(tipologias)
+          .where(eq(tipologias.projetoId, input.projetoId))
+          .orderBy(asc(tipologias.valorFinal));
+        return result;
+      }),
+
+    // Executa a migration SQL 0019 (cria a tabela tipologias se ainda não existe)
+    runMigration: adminProcedure
+      .mutation(async () => {
+        const { getDb } = await import('./db');
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Banco indisponível' });
+
+        const { sql } = await import('drizzle-orm');
+        const migrations = [
+          `ALTER TABLE \`projects\`
+             ADD COLUMN IF NOT EXISTS \`data_entrega\` VARCHAR(50) NULL,
+             ADD COLUMN IF NOT EXISTS \`stand_vendas\` TEXT NULL,
+             ADD COLUMN IF NOT EXISTS \`link_tabela\` TEXT NULL`,
+          `CREATE TABLE IF NOT EXISTS \`tipologias\` (
+             \`id\` INT PRIMARY KEY AUTO_INCREMENT,
+             \`projeto_id\` INT NOT NULL,
+             \`nome\` VARCHAR(255) NOT NULL,
+             \`metragem\` DECIMAL(6,2),
+             \`dormitorios\` INT,
+             \`vagas\` INT DEFAULT 0,
+             \`decorado\` TINYINT DEFAULT 0,
+             \`varanda\` VARCHAR(20),
+             \`enquadramento\` VARCHAR(10),
+             \`valor_tabela\` INT,
+             \`desconto\` INT,
+             \`valor_final\` INT,
+             \`valor_avaliacao\` INT,
+             \`disponivel\` TINYINT DEFAULT 1,
+             \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+             CONSTRAINT \`fk_tipologia_projeto\`
+               FOREIGN KEY (\`projeto_id\`) REFERENCES \`projects\`(\`id\`) ON DELETE CASCADE,
+             INDEX \`tipologia_projeto_idx\` (\`projeto_id\`)
+           )`,
+        ];
+
+        const errors: string[] = [];
+        for (const m of migrations) {
+          try {
+            await db.execute(sql.raw(m));
+          } catch (err: any) {
+            // MySQL 5.7 doesn't support ADD COLUMN IF NOT EXISTS — catch and ignore if column already exists
+            if (!err.message?.includes('Duplicate column') && !err.message?.includes('already exists')) {
+              errors.push(err.message);
+            }
+          }
+        }
+        return { success: errors.length === 0, errors };
+      }),
+  }),
+
   materiais: router({
     // Listar materiais de um projeto (público)
     byProject: publicProcedure
@@ -4494,12 +4560,12 @@ export const appRouter = router({
         const { materiais } = await import('../drizzle/schema');
         const { db } = await import('./db');
         const { eq } = await import('drizzle-orm');
-        
+
         const result = await db
           .select()
           .from(materiais)
           .where(eq(materiais.projetoId, input.projetoId));
-        
+
         return result;
       }),
   }),
