@@ -3,7 +3,9 @@ import { router, protectedProcedure } from '../_core/trpc';
 import { invokeLLM, type InvokeResult } from '../_core/llm';
 import { getDb } from '../db';
 import { leads, leadHistory, users, projects, notifications } from '../../drizzle/schema';
-import { eq, desc, and, like } from 'drizzle-orm';
+import { eq, desc, and, like, lte, inArray } from 'drizzle-orm';
+import { tabeloes } from '../../drizzle/schema';
+import { type FileContent } from '../_core/llm';
 import { executarPriorizacaoDiaria } from '../agentePriorizacaoJob';
 
 function extractTextContent(response: InvokeResult): string {
@@ -609,6 +611,171 @@ export const iaRouter = router({
         urgencia: acaoParsed.urgencia as string,
         script: acaoParsed.script as string,
         justificativa: acaoParsed.justificativa as string,
+      };
+    }),
+
+  // ─── Buscador de Projetos IA ─────────────────────────────────────────────
+
+  buscarProjetosPorDescricao: protectedProcedure
+    .input(z.object({
+      descricao: z.string().min(10).max(1000),
+      leadId: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error('Banco indisponível');
+
+      // Etapa 1: Extrair filtros estruturados da linguagem natural
+      const filtrosResponse = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `Extraia filtros estruturados de uma descrição de busca imobiliária em São Paulo. Responda SOMENTE em JSON puro sem markdown:
+{"zona":"norte|sul|leste|oeste|centro|null","dormitoriosMin":N_ou_null,"dormitoriosMax":N_ou_null,"vagasMax":N_ou_null,"precoMaximo":N_em_reais_sem_centavos_ou_null,"tipo":"mcmv|sfh|outro|null","enquadramento":"HIS1|HIS2|HMP|R2V|null","precisaLerPDF":true_se_busca_menciona_entrega_disponibilidade_ou_tipologia_especifica_de_planta,"palavrasChave":["termo1","termo2"]}
+Regras: precoMaximo sempre em reais inteiros (ex: 300000). vagasMax=0 significa "sem vaga". null para campos não mencionados.`,
+          },
+          { role: 'user', content: input.descricao },
+        ],
+      });
+
+      let filtros: {
+        zona?: string; dormitoriosMin?: number; dormitoriosMax?: number;
+        vagasMax?: number; precoMaximo?: number; tipo?: string;
+        enquadramento?: string; precisaLerPDF?: boolean; palavrasChave?: string[];
+      } = {};
+      try {
+        filtros = parseJsonFromLLM(extractTextContent(filtrosResponse)) as typeof filtros;
+      } catch {
+        filtros = {};
+      }
+      console.log('[Buscador IA] Filtros extraídos:', filtros);
+
+      // Etapa 2: Query ao banco com filtros estruturados
+      const conditions: Parameters<typeof and>[0][] = [eq(projects.status, 'ativo')];
+      if (filtros.zona && ['norte', 'sul', 'leste', 'oeste', 'centro'].includes(filtros.zona)) {
+        conditions.push(eq(projects.zona, filtros.zona as 'norte' | 'sul' | 'leste' | 'oeste' | 'centro'));
+      }
+      if (filtros.precoMaximo && typeof filtros.precoMaximo === 'number') {
+        conditions.push(lte(projects.valorMinimo, filtros.precoMaximo * 100));
+      }
+      if (filtros.vagasMax === 0) {
+        conditions.push(eq(projects.vagas, 0));
+      }
+      if (filtros.tipo && ['mcmv', 'sfh', 'outro'].includes(filtros.tipo)) {
+        conditions.push(eq(projects.tipo, filtros.tipo as 'mcmv' | 'sfh' | 'outro'));
+      }
+      if (filtros.enquadramento && ['HIS1', 'HIS2', 'HMP', 'R2V'].includes(filtros.enquadramento)) {
+        conditions.push(eq(projects.enquadramento, filtros.enquadramento as 'HIS1' | 'HIS2' | 'HMP' | 'R2V'));
+      }
+
+      const projetosBanco = await db
+        .select({
+          id: projects.id, nome: projects.nome, construtora: projects.construtora,
+          construtoraId: projects.construtoraId, bairro: projects.bairro,
+          zona: projects.zona, tipo: projects.tipo, enquadramento: projects.enquadramento,
+          dormitorios: projects.dormitorios, vagas: projects.vagas,
+          valorMinimo: projects.valorMinimo, valorMaximo: projects.valorMaximo,
+          metragemMinima: projects.metragemMinima, metragemMaxima: projects.metragemMaxima,
+          descricao: projects.descricao, bookPdfUrl: projects.bookPdfUrl,
+        })
+        .from(projects)
+        .where(and(...conditions))
+        .limit(30);
+
+      // Filtrar dormitórios em memória (campo é string como "1, 2")
+      let projetosValidos = projetosBanco;
+      if (filtros.dormitoriosMax != null) {
+        projetosValidos = projetosValidos.filter(p => {
+          if (!p.dormitorios) return true;
+          const nums = p.dormitorios.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+          return nums.length === 0 || nums.some(n => n <= filtros.dormitoriosMax!);
+        });
+      }
+      if (filtros.dormitoriosMin != null) {
+        projetosValidos = projetosValidos.filter(p => {
+          if (!p.dormitorios) return true;
+          const nums = p.dormitorios.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+          return nums.length === 0 || nums.some(n => n >= filtros.dormitoriosMin!);
+        });
+      }
+      console.log(`[Buscador IA] ${projetosValidos.length} projetos filtrados do banco`);
+
+      // Etapa 3: Enriquecer com PDFs das tabelões quando necessário
+      const fileContents: FileContent[] = [];
+      if (filtros.precisaLerPDF && projetosValidos.length > 0) {
+        const construtoraIds = [...new Set(projetosValidos.map(p => p.construtoraId).filter(Boolean))] as number[];
+        if (construtoraIds.length > 0) {
+          const tabsRecentes = await db
+            .select({ s3PdfUrl: tabeloes.s3PdfUrl })
+            .from(tabeloes)
+            .where(
+              and(
+                inArray(tabeloes.construtoraId, construtoraIds),
+                eq(tabeloes.statusProcessamento, 'concluido'),
+              ),
+            )
+            .orderBy(desc(tabeloes.ano), desc(tabeloes.mes))
+            .limit(3);
+
+          for (const tab of tabsRecentes) {
+            if (tab.s3PdfUrl) {
+              fileContents.push({ type: 'file_url', file_url: { url: tab.s3PdfUrl, mime_type: 'application/pdf' } });
+            }
+          }
+        }
+
+        // Incluir books dos top projetos como fonte adicional
+        for (const p of projetosValidos.slice(0, 2)) {
+          if (p.bookPdfUrl && fileContents.length < 5) {
+            fileContents.push({ type: 'file_url', file_url: { url: p.bookPdfUrl, mime_type: 'application/pdf' } });
+          }
+        }
+        console.log(`[Buscador IA] Anexando ${fileContents.length} PDFs para análise`);
+      }
+
+      // Etapa 4: Ranquear e explicar com LLM
+      const catalogoTexto = projetosValidos.length > 0
+        ? projetosValidos.map(p => {
+            const precoMin = p.valorMinimo ? `R$${(p.valorMinimo / 100).toLocaleString('pt-BR')}` : 'N/I';
+            const precoMax = p.valorMaximo ? `-${(p.valorMaximo / 100).toLocaleString('pt-BR')}` : '';
+            const metragem = p.metragemMinima
+              ? `${p.metragemMinima}${p.metragemMaxima ? `-${p.metragemMaxima}` : ''}m²`
+              : 'N/I';
+            return `ID:${p.id} | ${p.nome} | ${p.construtora || 'N/I'} | Zona:${p.zona || 'N/I'} | ${p.tipo?.toUpperCase() || ''} | Dorms:${p.dormitorios || 'N/I'} | Vagas:${p.vagas ?? 'N/I'} | ${precoMin}${precoMax} | ${metragem} | Bairro:${p.bairro || 'N/I'}`;
+          }).join('\n')
+        : 'Nenhum projeto encontrado com os filtros aplicados.';
+
+      const userContent: (FileContent | { type: 'text'; text: string })[] = [
+        { type: 'text', text: `Busca do corretor: "${input.descricao}"\n\nProjetos disponíveis no catálogo:\n${catalogoTexto}` },
+        ...fileContents,
+      ];
+
+      const rankingResponse = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `Você é um especialista em produtos imobiliários MCMV e lançamentos de São Paulo. Analise os projetos disponíveis e a busca do corretor para identificar os melhores matches.
+
+IMPORTANTE — leitura de tabelões: tabelões têm múltiplas linhas por tipologia onde cada bloco de linhas representa UMA tipologia diferente. Identifique: nome do empreendimento, tipologia (ex: "Apto 2 dorms Tipo B"), metragem, preço por tipologia, vagas e disponibilidade. Se houver PDFs anexados, use-os para enriquecer com dados de entrega, disponibilidade e preços por tipologia.
+
+Responda SOMENTE em JSON puro sem markdown:
+{"projetos":[{"id":N,"nome":"...","construtora":"...","tipologiaRecomendada":"tipologia específica se souber, senão melhor opção estimada","precoEstimado":N_em_reais_inteiro_ou_null,"motivo":"por que este projeto atende a busca (1-2 frases)","pontuacao":N_de_1_a_10}],"resumo":"resumo dos resultados encontrados (2-3 frases)","filtrosUsados":{"zona":"...","dormitorios":"...","precoMaximo":"..."}}`,
+          },
+          { role: 'user', content: userContent as Parameters<typeof invokeLLM>[0]['messages'][0]['content'] },
+        ],
+      });
+
+      const parsed = parseJsonFromLLM(extractTextContent(rankingResponse)) as {
+        projetos: Array<{ id: number; nome: string; construtora: string; tipologiaRecomendada: string; precoEstimado: number | null; motivo: string; pontuacao: number }>;
+        resumo: string;
+        filtrosUsados: Record<string, string>;
+      };
+
+      return {
+        projetos: parsed.projetos || [],
+        resumo: parsed.resumo || '',
+        filtrosUsados: parsed.filtrosUsados || {},
+        totalFiltrados: projetosValidos.length,
       };
     }),
 

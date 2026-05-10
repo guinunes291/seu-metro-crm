@@ -37,7 +37,7 @@ import {
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
-  Shield, Briefcase, Calculator, Phone, DollarSign, Zap, AlertTriangle
+  Shield, Briefcase, Calculator, Phone, DollarSign, Zap, AlertTriangle, Bot
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -92,6 +92,7 @@ const menuGroups = [
     icon: Building2,
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
       { icon: Import, label: "Importar Projetos", path: "/importar-projetos", roles: ["gestor", "admin", "superintendente"] },
       { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos", roles: ["gestor", "admin", "superintendente"] },
     ],
@@ -207,6 +208,7 @@ const menuGroupsCorretor = [
       { icon: DollarSign, label: "Minhas Comissões", path: "/comissoes" },
       { icon: Calculator, label: "Pré-Análise MCMV", path: "/meu-negocio/pre-analise" },
       { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
     ],
   },
 ];
@@ -258,6 +260,7 @@ const menuGroupsGestor = [
     icon: Building2,
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
       { icon: Import, label: "Importar Projetos", path: "/importar-projetos" },
       { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos" },
       { icon: Settings, label: "Configurações", path: "/configuracoes" },
@@ -383,6 +386,7 @@ const menuGroupsSuperintendente = [
     icon: Building2,
     items: [
       { icon: Building2, label: "Catálogo", path: "/projetos" },
+      { icon: Bot, label: "Buscador IA", path: "/buscador-projetos" },
       { icon: UserCheck, label: "Aprovar Projetos", path: "/aprovar-projetos" },
     ],
   },
