@@ -2,8 +2,9 @@ import { z } from 'zod';
 import { router, protectedProcedure } from '../_core/trpc';
 import { invokeLLM, type InvokeResult } from '../_core/llm';
 import { getDb } from '../db';
-import { leads, leadHistory, users, projects } from '../../drizzle/schema';
-import { eq, desc } from 'drizzle-orm';
+import { leads, leadHistory, users, projects, notifications } from '../../drizzle/schema';
+import { eq, desc, and, like } from 'drizzle-orm';
+import { executarPriorizacaoDiaria } from '../agentePriorizacaoJob';
 
 function extractTextContent(response: InvokeResult): string {
   const content = response.choices[0]?.message?.content;
@@ -305,5 +306,214 @@ export const iaRouter = router({
       } catch {
         throw new Error('Erro ao processar resposta da IA. Tente novamente.');
       }
+    }),
+
+  // ─── Agente 3: Priorização Diária ────────────────────────────────────────
+
+  priorizacaoHoje: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return { prioridades: [], geradoEm: null };
+
+      const hoje = new Date().toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      }).split('/').reverse().join('-');
+
+      const [notif] = await db
+        .select({ mensagem: notifications.mensagem, createdAt: notifications.createdAt })
+        .from(notifications)
+        .where(
+          and(
+            eq(notifications.userId, ctx.user.id),
+            like(notifications.titulo, '[IA] Leads prioritários de hoje%'),
+          ),
+        )
+        .orderBy(desc(notifications.createdAt))
+        .limit(1);
+
+      if (!notif) return { prioridades: [], geradoEm: null };
+
+      // Verificar se a notificação é de hoje
+      const notifDate = notif.createdAt.toLocaleDateString('pt-BR', {
+        timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
+      }).split('/').reverse().join('-');
+
+      if (notifDate !== hoje) return { prioridades: [], geradoEm: null };
+
+      try {
+        const prioridades = JSON.parse(notif.mensagem);
+        return { prioridades, geradoEm: notif.createdAt };
+      } catch {
+        return { prioridades: [], geradoEm: null };
+      }
+    }),
+
+  gerarPriorizacaoAgora: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      // Permite que o corretor gere manualmente (ignora o cache diário)
+      const db = await getDb();
+      if (!db) throw new Error('Banco indisponível');
+
+      const { leads: leadsTable, projects: projetosTable } = await import('../../drizzle/schema');
+      const { ne } = await import('drizzle-orm');
+
+      const leadsDoCorretor = await db
+        .select({
+          id: leadsTable.id,
+          nome: leadsTable.nome,
+          status: leadsTable.status,
+          temperatura: leadsTable.temperatura,
+          faixaRenda: leadsTable.faixaRenda,
+          ultimaInteracao: leadsTable.ultimaInteracao,
+          createdAt: leadsTable.createdAt,
+          proximoFollowup: leadsTable.proximoFollowup,
+          projetoNome: projetosTable.nome,
+          projetoCustom: leadsTable.projetoCustom,
+          observacoes: leadsTable.observacoes,
+        })
+        .from(leadsTable)
+        .leftJoin(projetosTable, eq(leadsTable.projectId, projetosTable.id))
+        .where(
+          and(
+            eq(leadsTable.corretorId, ctx.user.id),
+            ne(leadsTable.status, 'perdido'),
+            ne(leadsTable.status, 'contrato_fechado'),
+            eq(leadsTable.naLixeira, false),
+          ),
+        )
+        .limit(40);
+
+      if (leadsDoCorretor.length === 0) return { prioridades: [], geradoEm: new Date() };
+
+      const STATUS_LABELS: Record<string, string> = {
+        novo: 'Novo', aguardando_atendimento: 'Aguardando', em_atendimento: 'Em Atendimento',
+        qualificado: 'Qualificado', agendado: 'Agendado', visita_realizada: 'Visita Realizada',
+        proposta_enviada: 'Proposta Enviada', analise_credito: 'Análise Crédito', pos_venda: 'Pós-Venda',
+      };
+
+      const contexto = leadsDoCorretor.map((lead) => {
+        const diasDesdeEntrada = Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86_400_000);
+        const diasSemInteracao = lead.ultimaInteracao
+          ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / 86_400_000)
+          : diasDesdeEntrada;
+        let linha = `ID:${lead.id} | ${lead.nome} | Status:${STATUS_LABELS[lead.status] || lead.status}`;
+        if (lead.temperatura) linha += ` | Temp:${lead.temperatura}`;
+        if (lead.faixaRenda) linha += ` | Renda:${lead.faixaRenda}`;
+        if (lead.projetoNome || lead.projetoCustom) linha += ` | Projeto:${lead.projetoNome || lead.projetoCustom}`;
+        linha += ` | DiasBase:${diasDesdeEntrada} | DiasSemContato:${diasSemInteracao}`;
+        return linha;
+      }).join('\n');
+
+      const response = await invokeLLM({
+        messages: [
+          {
+            role: 'system',
+            content: `Você é um coach de vendas imobiliárias. Analise a carteira e escolha os 5 leads mais urgentes para contato HOJE. Responda SOMENTE em JSON puro sem markdown:\n{"prioridades":[{"leadId":N,"leadNome":"...","motivo":"motivo em 1 frase","acao":"ação concreta a fazer hoje"}]}`,
+          },
+          { role: 'user', content: contexto },
+        ],
+      });
+
+      const parsed = parseJsonFromLLM(extractTextContent(response)) as any;
+      const prioridades = (parsed.prioridades || []).slice(0, 5);
+      const agora = new Date();
+
+      // Salvar/atualizar na tabela notifications
+      await db.insert(notifications).values({
+        userId: ctx.user.id,
+        titulo: `[IA] Leads prioritários de hoje — ${agora.toLocaleDateString('pt-BR')}`,
+        mensagem: JSON.stringify(prioridades),
+        tipo: 'sistema',
+        lida: false,
+      });
+
+      return { prioridades, geradoEm: agora };
+    }),
+
+  // ─── Agente 1: Análise Pós-Interação ─────────────────────────────────────
+
+  analisarLeadPosInteracao: protectedProcedure
+    .input(z.object({ leadId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { lead, historico } = await fetchLeadContext(input.leadId);
+      const contexto = buildLeadSummaryText(lead, historico);
+
+      const [tempResponse, acaoResponse] = await Promise.all([
+        invokeLLM({
+          messages: [
+            {
+              role: 'system',
+              content: `Você é especialista em qualificação de leads imobiliários. Classifique a temperatura do lead. QUENTE: respondeu recentemente, interesse claro, capacidade financeira. MORNO: algum contato mas sem comprometimento. FRIO: sem resposta, negativa implícita, sem perfil confirmado.\nResponda em JSON puro sem markdown:\n{"temperatura":"quente|morno|frio","confianca":"alta|media|baixa","motivo":"justificativa em 1 frase"}`,
+            },
+            { role: 'user', content: contexto },
+          ],
+        }),
+        invokeLLM({
+          messages: [
+            {
+              role: 'system',
+              content: `Você é um coach de vendas imobiliárias MCMV. Sugira a próxima ação mais eficaz com base no histórico do lead. Responda em JSON puro sem markdown:\n{"acao":"descrição clara","canal":"whatsapp|ligacao|email|visita","urgencia":"imediata|hoje|essa_semana","script":"mensagem sugerida (máx 5 linhas)","justificativa":"por que essa ação agora (1 frase)"}`,
+            },
+            { role: 'user', content: contexto },
+          ],
+        }),
+      ]);
+
+      const tempParsed = parseJsonFromLLM(extractTextContent(tempResponse)) as any;
+      const acaoParsed = parseJsonFromLLM(extractTextContent(acaoResponse)) as any;
+
+      // Salvar temperatura automaticamente se válida
+      if (['quente', 'morno', 'frio'].includes(tempParsed.temperatura)) {
+        const db = await getDb();
+        if (db) {
+          await db.update(leads)
+            .set({ temperatura: tempParsed.temperatura as 'quente' | 'morno' | 'frio' })
+            .where(eq(leads.id, input.leadId));
+        }
+      }
+
+      return {
+        temperatura: tempParsed.temperatura as string,
+        motivoTemperatura: tempParsed.motivo as string,
+        proximaAcao: acaoParsed.acao as string,
+        canal: acaoParsed.canal as string,
+        urgencia: acaoParsed.urgencia as string,
+        script: acaoParsed.script as string,
+        justificativa: acaoParsed.justificativa as string,
+      };
+    }),
+
+  // ─── Agente 2: Follow-up com Mensagem IA ─────────────────────────────────
+
+  gerarMensagemFollowup: protectedProcedure
+    .input(z.object({ leadId: z.number() }))
+    .mutation(async ({ input }) => {
+      const { lead, historico } = await fetchLeadContext(input.leadId);
+      const contexto = buildLeadSummaryText(lead, historico);
+
+      const diasSemContato = lead.ultimaInteracao
+        ? Math.floor((Date.now() - new Date(lead.ultimaInteracao).getTime()) / 86_400_000)
+        : Math.floor((Date.now() - new Date(lead.createdAt).getTime()) / 86_400_000);
+
+      const response = await invokeLLM({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT_WHATSAPP },
+          {
+            role: 'user',
+            content: `${contexto}\n\nSituação atual: ${diasSemContato} dia(s) sem contato. Gere uma mensagem de follow-up WhatsApp personalizada para reengajar este lead usando a fórmula G.P.V.A.`,
+          },
+        ],
+      });
+
+      const parsed = parseJsonFromLLM(extractTextContent(response)) as any;
+      return {
+        principal: parsed.principal as string,
+        variacao: parsed.variacao as string,
+        orientacao: parsed.orientacao as string,
+        proximo_passo_sim: parsed.proximo_passo_sim as string,
+        proximo_passo_nao: parsed.proximo_passo_nao as string,
+        diasSemContato,
+      };
     }),
 });

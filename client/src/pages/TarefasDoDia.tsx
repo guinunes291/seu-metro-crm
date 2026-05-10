@@ -24,22 +24,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { 
-  Loader2, 
-  Phone, 
-  MessageCircle, 
-  Mail, 
-  Calendar, 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
+import {
+  Loader2,
+  Phone,
+  MessageCircle,
+  Mail,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  Clock,
   AlertTriangle,
   Plus,
   RefreshCw,
   User,
   FileText,
   Target,
-  Zap
+  Zap,
+  Bot,
+  Sparkles,
+  ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -122,6 +125,16 @@ export default function TarefasDoDia() {
   // Queries
   const { data: tarefasDoDia, isLoading, refetch } = trpc.tarefasDoDia.getAll.useQuery();
   const { data: leads } = trpc.leads.list.useQuery();
+  const { data: priorizacaoData, refetch: refetchPriorizacao } = trpc.ia.priorizacaoHoje.useQuery(undefined, {
+    staleTime: 30 * 60 * 1000, // 30 min
+  });
+  const gerarPriorizacaoMutation = trpc.ia.gerarPriorizacaoAgora.useMutation({
+    onSuccess: () => {
+      refetchPriorizacao();
+      toast.success("Priorização IA gerada!");
+    },
+    onError: (e) => toast.error(`Erro ao gerar priorização: ${e.message}`),
+  });
 
   // Mutations
   const criarTarefaMutation = trpc.tarefas.create.useMutation({
@@ -337,6 +350,75 @@ export default function TarefasDoDia() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Priorização IA */}
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50/60 to-white dark:from-purple-950/20 dark:to-background">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-300">
+                <Bot className="h-5 w-5" />
+                Foco de Hoje — IA
+              </CardTitle>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50"
+                onClick={() => gerarPriorizacaoMutation.mutate()}
+                disabled={gerarPriorizacaoMutation.isPending}
+              >
+                {gerarPriorizacaoMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {priorizacaoData?.prioridades?.length ? "Atualizar" : "Gerar agora"}
+              </Button>
+            </div>
+            <CardDescription>
+              {priorizacaoData?.geradoEm
+                ? `Gerado às ${new Date(priorizacaoData.geradoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} — leads que a IA sugere priorizar hoje`
+                : "A IA analisa sua carteira e indica os leads mais urgentes para contato hoje"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(!priorizacaoData?.prioridades || priorizacaoData.prioridades.length === 0) ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Bot className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">Clique em "Gerar agora" para a IA priorizar sua carteira de leads.</p>
+                <p className="text-xs mt-1">A análise é gerada automaticamente às 7h toda manhã.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {priorizacaoData.prioridades.map((item: any, idx: number) => (
+                  <div
+                    key={item.leadId}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-white dark:bg-background border border-purple-100 dark:border-purple-900/40"
+                  >
+                    <div className="flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 text-xs font-bold shrink-0">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{item.leadNome}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.motivo}</p>
+                      <p className="text-xs text-purple-700 dark:text-purple-400 font-medium mt-1 flex items-center gap-1">
+                        <ChevronRight className="h-3 w-3 shrink-0" />
+                        {item.acao}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-xs h-7 px-2"
+                      onClick={() => window.location.href = `/leads?leadId=${item.leadId}`}
+                    >
+                      Ver lead
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Follow-ups Pendentes */}
         {followUps.length > 0 && (
