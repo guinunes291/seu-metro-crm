@@ -223,12 +223,14 @@ export default function Leads() {
   });
   const analisarLeadMutation = trpc.ia.analisarLeadPosInteracao.useMutation({
     onSuccess: (data) => {
-      const tempLabel: Record<string, string> = { quente: '🔥 Quente', morno: '🌡 Morno', frio: '❄️ Frio' };
+      const tempLabel: Record<string, string> = { quente: '🔥 Quente', morno: '🌡️ Morno', frio: '❄️ Frio' };
       toast.success(
-        `IA: temperatura → ${tempLabel[data.temperatura] ?? data.temperatura} • ${data.proximaAcao}`,
-        { duration: 6000 }
+        `IA: ${tempLabel[data.temperatura] ?? data.temperatura} • ${data.proximaAcao} — análise salva nas observações do lead`,
+        { duration: 8000 }
       );
+      // Recarregar lead para mostrar observações atualizadas
       utils.leads.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
     },
   });
 

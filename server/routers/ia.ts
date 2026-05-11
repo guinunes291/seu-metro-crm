@@ -102,7 +102,7 @@ async function fetchLeadContext(leadId: number) {
       primeiroContatoEm: leads.primeiroContatoEm, proximoFollowup: leads.proximoFollowup,
       faixaRenda: leads.faixaRenda, usaFgts: leads.usaFgts, entradaDisponivel: leads.entradaDisponivel,
       finalidadeImovel: leads.finalidadeImovel, prefereContatoPor: leads.prefereContatoPor,
-      corretorNome: users.name, projetoNome: projects.nome,
+      corretorId: leads.corretorId, corretorNome: users.name, projetoNome: projects.nome,
     })
     .from(leads)
     .leftJoin(users, eq(leads.corretorId, users.id))
@@ -437,7 +437,7 @@ export const iaRouter = router({
 
   analisarLeadPosInteracao: protectedProcedure
     .input(z.object({ leadId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { lead, historico } = await fetchLeadContext(input.leadId);
       const contexto = buildLeadSummaryText(lead, historico);
 
@@ -465,14 +465,53 @@ export const iaRouter = router({
       const tempParsed = parseJsonFromLLM(extractTextContent(tempResponse)) as any;
       const acaoParsed = parseJsonFromLLM(extractTextContent(acaoResponse)) as any;
 
-      // Salvar temperatura automaticamente se válida
-      if (['quente', 'morno', 'frio'].includes(tempParsed.temperatura)) {
-        const db = await getDb();
-        if (db) {
-          await db.update(leads)
-            .set({ temperatura: tempParsed.temperatura as 'quente' | 'morno' | 'frio' })
-            .where(eq(leads.id, input.leadId));
+      const tempEmoji: Record<string, string> = { quente: '🔥 Quente', morno: '🌡️ Morno', frio: '❄️ Frio' };
+      const canalLabel: Record<string, string> = { whatsapp: 'WhatsApp', ligacao: 'Ligação', email: 'E-mail', visita: 'Visita' };
+      const urgenciaLabel: Record<string, string> = { imediata: 'imediata', hoje: 'hoje', essa_semana: 'essa semana' };
+
+      const dataHoje = new Date().toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+
+      // Montar bloco de observação estruturado
+      const blocoIA = [
+        `--- Análise IA (${dataHoje}) ---`,
+        `Temperatura: ${tempEmoji[tempParsed.temperatura] ?? tempParsed.temperatura}${tempParsed.confianca ? ` (confiança ${tempParsed.confianca})` : ''}`,
+        tempParsed.motivo ? `Motivo: ${tempParsed.motivo}` : null,
+        acaoParsed.acao ? `Próxima ação: ${acaoParsed.acao}` : null,
+        (acaoParsed.canal || acaoParsed.urgencia)
+          ? `Canal: ${canalLabel[acaoParsed.canal] ?? acaoParsed.canal} | Urgência: ${urgenciaLabel[acaoParsed.urgencia] ?? acaoParsed.urgencia}`
+          : null,
+        acaoParsed.script ? `Script: ${acaoParsed.script}` : null,
+      ].filter(Boolean).join('\n');
+
+      const db = await getDb();
+      if (db) {
+        const updates: Record<string, unknown> = {};
+
+        // Salvar temperatura se válida
+        if (['quente', 'morno', 'frio'].includes(tempParsed.temperatura)) {
+          updates.temperatura = tempParsed.temperatura as 'quente' | 'morno' | 'frio';
         }
+
+        // Append da análise nas observações do lead (mais recente no topo)
+        const obsAtual = lead.observacoes ?? '';
+        updates.observacoes = obsAtual ? `${blocoIA}\n\n${obsAtual}` : blocoIA;
+
+        await db.update(leads).set(updates).where(eq(leads.id, input.leadId));
+
+        // Notificação persistente para que o corretor encontre depois
+        const corretorId = lead.corretorId ?? ctx.user.id;
+        await db.insert(notifications).values({
+          userId: corretorId,
+          titulo: `[IA] Análise de ${lead.nome}`,
+          mensagem: blocoIA,
+          tipo: 'sistema',
+          leadId: input.leadId,
+          lida: false,
+        });
       }
 
       return {
