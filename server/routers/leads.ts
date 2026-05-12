@@ -5,6 +5,7 @@ import { blitzSessoes } from '../../drizzle/schema';
 import { desc, eq } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { sendPushNotification } from '../pushNotifications';
+import { sendLeadStatusChangedEvent } from '../metaConversions';
 
 // ============================================================================
 // HELPERS DE ROLE (replicados do routers.ts para independência)
@@ -219,6 +220,14 @@ export const leadsRouter = router({
           input.data.status,
           undefined
         );
+        // Disparar evento Meta Conversions API (assíncrono, não bloqueia)
+        sendLeadStatusChangedEvent({
+          statusAnterior: lead.status,
+          statusNovo: input.data.status,
+          email: lead.email,
+          telefone: lead.telefone,
+          crmLeadId: lead.id,
+        }).catch(() => {});
       }
 
       if (input.data.status === 'em_atendimento' && lead.status !== 'em_atendimento') {

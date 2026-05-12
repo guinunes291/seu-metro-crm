@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import * as db from './db';
 import { notifyOwner } from './_core/notification';
 import { ENV } from './_core/env';
+import { sendLeadCreatedEvent } from './metaConversions';
 
 const router = Router();
 
@@ -312,6 +313,15 @@ router.post('/facebook/:token', async (req: Request, res: Response) => {
     });
     
     console.log('[Webhook Facebook] Lead processado:', resultado);
+    
+    // Disparar evento Lead na Meta Conversions API (assíncrono)
+    sendLeadCreatedEvent({
+      email: email || null,
+      telefone: telefone || null,
+      nome: nome || null,
+      facebookLeadId: body.entry?.[0]?.changes?.[0]?.value?.leadgen_id || null,
+      crmLeadId: resultado.lead.id,
+    }).catch(() => {});
     
     return res.status(200).json({
       success: true,
