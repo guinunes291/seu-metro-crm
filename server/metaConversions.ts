@@ -74,24 +74,25 @@ async function sendMetaEvent(params: MetaEventParams): Promise<MetaEventResult> 
     userData.ph = [sha256(normalizeTelefone(params.telefone))];
   }
   if (params.leadId) {
-    userData.lead_id = String(params.leadId);
+    // lead_id deve ser número inteiro (não string) conforme spec da Meta
+    const leadIdNum = typeof params.leadId === 'string' ? parseInt(params.leadId, 10) : params.leadId;
+    if (!isNaN(Number(leadIdNum))) {
+      userData.lead_id = leadIdNum;
+    }
   }
 
-  // Construir custom_data
+  // custom_data com campos obrigatórios da spec CRM da Meta
   const customData: Record<string, any> = {
-    event_source: 'crm',
     lead_event_source: 'Seu Metro Quadrado CRM',
+    event_source: 'crm',
   };
-  if (params.statusAnterior) customData.status_anterior = params.statusAnterior;
-  if (params.statusNovo) customData.status_novo = params.statusNovo;
-  if (params.crmLeadId) customData.crm_lead_id = params.crmLeadId;
 
   const eventData: Record<string, any> = {
     event_name: params.eventName,
     event_time: Math.floor(Date.now() / 1000),
     action_source: 'system_generated',
-    custom_data: customData,
     user_data: userData,
+    custom_data: customData,
   };
 
   const payload: Record<string, any> = {
@@ -203,5 +204,24 @@ export async function sendTestEvent(testEventCode: string): Promise<MetaEventRes
     email: 'teste@seumetroquadrado.com',
     telefone: '11999999999',
     testEventCode,
+  });
+}
+
+/**
+ * Envia evento Lead com lead_id específico (para verificação no Events Manager)
+ */
+export async function sendLeadEventWithId(params: {
+  leadId: string | number;
+  email?: string | null;
+  telefone?: string | null;
+  eventName?: string;
+  testEventCode?: string;
+}): Promise<MetaEventResult> {
+  return sendMetaEvent({
+    eventName: params.eventName || 'Lead',
+    leadId: params.leadId,
+    email: params.email,
+    telefone: params.telefone,
+    testEventCode: params.testEventCode,
   });
 }
