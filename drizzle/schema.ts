@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json, date, decimal } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, index, json, date, decimal, tinyint } from "drizzle-orm/mysql-core";
 
 /**
  * Schema do CRM Imobiliário - Seu Metro Quadrado
@@ -154,6 +154,9 @@ export const projects = mysqlTable("projects", {
   bookPdfUrl: text("bookPdfUrl"), // URL do book em PDF
   linkMateriais: text("linkMateriais"), // JSON com links do Drive
   regiao: varchar("regiao", { length: 255 }), // Região alternativa (além de zona)
+  dataEntrega: varchar("data_entrega", { length: 50 }),   // Ex: "Dezembro/2027", "jun/27"
+  standVendas: text("stand_vendas"),                       // Endereço do stand/decorado
+  linkTabela: text("link_tabela"),                         // Link direto para a tabela PDF
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   
@@ -170,6 +173,30 @@ export const projects = mysqlTable("projects", {
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = typeof projects.$inferInsert;
+
+// Tipologias individuais de cada projeto (extraídas dos tabelões)
+export const tipologias = mysqlTable('tipologias', {
+  id: int('id').primaryKey().autoincrement(),
+  projetoId: int('projeto_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  nome: varchar('nome', { length: 255 }).notNull(),
+  metragem: decimal('metragem', { precision: 6, scale: 2 }),
+  dormitorios: int('dormitorios'),
+  vagas: int('vagas').default(0),
+  decorado: tinyint('decorado').default(0),
+  varanda: varchar('varanda', { length: 20 }),
+  enquadramento: varchar('enquadramento', { length: 10 }),
+  valorTabela: int('valor_tabela'),
+  desconto: int('desconto'),
+  valorFinal: int('valor_final'),
+  valorAvaliacao: int('valor_avaliacao'),
+  disponivel: tinyint('disponivel').default(1),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  projetoIdx: index('tipologia_projeto_idx').on(table.projetoId),
+}));
+
+export type Tipologia = typeof tipologias.$inferSelect;
+export type InsertTipologia = typeof tipologias.$inferInsert;
 
 // ============================================================================
 // TABELA DE SUGESTÕES DE PROJETOS (PENDENTES DE APROVAÇÃO)

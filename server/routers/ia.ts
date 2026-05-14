@@ -102,7 +102,7 @@ async function fetchLeadContext(leadId: number) {
       primeiroContatoEm: leads.primeiroContatoEm, proximoFollowup: leads.proximoFollowup,
       faixaRenda: leads.faixaRenda, usaFgts: leads.usaFgts, entradaDisponivel: leads.entradaDisponivel,
       finalidadeImovel: leads.finalidadeImovel, prefereContatoPor: leads.prefereContatoPor,
-      corretorNome: users.name, projetoNome: projects.nome,
+      corretorId: leads.corretorId, corretorNome: users.name, projetoNome: projects.nome,
     })
     .from(leads)
     .leftJoin(users, eq(leads.corretorId, users.id))
@@ -263,135 +263,7 @@ export const iaRouter = router({
       };
     }),
 
-
-  // ── DICAS RAPIDAS PARA O CARD DO LEAD ──────────────────────────────────────
-  // Gera 2-3 dicas objetivas para o corretor sem expor nomes de antigos proprietarios
-  dicasRapidas: protectedProcedure
-    .input(z.object({ leadId: z.number() }))
-    .query(async ({ input, ctx }) => {
-      const db = await getDb();
-      if (!db) throw new Error("Banco de dados indisponivel");
-
-      const [leadRow] = await db
-        .select({
-          id: leads.id, nome: leads.nome, status: leads.status,
-          temperatura: leads.temperatura, origem: leads.origem,
-          projetoCustom: leads.projetoCustom, observacoes: leads.observacoes,
-          createdAt: leads.createdAt, ultimaInteracao: leads.ultimaInteracao,
-          faixaRenda: leads.faixaRenda, usaFgts: leads.usaFgts,
-          entradaDisponivel: leads.entradaDisponivel,
-          finalidadeImovel: leads.finalidadeImovel,
-          prefereContatoPor: leads.prefereContatoPor,
-          corretorId: leads.corretorId,
-          projetoNome: projects.nome,
-        })
-        .from(leads)
-        .leftJoin(projects, eq(leads.projectId, projects.id))
-        .where(eq(leads.id, input.leadId))
-        .limit(1);
-
-      if (!leadRow) throw new Error("Lead nao encontrado");
-
-      if (ctx.user.role === "corretor" && leadRow.corretorId !== ctx.user.id) {
-        throw new Error("Acesso negado");
-      }
-
-      const historico = await db
-        .select({
-          tipo: leadHistory.tipo, resultado: leadHistory.resultado,
-          observacoes: leadHistory.observacoes,
-          statusAnterior: leadHistory.statusAnterior,
-          statusNovo: leadHistory.statusNovo,
-          createdAt: leadHistory.createdAt,
-        })
-        .from(leadHistory)
-        .where(eq(leadHistory.leadId, input.leadId))
-        .orderBy(desc(leadHistory.createdAt))
-        .limit(8);
-
-      const diasDesdeEntrada = Math.floor((Date.now() - leadRow.createdAt.getTime()) / 86_400_000);
-      const diasSemInteracao = leadRow.ultimaInteracao
-        ? Math.floor((Date.now() - leadRow.ultimaInteracao.getTime()) / 86_400_000)
-        : diasDesdeEntrada;
-
-      const parts: string[] = [];
-      parts.push("Lead: " + leadRow.nome);
-      parts.push("Status: " + (STATUS_LABELS[leadRow.status] || leadRow.status));
-      if (leadRow.temperatura) parts.push("Temperatura: " + leadRow.temperatura);
-      parts.push("Empreendimento: " + (leadRow.projetoNome || leadRow.projetoCustom || "nao informado"));
-      parts.push("Origem: " + (leadRow.origem || "nao informada"));
-      parts.push("Dias na base: " + diasDesdeEntrada);
-      parts.push("Dias sem interacao: " + diasSemInteracao);
-      if (leadRow.faixaRenda) parts.push("Faixa de renda: " + leadRow.faixaRenda);
-      if (leadRow.usaFgts) parts.push("Usa FGTS: sim");
-      if (leadRow.entradaDisponivel) parts.push("Entrada disponivel: " + leadRow.entradaDisponivel);
-      if (leadRow.finalidadeImovel) parts.push("Finalidade: " + leadRow.finalidadeImovel);
-      if (leadRow.prefereContatoPor) parts.push("Prefere contato por: " + leadRow.prefereContatoPor);
-      if (leadRow.observacoes) parts.push("Observacoes: " + leadRow.observacoes);
-
-      if (historico.length > 0) {
-        parts.push("");
-        parts.push("Historico de interacoes (" + historico.length + " registros, mais recentes primeiro):");
-        for (const h of historico) {
-          const data = h.createdAt.toLocaleDateString("pt-BR");
-          const tipo = INTERACTION_LABELS[h.tipo] || h.tipo;
-          const resultado = RESULTADO_LABELS[h.resultado] || h.resultado;
-          let linha = "- " + data + " | " + tipo + " | " + resultado;
-          if (h.observacoes) linha += " | [" + h.observacoes + "]";
-          if (h.statusNovo) linha += " | -> " + (STATUS_LABELS[h.statusNovo] || h.statusNovo);
-          parts.push(linha);
-        }
-      } else {
-        parts.push("");
-        parts.push("Sem interacoes registradas ainda.");
-      }
-
-      const contexto = parts.join("\n");
-
-      const systemPrompt = [
-        "Voce e um coach de vendas imobiliarias especializado em MCMV.",
-        "Analise os dados do lead e gere dicas rapidas e objetivas para o corretor agir agora.",
-        "",
-        "REGRAS:",
-        "- Maximo 3 dicas, cada uma com no maximo 2 linhas",
-        "- Foco em acao imediata: o que fazer AGORA com esse lead",
-        "- Identifique riscos (lead esfriando, sem resposta, objecao provavel)",
-        "- Identifique oportunidades (perfil qualificado, momento certo, canal preferido)",
-        "- NAO mencione nomes de corretores anteriores",
-        "- NAO invente dados que nao estao no contexto",
-        "- Tom direto, pratico, como um gerente experiente falando com o corretor",
-        "",
-        "Responda em JSON puro sem markdown:",
-        "{",
-        '  "dicas": [',
-        '    {"tipo": "alerta|oportunidade|acao", "emoji": "emoji aqui", "texto": "dica objetiva em 1-2 linhas"},',
-        "    ...",
-        "  ],",
-        '  "prioridade": "alta|media|baixa",',
-        '  "resumo_curto": "frase de 5-8 palavras descrevendo o momento do lead"',
-        "}",
-      ].join("\n");
-
-      const response = await invokeLLM({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: contexto },
-        ],
-      });
-
-      try {
-        const parsed = parseJsonFromLLM(extractTextContent(response)) as any;
-        return {
-          dicas: (parsed.dicas || []) as Array<{ tipo: string; emoji: string; texto: string }>,
-          prioridade: (parsed.prioridade || "media") as string,
-          resumo_curto: (parsed.resumo_curto || "") as string,
-        };
-      } catch {
-        throw new Error("Erro ao processar dicas da IA.");
-      }
-    }),
-
-    gerarScriptWhatsApp: protectedProcedure
+  gerarScriptWhatsApp: protectedProcedure
     .input(z.object({
       nomeCliente: z.string().min(1, 'Nome do cliente é obrigatório'),
       estagio: z.enum([
@@ -565,7 +437,7 @@ export const iaRouter = router({
 
   analisarLeadPosInteracao: protectedProcedure
     .input(z.object({ leadId: z.number() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const { lead, historico } = await fetchLeadContext(input.leadId);
       const contexto = buildLeadSummaryText(lead, historico);
 
@@ -593,14 +465,53 @@ export const iaRouter = router({
       const tempParsed = parseJsonFromLLM(extractTextContent(tempResponse)) as any;
       const acaoParsed = parseJsonFromLLM(extractTextContent(acaoResponse)) as any;
 
-      // Salvar temperatura automaticamente se válida
-      if (['quente', 'morno', 'frio'].includes(tempParsed.temperatura)) {
-        const db = await getDb();
-        if (db) {
-          await db.update(leads)
-            .set({ temperatura: tempParsed.temperatura as 'quente' | 'morno' | 'frio' })
-            .where(eq(leads.id, input.leadId));
+      const tempEmoji: Record<string, string> = { quente: '🔥 Quente', morno: '🌡️ Morno', frio: '❄️ Frio' };
+      const canalLabel: Record<string, string> = { whatsapp: 'WhatsApp', ligacao: 'Ligação', email: 'E-mail', visita: 'Visita' };
+      const urgenciaLabel: Record<string, string> = { imediata: 'imediata', hoje: 'hoje', essa_semana: 'essa semana' };
+
+      const dataHoje = new Date().toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+
+      // Montar bloco de observação estruturado
+      const blocoIA = [
+        `--- Análise IA (${dataHoje}) ---`,
+        `Temperatura: ${tempEmoji[tempParsed.temperatura] ?? tempParsed.temperatura}${tempParsed.confianca ? ` (confiança ${tempParsed.confianca})` : ''}`,
+        tempParsed.motivo ? `Motivo: ${tempParsed.motivo}` : null,
+        acaoParsed.acao ? `Próxima ação: ${acaoParsed.acao}` : null,
+        (acaoParsed.canal || acaoParsed.urgencia)
+          ? `Canal: ${canalLabel[acaoParsed.canal] ?? acaoParsed.canal} | Urgência: ${urgenciaLabel[acaoParsed.urgencia] ?? acaoParsed.urgencia}`
+          : null,
+        acaoParsed.script ? `Script: ${acaoParsed.script}` : null,
+      ].filter(Boolean).join('\n');
+
+      const db = await getDb();
+      if (db) {
+        const updates: Record<string, unknown> = {};
+
+        // Salvar temperatura se válida
+        if (['quente', 'morno', 'frio'].includes(tempParsed.temperatura)) {
+          updates.temperatura = tempParsed.temperatura as 'quente' | 'morno' | 'frio';
         }
+
+        // Append da análise nas observações do lead (mais recente no topo)
+        const obsAtual = lead.observacoes ?? '';
+        updates.observacoes = obsAtual ? `${blocoIA}\n\n${obsAtual}` : blocoIA;
+
+        await db.update(leads).set(updates).where(eq(leads.id, input.leadId));
+
+        // Notificação persistente para que o corretor encontre depois
+        const corretorId = lead.corretorId ?? ctx.user.id;
+        await db.insert(notifications).values({
+          userId: corretorId,
+          titulo: `[IA] Análise de ${lead.nome}`,
+          mensagem: blocoIA,
+          tipo: 'sistema',
+          leadId: input.leadId,
+          lida: false,
+        });
       }
 
       return {
@@ -733,6 +644,26 @@ Regras: precoMaximo sempre em reais inteiros (ex: 300000). vagasMax=0 significa 
         console.log(`[Buscador IA] Anexando ${fileContents.length} PDFs para análise`);
       }
 
+      // Etapa 3.5: Enriquecer projetos com tipologias do banco
+      const projetoIds = projetosValidos.map(p => p.id);
+      let tipologiasPorProjeto: Record<number, any[]> = {};
+      if (projetoIds.length > 0) {
+        try {
+          const { tipologias: tipologiasTable } = await import('../../drizzle/schema');
+          const { inArray: inArr } = await import('drizzle-orm');
+          const allTips = await db
+            .select()
+            .from(tipologiasTable)
+            .where(inArr(tipologiasTable.projetoId, projetoIds));
+          for (const t of allTips) {
+            if (!tipologiasPorProjeto[t.projetoId]) tipologiasPorProjeto[t.projetoId] = [];
+            tipologiasPorProjeto[t.projetoId].push(t);
+          }
+        } catch {
+          // tipologias table may not exist yet (migration pending) — graceful fallback
+        }
+      }
+
       // Etapa 4: Ranquear e explicar com LLM
       const catalogoTexto = projetosValidos.length > 0
         ? projetosValidos.map(p => {
@@ -741,7 +672,14 @@ Regras: precoMaximo sempre em reais inteiros (ex: 300000). vagasMax=0 significa 
             const metragem = p.metragemMinima
               ? `${p.metragemMinima}${p.metragemMaxima ? `-${p.metragemMaxima}` : ''}m²`
               : 'N/I';
-            return `ID:${p.id} | ${p.nome} | ${p.construtora || 'N/I'} | Zona:${p.zona || 'N/I'} | ${p.tipo?.toUpperCase() || ''} | Dorms:${p.dormitorios || 'N/I'} | Vagas:${p.vagas ?? 'N/I'} | ${precoMin}${precoMax} | ${metragem} | Bairro:${p.bairro || 'N/I'}`;
+            const tips = tipologiasPorProjeto[p.id] ?? [];
+            const tipsStr = tips.length
+              ? ` | Tipologias: ${tips.slice(0, 4).map((t: any) => {
+                  const preco = t.valorFinal ?? t.valorTabela;
+                  return `${t.nome}${t.metragem ? ` ${parseFloat(t.metragem).toFixed(0)}m²` : ''}${t.vagas != null ? ` ${t.vagas}v` : ''}${preco ? ` R$${(preco / 100).toLocaleString('pt-BR')}` : ''}`;
+                }).join(', ')}`
+              : '';
+            return `ID:${p.id} | ${p.nome} | ${p.construtora || 'N/I'} | Zona:${p.zona || 'N/I'} | ${p.tipo?.toUpperCase() || ''} | Dorms:${p.dormitorios || 'N/I'} | Vagas:${p.vagas ?? 'N/I'} | ${precoMin}${precoMax} | ${metragem} | Bairro:${p.bairro || 'N/I'}${tipsStr}`;
           }).join('\n')
         : 'Nenhum projeto encontrado com os filtros aplicados.';
 

@@ -1362,16 +1362,18 @@ export async function getLeadsPendentesFollowup() {
   if (!db) return [];
 
   const now = new Date();
-  // LIMIT 1000 para evitar full table scan com 31k+ leads
+  // Cap de 48h evita reprocessar leads antigos que já deveriam ter sido tratados
+  const limiteAnterior = new Date(now.getTime() - 48 * 60 * 60 * 1000);
   return await db.select().from(leads)
     .where(
       and(
         lte(leads.proximoFollowup, now),
+        gte(leads.proximoFollowup, limiteAnterior),
         inArray(leads.status, ["aguardando_atendimento", "em_atendimento", "agendado"])
       )
     )
     .orderBy(leads.proximoFollowup)
-    .limit(1000);
+    .limit(100);
 }
 
 // Retorna contagem de leads "parados" por faixa de dias sem interação.
@@ -3083,28 +3085,93 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
 export async function getProgressoMetasTodosCorretores(mes: number, ano: number) {
   const db = await getDb();
   if (!db) return [];
-  
-  // Buscar todos os corretores ativos
-  const corretores = await db.select()
-    .from(users)
-    .where(eq(users.role, 'corretor'));
-  
-  const resultados = [];
-  
-  for (const corretor of corretores) {
-    const progresso = await getProgressoMeta(corretor.id, mes, ano);
-    
-    resultados.push({
-      corretor: {
-        id: corretor.id,
-        nome: corretor.name || 'Sem nome',
-        status: corretor.status,
-      },
-      progresso,
-    });
+
+  const dataInicio = new Date(ano, mes - 1, 1);
+  const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
+
+  // 4 queries paralelas em vez de (2 queries × N corretores) — reduz de O(2N) para O(4)
+  const [corretores, todasMetas, leadsAgregados, vgvAgregado] = await Promise.all([
+    db.select({ id: users.id, name: users.name, status: users.status })
+      .from(users)
+      .where(eq(users.role, 'corretor')),
+
+    db.select().from(metas)
+      .where(and(eq(metas.mes, mes), eq(metas.ano, ano))),
+
+    db.select({
+      corretorId: leads.corretorId,
+      status: leads.status,
+      count: sql<number>`COUNT(*)`,
+    })
+      .from(leads)
+      .where(and(
+        eq(leads.origem, 'captacao_corretor'),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim),
+      ))
+      .groupBy(leads.corretorId, leads.status),
+
+    db.select({
+      corretorId: leads.corretorId,
+      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`,
+    })
+      .from(leads)
+      .leftJoin(projects, eq(leads.projectId, projects.id))
+      .where(and(
+        eq(leads.status, 'contrato_fechado'),
+        gte(leads.createdAt, dataInicio),
+        lte(leads.createdAt, dataFim),
+      ))
+      .groupBy(leads.corretorId),
+  ]);
+
+  const metasMap = new Map(todasMetas.map(m => [m.corretorId, m]));
+
+  type LeadStats = { totalLeads: number; agendamentos: number; visitas: number; contratos: number };
+  const leadsMap = new Map<number, LeadStats>();
+  for (const row of leadsAgregados) {
+    const cid = row.corretorId ?? 0;
+    if (!leadsMap.has(cid)) leadsMap.set(cid, { totalLeads: 0, agendamentos: 0, visitas: 0, contratos: 0 });
+    const s = leadsMap.get(cid)!;
+    s.totalLeads += Number(row.count);
+    if (row.status === 'agendado') s.agendamentos = Number(row.count);
+    if (row.status === 'visita_realizada') s.visitas = Number(row.count);
+    if (row.status === 'contrato_fechado') s.contratos = Number(row.count);
   }
-  
-  return resultados;
+
+  const vgvMap = new Map(vgvAgregado.map(r => [r.corretorId, Number(r.total)]));
+
+  return corretores.map(corretor => {
+    const meta = metasMap.get(corretor.id);
+    if (!meta) return { corretor: { id: corretor.id, nome: corretor.name || 'Sem nome', status: corretor.status }, progresso: null };
+
+    const s = leadsMap.get(corretor.id) ?? { totalLeads: 0, agendamentos: 0, visitas: 0, contratos: 0 };
+    const vgvRealizado = vgvMap.get(corretor.id) ?? 0;
+
+    const progressoLeads       = meta.metaLeads        > 0 ? Math.round((s.totalLeads   / meta.metaLeads)        * 100) : 0;
+    const progressoAgendamentos = meta.metaAgendamentos > 0 ? Math.round((s.agendamentos / meta.metaAgendamentos) * 100) : 0;
+    const progressoVisitas      = meta.metaVisitas      > 0 ? Math.round((s.visitas      / meta.metaVisitas)      * 100) : 0;
+    const progressoContratos    = meta.metaContratos    > 0 ? Math.round((s.contratos    / meta.metaContratos)    * 100) : 0;
+    const progressoVGV          = meta.metaVGV          > 0 ? Math.round((vgvRealizado   / meta.metaVGV)          * 100) : 0;
+
+    const progressoGeral = Math.round(
+      Math.min(20, (progressoLeads        / 100) * 20) +
+      Math.min(20, (progressoAgendamentos / 100) * 20) +
+      Math.min(20, (progressoVisitas      / 100) * 20) +
+      Math.min(20, (progressoContratos    / 100) * 20) +
+      Math.min(20, (progressoVGV          / 100) * 20),
+    );
+
+    return {
+      corretor: { id: corretor.id, nome: corretor.name || 'Sem nome', status: corretor.status },
+      progresso: {
+        meta,
+        realizado: { leads: s.totalLeads, agendamentos: s.agendamentos, visitas: s.visitas, contratos: s.contratos, vgv: vgvRealizado },
+        progresso: { leads: progressoLeads, agendamentos: progressoAgendamentos, visitas: progressoVisitas, contratos: progressoContratos, vgv: progressoVGV },
+        progressoGeral,
+      },
+    };
+  });
 }
 
 
@@ -3774,6 +3841,21 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
         } catch (zapierError) {
           console.error('[Webhook] Erro ao notificar via Zapier:', zapierError);
         }
+
+        // Enviar push notification (funciona mesmo com aba fechada)
+        try {
+          const { sendPushNotification } = await import('./pushNotifications');
+          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
+          await sendPushNotification(corretor.id, {
+            title: '🔥 Novo Lead!',
+            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
+            url: `/leads?leadId=${leadCriado.id}`,
+            tag: `lead-novo-${leadCriado.id}`,
+            requireInteraction: true,
+          });
+        } catch (pushError) {
+          console.error('[Webhook] Erro ao enviar push notification:', pushError);
+        }
       }
     } catch (error) {
       console.error('[Webhook] Erro ao notificar corretor:', error);
@@ -3950,11 +4032,26 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
         } catch (zapierError) {
           console.error('[Webhook Foco] Erro ao notificar via Zapier:', zapierError);
         }
+
+        // Enviar push notification (funciona mesmo com aba fechada)
+        try {
+          const { sendPushNotification } = await import('./pushNotifications');
+          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
+          await sendPushNotification(corretor.id, {
+            title: '🔥 Novo Lead!',
+            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
+            url: `/leads?leadId=${leadCriado.id}`,
+            tag: `lead-novo-${leadCriado.id}`,
+            requireInteraction: true,
+          });
+        } catch (pushError) {
+          console.error('[Webhook Foco] Erro ao enviar push notification:', pushError);
+        }
       }
     } catch (error) {
       console.error('[Webhook Foco] Erro ao notificar corretor:', error);
     }
-    
+
     console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
 
     // Push notification nativa (non-blocking) -- funciona mesmo com aba fechada / PWA

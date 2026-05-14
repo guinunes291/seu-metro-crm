@@ -1,11 +1,9 @@
 /**
  * Subscribes to the /api/events/corretor SSE stream.
- * Handles two events:
- * - 'novo_lead': fired by distribuirLeadPelaRoleta when a brand-new lead arrives
- * - 'lead_transferido': fired by notifyLeadDistribuido when a lead is redistributed
- *   from another corretor (timer de inatividade, redistribuição manual, etc.)
- * Both events invalidate leadsPrioritarios so the banner and "O que fazer agora?"
- * update instantly without waiting for the next polling cycle.
+ * When the server pushes a 'novo_lead' event (immediately after
+ * distribuirLeadPelaRoleta runs), we invalidate the leadsPrioritarios
+ * query so the banner and "O que fazer agora?" update without waiting
+ * for the next polling cycle.
  */
 
 import { useEffect } from "react";
@@ -28,12 +26,6 @@ export function useLeadEvents() {
       es = new EventSource("/api/events/corretor");
 
       es.addEventListener("novo_lead", () => {
-        utils.dashboard.leadsPrioritarios.invalidate();
-        utils.leads.getNewWebhookLeads.invalidate();
-      });
-
-      // Lead transferido de outro corretor (timer de inatividade, redistribuição manual, etc.)
-      es.addEventListener("lead_transferido", () => {
         utils.dashboard.leadsPrioritarios.invalidate();
         utils.leads.getNewWebhookLeads.invalidate();
       });
