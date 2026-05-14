@@ -1,0 +1,266 @@
+{
+  "query": "SHOW COLUMNS FROM projects;\nSHOW TABLES LIKE 'tipologias';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SHOW COLUMNS FROM projects;\nSHOW TABLES LIKE 'tipologias';",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "nome",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "construtora",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "endereco",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "bairro",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cidade",
+      "Type": "varchar(100)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "Su00e3o Paulo",
+      "Extra": ""
+    },
+    {
+      "Field": "estado",
+      "Type": "varchar(2)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "SP",
+      "Extra": ""
+    },
+    {
+      "Field": "zona",
+      "Type": "enum('norte','sul','leste','oeste','centro')",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "descricao",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "tipo",
+      "Type": "enum('mcmv','sfh','outro')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "mcmv",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('ativo','inativo','esgotado')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "ativo",
+      "Extra": ""
+    },
+    {
+      "Field": "valorMinimo",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "valorMaximo",
+      "Type": "bigint",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "metragemMinima",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "metragemMaxima",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dormitorios",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "vagas",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "imagemPrincipal",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "imagensAdicionais",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "enquadramento",
+      "Type": "enum('HIS1','HIS2','HMP','R2V')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "developer",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "logoUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "bookUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "construtoraId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "imagemCapaUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "bookPdfUrl",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "linkMateriais",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "regiao",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "latitude",
+      "Type": "decimal(10,8)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "longitude",
+      "Type": "decimal(11,8)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nnome\tvarchar(255)\tNO\tMUL\tNULL\t\nconstrutora\tvarchar(255)\tYES\t\tNULL\t\nendereco\ttext\tYES\t\tNULL\t\nbairro\tvarchar(100)\tYES\t\tNULL\t\ncidade\tvarchar(100)\tNO\tMUL\tSu00e3o Paulo\t\nestado\tvarchar(2)\tNO\t\tSP\t\nzona\tenum('norte','sul','leste','oeste','centro')\tYES\tMUL\tNULL\t\ndescricao\ttext\tYES\t\tNULL\t\ntipo\tenum('mcmv','sfh','outro')\tNO\tMUL\tmcmv\t\nstatus\tenum('ativo','inativo','esgotado')\tNO\tMUL\tativo\t\nvalorMinimo\tbigint\tYES\t\tNULL\t\nvalorMaximo\tbigint\tYES\t\tNULL\t\nmetragemMinima\tint\tYES\t\tNULL\t\nmetragemMaxima\tint\tYES\t\tNULL\t\ndormitorios\tvarchar(50)\tYES\t\tNULL\t\nvagas\tint\tYES\t\t0\t\nimagemPrincipal\ttext\tYES\t\tNULL\t\nimagensAdicionais\ttext\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nenquadramento\tenum('HIS1','HIS2','HMP','R2V')\tYES\t\tNULL\t\ndeveloper\tvarchar(255)\tYES\t\tNULL\t\nlogoUrl\ttext\tYES\t\tNULL\t\nbookUrl\ttext\tYES\t\tNULL\t\nconstrutoraId\tint\tYES\t\tNULL\t\nimagemCapaUrl\ttext\tYES\t\tNULL\t\nbookPdfUrl\ttext\tYES\t\tNULL\t\nlinkMateriais\ttext\tYES\t\tNULL\t\nregiao\tvarchar(255)\tYES\t\tNULL\t\nlatitude\tdecimal(10,8)\tYES\t\tNULL\t\nlongitude\tdecimal(11,8)\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}
