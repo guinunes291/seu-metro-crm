@@ -543,11 +543,12 @@ function DashboardContent({
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
 
   // Leads prioritários para badge, banner e modal agenda
-  // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
+  // SSE invalida a query instantaneamente; 60s é apenas fallback para quando a conexão cai.
+  // staleTime 55s evita refetch no foco da janela enquanto o dado ainda é recente.
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 30 * 1000,
-    staleTime: 0,
+    refetchInterval: 60 * 1000,
+    staleTime: 55 * 1000,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +
