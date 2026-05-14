@@ -296,10 +296,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
+  payload.max_tokens = 8192;
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -312,17 +309,9 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  // Retry com backoff exponencial para erros 429 (rate limit)
-  const MAX_RETRIES = 3;
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    if (attempt > 0) {
-      // Backoff: 2s, 4s, 8s
-      const delayMs = Math.pow(2, attempt) * 1000;
-      await new Promise(resolve => setTimeout(resolve, delayMs));
-    }
-
+  const maxRetries = 4;
+  const baseDelay = 2000;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     const response = await fetch(resolveApiUrl(), {
       method: "POST",
       headers: {
@@ -335,24 +324,16 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     if (response.ok) {
       return (await response.json()) as InvokeResult;
     }
-
-    const errorText = await response.text();
-
-    if (response.status === 429) {
-      // Rate limit: tenta novamente com backoff
-      lastError = new Error(
-        `O assistente de IA está com muitas solicitações no momento. Aguarde alguns segundos e tente novamente.`
-      );
-      console.warn(`[LLM] Rate limit atingido (tentativa ${attempt + 1}/${MAX_RETRIES + 1}). Aguardando...`);
+    if (response.status === 429 && attempt < maxRetries) {
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.warn(`[LLM] Rate limit atingido — aguardando ${delay}ms antes de tentar novamente (tentativa ${attempt + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
       continue;
     }
-
-    // Outros erros: falha imediata
+    const errorText = await response.text();
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );
   }
-
-  // Esgotou todas as tentativas com 429
-  throw lastError ?? new Error('LLM invoke failed after retries');
+  throw new Error("LLM invoke failed: máximo de tentativas atingido após rate limit");
 }
