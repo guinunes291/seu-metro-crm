@@ -312,21 +312,47 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  // Retry com backoff exponencial para erros 429 (rate limit)
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
 
-  if (!response.ok) {
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      // Backoff: 2s, 4s, 8s
+      const delayMs = Math.pow(2, attempt) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+
+    const response = await fetch(resolveApiUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (response.ok) {
+      return (await response.json()) as InvokeResult;
+    }
+
     const errorText = await response.text();
+
+    if (response.status === 429) {
+      // Rate limit: tenta novamente com backoff
+      lastError = new Error(
+        `O assistente de IA está com muitas solicitações no momento. Aguarde alguns segundos e tente novamente.`
+      );
+      console.warn(`[LLM] Rate limit atingido (tentativa ${attempt + 1}/${MAX_RETRIES + 1}). Aguardando...`);
+      continue;
+    }
+
+    // Outros erros: falha imediata
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );
   }
 
-  return (await response.json()) as InvokeResult;
+  // Esgotou todas as tentativas com 429
+  throw lastError ?? new Error('LLM invoke failed after retries');
 }
