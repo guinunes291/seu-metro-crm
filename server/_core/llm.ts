@@ -296,7 +296,10 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 8192;
+  payload.max_tokens = 32768
+  payload.thinking = {
+    "budget_tokens": 128
+  }
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -309,31 +312,21 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const maxRetries = 4;
-  const baseDelay = 2000;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const response = await fetch(resolveApiUrl(), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+  const response = await fetch(resolveApiUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
 
-    if (response.ok) {
-      return (await response.json()) as InvokeResult;
-    }
-    if (response.status === 429 && attempt < maxRetries) {
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.warn(`[LLM] Rate limit atingido — aguardando ${delay}ms antes de tentar novamente (tentativa ${attempt + 1}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-      continue;
-    }
+  if (!response.ok) {
     const errorText = await response.text();
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );
   }
-  throw new Error("LLM invoke failed: máximo de tentativas atingido após rate limit");
+
+  return (await response.json()) as InvokeResult;
 }

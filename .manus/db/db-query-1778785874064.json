@@ -1,9 +1,0 @@
-{
-  "query": "ALTER TABLE `projects`\n  ADD COLUMN `data_entrega` VARCHAR(50) NULL,\n  ADD COLUMN `stand_vendas` TEXT NULL,\n  ADD COLUMN `link_tabela` TEXT NULL;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute ALTER TABLE `projects`\n  ADD COLUMN `data_entrega` VARCHAR(50) NULL,\n  ADD COLUMN `stand_vendas` TEXT NULL,\n  ADD COLUMN `link_tabela` TEXT NULL;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 833
-}

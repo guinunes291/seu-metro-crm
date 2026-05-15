@@ -179,9 +179,6 @@ export async function executarPriorizacaoDiaria(): Promise<void> {
     } catch (err) {
       console.error(`[Agente Priorização] Erro para corretor ${corretor.id}:`, err);
     }
-
-    // Pausa entre corretores para não estourar quota da API em rajada
-    await new Promise(resolve => setTimeout(resolve, 1500));
   }
 
   await setSystemConfig(PRIORIZACAO_LAST_RUN_KEY, hoje);

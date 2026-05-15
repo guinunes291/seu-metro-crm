@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, sql, gte, lte, lt, inArray, notInArray, gt, or, isNull, isNotNull, ne, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import * as mysql from "mysql2/promise";
+import mysql from "mysql2/promise";
 import { 
   InsertUser, users, 
   projects, InsertProject, Project,
@@ -114,7 +114,7 @@ export async function getDb() {
         enableKeepAlive: true,
         keepAliveInitialDelay: 0,
       });
-      _db = drizzle(_pool!) as any;
+      _db = drizzle(_pool);
       console.log('[Database] Pool criado com sucesso');
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
@@ -1007,17 +1007,17 @@ export async function getAllLeads(options?: {
   
   // Filtro por status
   if (options?.status) {
-    conditions.push(eq(leads.status, options.status as any));
+    conditions.push(eq(leads.status, options.status));
   }
-
+  
   // Filtro por projeto
   if (options?.projectId) {
     conditions.push(eq(leads.projectId, options.projectId));
   }
-
+  
   // Filtro por origem
   if (options?.origem) {
-    conditions.push(eq(leads.origem, options.origem as any));
+    conditions.push(eq(leads.origem, options.origem));
   }
   
   // Filtro por corretor específico (quando selecionado no dropdown)
@@ -1055,10 +1055,10 @@ export async function getAllLeads(options?: {
   // 2. Aguardando Atendimento sem ADS (mais recentes primeiro)
   // 3. Facebook ADS + Em Atendimento (mais recentes primeiro)
   // 4. Demais leads (mais recentes primeiro)
-  const leadsResult = await (db.select({
+  const leadsResult = await db.select({
     ...leads,
     corretorNome: users.name,
-  } as any) as any).from(leads)
+  }).from(leads)
     .leftJoin(users, eq(leads.corretorId, users.id))
     .where(whereClause)
     .orderBy(
@@ -1125,17 +1125,17 @@ export async function getLeadsByCorretor(corretorId: number, options?: {
   
   // Filtro por status
   if (options?.status && options.status !== 'all') {
-    conditions.push(eq(leads.status, options.status as any));
+    conditions.push(eq(leads.status, options.status));
   }
-
+  
   // Filtro por projeto
   if (options?.projectId) {
     conditions.push(eq(leads.projectId, options.projectId));
   }
-
+  
   // Filtro por origem
   if (options?.origem && options.origem !== 'all') {
-    conditions.push(eq(leads.origem, options.origem as any));
+    conditions.push(eq(leads.origem, options.origem));
   }
   
   // Filtro por data de criação
@@ -1362,18 +1362,16 @@ export async function getLeadsPendentesFollowup() {
   if (!db) return [];
 
   const now = new Date();
-  // Cap de 48h evita reprocessar leads antigos que já deveriam ter sido tratados
-  const limiteAnterior = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  // LIMIT 1000 para evitar full table scan com 31k+ leads
   return await db.select().from(leads)
     .where(
       and(
         lte(leads.proximoFollowup, now),
-        gte(leads.proximoFollowup, limiteAnterior),
         inArray(leads.status, ["aguardando_atendimento", "em_atendimento", "agendado"])
       )
     )
     .orderBy(leads.proximoFollowup)
-    .limit(100);
+    .limit(1000);
 }
 
 // Retorna contagem de leads "parados" por faixa de dias sem interação.
@@ -1387,7 +1385,7 @@ export async function getResumoLeadsParados(corretoresIds?: number[] | null): Pr
 
   const statusAtivos = ['aguardando_atendimento', 'em_atendimento', 'agendado', 'visita_realizada', 'analise_credito'];
   const baseConditions: any[] = [
-    inArray(leads.status, statusAtivos as any),
+    inArray(leads.status, statusAtivos),
     eq(leads.naLixeira, false),
   ];
   if (corretoresIds && corretoresIds.length > 0) {
@@ -1445,7 +1443,7 @@ export async function getLeadsPrioritariosCorretor(corretorId: number): Promise<
       .where(and(
         eq(leads.corretorId, corretorId),
         lte(leads.proximoFollowup, agora),
-        inArray(leads.status, statusAtivos as any),
+        inArray(leads.status, statusAtivos),
         eq(leads.naLixeira, false),
       ))
       .orderBy(asc(leads.proximoFollowup))
@@ -1457,7 +1455,7 @@ export async function getLeadsPrioritariosCorretor(corretorId: number): Promise<
       .where(and(
         eq(leads.corretorId, corretorId),
         eq(leads.temperatura, 'quente'),
-        inArray(leads.status, statusAtivos as any),
+        inArray(leads.status, statusAtivos),
         eq(leads.naLixeira, false),
         or(
           isNull(leads.ultimaInteracao),
@@ -3085,93 +3083,28 @@ export async function getProgressoMeta(corretorId: number, mes: number, ano: num
 export async function getProgressoMetasTodosCorretores(mes: number, ano: number) {
   const db = await getDb();
   if (!db) return [];
-
-  const dataInicio = new Date(ano, mes - 1, 1);
-  const dataFim = new Date(ano, mes, 0, 23, 59, 59, 999);
-
-  // 4 queries paralelas em vez de (2 queries × N corretores) — reduz de O(2N) para O(4)
-  const [corretores, todasMetas, leadsAgregados, vgvAgregado] = await Promise.all([
-    db.select({ id: users.id, name: users.name, status: users.status })
-      .from(users)
-      .where(eq(users.role, 'corretor')),
-
-    db.select().from(metas)
-      .where(and(eq(metas.mes, mes), eq(metas.ano, ano))),
-
-    db.select({
-      corretorId: leads.corretorId,
-      status: leads.status,
-      count: sql<number>`COUNT(*)`,
-    })
-      .from(leads)
-      .where(and(
-        eq(leads.origem, 'captacao_corretor'),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim),
-      ))
-      .groupBy(leads.corretorId, leads.status),
-
-    db.select({
-      corretorId: leads.corretorId,
-      total: sql<number>`COALESCE(SUM(${projects.valorMinimo}), 0)`,
-    })
-      .from(leads)
-      .leftJoin(projects, eq(leads.projectId, projects.id))
-      .where(and(
-        eq(leads.status, 'contrato_fechado'),
-        gte(leads.createdAt, dataInicio),
-        lte(leads.createdAt, dataFim),
-      ))
-      .groupBy(leads.corretorId),
-  ]);
-
-  const metasMap = new Map(todasMetas.map(m => [m.corretorId, m]));
-
-  type LeadStats = { totalLeads: number; agendamentos: number; visitas: number; contratos: number };
-  const leadsMap = new Map<number, LeadStats>();
-  for (const row of leadsAgregados) {
-    const cid = row.corretorId ?? 0;
-    if (!leadsMap.has(cid)) leadsMap.set(cid, { totalLeads: 0, agendamentos: 0, visitas: 0, contratos: 0 });
-    const s = leadsMap.get(cid)!;
-    s.totalLeads += Number(row.count);
-    if (row.status === 'agendado') s.agendamentos = Number(row.count);
-    if (row.status === 'visita_realizada') s.visitas = Number(row.count);
-    if (row.status === 'contrato_fechado') s.contratos = Number(row.count);
-  }
-
-  const vgvMap = new Map(vgvAgregado.map(r => [r.corretorId, Number(r.total)]));
-
-  return corretores.map(corretor => {
-    const meta = metasMap.get(corretor.id);
-    if (!meta) return { corretor: { id: corretor.id, nome: corretor.name || 'Sem nome', status: corretor.status }, progresso: null };
-
-    const s = leadsMap.get(corretor.id) ?? { totalLeads: 0, agendamentos: 0, visitas: 0, contratos: 0 };
-    const vgvRealizado = vgvMap.get(corretor.id) ?? 0;
-
-    const progressoLeads       = meta.metaLeads        > 0 ? Math.round((s.totalLeads   / meta.metaLeads)        * 100) : 0;
-    const progressoAgendamentos = meta.metaAgendamentos > 0 ? Math.round((s.agendamentos / meta.metaAgendamentos) * 100) : 0;
-    const progressoVisitas      = meta.metaVisitas      > 0 ? Math.round((s.visitas      / meta.metaVisitas)      * 100) : 0;
-    const progressoContratos    = meta.metaContratos    > 0 ? Math.round((s.contratos    / meta.metaContratos)    * 100) : 0;
-    const progressoVGV          = meta.metaVGV          > 0 ? Math.round((vgvRealizado   / meta.metaVGV)          * 100) : 0;
-
-    const progressoGeral = Math.round(
-      Math.min(20, (progressoLeads        / 100) * 20) +
-      Math.min(20, (progressoAgendamentos / 100) * 20) +
-      Math.min(20, (progressoVisitas      / 100) * 20) +
-      Math.min(20, (progressoContratos    / 100) * 20) +
-      Math.min(20, (progressoVGV          / 100) * 20),
-    );
-
-    return {
-      corretor: { id: corretor.id, nome: corretor.name || 'Sem nome', status: corretor.status },
-      progresso: {
-        meta,
-        realizado: { leads: s.totalLeads, agendamentos: s.agendamentos, visitas: s.visitas, contratos: s.contratos, vgv: vgvRealizado },
-        progresso: { leads: progressoLeads, agendamentos: progressoAgendamentos, visitas: progressoVisitas, contratos: progressoContratos, vgv: progressoVGV },
-        progressoGeral,
+  
+  // Buscar todos os corretores ativos
+  const corretores = await db.select()
+    .from(users)
+    .where(eq(users.role, 'corretor'));
+  
+  const resultados = [];
+  
+  for (const corretor of corretores) {
+    const progresso = await getProgressoMeta(corretor.id, mes, ano);
+    
+    resultados.push({
+      corretor: {
+        id: corretor.id,
+        nome: corretor.name || 'Sem nome',
+        status: corretor.status,
       },
-    };
-  });
+      progresso,
+    });
+  }
+  
+  return resultados;
 }
 
 
@@ -3767,8 +3700,8 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
     nome: dadosLead.nome,
     email: dadosLead.email,
     telefone: dadosLead.telefone,
-    origem: (dadosLead.origem || webhook.fonte) as any,
-    projectId: dadosLead.projectId || webhook.projectIdPadrao || null,
+    origem: dadosLead.origem || webhook.fonte,
+    projectId: dadosLead.projectId || webhook.projectId || null,
     status: 'novo',
     campanha: dadosLead.campanha,
     faixaRenda: dadosLead.faixaRenda,
@@ -3803,15 +3736,15 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
         try {
           const { enviarNotificacaoLeadWebhook } = await import('./emailService');
           await enviarNotificacaoLeadWebhook({
-            corretorNome: corretor.name ?? '',
-            corretorEmail: corretor.email ?? '',
+            corretorNome: corretor.name,
+            corretorEmail: corretor.email,
             leadNome: leadCriado.nome,
             leadTelefone: leadCriado.telefone,
-            leadEmail: leadCriado.email ?? undefined,
-            leadOrigem: leadCriado.origem || '',
+            leadEmail: leadCriado.email || undefined,
+            leadOrigem: leadCriado.origem,
             leadProjeto: projeto?.nome,
-            leadCampanha: leadCriado.campanha ?? undefined,
-            leadFaixaRenda: leadCriado.faixaRenda ?? undefined,
+            leadCampanha: leadCriado.campanha || undefined,
+            leadFaixaRenda: leadCriado.faixaRenda || undefined,
           });
           console.log('[Webhook] Notificação por email enviada para:', corretor.email);
         } catch (emailError) {
@@ -3824,37 +3757,22 @@ export async function processarLeadWebhook(webhookToken: string, dadosLead: {
           await notificarCorretorLeadWebhook({
             corretor: {
               id: corretor.id,
-              nome: corretor.name ?? '',
-              telefone: corretor.telefone ?? undefined,
-              email: corretor.email ?? undefined,
+              nome: corretor.name,
+              telefone: corretor.telefone || undefined,
+              email: corretor.email,
             },
             lead: {
               id: leadCriado.id,
               nome: leadCriado.nome,
               telefone: leadCriado.telefone,
-              email: leadCriado.email ?? undefined,
+              email: leadCriado.email || undefined,
               status: leadCriado.status,
-              origem: leadCriado.origem ?? undefined,
+              origem: leadCriado.origem,
               projeto: projeto?.nome,
             },
           });
         } catch (zapierError) {
           console.error('[Webhook] Erro ao notificar via Zapier:', zapierError);
-        }
-
-        // Enviar push notification (funciona mesmo com aba fechada)
-        try {
-          const { sendPushNotification } = await import('./pushNotifications');
-          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
-          await sendPushNotification(corretor.id, {
-            title: '🔥 Novo Lead!',
-            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
-            url: `/leads?leadId=${leadCriado.id}`,
-            tag: `lead-novo-${leadCriado.id}`,
-            requireInteraction: true,
-          });
-        } catch (pushError) {
-          console.error('[Webhook] Erro ao enviar push notification:', pushError);
         }
       }
     } catch (error) {
@@ -3918,7 +3836,7 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
     nome: dadosLead.nome,
     email: dadosLead.email,
     telefone: dadosLead.telefone,
-    origem: (dadosLead.origem || webhook.fonte) as any,
+    origem: dadosLead.origem || webhook.fonte,
     projectId: dadosLead.projectId || webhook.projectIdPadrao || undefined,
     status: 'novo',
     faixaRenda: dadosLead.faixaRenda,
@@ -3940,7 +3858,7 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
   
   // Buscar configuração da fila Foco (para obter URL do webhook de notificação WhatsApp)
   const configFoco = await getConfiguracaoProjetoFoco();
-  const webhookNotificacaoUrl = (configFoco as any)?.webhookNotificacaoCorretor as string | undefined;
+  const webhookNotificacaoUrl = configFoco?.webhookNotificacaoCorretor || undefined;
 
   // Distribuir APENAS para corretores da Fila Foco (SEM LIMITES)
   const corretorId = await getProximoCorretorFilaFoco();
@@ -3988,15 +3906,15 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
         try {
           const { enviarNotificacaoLeadWebhook } = await import('./emailService');
           await enviarNotificacaoLeadWebhook({
-            corretorNome: corretor.name ?? '',
-            corretorEmail: corretor.email ?? '',
+            corretorNome: corretor.name,
+            corretorEmail: corretor.email,
             leadNome: leadCriado.nome,
             leadTelefone: leadCriado.telefone,
-            leadEmail: leadCriado.email ?? undefined,
-            leadOrigem: leadCriado.origem || '',
+            leadEmail: leadCriado.email || undefined,
+            leadOrigem: leadCriado.origem,
             leadProjeto: projeto?.nome,
             leadCampanha: undefined,
-            leadFaixaRenda: leadCriado.faixaRenda ?? undefined,
+            leadFaixaRenda: leadCriado.faixaRenda || undefined,
           });
           console.log('[Webhook Foco] Notificação por email enviada para:', corretor.email);
         } catch (emailError) {
@@ -4009,17 +3927,17 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
           const zapierResult = await notificarCorretorLeadWebhook({
             corretor: {
               id: corretor.id,
-              nome: corretor.name ?? '',
-              telefone: corretor.telefone ?? undefined,
-              email: corretor.email ?? undefined,
+              nome: corretor.name,
+              telefone: corretor.telefone || undefined,
+              email: corretor.email,
             },
             lead: {
               id: leadCriado.id,
               nome: leadCriado.nome,
               telefone: leadCriado.telefone,
-              email: leadCriado.email ?? undefined,
+              email: leadCriado.email || undefined,
               status: leadCriado.status,
-              origem: leadCriado.origem ?? undefined,
+              origem: leadCriado.origem,
               projeto: projeto?.nome,
             },
             webhookUrl: webhookNotificacaoUrl, // URL específica da fila Foco configurada pelo admin
@@ -4032,26 +3950,11 @@ export async function processarLeadWebhookFoco(webhookToken: string, dadosLead: 
         } catch (zapierError) {
           console.error('[Webhook Foco] Erro ao notificar via Zapier:', zapierError);
         }
-
-        // Enviar push notification (funciona mesmo com aba fechada)
-        try {
-          const { sendPushNotification } = await import('./pushNotifications');
-          const projetoNome = projeto?.nome || leadCriado.projetoCustom;
-          await sendPushNotification(corretor.id, {
-            title: '🔥 Novo Lead!',
-            body: projetoNome ? `${leadCriado.nome} — ${projetoNome}` : leadCriado.nome,
-            url: `/leads?leadId=${leadCriado.id}`,
-            tag: `lead-novo-${leadCriado.id}`,
-            requireInteraction: true,
-          });
-        } catch (pushError) {
-          console.error('[Webhook Foco] Erro ao enviar push notification:', pushError);
-        }
       }
     } catch (error) {
       console.error('[Webhook Foco] Erro ao notificar corretor:', error);
     }
-
+    
     console.log(`[Webhook Foco] Lead ${leadCriado.id} distribuído para corretor ${corretorId} (Fila Foco)`);
 
     // Push notification nativa (non-blocking) -- funciona mesmo com aba fechada / PWA
@@ -4849,11 +4752,11 @@ export async function getFollowUpsDoDiaExpandido(
     
     // Filtro por origem (aplicado no lead)
     if (origem) {
-      conditions.push(eq(leads.origem, origem as any));
+      conditions.push(eq(leads.origem, origem));
     }
-
+    
     // Query com leftJoin
-    let query: any = db.select({
+    let query = db.select({
       id: followUps.id,
       leadId: followUps.leadId,
       dataFollowUp: followUps.dataFollowUp,
@@ -5975,7 +5878,6 @@ export async function getProgressoMetasDiarias(corretorId?: number): Promise<any
       whatsappRespondidos: 0,
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
-      analiseCreditoEnviadas: 0,
       vendasRealizadas: 0,
       pontuacaoTotal: 0,
     };
@@ -6238,12 +6140,12 @@ export async function verificarConquistasRanking(): Promise<number> {
   ];
   
   for (const { posicao, codigo } of conquistasRanking) {
-    if (ranking[posicao - 1] && (ranking[posicao - 1] as any).vgvTotal > 0) {
+    if (ranking[posicao - 1] && ranking[posicao - 1].metricas.vgv > 0) {
       const conquista = await concederConquista(
-        (ranking[posicao - 1] as any).corretorId,
+        ranking[posicao - 1].corretor.id,
         codigo,
         {
-          valor: (ranking[posicao - 1] as any).vgvTotal,
+          valor: ranking[posicao - 1].metricas.vgv,
           posicao,
           periodoInicio: inicioSemana,
           periodoFim: fimSemana,
@@ -6742,12 +6644,12 @@ export async function updateAgendamentoStatus(
     const lead = await getLeadById(agendamento.leadId);
     if (lead && lead.status !== 'visita_realizada') {
       await updateLead(agendamento.leadId, { status: 'visita_realizada' });
-      await registrarTransicaoStatus({
+      await registrarAlteracaoStatus({
         leadId: agendamento.leadId,
         corretorId: corretorId || agendamento.corretorId,
         statusAnterior: lead.status,
         statusNovo: 'visita_realizada',
-        observacao: `Status alterado automaticamente ao marcar agendamento como realizado`
+        observacoes: `Status alterado automaticamente ao marcar agendamento como realizado`
       });
     }
   }
@@ -8525,16 +8427,16 @@ export async function getLeadsComInteracaoHoje(corretorId: number, hoje: Date, a
   const db = await getDb();
   if (!db) return [];
   
-  // Buscar follow-ups registrados hoje
+  // Buscar follow-ups que tiveram ultimaTentativa atualizada hoje
   return await db.select({
     leadId: followUps.leadId,
-    ultimaTentativa: followUps.dataRegistro,
+    ultimaTentativa: followUps.ultimaTentativa,
   })
     .from(followUps)
     .where(and(
       eq(followUps.corretorId, corretorId),
-      gte(followUps.dataRegistro, hoje),
-      lt(followUps.dataRegistro, amanha)
+      gte(followUps.ultimaTentativa, hoje),
+      lt(followUps.ultimaTentativa, amanha)
     ));
 }
 
@@ -8627,31 +8529,34 @@ export async function criarOuAtualizarFollowUp(leadId: number, corretorId: numbe
     .from(followUps)
     .where(and(
       eq(followUps.leadId, leadId),
-      eq(followUps.status, "pendente")
+      eq(followUps.status, "ativo")
     ))
     .limit(1);
-
+  
   if (existente[0]) {
     // Já existe, apenas atualizar próxima tentativa para amanhã
     const { proximoDiaAs9h } = await import('./timezone');
     const proximaTentativa = proximoDiaAs9h();
-
+    
     await db.update(followUps)
-      .set({ dataFollowUp: proximaTentativa })
+      .set({ proximaTentativa })
       .where(eq(followUps.id, existente[0].id));
-
+    
     return existente[0].id;
   }
-
+  
   // Criar novo follow-up para amanhã às 9h
   const { proximoDiaAs9h: _pda9h } = await import('./timezone');
   const proximaTentativa = _pda9h();
-
+  
   const result = await db.insert(followUps).values({
     leadId,
     corretorId,
-    dataFollowUp: proximaTentativa,
-    status: "pendente",
+    tentativaAtual: 1, // Primeira tentativa
+    maxTentativas: 3,
+    proximaTentativa,
+    status: "ativo",
+    historicoTentativas: "[]"
   });
   
   return result[0].insertId;
@@ -9436,8 +9341,8 @@ export async function cancelarFollowUpsPendentes(leadId: number) {
         eq(followUps.status, 'pendente')
       ));
     
-    console.log(`[cancelarFollowUpsPendentes] Lead ${leadId}: ${(resultado as any)[0]?.affectedRows || 0} follow-ups cancelados`);
-    return (resultado as any)[0]?.affectedRows || 0;
+    console.log(`[cancelarFollowUpsPendentes] Lead ${leadId}: ${resultado.rowsAffected || 0} follow-ups cancelados`);
+    return resultado.rowsAffected || 0;
     
   } catch (error) {
     console.error('[cancelarFollowUpsPendentes] Erro:', error);
@@ -9471,7 +9376,7 @@ export async function cancelarFollowUpsPorTransferencia(leadId: number, corretor
         eq(followUps.status, 'pendente')
       ));
 
-    const cancelados = (resultado as any)[0]?.affectedRows || 0;
+    const cancelados = resultado.rowsAffected || 0;
     console.log(`[cancelarFollowUpsPorTransferencia] Lead ${leadId}: ${cancelados} follow-ups do corretor ${corretorAnteriorId} cancelados`);
     return cancelados;
   } catch (error) {
@@ -9650,9 +9555,9 @@ async function garantirAtividadeDiariaExiste(corretorId: number, data: Date) {
       whatsappRespondidos: 0,
       agendamentosConfirmados: 0,
       visitasRealizadas: 0,
-      analiseCreditoEnviadas: 0,
+      analisesCredito: 0,
       contratosFechados: 0,
-      pontuacaoTotal: 0,
+      pontuacao: 0,
     });
     console.log(`[garantirAtividadeDiariaExiste] Criado registro para corretor ${corretorId} na data ${data.toISOString().split('T')[0]}`);
   }
@@ -9695,11 +9600,10 @@ export async function sincronizarInteracoesDoDia() {
   const corretoresMap = new Map<number, { ligacoes: number, ligacoesAtendidas: number, whatsapp: number, whatsappRespondidos: number }>();
   
   for (const interacao of interacoesHoje) {
-    if (!interacao.corretorId) continue;
     if (!corretoresMap.has(interacao.corretorId)) {
       corretoresMap.set(interacao.corretorId, { ligacoes: 0, ligacoesAtendidas: 0, whatsapp: 0, whatsappRespondidos: 0 });
     }
-
+    
     const corretor = corretoresMap.get(interacao.corretorId)!;
     
     if (interacao.tipo === 'ligacao') {
@@ -9770,7 +9674,6 @@ export async function sincronizarVisitasDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const visita of visitasHoje) {
-    if (!visita.corretorId) continue;
     // Garantir que existe registro antes de UPDATE
     await garantirAtividadeDiariaExiste(visita.corretorId, hoje);
     
@@ -9825,7 +9728,6 @@ export async function sincronizarDocumentacoesDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const doc of documentacoesHoje) {
-    if (!doc.corretorId) continue;
     // Garantir que existe registro antes de UPDATE
     await garantirAtividadeDiariaExiste(doc.corretorId, hoje);
     
@@ -9880,7 +9782,6 @@ export async function sincronizarAnalisesCreditoDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const analise of analisesHoje) {
-    if (!analise.corretorId) continue;
     // Garantir que existe registro antes de UPDATE
     await garantirAtividadeDiariaExiste(analise.corretorId, hoje);
     
@@ -9937,7 +9838,6 @@ export async function sincronizarContratosDoDia() {
   
   // Atualizar contadores para cada corretor
   for (const contrato of contratosHoje) {
-    if (!contrato.corretorId) continue;
     // Garantir que existe registro antes de UPDATE
     await garantirAtividadeDiariaExiste(contrato.corretorId, hoje);
     
@@ -9945,7 +9845,7 @@ export async function sincronizarContratosDoDia() {
       .update(atividadesDiarias)
       .set({
         contratosFechados: contrato.total,
-        vgvDia: Number(contrato.vgvTotal),
+        vgv: contrato.vgvTotal.toString(),
       })
       .where(
         and(
@@ -11276,7 +11176,7 @@ export async function criarNovoContrato(dados: {
       dataContrato.setHours(0, 0, 0, 0);
       await garantirAtividadeDiariaExiste(dados.corretorId, dataContrato);
       await db.update(atividadesDiarias)
-        .set({ analiseCreditoEnviadas: sql`${atividadesDiarias.analiseCreditoEnviadas} + 1` })
+        .set({ analisesCredito: sql`${atividadesDiarias.analisesCredito} + 1` })
         .where(
           and(
             eq(atividadesDiarias.corretorId, dados.corretorId),

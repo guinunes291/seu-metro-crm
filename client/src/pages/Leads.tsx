@@ -4,12 +4,14 @@ import { trpc } from "@/lib/trpc";
 import {
   Phone, Mail, Building2, Calendar, MessageSquare, Search,
   Clock, AlertCircle, CheckCircle2, XCircle, Eye, LayoutGrid, List, Plus, UserPlus, Loader2, MessageCircle, CalendarPlus, FileText,
-  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, MoreHorizontal, Zap, ChevronDown, ChevronUp, SlidersHorizontal
+  Shield, Flame, Thermometer, Snowflake, BookOpen, Copy, Sparkles, ChevronDown, ChevronUp, RefreshCw,
+  FolderOpen, Briefcase, User as UserIcon, MoreHorizontal, Zap, SlidersHorizontal
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -66,6 +68,7 @@ import { TimerLead } from "@/components/TimerLead";
 import { AtribuirCorretorDialog } from "@/components/AtribuirCorretorDialog";
 import { TransferirEmLoteDialog } from "@/components/TransferirEmLoteDialog";
 import TransferirLeadButton from "@/components/TransferirLeadButton";
+import { LeadAiDicas } from "@/components/LeadAiDicas";
 import ReatribuirLeadButton from "@/components/ReatribuirLeadButton";
 import { DateRangeFilter, DateRangePreset } from "@/components/DateRangeFilter";
 import { getDateRangeFromPreset } from "@/lib/dateRangeUtils";
@@ -223,14 +226,12 @@ export default function Leads() {
   });
   const analisarLeadMutation = trpc.ia.analisarLeadPosInteracao.useMutation({
     onSuccess: (data) => {
-      const tempLabel: Record<string, string> = { quente: '🔥 Quente', morno: '🌡️ Morno', frio: '❄️ Frio' };
+      const tempLabel: Record<string, string> = { quente: '🔥 Quente', morno: '🌡 Morno', frio: '❄️ Frio' };
       toast.success(
-        `IA: ${tempLabel[data.temperatura] ?? data.temperatura} • ${data.proximaAcao} — análise salva nas observações do lead`,
-        { duration: 8000 }
+        `IA: temperatura → ${tempLabel[data.temperatura] ?? data.temperatura} • ${data.proximaAcao}`,
+        { duration: 6000 }
       );
-      // Recarregar lead para mostrar observações atualizadas
       utils.leads.list.invalidate();
-      utils.notifications.unreadCount.invalidate();
     },
   });
 
@@ -1017,7 +1018,7 @@ export default function Leads() {
                             {statusLabels[lead.status]}
                           </Badge>
                           <div className="flex flex-col gap-1">
-                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact />
+                            <LeadTimer createdAt={lead.createdAt} timerAtivo={lead.timerAtivo ?? false} status={lead.status} compact />
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
@@ -1206,6 +1207,9 @@ export default function Leads() {
                           </p>
                         </div>
                       )}
+                      
+                      {/* Dicas Rápidas da IA */}
+                      <LeadAiDicas leadId={lead.id} />
                     </CardContent>
                   </Card>
                 );
@@ -1321,7 +1325,7 @@ export default function Leads() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
-                            <LeadTimer createdAt={lead.createdAt} status={lead.status} compact showIcon={false} />
+                            <LeadTimer createdAt={lead.createdAt} timerAtivo={lead.timerAtivo ?? false} status={lead.status} compact showIcon={false} />
                             <TimerLead 
                               timestampRecebimento={lead.timestampRecebimento} 
                               timerAtivo={lead.timerAtivo ?? false}
@@ -1470,7 +1474,7 @@ export default function Leads() {
 
         {/* Dialog de detalhes do lead */}
         <Dialog open={detailsDialog} onOpenChange={setDetailsDialog}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">{selectedLead?.nome}</DialogTitle>
               <DialogDescription>
@@ -1498,30 +1502,32 @@ export default function Leads() {
                 <div>
                   <h3 className="font-semibold mb-3">Informações de Contato</h3>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${selectedLead.telefone}`} className="hover:underline">
-                        {selectedLead.telefone}
-                      </a>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`tel:${selectedLead.telefone}`} className="hover:underline font-medium">
+                          {selectedLead.telefone}
+                        </a>
+                      </div>
                       {selectedLead.telefone && (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="ml-2 bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
+                          className="w-fit bg-green-50 hover:bg-green-100 border-green-200 text-green-700"
                           onClick={() => {
                             const projeto = projects?.find(p => p.id === selectedLead.projectId)?.nome || selectedLead.projetoCustom;
                             window.open(gerarLinkWhatsApp(selectedLead.telefone, selectedLead.nome, projeto), '_blank');
                           }}
                         >
                           <MessageCircle className="h-4 w-4 mr-1" />
-                          WhatsApp
+                          Abrir WhatsApp
                         </Button>
                       )}
                     </div>
                     {selectedLead.email && (
                       <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <a href={`mailto:${selectedLead.email}`} className="hover:underline">
+                        <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <a href={`mailto:${selectedLead.email}`} className="hover:underline break-all">
                           {selectedLead.email}
                         </a>
                       </div>
@@ -1683,6 +1689,52 @@ export default function Leads() {
                             Enviar para Análise
                           </Button>
                         )}
+
+                        {/* Botão de Documentação — abre Google Forms com dados pré-preenchidos */}
+                        {selectedLead.status !== 'perdido' && selectedLead.status !== 'contrato_fechado' && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-50">
+                                <FolderOpen className="h-4 w-4 mr-1" />
+                                Enviar Documentação
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Regime de Trabalho</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  // Autônomo: entry.3cc060c4=Corretor, entry.0f929fa2=NomeCliente, entry.39c16c71=Telefone
+                                  const nome = encodeURIComponent(selectedLead.nome || '');
+                                  const tel = encodeURIComponent(selectedLead.telefone || '');
+                                  const corretor = encodeURIComponent(user?.name || '');
+                                  window.open(
+                                    `https://docs.google.com/forms/d/e/1FAIpQLSfTVPeCOqZtu5J3oaIq1kFIzGkij2uvF8TEEnWZymRJ1VHvaw/viewform?usp=pp_url&entry.3cc060c4=${corretor}&entry.0f929fa2=${nome}&entry.39c16c71=${tel}`,
+                                    '_blank'
+                                  );
+                                }}
+                              >
+                                <UserIcon className="h-4 w-4 mr-2" />
+                                Autônomo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  // CLT: entry.6cf60b1d=Corretor, entry.3dab385a=NomeCliente, entry.2f291cec=Telefone
+                                  const nome = encodeURIComponent(selectedLead.nome || '');
+                                  const tel = encodeURIComponent(selectedLead.telefone || '');
+                                  const corretor = encodeURIComponent(user?.name || '');
+                                  window.open(
+                                    `https://docs.google.com/forms/d/e/1FAIpQLSd7R0I0trmb2aHjfUn9lISSd6ZUSMUb06tXc6935u0U2JNWPw/viewform?usp=pp_url&entry.6cf60b1d=${corretor}&entry.3dab385a=${nome}&entry.2f291cec=${tel}`,
+                                    '_blank'
+                                  );
+                                }}
+                              >
+                                <Briefcase className="h-4 w-4 mr-2" />
+                                CLT
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                         
                         {/* Análise de Crédito → Contrato Fechado */}
                         {selectedLead.status === 'analise_credito' && (
@@ -1766,9 +1818,9 @@ export default function Leads() {
                     <div className="space-y-2">
                       <Label>Temperatura do Lead</Label>
                       <Select
-                        value={selectedLead.temperatura || ""}
+                        value={selectedLead.temperatura || "nenhum"}
                         onValueChange={(val) => {
-                          const novaTemp = val === "" ? null : val;
+                          const novaTemp = val === "nenhum" ? null : val;
                           updateLeadMutation.mutate({ id: selectedLead.id, data: { temperatura: novaTemp as any } });
                           setSelectedLead({ ...selectedLead, temperatura: novaTemp });
                         }}
@@ -1777,7 +1829,7 @@ export default function Leads() {
                           <SelectValue placeholder="Não classificado" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">
+                          <SelectItem value="nenhum">
                             <span className="text-muted-foreground">Não classificado</span>
                           </SelectItem>
                           <SelectItem value="quente">

@@ -16,10 +16,6 @@ export function useAuth(options?: UseAuthOptions) {
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
-    // staleTime alto: sessão não muda com frequência.
-    // Evita refetch ao trocar de página e elimina o flash de "Acesso Restrito".
-    staleTime: 10 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({

@@ -11,10 +11,13 @@ import * as path from 'path';
 const SA_PATH = path.join(__dirname, '../server/google-service-account.json');
 
 function getDriveClient() {
-  const auth = new google.auth.GoogleAuth({
-    keyFile: SA_PATH,
-    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-  });
+  // Usar env GOOGLE_SERVICE_ACCOUNT_JSON se disponível (produção),
+  // senão fallback para arquivo local (desenvolvimento)
+  const envJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  const authConfig = envJson
+    ? { credentials: JSON.parse(envJson), scopes: ['https://www.googleapis.com/auth/drive.readonly'] }
+    : { keyFile: SA_PATH, scopes: ['https://www.googleapis.com/auth/drive.readonly'] };
+  const auth = new google.auth.GoogleAuth(authConfig);
   return google.drive({ version: 'v3', auth });
 }
 

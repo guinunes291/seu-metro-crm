@@ -15,7 +15,7 @@ import { CONQUISTAS, CATEGORIAS, getNivelAtual, type Conquista } from "../../../
 import { 
   Camera, Trophy, Target, Flame, Star, Crown, Medal, Award, 
   Gem, Rocket, Flag, Sparkles, Upload, User, Calendar,
-  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, ChevronDown, Lock, Share2
+  TrendingUp, Phone, Mail, Search, Filter, ChevronRight, ChevronDown, Lock, Share2, Bell
 } from "lucide-react";
 import {
   Collapsible,
@@ -23,8 +23,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import ConquistaShareCard from "@/components/ConquistaShareCard";
-import { Bell, BellOff, BellRing } from "lucide-react";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { PushNotificationToggle } from "@/components/PushNotificationBanner";
 
 export default function MeuPerfil() {
   const { user } = useAuth();
@@ -281,7 +280,7 @@ export default function MeuPerfil() {
               <TrendingUp className="h-4 w-4 mr-2" />
               Estatísticas
             </TabsTrigger>
-            <TabsTrigger value="notificacoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="notificacoes" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               <Bell className="h-4 w-4 mr-2" />
               Notificações
             </TabsTrigger>
@@ -546,126 +545,29 @@ export default function MeuPerfil() {
           </TabsContent>
 
           {/* Tab Notificações */}
-          <TabsContent value="notificacoes">
-            <PushNotificacoesTab />
+          <TabsContent value="notificacoes" className="space-y-4">
+            <Card className="bg-slate-900 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white text-lg flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-green-400" />
+                  Notificações Push
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Receba alertas de novos leads diretamente no seu dispositivo, mesmo com a aba fechada ou o celular bloqueado.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <PushNotificationToggle />
+                <div className="text-xs text-slate-500 space-y-1">
+                  <p>• As notificações funcionam em Chrome, Edge, Firefox e Safari (iOS 16.4+)</p>
+                  <p>• Você será notificado imediatamente quando receber um novo lead</p>
+                  <p>• Clique na notificação para abrir o lead diretamente</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>
-  );
-}
-
-function PushNotificacoesTab() {
-  const { isSupported, isSubscribed, subscribe, unsubscribe } = usePushNotifications();
-  const [loading, setLoading] = useState(false);
-  const [permissao, setPermissao] = useState<NotificationPermission | null>(null);
-
-  useEffect(() => {
-    if (typeof Notification !== "undefined") {
-      setPermissao(Notification.permission);
-    }
-  }, [isSubscribed]);
-
-  async function handleToggle() {
-    setLoading(true);
-    try {
-      if (isSubscribed) {
-        await unsubscribe();
-        toast.success("Notificações push desativadas.");
-      } else {
-        const result = await subscribe();
-        if (result) {
-          toast.success("Notificações push ativadas! Você receberá alertas mesmo com a aba fechada.");
-          setPermissao("granted");
-        } else if (typeof Notification !== "undefined" && Notification.permission === "denied") {
-          toast.error("Permissão bloqueada no navegador. Habilite nas configurações do browser.");
-          setPermissao("denied");
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (!isSupported) {
-    return (
-      <Card className="bg-slate-900 border-slate-700">
-        <CardContent className="p-6 text-center">
-          <BellOff className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-          <p className="text-slate-400">Seu navegador não suporta notificações push.</p>
-          <p className="text-sm text-slate-500 mt-1">Use Chrome, Edge ou Firefox para ativar este recurso.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-slate-900 border-slate-700">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
-          {isSubscribed ? <BellRing className="h-5 w-5 text-blue-400" /> : <Bell className="h-5 w-5 text-slate-400" />}
-          Notificações Push
-        </CardTitle>
-        <CardDescription>
-          Receba alertas de novos leads diretamente no seu dispositivo, mesmo com o sistema fechado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        {/* Status atual */}
-        <div className="flex items-center justify-between p-4 rounded-lg bg-slate-800">
-          <div>
-            <p className="text-sm font-medium text-white">Status atual</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {isSubscribed
-                ? "Notificações ativas neste dispositivo/navegador"
-                : permissao === "denied"
-                ? "Permissão bloqueada — habilite nas configurações do browser"
-                : "Notificações desativadas"}
-            </p>
-          </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-            isSubscribed
-              ? "bg-emerald-500/20 text-emerald-400"
-              : permissao === "denied"
-              ? "bg-red-500/20 text-red-400"
-              : "bg-slate-700 text-slate-400"
-          }`}>
-            {isSubscribed ? "Ativo" : permissao === "denied" ? "Bloqueado" : "Inativo"}
-          </span>
-        </div>
-
-        {/* O que você receberá */}
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Você receberá notificações para:</p>
-          <ul className="space-y-1.5 text-sm text-slate-300">
-            {["🔥 Novos leads recebidos via webhook (Facebook Ads, Zapier, etc.)", "⚡ Leads distribuídos automaticamente para você"].map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {permissao === "denied" ? (
-          <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-800 text-sm text-amber-300">
-            Para habilitar, acesse as configurações do seu navegador em{" "}
-            <strong>Configurações → Privacidade e Segurança → Notificações</strong> e permita este site.
-          </div>
-        ) : (
-          <Button
-            onClick={handleToggle}
-            disabled={loading}
-            variant={isSubscribed ? "outline" : "default"}
-            className={isSubscribed ? "border-slate-600 text-slate-300 hover:bg-slate-800" : ""}
-          >
-            {loading ? "Aguarde..." : isSubscribed ? "Desativar notificações" : "Ativar notificações neste dispositivo"}
-          </Button>
-        )}
-
-        <p className="text-xs text-slate-500">
-          A ativação é por dispositivo e navegador. Para receber no celular, acesse o sistema pelo celular e ative novamente.
-        </p>
-      </CardContent>
-    </Card>
   );
 }

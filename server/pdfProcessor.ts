@@ -1,52 +1,60 @@
 /**
  * Processador de Tabelões PDF
  *
- * Pipeline sem dependências externas:
+ * Pipeline simplificado sem dependências externas (sem rclone, sem pdftotext):
  * 1. Download do PDF via HTTP (Google Drive share link ou URL direta)
  * 2. Upload para S3
- * 3. Gemini lê o PDF nativamente via file_url — resolve multi-linha e formatos variados por construtora
- * 4. Upsert de projetos + tipologias individuais no banco
+ * 3. Leitura nativa pelo Gemini via file_url (resolve multi-linha de tipologias automaticamente)
+ * 4. Upsert dos projetos no banco
  */
 
 import { invokeLLM } from './_core/llm';
 import { storagePut } from './storage';
 import { getDb } from './db';
-import { tabeloes, projects, construtoras, tipologias, historicosPrecos, logsSincronizacao } from '../drizzle/schema';
+import { tabeloes, projects, construtoras, historicosPrecos, logsSincronizacao } from '../drizzle/schema';
 import { eq, and } from 'drizzle-orm';
 
 // ─── Drive URL helpers ────────────────────────────────────────────────────────
 
 function extractDriveFileId(url: string): string | null {
-  const patterns = [/\/file\/d\/([a-zA-Z0-9_-]+)/, /[?&]id=([a-zA-Z0-9_-]+)/];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return m[1];
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /[?&]id=([a-zA-Z0-9_-]+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
   }
   return null;
+}
+
+function buildDriveDownloadUrl(fileId: string): string {
+  return `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`;
 }
 
 // ─── Download ─────────────────────────────────────────────────────────────────
 
 export async function downloadPdfFromUrl(url: string): Promise<Buffer> {
   const driveFileId = extractDriveFileId(url);
-  const downloadUrl = driveFileId
-    ? `https://drive.google.com/uc?export=download&id=${driveFileId}&confirm=t`
-    : url;
+  const downloadUrl = driveFileId ? buildDriveDownloadUrl(driveFileId) : url;
 
   const response = await fetch(downloadUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SMQ-CRM/1.0)' },
     redirect: 'follow',
   });
 
-  if (!response.ok) throw new Error(`Falha ao baixar PDF: HTTP ${response.status} ${response.statusText}`);
+  if (!response.ok) {
+    throw new Error(`Falha ao baixar PDF: HTTP ${response.status} ${response.statusText}`);
+  }
 
-  const ct = response.headers.get('content-type') || '';
-  if (ct.includes('text/html')) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('text/html')) {
     throw new Error(
-      'Google Drive retornou HTML. Certifique-se que o arquivo está compartilhado como ' +
-      '"Qualquer pessoa com o link pode visualizar".',
+      'Google Drive retornou uma página HTML. O arquivo pode ser muito grande para download direto ou não está compartilhado publicamente. ' +
+      'Certifique-se que o arquivo está compartilhado como "Qualquer pessoa com o link pode visualizar".',
     );
   }
+
   return Buffer.from(await response.arrayBuffer());
 }
 
@@ -58,13 +66,14 @@ export async function uploadPdfToS3(
   mes: number,
   ano: number,
 ): Promise<{ url: string; fileKey: string }> {
-  const safe = construtoraName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  const fileKey = `tabeloes/${ano}/${String(mes).padStart(2, '0')}/tabelao-${safe}-${ano}-${String(mes).padStart(2, '0')}.pdf`;
+  const safeName = construtoraName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const fileName = `tabelao-${safeName}-${ano}-${String(mes).padStart(2, '0')}.pdf`;
+  const fileKey = `tabeloes/${ano}/${String(mes).padStart(2, '0')}/${fileName}`;
   const { url } = await storagePut(fileKey, pdfBuffer, 'application/pdf');
   return { url, fileKey };
 }
 
-// ─── Gemini extraction schema ─────────────────────────────────────────────────
+// ─── Gemini extraction ────────────────────────────────────────────────────────
 
 const TABELAO_SCHEMA = {
   name: 'tabelao_data',
@@ -77,40 +86,32 @@ const TABELAO_SCHEMA = {
         items: {
           type: 'object',
           properties: {
-            nome:          { type: 'string' },
-            endereco:      { type: ['string', 'null'] },
-            regiao:        { type: ['string', 'null'] },
-            bairro:        { type: ['string', 'null'] },
-            zona:          { type: ['string', 'null'], description: 'norte|sul|leste|oeste|centro' },
-            dataEntrega:   { type: ['string', 'null'], description: 'Ex: "Dezembro/2027", "jun/27", "PRONTO"' },
-            standVendas:   { type: ['string', 'null'], description: 'Endereço do stand/decorado de vendas' },
-            precoMinimo:   { type: ['integer', 'null'], description: 'Menor preço em centavos' },
-            precoMaximo:   { type: ['integer', 'null'], description: 'Maior preço em centavos' },
-            metragemMinima:{ type: ['integer', 'null'] },
-            metragemMaxima:{ type: ['integer', 'null'] },
-            dormitoriosMin:{ type: ['integer', 'null'] },
-            dormitoriosMax:{ type: ['integer', 'null'] },
-            descricao:     { type: ['string', 'null'] },
-            linkMateriais: { type: ['string', 'null'], description: 'Link Google Drive para pasta de materiais (DRIVE)' },
-            linkTabela:    { type: ['string', 'null'], description: 'Link direto para a tabela PDF (TABELA)' },
-            bookPdfUrl:    { type: ['string', 'null'], description: 'Link direto para o book/apresentação PDF' },
+            nome: { type: 'string' },
+            endereco: { type: ['string', 'null'] },
+            regiao: { type: ['string', 'null'] },
+            bairro: { type: ['string', 'null'] },
+            dataEntrega: { type: ['string', 'null'], description: 'Previsão de entrega, ex: "Dezembro/2027" ou "4T/2026"' },
+            precoMinimo: { type: ['integer', 'null'], description: 'Menor preço em centavos (multiplicar por 100)' },
+            precoMaximo: { type: ['integer', 'null'], description: 'Maior preço em centavos' },
+            metragemMinima: { type: ['integer', 'null'] },
+            metragemMaxima: { type: ['integer', 'null'] },
+            dormitoriosMin: { type: ['integer', 'null'] },
+            dormitoriosMax: { type: ['integer', 'null'] },
+            vagasMin: { type: ['integer', 'null'] },
+            vagasMax: { type: ['integer', 'null'] },
+            descricao: { type: ['string', 'null'] },
+            linkMateriais: { type: ['string', 'null'], description: 'Link do Google Drive para pasta de materiais' },
+            bookPdfUrl: { type: ['string', 'null'], description: 'Link direto para o book/apresentação em PDF' },
             tipologias: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  nome:          { type: 'string', description: 'Ex: "HIS2 - 1 Dorm + Varanda", "R2V - Studio"' },
-                  metragem:      { type: ['number', 'null'] },
-                  dormitorios:   { type: ['integer', 'null'], description: '0=studio, 1, 2, 3...' },
-                  vagas:         { type: ['integer', 'null'], description: 'Quantidade de vagas de garagem' },
-                  decorado:      { type: ['boolean', 'null'] },
-                  varanda:       { type: ['string', 'null'], description: 'nao|sim|suite|garden|moto' },
-                  enquadramento: { type: ['string', 'null'], description: 'HIS1|HIS2|R2V|HMP|HS1|HS2 — pode ser extraído do nome do tipo' },
-                  valorTabela:   { type: ['integer', 'null'], description: 'Preço tabela original em centavos (antes do desconto)' },
-                  desconto:      { type: ['integer', 'null'], description: 'Valor do desconto em centavos' },
-                  valorFinal:    { type: ['integer', 'null'], description: 'Preço final após desconto em centavos (campo "À PARTIR" ou "Valor FINAL")' },
-                  valorAvaliacao:{ type: ['integer', 'null'], description: 'Valor de avaliação/laudo em centavos' },
-                  disponivel:    { type: ['boolean', 'null'] },
+                  nome: { type: 'string', description: 'Ex: "Tipo A - 2 Dorms 52m²"' },
+                  metragem: { type: ['number', 'null'] },
+                  preco: { type: ['integer', 'null'], description: 'Preço em centavos' },
+                  vagas: { type: ['integer', 'null'] },
+                  disponivel: { type: ['boolean', 'null'] },
                 },
                 required: ['nome'],
                 additionalProperties: false,
@@ -127,8 +128,6 @@ const TABELAO_SCHEMA = {
   },
 };
 
-// ─── Gemini call ──────────────────────────────────────────────────────────────
-
 export async function extractProjectDataWithGemini(
   s3PdfUrl: string,
   construtoraName: string,
@@ -139,40 +138,26 @@ export async function extractProjectDataWithGemini(
         role: 'system',
         content: `Você é especialista em extração de dados de tabelões imobiliários de São Paulo.
 
-REGRAS DE LEITURA DOS TABELÕES:
+FORMATO DOS TABELÕES — regras críticas de leitura:
+- Cada TIPOLOGIA (planta/unidade) ocupa várias linhas consecutivas formando um bloco
+- Um novo bloco de tipologia começa quando aparece um novo nome/código de planta
+- Para cada bloco extraia: nome da tipologia, metragem, preço, número de vagas, disponibilidade
+- Um EMPREENDIMENTO pode ter múltiplas tipologias — extraia TODAS
+- Preços devem ser em centavos (ex: R$ 285.000 → 28500000)
 
-Cada empreendimento tem múltiplas TIPOLOGIAS (tipos de unidade). Extraia TODAS.
-
-FORMATO CURY:
-- Colunas: TIPOLOGIA | ÁREA | DECORADO | VARANDA | VAGA | ENTREGA | À PARTIR | ZONEAMENTO
-- DECORADO: SIM → decorado=true, NÃO → false
-- VARANDA: SIM→sim, NÃO→nao, MOTO→moto, SIM/SUITE→suite, SIM/GARDEN→garden
-- ZONEAMENTO → campo enquadramento da tipologia (HIS1, HIS2, R2V, HMP, HS1, HS2)
-- À PARTIR → valorFinal da tipologia (em centavos)
-- ENTREGA → dataEntrega do projeto (ex: "jan/27")
-- LINK DRIVE → linkMateriais do projeto
-
-FORMATO MUNDO APTO / PLANILHA:
-- Colunas: Empreendimento | Previsão Habite-se | Metragem | Dorms | Vagas | Desconto | R$ Tabela | Valor FINAL | Valor Avaliação | DRIVE | TABELA | Endereço | Stand de Vendas
-- O enquadramento está embutido no nome do tipo de Dorm: começa com HIS2, R2V, HMP, etc.
-- R$ Tabela → valorTabela (centavos), Desconto → desconto (centavos), Valor FINAL → valorFinal (centavos)
-- Valor Avaliação → valorAvaliacao (centavos)
-- DRIVE → linkMateriais, TABELA → linkTabela
-- Stand de Vendas → standVendas do projeto
-- Previsão do Habite-se → dataEntrega
-
-REGRAS GERAIS:
-- Preços SEMPRE em centavos: R$ 285.000 → 28500000
-- Se um campo não está disponível para determinada tipologia, use null
-- Extraia TODAS as tipologias de TODOS os empreendimentos
-- Se o tabelão tem zonas (ZONA SUL, ZONA NORTE), capture em zona: "sul", "norte", "leste", "oeste", "centro"`,
+Para cada empreendimento extraia todos os campos disponíveis, incluindo:
+- Nome completo do empreendimento
+- Endereço, bairro e região
+- Previsão de entrega (ex: "Dezembro/2027", "4T/2026")
+- Todas as tipologias com preços individuais
+- Links para materiais ou book PDF se presentes no documento`,
       },
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `Extraia TODOS os empreendimentos e tipologias do tabelão da construtora "${construtoraName}":`,
+            text: `Extraia TODOS os empreendimentos e tipologias do tabelão da construtora "${construtoraName}". Inclua cada tipologia separadamente com seu preço individual:`,
           },
           {
             type: 'file_url',
@@ -202,182 +187,135 @@ export async function processCatalog(tabelaoId: number): Promise<void> {
   const [tabelao] = await db.select().from(tabeloes).where(eq(tabeloes.id, tabelaoId)).limit(1);
   if (!tabelao) throw new Error(`Tabelão ${tabelaoId} não encontrado`);
 
-  const [construtora] = await db.select().from(construtoras).where(eq(construtoras.id, tabelao.construtoraId)).limit(1);
+  const [construtora] = await db
+    .select()
+    .from(construtoras)
+    .where(eq(construtoras.id, tabelao.construtoraId))
+    .limit(1);
   if (!construtora) throw new Error(`Construtora ${tabelao.construtoraId} não encontrada`);
 
   await db.update(tabeloes).set({ statusProcessamento: 'processando' }).where(eq(tabeloes.id, tabelaoId));
 
   try {
-    // Ensure we have an S3 URL
+    // Ensure we have an S3 URL (upload if not yet done)
     let s3PdfUrl = tabelao.s3PdfUrl;
     let fileKey = tabelao.fileKey || '';
 
     if (!s3PdfUrl) {
       if (!tabelao.drivePdfUrl) throw new Error('Nenhuma URL do PDF disponível');
-      console.log(`[Tabelão ${tabelaoId}] Baixando PDF...`);
+      console.log(`[Tabelão ${tabelaoId}] Baixando PDF de: ${tabelao.drivePdfUrl}`);
       const pdfBuffer = await downloadPdfFromUrl(tabelao.drivePdfUrl);
       const uploaded = await uploadPdfToS3(pdfBuffer, construtora.nome, tabelao.mes, tabelao.ano);
       s3PdfUrl = uploaded.url;
       fileKey = uploaded.fileKey;
       await db.update(tabeloes).set({ s3PdfUrl, fileKey }).where(eq(tabeloes.id, tabelaoId));
+      console.log(`[Tabelão ${tabelaoId}] PDF enviado ao S3: ${s3PdfUrl}`);
     }
 
     // Extract with Gemini
     console.log(`[Tabelão ${tabelaoId}] Processando com Gemini...`);
     const extractedData = await extractProjectDataWithGemini(s3PdfUrl, construtora.nome);
-    const projs = extractedData.projects ?? [];
-    console.log(`[Tabelão ${tabelaoId}] Gemini extraiu ${projs.length} projetos`);
+    console.log(`[Tabelão ${tabelaoId}] Gemini extraiu ${extractedData.projects?.length ?? 0} projetos`);
 
-    let projetosNovos = 0;
-    let totalTipologias = 0;
-
-    for (const pd of projs) {
+    // Upsert projects
+    let projetosExtraidos = 0;
+    for (const projectData of extractedData.projects || []) {
       try {
-        // Compute aggregates from tipologias
-        const tips = pd.tipologias ?? [];
-        const allPrecos = tips
-          .map((t: any) => t.valorFinal ?? t.valorTabela)
-          .filter((v: any) => v != null && v > 0) as number[];
-        const allMetragens = tips.map((t: any) => t.metragem).filter((v: any) => v != null && v > 0) as number[];
-        const allDorms = tips.map((t: any) => t.dormitorios).filter((v: any) => v != null) as number[];
-
-        const precoMin = allPrecos.length ? Math.min(...allPrecos) : (pd.precoMinimo ?? null);
-        const precoMax = allPrecos.length ? Math.max(...allPrecos) : (pd.precoMaximo ?? null);
-        const metMin   = allMetragens.length ? Math.min(...allMetragens) : (pd.metragemMinima ?? null);
-        const metMax   = allMetragens.length ? Math.max(...allMetragens) : (pd.metragemMaxima ?? null);
-        const dormMin  = allDorms.length ? Math.min(...allDorms) : (pd.dormitoriosMin ?? null);
-        const dormMax  = allDorms.length ? Math.max(...allDorms) : (pd.dormitoriosMax ?? null);
-
-        // Validate zona
-        const zonaValida = ['norte', 'sul', 'leste', 'oeste', 'centro'].includes(pd.zona ?? '')
-          ? pd.zona
-          : null;
-
-        // Find or create project
         const [existing] = await db
           .select({ id: projects.id })
           .from(projects)
-          .where(and(eq(projects.nome, pd.nome), eq(projects.construtoraId, construtora.id)))
+          .where(and(eq(projects.nome, projectData.nome), eq(projects.construtoraId, construtora.id)))
           .limit(1);
-
-        let projetoId: number;
 
         if (existing) {
           await db.update(projects).set({
-            endereco:      pd.endereco    ?? undefined,
-            regiao:        pd.regiao      ?? undefined,
-            bairro:        pd.bairro      ?? undefined,
-            zona:          zonaValida     ?? undefined,
-            dataEntrega:   pd.dataEntrega ?? undefined,
-            standVendas:   pd.standVendas ?? undefined,
-            valorMinimo:   precoMin       ?? undefined,
-            valorMaximo:   precoMax       ?? undefined,
-            metragemMinima:metMin         ?? undefined,
-            metragemMaxima:metMax         ?? undefined,
-            dormitorios:   dormMin != null && dormMax != null ? `${dormMin}, ${dormMax}` : undefined,
-            descricao:     pd.descricao   ?? undefined,
-            linkMateriais: pd.linkMateriais ?? undefined,
-            linkTabela:    pd.linkTabela  ?? undefined,
-            bookPdfUrl:    pd.bookPdfUrl  ?? undefined,
-            updatedAt:     new Date(),
+            endereco: projectData.endereco ?? undefined,
+            regiao: projectData.regiao ?? undefined,
+            bairro: projectData.bairro ?? undefined,
+            valorMinimo: projectData.precoMinimo ?? undefined,
+            valorMaximo: projectData.precoMaximo ?? undefined,
+            metragemMinima: projectData.metragemMinima ?? undefined,
+            metragemMaxima: projectData.metragemMaxima ?? undefined,
+            dormitorios: projectData.dormitoriosMin != null && projectData.dormitoriosMax != null
+              ? `${projectData.dormitoriosMin}, ${projectData.dormitoriosMax}`
+              : undefined,
+            descricao: projectData.descricao ?? undefined,
+            linkMateriais: projectData.linkMateriais ?? undefined,
+            bookPdfUrl: projectData.bookPdfUrl ?? undefined,
+            updatedAt: new Date(),
           }).where(eq(projects.id, existing.id));
-          projetoId = existing.id;
         } else {
-          const [inserted] = await db.insert(projects).values({
-            nome:          pd.nome,
-            construtora:   construtora.nome,
+          await db.insert(projects).values({
+            nome: projectData.nome,
+            construtora: construtora.nome,
             construtoraId: construtora.id,
-            endereco:      pd.endereco    ?? null,
-            regiao:        pd.regiao      ?? null,
-            bairro:        pd.bairro      ?? null,
-            zona:          zonaValida     as any ?? null,
-            dataEntrega:   pd.dataEntrega ?? null,
-            standVendas:   pd.standVendas ?? null,
-            cidade:        'São Paulo',
-            estado:        'SP',
-            valorMinimo:   precoMin       ?? null,
-            valorMaximo:   precoMax       ?? null,
-            metragemMinima:metMin         ?? null,
-            metragemMaxima:metMax         ?? null,
-            dormitorios:   dormMin != null && dormMax != null ? `${dormMin}, ${dormMax}` : null,
-            descricao:     pd.descricao   ?? null,
-            linkMateriais: pd.linkMateriais ?? null,
-            linkTabela:    pd.linkTabela  ?? null,
-            bookPdfUrl:    pd.bookPdfUrl  ?? null,
-            status:        'ativo',
-            tipo:          'mcmv',
-          }).$returningId();
-          projetoId = inserted.id;
-          projetosNovos++;
+            endereco: projectData.endereco ?? null,
+            regiao: projectData.regiao ?? null,
+            bairro: projectData.bairro ?? null,
+            cidade: 'São Paulo',
+            estado: 'SP',
+            valorMinimo: projectData.precoMinimo ?? null,
+            valorMaximo: projectData.precoMaximo ?? null,
+            metragemMinima: projectData.metragemMinima ?? null,
+            metragemMaxima: projectData.metragemMaxima ?? null,
+            dormitorios: projectData.dormitoriosMin != null && projectData.dormitoriosMax != null
+              ? `${projectData.dormitoriosMin}, ${projectData.dormitoriosMax}`
+              : null,
+            descricao: projectData.descricao ?? null,
+            linkMateriais: projectData.linkMateriais ?? null,
+            bookPdfUrl: projectData.bookPdfUrl ?? null,
+            status: 'ativo',
+            tipo: 'outro',
+          });
+          projetosExtraidos++;
         }
 
-        // Upsert tipologias
-        for (const tip of tips) {
-          try {
-            await db.insert(tipologias).values({
-              projetoId,
-              nome:          tip.nome,
-              metragem:      tip.metragem    ?? null,
-              dormitorios:   tip.dormitorios ?? null,
-              vagas:         tip.vagas       ?? 0,
-              decorado:      tip.decorado    ? 1 : 0,
-              varanda:       tip.varanda     ?? null,
-              enquadramento: tip.enquadramento ?? null,
-              valorTabela:   tip.valorTabela ?? null,
-              desconto:      tip.desconto    ?? null,
-              valorFinal:    tip.valorFinal  ?? null,
-              valorAvaliacao:tip.valorAvaliacao ?? null,
-              disponivel:    tip.disponivel !== false ? 1 : 0,
-            });
-            totalTipologias++;
-          } catch (err) {
-            // Graceful: can fail if tipologias table migration not yet run
-            const msg = err instanceof Error ? err.message : String(err);
-            if (msg.includes("doesn't exist") || msg.includes('ER_NO_SUCH_TABLE')) {
-              console.warn('[Tabelão] Tabela tipologias não existe ainda — execute a migration 0019_tipologias_projetos.sql');
-              break;
-            }
-          }
-        }
-
-        // Price history
-        if (precoMin) {
+        // Register price history
+        if (projectData.precoMinimo) {
           await db.insert(historicosPrecos).values({
-            projetoId,
-            mes:        tabelao.mes,
-            ano:        tabelao.ano,
-            precoMinimo:precoMin,
+            projetoId: existing?.id ?? 0,
+            mes: tabelao.mes,
+            ano: tabelao.ano,
+            precoMinimo: projectData.precoMinimo,
           }).catch(() => {});
         }
       } catch (err) {
-        console.error(`[Tabelão ${tabelaoId}] Erro ao salvar projeto "${pd.nome}":`, err);
+        console.error(`[Tabelão ${tabelaoId}] Erro ao salvar projeto "${projectData.nome}":`, err);
       }
     }
 
     await db.update(tabeloes).set({
       statusProcessamento: 'concluido',
-      totalProjetos:       projs.length,
-      processadoEm:        new Date(),
+      totalProjetos: extractedData.projects?.length ?? 0,
+      processadoEm: new Date(),
     }).where(eq(tabeloes.id, tabelaoId));
 
     await db.insert(logsSincronizacao).values({
-      status:             'sucesso',
-      mensagem:           `Tabelão processado: ${construtora.nome} — ${tabelao.mes}/${tabelao.ano}`,
-      detalhes:           JSON.stringify({ tabelaoId, projetosNovos, totalTipologias }),
-      tabeloesProcessados:1,
-      projetosExtraidos:  projetosNovos,
-      materiaisExtraidos: totalTipologias,
+      status: 'sucesso',
+      mensagem: `Tabelão processado: ${construtora.nome} — ${tabelao.mes}/${tabelao.ano}`,
+      detalhes: JSON.stringify({ tabelaoId, construtoraId: construtora.id, projetosExtraidos }),
+      tabeloesProcessados: 1,
+      projetosExtraidos,
+      materiaisExtraidos: 0,
     });
 
-    console.log(`✅ Tabelão ${tabelaoId} concluído — ${projetosNovos} novos projetos, ${totalTipologias} tipologias`);
+    console.log(`✅ Tabelão ${tabelaoId} concluído — ${projetosExtraidos} novos projetos`);
   } catch (error) {
     const mensagem = error instanceof Error ? error.message : String(error);
     await db.update(tabeloes).set({ statusProcessamento: 'erro', mensagemErro: mensagem }).where(eq(tabeloes.id, tabelaoId));
-    await db.insert(logsSincronizacao).values({ status: 'erro', mensagem: `Erro ao processar tabelão ${tabelaoId}`, detalhes: mensagem });
+    await db.insert(logsSincronizacao).values({
+      status: 'erro',
+      mensagem: `Erro ao processar tabelão ${tabelaoId}`,
+      detalhes: mensagem,
+    });
     throw error;
   }
 }
 
+/**
+ * Cria um registro de tabelão a partir de um buffer de PDF já em memória
+ * e dispara o processamento em background.
+ */
 export async function processTabelaoFromBuffer(
   construtoraId: number,
   pdfBuffer: Buffer,
@@ -400,10 +338,14 @@ export async function processTabelaoFromBuffer(
 
   let tabelaoId: number;
   if (existing) {
-    await db.update(tabeloes).set({ s3PdfUrl, fileKey, statusProcessamento: 'pendente', mensagemErro: null }).where(eq(tabeloes.id, existing.id));
+    await db.update(tabeloes).set({
+      s3PdfUrl, fileKey, statusProcessamento: 'pendente', mensagemErro: null,
+    }).where(eq(tabeloes.id, existing.id));
     tabelaoId = existing.id;
   } else {
-    const [result] = await db.insert(tabeloes).values({ construtoraId, mes, ano, s3PdfUrl, fileKey, statusProcessamento: 'pendente' }).$returningId();
+    const [result] = await db.insert(tabeloes).values({
+      construtoraId, mes, ano, s3PdfUrl, fileKey, statusProcessamento: 'pendente',
+    }).$returningId();
     tabelaoId = result.id;
   }
 
@@ -415,6 +357,7 @@ export async function processAllPendingCatalogs(): Promise<void> {
   const db = await getDb();
   if (!db) return;
   const pendentes = await db.select().from(tabeloes).where(eq(tabeloes.statusProcessamento, 'pendente'));
+  console.log(`[Tabelão] ${pendentes.length} tabelões pendentes`);
   for (const t of pendentes) {
     await processCatalog(t.id).catch(err => console.error(`[Tabelão] Erro em ${t.id}:`, err));
   }

@@ -543,12 +543,11 @@ function DashboardContent({
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
 
   // Leads prioritários para badge, banner e modal agenda
-  // SSE invalida a query instantaneamente; 60s é apenas fallback para quando a conexão cai.
-  // staleTime 55s evita refetch no foco da janela enquanto o dado ainda é recente.
+  // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 60 * 1000,
-    staleTime: 55 * 1000,
+    refetchInterval: 30 * 1000,
+    staleTime: 0,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +
@@ -1089,7 +1088,9 @@ function DashboardContent({
           <ThemeToggle />
         </header>
         <main className="flex-1 overflow-auto relative">
-          <PushNotificationBanner />
+          <div className="px-4 pt-4">
+            <PushNotificationBanner />
+          </div>
           {/* Banner de lead aguardando primeiro contato */}
           {isCorretor && primeiroLeadAguardando && (
             <div className="sticky top-0 z-40 flex items-center justify-between gap-3 bg-red-600 px-4 py-2.5 text-white shadow-md">
