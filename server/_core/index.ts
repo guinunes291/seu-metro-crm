@@ -10,7 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import webhookRoutes from "../webhookRoutes";
 import uploadRoutes from "../uploadRoutes";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { sdk } from "./sdk";
 import { addSSEConnection, removeSSEConnection } from "../sseManager";
 
@@ -57,8 +57,10 @@ async function startServer() {
     message: { error: 'Muitas requisições. Tente novamente em 1 minuto.' },
     keyGenerator: (req) => {
       // Usar token do header como chave (mais preciso que IP para webhooks)
-      const token = (req.headers['x-webhook-token'] || req.headers['authorization'] || req.ip || 'unknown') as string;
-      return token;
+      // Fallback para ipKeyGenerator (compatível com IPv6) quando não há token
+      const token = req.headers['x-webhook-token'] || req.headers['authorization'];
+      if (token) return token as string;
+      return ipKeyGenerator(req);
     },
   });
 
