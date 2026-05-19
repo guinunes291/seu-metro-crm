@@ -138,10 +138,10 @@ export async function startBackupJob(): Promise<void> {
       );
       await runBackup("diário agendado");
     }
-  }, 60_000);
+  }, 5 * 60_000); // 5 min — backup diário, precisão de 5 min é suficiente
 
   console.log(
-    "[Backup Job] Job de backup automático inicializado (verificação a cada 1 minuto)"
+    "[Backup Job] Job de backup automático inicializado (verificação a cada 5 minutos)"
   );
 }
 

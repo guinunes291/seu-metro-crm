@@ -309,7 +309,7 @@ function AgendamentoCard({
 
 export default function ModeFoco() {
   const { data, isLoading, refetch } = trpc.meuNegocio.getFocoDoDia.useQuery(undefined, {
-    refetchInterval: 60_000, // Atualiza a cada 1 min
+    refetchInterval: 2 * 60_000, // 2 min — reduzido de 60s para economizar recursos
   });
 
   const totalItens =

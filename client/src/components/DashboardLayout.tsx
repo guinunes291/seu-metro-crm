@@ -546,8 +546,8 @@ function DashboardContent({
   // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 30 * 1000,
-    staleTime: 0,
+    refetchInterval: 2 * 60 * 1000, // 2 min — SSE invalida instantaneamente; polling é só fallback
+    staleTime: 30 * 1000,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +

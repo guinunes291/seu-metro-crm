@@ -220,12 +220,12 @@ export function startWhatsAppRemindersJob() {
 
   console.log("[WhatsApp Lembretes] Job iniciado — lembretes D-1 às 18h SP, boas-vindas a cada 10min");
 
-  // Lembretes D-1: verifica a cada 60s se já é 18h e ainda não executou hoje
+  // Lembretes D-1: verifica a cada 5 min se já é 18h e ainda não executou hoje
   setInterval(async () => {
     if (horaAtualSP() === 18) {
       await enviarLembretesDia1();
     }
-  }, 60_000);
+  }, 5 * 60_000); // 5 min — evento diário, precisão de 5 min é suficiente
 
   // Boas-vindas para novos leads: a cada 10 minutos
   setInterval(async () => {
