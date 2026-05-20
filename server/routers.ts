@@ -34,6 +34,7 @@ import { propostasRouter } from "./routers/propostas";
 import { meuNegocioRouter } from "./routers/meuNegocio";
 import { relatorioDiarioRouter } from "./routers/relatorioDiario";
 import { scriptsRouter } from "./routers/scripts";
+import { ofertaAtivaRouter } from "./routers/ofertaAtiva";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -117,7 +118,8 @@ export const appRouter = router({
   meuNegocio: meuNegocioRouter,
   relatorioDiario: relatorioDiarioRouter,
   scripts: scriptsRouter,
-  
+  ofertaAtiva: ofertaAtivaRouter,
+
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
