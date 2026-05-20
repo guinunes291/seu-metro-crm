@@ -85,6 +85,7 @@ const menuGroups = [
       { icon: Zap, label: "Modo Blitz", path: "/modo-blitz", roles: ["corretor"] },
       { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
       { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
+      { icon: Link2, label: "Links Úteis", path: "/links-uteis", requirePermission: "acessaLinksUteis" },
     ],
   },
   {
@@ -188,6 +189,7 @@ const menuGroupsCorretor = [
     items: [
       { icon: Users, label: "Meus Leads", path: "/leads", showLeadsBadge: true },
       { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
+      { icon: Link2, label: "Links Úteis", path: "/links-uteis", requirePermission: "acessaLinksUteis" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda" },
       { icon: FileText, label: "Propostas", path: "/propostas" },
@@ -248,6 +250,7 @@ const menuGroupsGestor = [
       { icon: Megaphone, label: "Sessões de Oferta", path: "/sessoes-oferta" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
+      { icon: Link2, label: "Gerenciar Links Úteis", path: "/gerenciar-links-uteis" },
     ],
   },
   {
@@ -295,6 +298,7 @@ const menuGroupsAdmin = [
       { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor" },
       { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
       { icon: Megaphone, label: "Sessões de Oferta", path: "/sessoes-oferta" },
+      { icon: Link2, label: "Gerenciar Links Úteis", path: "/gerenciar-links-uteis", roles: ["admin", "superintendente"] },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor" },
       { icon: Users2, label: "Corretores", path: "/corretores" },
@@ -632,9 +636,11 @@ function DashboardContent({
       : role === 'superintendente' ? menuGroupsSuperintendente
       : menuGroups;
     for (const group of groups) {
-      const items = group.items.filter(item =>
-        !(item as any).roles || (item as any).roles.includes(role)
-      );
+      const items = group.items.filter(item => {
+        const roleOk = !(item as any).roles || (item as any).roles.includes(role);
+        const permOk = !(item as any).requirePermission || !!(user as any)?.[(item as any).requirePermission];
+        return roleOk && permOk;
+      });
       if (items.some(item => item.path === location)) {
         setOpenGroups(prev => prev[group.id] ? prev : { ...prev, [group.id]: true });
         break;
@@ -790,9 +796,11 @@ function DashboardContent({
       return false;
     }
     // Verificar se há pelo menos um item visível no grupo
-    const visibleItems = group.items.filter(item =>
-      !(item as any).roles || (item as any).roles.includes(user?.role || "")
-    );
+    const visibleItems = group.items.filter(item => {
+      const roleOk = !(item as any).roles || (item as any).roles.includes(user?.role || "");
+      const permOk = !(item as any).requirePermission || !!(user as any)?.[(item as any).requirePermission];
+      return roleOk && permOk;
+    });
     return visibleItems.length > 0;
   });
 
@@ -885,9 +893,11 @@ function DashboardContent({
           {/* Menu Agrupado */}
           <div className="px-2 py-1 space-y-1">
             {filteredGroups.map((group) => {
-              const visibleItems = group.items.filter(item =>
-                !(item as any).roles || (item as any).roles.includes(user?.role || "")
-              );
+              const visibleItems = group.items.filter(item => {
+                const roleOk = !(item as any).roles || (item as any).roles.includes(user?.role || "");
+                const permOk = !(item as any).requirePermission || !!(user as any)?.[(item as any).requirePermission];
+                return roleOk && permOk;
+              });
               const hasActiveItem = visibleItems.some(item => location === item.path);
               const GroupIcon = group.icon;
 

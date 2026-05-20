@@ -35,6 +35,7 @@ import { meuNegocioRouter } from "./routers/meuNegocio";
 import { relatorioDiarioRouter } from "./routers/relatorioDiario";
 import { scriptsRouter } from "./routers/scripts";
 import { ofertaAtivaRouter } from "./routers/ofertaAtiva";
+import { linksUteisRouter } from "./routers/linksUteis";
 
 // ============================================================================
 // HELPERS E MIDDLEWARES
@@ -119,6 +120,7 @@ export const appRouter = router({
   relatorioDiario: relatorioDiarioRouter,
   scripts: scriptsRouter,
   ofertaAtiva: ofertaAtivaRouter,
+  linksUteis: linksUteisRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -460,6 +462,8 @@ export const appRouter = router({
         cidade: z.string().optional(),
         estado: z.string().optional(),
         cep: z.string().optional(),
+        // Permissões granulares
+        acessaLinksUteis: z.boolean().default(false).optional(),
       }))
       .mutation(async ({ input }) => {
         const resultado = await db.createCorretor(input);
@@ -505,6 +509,8 @@ export const appRouter = router({
           cidade: z.string().optional(),
           estado: z.string().optional(),
           cep: z.string().optional(),
+          // Permissões granulares
+          acessaLinksUteis: z.boolean().optional(),
         })
       }))
       .mutation(async ({ input }) => {

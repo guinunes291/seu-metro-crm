@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +45,8 @@ interface CorretorFormData {
   cidade: string;
   estado: string;
   cep: string;
+  // Permissões
+  acessaLinksUteis: boolean;
 }
 
 const initialFormData: CorretorFormData = {
@@ -64,6 +67,7 @@ const initialFormData: CorretorFormData = {
   cidade: "",
   estado: "",
   cep: "",
+  acessaLinksUteis: false,
 };
 
 const estadosBrasileiros = [
@@ -204,6 +208,7 @@ export default function Corretores() {
       cidade: corretor.cidade || "",
       estado: corretor.estado || "",
       cep: corretor.cep || "",
+      acessaLinksUteis: corretor.acessaLinksUteis ?? false,
     });
     setIsEditDialogOpen(true);
   };
@@ -231,6 +236,7 @@ export default function Corretores() {
       cidade: formData.cidade || undefined,
       estado: formData.estado || undefined,
       cep: formData.cep || undefined,
+      acessaLinksUteis: formData.acessaLinksUteis,
     };
     
     if (formData.dataNascimento) {
@@ -456,6 +462,17 @@ export default function Corretores() {
                 <SelectItem value="ausente">Ausente</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="col-span-2 flex items-center justify-between rounded-lg border p-3">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium">Acessa Links Úteis</Label>
+              <p className="text-xs text-muted-foreground">Permite visualizar a central de links e atalhos comerciais</p>
+            </div>
+            <Switch
+              checked={formData.acessaLinksUteis}
+              onCheckedChange={(v) => setFormData((prev) => ({ ...prev, acessaLinksUteis: v }))}
+            />
           </div>
         </div>
       </TabsContent>

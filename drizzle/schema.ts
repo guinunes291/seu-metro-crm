@@ -65,7 +65,10 @@ export const users = mysqlTable("users", {
   
   // Sistema de Onboarding
   perfilCompleto: boolean("perfilCompleto").default(false).notNull(), // Se o corretor completou o onboarding
-  
+
+  // Permissões granulares por feature
+  acessaLinksUteis: boolean("acessaLinksUteis").default(false).notNull(),
+
   // Sistema de Equipes
   equipeId: int("equipeId"), // ID da equipe (para corretores e gestores)
   
@@ -2616,3 +2619,37 @@ export const atribuicaoSessao = mysqlTable("atribuicao_sessao", {
 });
 export type AtribuicaoSessao = typeof atribuicaoSessao.$inferSelect;
 export type InsertAtribuicaoSessao = typeof atribuicaoSessao.$inferInsert;
+
+// ============================================================================
+// LINKS ÚTEIS — Central de atalhos e links para corretores
+// ============================================================================
+
+export const linksUteis = mysqlTable("links_uteis", {
+  id: int("id").autoincrement().primaryKey(),
+  titulo: varchar("titulo", { length: 255 }).notNull(),
+  descricao: varchar("descricao", { length: 500 }),
+  url: varchar("url", { length: 1000 }).notNull(),
+  categoria: varchar("categoria", { length: 100 }).notNull(),
+  status: mysqlEnum("status", ["ativo", "inativo"]).default("ativo").notNull(),
+  criadoPorId: int("criadoPorId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({
+  linksUteisStatusIdx: index("links_uteis_status_idx").on(table.status),
+  linksUteisCategoriaIdx: index("links_uteis_categoria_idx").on(table.categoria),
+}));
+export type LinkUtil = typeof linksUteis.$inferSelect;
+export type InsertLinkUtil = typeof linksUteis.$inferInsert;
+
+export const acessosLinksUteis = mysqlTable("acessos_links_uteis", {
+  id: int("id").autoincrement().primaryKey(),
+  linkId: int("linkId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  acessosLinkIdx: index("acessos_link_idx").on(table.linkId),
+  acessosCorretorIdx: index("acessos_corretor_idx").on(table.corretorId),
+  acessosDataIdx: index("acessos_data_idx").on(table.createdAt),
+}));
+export type AcessoLinkUtil = typeof acessosLinksUteis.$inferSelect;
+export type InsertAcessoLinkUtil = typeof acessosLinksUteis.$inferInsert;
