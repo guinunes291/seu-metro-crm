@@ -2540,3 +2540,79 @@ export const blitzSessoes = mysqlTable("blitz_sessoes", {
 }));
 export type BlitzSessao = typeof blitzSessoes.$inferSelect;
 export type InsertBlitzSessao = typeof blitzSessoes.$inferInsert;
+
+// ============================================================================
+// OFERTA ATIVA — Listas segmentadas de leads para campanhas de ligação
+// ============================================================================
+
+export type FiltrosOferta = {
+  status?: string[];
+  temperatura?: string[];
+  projetoId?: number[];
+  faixaRenda?: string[];
+  origem?: string[];
+  diasSemContatoMin?: number;
+  diasSemContatoMax?: number;
+  semInteracaoHaDias?: number;
+};
+
+export const sessaoOferta = mysqlTable("sessao_oferta", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  tipo: mysqlEnum("tipo", ["terca", "quinta", "avulsa"]).default("avulsa").notNull(),
+  dataHora: timestamp("dataHora").notNull(),
+  criadoPorId: int("criadoPorId").notNull(),
+  status: mysqlEnum("status", ["agendada", "em_andamento", "concluida"]).default("agendada").notNull(),
+  descricao: text("descricao"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type SessaoOferta = typeof sessaoOferta.$inferSelect;
+export type InsertSessaoOferta = typeof sessaoOferta.$inferInsert;
+
+export const ofertaAtiva = mysqlTable("oferta_ativa", {
+  id: int("id").autoincrement().primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  corretorId: int("corretorId"),
+  criadoPorId: int("criadoPorId").notNull(),
+  sessaoId: int("sessaoId"),
+  status: mysqlEnum("status", ["rascunho", "ativa", "concluida", "arquivada"]).default("ativa").notNull(),
+  filtros: json("filtros").$type<FiltrosOferta>().notNull().default({}),
+  totalLeads: int("totalLeads").default(0).notNull(),
+  totalContatados: int("totalContatados").default(0).notNull(),
+  totalAvancados: int("totalAvancados").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OfertaAtiva = typeof ofertaAtiva.$inferSelect;
+export type InsertOfertaAtiva = typeof ofertaAtiva.$inferInsert;
+
+export const itemOfertaAtiva = mysqlTable("item_oferta_ativa", {
+  id: int("id").autoincrement().primaryKey(),
+  ofertaId: int("ofertaId").notNull(),
+  leadId: int("leadId").notNull(),
+  statusKanban: mysqlEnum("statusKanban", [
+    "ofertar", "tratando", "agendou", "sem_retorno", "perdido",
+  ]).default("ofertar").notNull(),
+  agendamentoId: int("agendamentoId"),
+  observacao: text("observacao"),
+  contatadoEm: timestamp("contatadoEm"),
+  ordem: int("ordem").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({
+  itemOfertaAtivaOfertaIdx: index("item_oferta_ativa_oferta_idx").on(table.ofertaId),
+  itemOfertaAtivaLeadIdx: index("item_oferta_ativa_lead_idx").on(table.leadId),
+}));
+export type ItemOfertaAtiva = typeof itemOfertaAtiva.$inferSelect;
+export type InsertItemOfertaAtiva = typeof itemOfertaAtiva.$inferInsert;
+
+export const atribuicaoSessao = mysqlTable("atribuicao_sessao", {
+  id: int("id").autoincrement().primaryKey(),
+  sessaoId: int("sessaoId").notNull(),
+  corretorId: int("corretorId").notNull(),
+  ofertaId: int("ofertaId"),
+  status: mysqlEnum("status", ["pendente", "em_andamento", "concluida"]).default("pendente").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AtribuicaoSessao = typeof atribuicaoSessao.$inferSelect;
+export type InsertAtribuicaoSessao = typeof atribuicaoSessao.$inferInsert;
