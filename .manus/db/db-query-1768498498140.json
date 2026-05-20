@@ -1,9 +1,0 @@
-{
-  "query": "\n-- Remover leads de teste\nDELETE FROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR telefone LIKE '11991%'\n  OR email LIKE '%webhook%';\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Remover leads de teste\nDELETE FROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR telefone LIKE '11991%'\n  OR email LIKE '%webhook%';\n",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 88
-}

@@ -1,8 +1,0 @@
-{
-  "query": "SELECT \n  f.id,\n  f.leadId,\n  f.dataFollowUp,\n  f.dataRegistro,\n  f.status,\n  f.resultado,\n  l.nome as leadNome\nFROM follow_ups f\nLEFT JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = (SELECT id FROM users WHERE name = 'Guilherme Nunes')\n  AND f.status = 'pendente'\n  AND DATE(f.dataFollowUp) = CURDATE()\nLIMIT 10;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  f.id,\n  f.leadId,\n  f.dataFollowUp,\n  f.dataRegistro,\n  f.status,\n  f.resultado,\n  l.nome as leadNome\nFROM follow_ups f\nLEFT JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = (SELECT id FROM users WHERE name = 'Guilherme Nunes')\n  AND f.status = 'pendente'\n  AND DATE(f.dataFollowUp) = CURDATE()\nLIMIT 10;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1242 (21000) at line 1: Subquery returns more than 1 row"
-  ]
-}

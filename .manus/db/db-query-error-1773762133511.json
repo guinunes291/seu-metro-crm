@@ -1,8 +1,0 @@
-{
-  "query": "\nSELECT id, nome, construtora, cidade, estado, tipoImovel, valorMinimo, valorMaximo, status, descricao FROM projects ORDER BY nome LIMIT 20;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, nome, construtora, cidade, estado, tipoImovel, valorMinimo, valorMaximo, status, descricao FROM projects ORDER BY nome LIMIT 20;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 2: Unknown column 'tipoimovel' in 'field list'"
-  ]
-}

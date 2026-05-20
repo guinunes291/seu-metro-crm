@@ -1,9 +1,0 @@
-{
-  "query": "CREATE INDEX idx_followup_data ON follow_ups (dataFollowUp, status)",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE INDEX idx_followup_data ON follow_ups (dataFollowUp, status)",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 287
-}

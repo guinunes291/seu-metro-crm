@@ -1,9 +1,0 @@
-{
-  "query": "DELETE FROM lead_history WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'); DELETE FROM lead_status_transitions WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'); DELETE FROM agendamentos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%');",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE FROM lead_history WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'); DELETE FROM lead_status_transitions WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%'); DELETE FROM agendamentos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%');",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 484
-}

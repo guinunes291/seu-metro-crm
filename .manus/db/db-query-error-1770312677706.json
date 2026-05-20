@@ -1,8 +1,0 @@
-{
-  "query": "SELECT a.id, a.dataHora, a.status, u.name as corretor_name, u.equipeId \nFROM agendamentos a \nJOIN users u ON a.corretorId = u.id \nORDER BY a.dataHora \nLIMIT 10;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT a.id, a.dataHora, a.status, u.name as corretor_name, u.equipeId \nFROM agendamentos a \nJOIN users u ON a.corretorId = u.id \nORDER BY a.dataHora \nLIMIT 10;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'a.dataHora' in 'order clause'"
-  ]
-}

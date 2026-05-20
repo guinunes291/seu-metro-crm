@@ -1,9 +1,0 @@
-{
-  "query": "DELETE FROM metas WHERE corretorId = 10627393; DELETE FROM fila_distribuicao WHERE corretorId = 10627393; DELETE FROM conversion_stats WHERE corretorId = 10627393; DELETE FROM atividades_diarias WHERE corretorId = 10627393; DELETE FROM metas_diarias WHERE corretorId = 10627393; UPDATE leads SET corretorId = NULL WHERE corretorId = 10627393; UPDATE leads SET corretorAnteriorId = NULL WHERE corretorAnteriorId = 10627393; DELETE FROM users WHERE id = 10627393;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE FROM metas WHERE corretorId = 10627393; DELETE FROM fila_distribuicao WHERE corretorId = 10627393; DELETE FROM conversion_stats WHERE corretorId = 10627393; DELETE FROM atividades_diarias WHERE corretorId = 10627393; DELETE FROM metas_diarias WHERE corretorId = 10627393; UPDATE leads SET corretorId = NULL WHERE corretorId = 10627393; UPDATE leads SET corretorAnteriorId = NULL WHERE corretorAnteriorId = 10627393; DELETE FROM users WHERE id = 10627393;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 836
-}

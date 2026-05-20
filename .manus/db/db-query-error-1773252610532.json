@@ -1,8 +1,0 @@
-{
-  "query": "\nSELECT \n  COUNT(CASE WHEN l.corretor_id IS NULL THEN 1 END) as sem_corretor,\n  COUNT(CASE WHEN u.role = 'admin' THEN 1 END) as com_gestor,\n  COUNT(CASE WHEN u.role = 'corretor' THEN 1 END) as com_corretor,\n  COUNT(*) as total\nFROM leads l\nLEFT JOIN users u ON l.corretor_id = u.id;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  COUNT(CASE WHEN l.corretor_id IS NULL THEN 1 END) as sem_corretor,\n  COUNT(CASE WHEN u.role = 'admin' THEN 1 END) as com_gestor,\n  COUNT(CASE WHEN u.role = 'corretor' THEN 1 END) as com_corretor,\n  COUNT(*) as total\nFROM leads l\nLEFT JOIN users u ON l.corretor_id = u.id;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 2: Unknown column 'l.corretor_id' in 'on clause'"
-  ]
-}

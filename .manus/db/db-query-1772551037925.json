@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE leads SET timerAtivo = false WHERE timerAtivo = true AND status != 'aguardando_atendimento';",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE leads SET timerAtivo = false WHERE timerAtivo = true AND status != 'aguardando_atendimento';",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 603
-}

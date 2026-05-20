@@ -1,9 +1,0 @@
-{
-  "query": "\nSELECT \n  id,\n  nome,\n  origem,\n  status,\n  origemWebhook,\n  createdAt,\n  CASE WHEN origem = 'facebook' AND status = 'Aguardando Atendimento' THEN 1 ELSE 0 END as priority\nFROM leads\nWHERE corretorId = 2\nORDER BY \n  CASE WHEN origem = 'facebook' AND status = 'Aguardando Atendimento' THEN 1 ELSE 0 END DESC,\n  origemWebhook DESC,\n  createdAt DESC\nLIMIT 15;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  id,\n  nome,\n  origem,\n  status,\n  origemWebhook,\n  createdAt,\n  CASE WHEN origem = 'facebook' AND status = 'Aguardando Atendimento' THEN 1 ELSE 0 END as priority\nFROM leads\nWHERE corretorId = 2\nORDER BY \n  CASE WHEN origem = 'facebook' AND status = 'Aguardando Atendimento' THEN 1 ELSE 0 END DESC,\n  origemWebhook DESC,\n  createdAt DESC\nLIMIT 15;\n",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 607
-}

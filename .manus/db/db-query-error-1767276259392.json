@@ -1,8 +1,0 @@
-{
-  "query": "SELECT f.id, f.lead_id, f.corretor_id, f.tentativa_atual, f.max_tentativas, f.status, f.proxima_tentativa, l.nome as lead_nome, u.name as corretor_nome \nFROM follow_ups f \nLEFT JOIN leads l ON f.lead_id = l.id \nLEFT JOIN users u ON f.corretor_id = u.id \nWHERE f.status = 'ativo' \nORDER BY f.proxima_tentativa \nLIMIT 20;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT f.id, f.lead_id, f.corretor_id, f.tentativa_atual, f.max_tentativas, f.status, f.proxima_tentativa, l.nome as lead_nome, u.name as corretor_nome \nFROM follow_ups f \nLEFT JOIN leads l ON f.lead_id = l.id \nLEFT JOIN users u ON f.corretor_id = u.id \nWHERE f.status = 'ativo' \nORDER BY f.proxima_tentativa \nLIMIT 20;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'f.lead_id' in 'on clause'"
-  ]
-}

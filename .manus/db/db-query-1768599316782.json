@@ -1,9 +1,0 @@
-{
-  "query": "SELECT \n  COUNT(*) as total_interacoes,\n  SUM(CASE WHEN i.tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN i.tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp,\n  DATE(i.createdAt) as data\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY DATE(i.createdAt);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  COUNT(*) as total_interacoes,\n  SUM(CASE WHEN i.tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN i.tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp,\n  DATE(i.createdAt) as data\nFROM interacoes i\nJOIN users u ON i.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND DATE(i.createdAt) = CURDATE()\nGROUP BY DATE(i.createdAt);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 54
-}

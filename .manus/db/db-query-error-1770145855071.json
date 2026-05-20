@@ -1,8 +1,0 @@
-{
-  "query": "CREATE TEMPORARY TABLE IF NOT EXISTS keep_ids AS\nSELECT MIN(id) as id\nFROM follow_ups\nWHERE status = 'pendente'\nGROUP BY leadId, corretorId, DATE(dataFollowUp);\n\nDELETE FROM follow_ups\nWHERE status = 'pendente'\nAND id NOT IN (SELECT id FROM keep_ids);\n\nDROP TEMPORARY TABLE IF EXISTS keep_ids;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TEMPORARY TABLE IF NOT EXISTS keep_ids AS\nSELECT MIN(id) as id\nFROM follow_ups\nWHERE status = 'pendente'\nGROUP BY leadId, corretorId, DATE(dataFollowUp);\n\nDELETE FROM follow_ups\nWHERE status = 'pendente'\nAND id NOT IN (SELECT id FROM keep_ids);\n\nDROP TEMPORARY TABLE IF EXISTS keep_ids;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1105 (HY000) at line 1: 'CREATE TABLE ... SELECT' is not implemented yet"
-  ]
-}

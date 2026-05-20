@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE propostas SET valorImovel = valorImovel / 100, valorEntrada = valorEntrada / 100, valorFinanciamento = valorFinanciamento / 100, valorParcela = valorParcela / 100;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE propostas SET valorImovel = valorImovel / 100, valorEntrada = valorEntrada / 100, valorFinanciamento = valorFinanciamento / 100, valorParcela = valorParcela / 100;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 60
-}

@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE atividades_diarias \nSET pontuacaoTotal = (\n  (ligacoesRealizadas * 5) +\n  (whatsappEnviados * 1) +\n  (agendamentosConfirmados * 25) +\n  (visitasRealizadas * 40) +\n  (documentacoesRecolhidas * 60) +\n  (analiseCreditoEnviadas * 60) +\n  (contratosFechados * 150)\n)\nWHERE DATE(data) = CURDATE();",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE atividades_diarias \nSET pontuacaoTotal = (\n  (ligacoesRealizadas * 5) +\n  (whatsappEnviados * 1) +\n  (agendamentosConfirmados * 25) +\n  (visitasRealizadas * 40) +\n  (documentacoesRecolhidas * 60) +\n  (analiseCreditoEnviadas * 60) +\n  (contratosFechados * 150)\n)\nWHERE DATE(data) = CURDATE();",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 64
-}

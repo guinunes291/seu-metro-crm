@@ -1,8 +1,0 @@
-{
-  "query": "SELECT id, nome, email FROM equipes WHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR nome LIKE '%Rank%' OR nome LIKE '%Batch%' OR nome LIKE '%Sheets%' OR nome LIKE '%Duplica%' OR nome LIKE '%Visitas%' OR nome LIKE '%Performance%' OR nome = 'Corretor 2' OR nome = 'João Silva Atualizado' OR nome LIKE 'João Silva Teste%' OR nome = 'Sem nome' OR nome = 'Juliana Alonso' ORDER BY nome LIMIT 100;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, email FROM equipes WHERE nome LIKE '%Teste%' OR nome LIKE '%Test%' OR nome LIKE '%Rank%' OR nome LIKE '%Batch%' OR nome LIKE '%Sheets%' OR nome LIKE '%Duplica%' OR nome LIKE '%Visitas%' OR nome LIKE '%Performance%' OR nome = 'Corretor 2' OR nome = 'João Silva Atualizado' OR nome LIKE 'João Silva Teste%' OR nome = 'Sem nome' OR nome = 'Juliana Alonso' ORDER BY nome LIMIT 100;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'email' in 'field list'"
-  ]
-}

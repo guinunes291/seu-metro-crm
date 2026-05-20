@@ -1,8 +1,0 @@
-{
-  "query": "\n-- Buscar leads com padrões de teste\nSELECT id, nome, telefone, email, status, corretor_id, created_at\nFROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR email LIKE '%webhook%'\nORDER BY created_at DESC\nLIMIT 50;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Buscar leads com padrões de teste\nSELECT id, nome, telefone, email, status, corretor_id, created_at\nFROM leads\nWHERE \n  nome LIKE '%Teste%' \n  OR nome LIKE '%Lead Rank%'\n  OR nome LIKE '%Roleta%'\n  OR nome LIKE '%Webhook%'\n  OR telefone LIKE '11777777777%'\n  OR telefone LIKE '11888888888%'\n  OR telefone LIKE '11992%'\n  OR email LIKE '%webhook%'\nORDER BY created_at DESC\nLIMIT 50;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 3: Unknown column 'corretor_id' in 'field list'"
-  ]
-}

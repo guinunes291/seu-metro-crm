@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE propostas SET tabelaPagamento = '[{\"tipo\":\"Financiamento\",\"quantidade\":1,\"valorUnitario\":280000,\"valorTotal\":280000},{\"tipo\":\"Entrada\",\"quantidade\":1,\"valorUnitario\":50000,\"valorTotal\":50000},{\"tipo\":\"Mensais\",\"quantidade\":10,\"valorUnitario\":2000,\"valorTotal\":20000}]' WHERE nomeCliente LIKE '%Marcio%' LIMIT 1;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE propostas SET tabelaPagamento = '[{\"tipo\":\"Financiamento\",\"quantidade\":1,\"valorUnitario\":280000,\"valorTotal\":280000},{\"tipo\":\"Entrada\",\"quantidade\":1,\"valorUnitario\":50000,\"valorTotal\":50000},{\"tipo\":\"Mensais\",\"quantidade\":10,\"valorUnitario\":2000,\"valorTotal\":20000}]' WHERE nomeCliente LIKE '%Marcio%' LIMIT 1;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 62
-}

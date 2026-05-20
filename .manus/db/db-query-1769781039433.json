@@ -1,9 +1,0 @@
-{
-  "query": "\nSELECT \n  l.nome,\n  l.origem,\n  l.status,\n  l.origemWebhook,\n  DATE_FORMAT(l.createdAt, '%Y-%m-%d %H:%i') as created\nFROM leads l\nINNER JOIN users u ON l.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%' \n  AND l.origem = 'facebook' \n  AND l.status = 'Aguardando Atendimento'\nORDER BY l.createdAt DESC\nLIMIT 10;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  l.nome,\n  l.origem,\n  l.status,\n  l.origemWebhook,\n  DATE_FORMAT(l.createdAt, '%Y-%m-%d %H:%i') as created\nFROM leads l\nINNER JOIN users u ON l.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%' \n  AND l.origem = 'facebook' \n  AND l.status = 'Aguardando Atendimento'\nORDER BY l.createdAt DESC\nLIMIT 10;\n",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 61
-}

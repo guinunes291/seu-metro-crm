@@ -1,9 +1,0 @@
-{
-  "query": "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE leads; TRUNCATE TABLE lead_history; TRUNCATE TABLE distribution_log; TRUNCATE TABLE follow_ups; TRUNCATE TABLE tarefas; TRUNCATE TABLE fila_distribuicao; TRUNCATE TABLE atividades_diarias; SET FOREIGN_KEY_CHECKS = 1;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE leads; TRUNCATE TABLE lead_history; TRUNCATE TABLE distribution_log; TRUNCATE TABLE follow_ups; TRUNCATE TABLE tarefas; TRUNCATE TABLE fila_distribuicao; TRUNCATE TABLE atividades_diarias; SET FOREIGN_KEY_CHECKS = 1;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 1371
-}

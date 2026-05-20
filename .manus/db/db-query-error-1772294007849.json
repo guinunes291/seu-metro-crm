@@ -1,8 +1,0 @@
-{
-  "query": "\nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'comissoes', COUNT(*) FROM comissoes\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'atividades', COUNT(*) FROM atividades\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'projects', COUNT(*) FROM projects;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'comissoes', COUNT(*) FROM comissoes\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'atividades', COUNT(*) FROM atividades\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'projects', COUNT(*) FROM projects;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1146 (42S02) at line 2: Table 'gjgl2sfxynbzjhum6i4tzh.atividades' doesn't exist"
-  ]
-}

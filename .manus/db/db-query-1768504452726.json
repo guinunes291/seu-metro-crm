@@ -1,9 +1,0 @@
-{
-  "query": "CREATE INDEX IF NOT EXISTS user_email_idx ON users(email);\nCREATE INDEX IF NOT EXISTS user_cpf_idx ON users(cpf);\nCREATE INDEX IF NOT EXISTS user_role_idx ON users(role);\nCREATE INDEX IF NOT EXISTS user_status_idx ON users(status);\nCREATE INDEX IF NOT EXISTS user_situacao_idx ON users(situacao);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE INDEX IF NOT EXISTS user_email_idx ON users(email);\nCREATE INDEX IF NOT EXISTS user_cpf_idx ON users(cpf);\nCREATE INDEX IF NOT EXISTS user_role_idx ON users(role);\nCREATE INDEX IF NOT EXISTS user_status_idx ON users(status);\nCREATE INDEX IF NOT EXISTS user_situacao_idx ON users(situacao);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 2496
-}

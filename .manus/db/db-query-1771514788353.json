@@ -1,9 +1,0 @@
-{
-  "query": "UPDATE users SET equipeId = 1 WHERE id = 11184140; UPDATE users SET equipeId = 1 WHERE id = 5055943; UPDATE users SET equipeId = 30001 WHERE id = 7961898;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE users SET equipeId = 1 WHERE id = 11184140; UPDATE users SET equipeId = 1 WHERE id = 5055943; UPDATE users SET equipeId = 30001 WHERE id = 7961898;",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 83
-}

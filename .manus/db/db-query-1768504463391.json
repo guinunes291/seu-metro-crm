@@ -1,9 +1,0 @@
-{
-  "query": "CREATE INDEX IF NOT EXISTS project_status_idx ON projects(status);\nCREATE INDEX IF NOT EXISTS project_tipo_idx ON projects(tipo);\nCREATE INDEX IF NOT EXISTS project_zona_idx ON projects(zona);\nCREATE INDEX IF NOT EXISTS project_cidade_idx ON projects(cidade);\nCREATE INDEX IF NOT EXISTS project_nome_idx ON projects(nome);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE INDEX IF NOT EXISTS project_status_idx ON projects(status);\nCREATE INDEX IF NOT EXISTS project_tipo_idx ON projects(tipo);\nCREATE INDEX IF NOT EXISTS project_zona_idx ON projects(zona);\nCREATE INDEX IF NOT EXISTS project_cidade_idx ON projects(cidade);\nCREATE INDEX IF NOT EXISTS project_nome_idx ON projects(nome);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 2535
-}

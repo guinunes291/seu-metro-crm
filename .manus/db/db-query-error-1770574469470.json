@@ -1,8 +1,0 @@
-{
-  "query": "\nSELECT \n  a.id,\n  a.leadId,\n  l.nome as leadNome,\n  a.dataAgendamento,\n  a.horaAgendamento,\n  a.status,\n  a.createdAt,\n  u.nome as corretorNome\nFROM agendamentos a\nLEFT JOIN leads l ON a.leadId = l.id\nLEFT JOIN users u ON a.corretorId = u.id\nWHERE a.status IN ('pendente', 'confirmado')\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  a.id,\n  a.leadId,\n  l.nome as leadNome,\n  a.dataAgendamento,\n  a.horaAgendamento,\n  a.status,\n  a.createdAt,\n  u.nome as corretorNome\nFROM agendamentos a\nLEFT JOIN leads l ON a.leadId = l.id\nLEFT JOIN users u ON a.corretorId = u.id\nWHERE a.status IN ('pendente', 'confirmado')\n  AND (a.leadId, a.dataAgendamento, a.horaAgendamento) IN (\n    SELECT leadId, dataAgendamento, horaAgendamento\n    FROM agendamentos\n    WHERE status IN ('pendente', 'confirmado')\n    GROUP BY leadId, dataAgendamento, horaAgendamento\n    HAVING COUNT(*) > 1\n  )\nORDER BY a.leadId, a.dataAgendamento, a.horaAgendamento, a.id;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 2: Unknown column 'u.nome' in 'field list'"
-  ]
-}

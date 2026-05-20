@@ -1,8 +1,0 @@
-{
-  "query": "SELECT id, name, email, role, status, foto_url FROM users ORDER BY role, name",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, status, foto_url FROM users ORDER BY role, name",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'foto_url' in 'field list'"
-  ]
-}

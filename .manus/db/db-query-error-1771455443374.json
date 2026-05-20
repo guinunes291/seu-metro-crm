@@ -1,8 +1,0 @@
-{
-  "query": "SELECT c.id, c.nomeCliente, c.valorVenda, c.createdAt, u.name as corretor_nome, u.id as corretor_id\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%Nunes%'\nORDER BY c.createdAt DESC;",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT c.id, c.nomeCliente, c.valorVenda, c.createdAt, u.name as corretor_nome, u.id as corretor_id\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%Nunes%'\nORDER BY c.createdAt DESC;",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 1: Unknown column 'c.nomecliente' in 'field list'"
-  ]
-}

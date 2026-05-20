@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS `configuracao_projeto_foco` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `projetoId` int,\n  `corretoresIds` json,\n  `posicaoAtual` int NOT NULL DEFAULT 0,\n  `ativo` boolean NOT NULL DEFAULT true,\n  `observacoes` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `configuracao_projeto_foco_id` PRIMARY KEY(`id`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS `configuracao_projeto_foco` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `projetoId` int,\n  `corretoresIds` json,\n  `posicaoAtual` int NOT NULL DEFAULT 0,\n  `ativo` boolean NOT NULL DEFAULT true,\n  `observacoes` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `configuracao_projeto_foco_id` PRIMARY KEY(`id`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 115
-}

@@ -1,8 +1,0 @@
-{
-  "query": "\n-- Buscar agendamentos para mapear corretores antigos por email\nSELECT DISTINCT\n  a.corretorId as old_corretor_id,\n  a.corretorEmail,\n  COUNT(DISTINCT a.leadId) as leads_agendados\nFROM agendamentos a\nWHERE a.corretorId IN (5053030, 6600095, 6851110, 4236243, 5052575, 4236208, 6621455, 6183990, 6399794, 7435908, 6600098)\nGROUP BY a.corretorId, a.corretorEmail\nORDER BY leads_agendados DESC;\n",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Buscar agendamentos para mapear corretores antigos por email\nSELECT DISTINCT\n  a.corretorId as old_corretor_id,\n  a.corretorEmail,\n  COUNT(DISTINCT a.leadId) as leads_agendados\nFROM agendamentos a\nWHERE a.corretorId IN (5053030, 6600095, 6851110, 4236243, 5052575, 4236208, 6621455, 6183990, 6399794, 7435908, 6600098)\nGROUP BY a.corretorId, a.corretorEmail\nORDER BY leads_agendados DESC;\n",
-  "returncode": 1,
-  "logs": [
-    "ERROR 1054 (42S22) at line 3: Unknown column 'a.corretoremail' in 'group statement'"
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "query": "CREATE TABLE IF NOT EXISTS `log_transferencias` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `leadId` int NOT NULL,\n  `leadNome` varchar(255) NOT NULL,\n  `corretorOrigemId` int,\n  `corretorOrigemNome` varchar(255),\n  `corretorDestinoId` int,\n  `corretorDestinoNome` varchar(255),\n  `motivo` varchar(255) NOT NULL,\n  `statusFinal` varchar(50) NOT NULL,\n  `dataTransferencia` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `log_transferencias_id` PRIMARY KEY(`id`)\n);",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS `log_transferencias` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `leadId` int NOT NULL,\n  `leadNome` varchar(255) NOT NULL,\n  `corretorOrigemId` int,\n  `corretorOrigemNome` varchar(255),\n  `corretorDestinoId` int,\n  `corretorDestinoNome` varchar(255),\n  `motivo` varchar(255) NOT NULL,\n  `statusFinal` varchar(50) NOT NULL,\n  `dataTransferencia` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  CONSTRAINT `log_transferencias_id` PRIMARY KEY(`id`)\n);",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 229
-}
