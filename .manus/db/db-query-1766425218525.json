@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE atividades_diarias SET data = '2025-12-22 05:00:00' WHERE data = '2025-12-22 00:00:00';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE atividades_diarias SET data = '2025-12-22 05:00:00' WHERE data = '2025-12-22 00:00:00';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 57
+}

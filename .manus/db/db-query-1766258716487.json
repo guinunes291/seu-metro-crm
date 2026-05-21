@@ -1,0 +1,185 @@
+{
+  "query": "SELECT id, name, email, role, status FROM users ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, status FROM users ORDER BY id",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "gestor",
+      "status": "ausente"
+    },
+    {
+      "id": "4236208",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4236243",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4237174",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891632",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617108@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891633",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617469@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891634",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617567@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891635",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617723@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891636",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245617936@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891637",
+      "name": "Corretor 2",
+      "email": "corretor2-1766245618990@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891638",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1766245618385@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891639",
+      "name": "Corretor Rank 0",
+      "email": "corretor-rank-0-1766245618431@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891640",
+      "name": "Corretor Rank 1",
+      "email": "corretor-rank-1-1766245618431@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891642",
+      "name": "Corretor Rank 2",
+      "email": "corretor-rank-2-1766245618431@test.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891652",
+      "name": "Corretor Sheets Test",
+      "email": "sheets@test.com",
+      "role": "corretor",
+      "status": "presente"
+    },
+    {
+      "id": "4891657",
+      "name": "Corretor Batch Test",
+      "email": "sheets-batch@test.com",
+      "role": "corretor",
+      "status": "presente"
+    },
+    {
+      "id": "4891660",
+      "name": "João Silva Atualizado",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "presente"
+    },
+    {
+      "id": "4891661",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891662",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891663",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891664",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891665",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891666",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891667",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    },
+    {
+      "id": "4891669",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "status": "ausente"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tstatus\n1\tGuilherme Nunes\tguilherme_97fm@outlook.com\tgestor\tausente\n4236208\tAndrew\tandrewformigoni.corretor@gmail.com\tcorretor\tausente\n4236243\tkauanthyago34\tkauanthyago34@gmail.com\tcorretor\tausente\n4237174\tGuilherme Nunes\tguilherme.97fn@gmail.com\tcorretor\tausente\n4891632\tCorretor Teste Performance\tcorretor-perf-1766245617108@test.com\tcorretor\tausente\n4891633\tCorretor Teste Performance\tcorretor-perf-1766245617469@test.com\tcorretor\tausente\n4891634\tCorretor Teste Performance\tcorretor-perf-1766245617567@test.com\tcorretor\tausente\n4891635\tCorretor Teste Performance\tcorretor-perf-1766245617723@test.com\tcorretor\tausente\n4891636\tCorretor Teste Performance\tcorretor-perf-1766245617936@test.com\tcorretor\tausente\n4891637\tCorretor 2\tcorretor2-1766245618990@test.com\tcorretor\tausente\n4891638\tCorretor Teste Performance\tcorretor-perf-1766245618385@test.com\tcorretor\tausente\n4891639\tCorretor Rank 0\tcorretor-rank-0-1766245618431@test.com\tcorretor\tausente\n4891640\tCorretor Rank 1\tcorretor-rank-1-1766245618431@test.com\tcorretor\tausente\n4891642\tCorretor Rank 2\tcorretor-rank-2-1766245618431@test.com\tcorretor\tausente\n4891652\tCorretor Sheets Test\tsheets@test.com\tcorretor\tpresente\n4891657\tCorretor Batch Test\tsheets-batch@test.com\tcorretor\tpresente\n4891660\tJoão Silva Atualizado\tjoao.teste@exemplo.com\tcorretor\tpresente\n4891661\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891662\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891663\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891664\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891665\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891666\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891667\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n4891669\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\tausente\n",
+  "stderr": "",
+  "execution_time_ms": 74
+}

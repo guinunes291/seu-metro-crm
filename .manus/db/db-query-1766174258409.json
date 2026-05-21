@@ -1,0 +1,22 @@
+{
+  "query": "SELECT 'leads' as tabela, COUNT(*) as total FROM leads WHERE nome LIKE '_T_%' OR telefone LIKE '99%'\nUNION ALL\nSELECT 'projects' as tabela, COUNT(*) as total FROM projects WHERE nome LIKE '_T_%'\nUNION ALL\nSELECT 'users' as tabela, COUNT(*) as total FROM users WHERE name LIKE '_T_%' OR email LIKE '_T_%'",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT 'leads' as tabela, COUNT(*) as total FROM leads WHERE nome LIKE '_T_%' OR telefone LIKE '99%'\nUNION ALL\nSELECT 'projects' as tabela, COUNT(*) as total FROM projects WHERE nome LIKE '_T_%'\nUNION ALL\nSELECT 'users' as tabela, COUNT(*) as total FROM users WHERE name LIKE '_T_%' OR email LIKE '_T_%'",
+  "rows": [
+    {
+      "tabela": "users",
+      "total": "0"
+    },
+    {
+      "tabela": "projects",
+      "total": "0"
+    },
+    {
+      "tabela": "leads",
+      "total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tabela\ttotal\nusers\t0\nprojects\t0\nleads\t0\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

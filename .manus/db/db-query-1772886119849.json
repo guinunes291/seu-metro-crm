@@ -1,0 +1,184 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso' ORDER BY name LIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso' ORDER BY name LIMIT 100;",
+  "rows": [
+    {
+      "id": "14160118",
+      "name": "Corretor 2",
+      "email": "corretor2-1772840851515@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160142",
+      "name": "Corretor Batch Test",
+      "email": "sheets-batch@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160121",
+      "name": "Corretor Rank 0",
+      "email": "corretor-rank-0-1772840850983@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160122",
+      "name": "Corretor Rank 1",
+      "email": "corretor-rank-1-1772840850983@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160123",
+      "name": "Corretor Rank 2",
+      "email": "corretor-rank-2-1772840850983@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160141",
+      "name": "Corretor Sheets Test",
+      "email": "sheets@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160149",
+      "name": "Corretor Teste Duplicação",
+      "email": "corretor-dup-1772840864147@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160115",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840850184@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160114",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840850092@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160116",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840850308@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160113",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840849724@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160120",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840850938@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160117",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772840850476@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160129",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840856053@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160130",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840856070@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160133",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840856124@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160128",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840855932@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160132",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840856108@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160131",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772840856089@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160154",
+      "name": "João Silva Atualizado",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160160",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160158",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160164",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160156",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160161",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160162",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160159",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "14160157",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor"
+    },
+    {
+      "id": "13929259",
+      "name": "Juliana Alonso",
+      "email": "juliana.alonso3@gmail.com",
+      "role": "corretor"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n14160118\tCorretor 2\tcorretor2-1772840851515@test.com\tcorretor\n14160142\tCorretor Batch Test\tsheets-batch@test.com\tcorretor\n14160121\tCorretor Rank 0\tcorretor-rank-0-1772840850983@test.com\tcorretor\n14160122\tCorretor Rank 1\tcorretor-rank-1-1772840850983@test.com\tcorretor\n14160123\tCorretor Rank 2\tcorretor-rank-2-1772840850983@test.com\tcorretor\n14160141\tCorretor Sheets Test\tsheets@test.com\tcorretor\n14160149\tCorretor Teste Duplicação\tcorretor-dup-1772840864147@test.com\tcorretor\n14160115\tCorretor Teste Performance\tcorretor-perf-1772840850184@test.com\tcorretor\n14160114\tCorretor Teste Performance\tcorretor-perf-1772840850092@test.com\tcorretor\n14160116\tCorretor Teste Performance\tcorretor-perf-1772840850308@test.com\tcorretor\n14160113\tCorretor Teste Performance\tcorretor-perf-1772840849724@test.com\tcorretor\n14160120\tCorretor Teste Performance\tcorretor-perf-1772840850938@test.com\tcorretor\n14160117\tCorretor Teste Performance\tcorretor-perf-1772840850476@test.com\tcorretor\n14160129\tCorretor Teste Visitas\tcorretor-visitas-1772840856053@test.com\tcorretor\n14160130\tCorretor Teste Visitas\tcorretor-visitas-1772840856070@test.com\tcorretor\n14160133\tCorretor Teste Visitas\tcorretor-visitas-1772840856124@test.com\tcorretor\n14160128\tCorretor Teste Visitas\tcorretor-visitas-1772840855932@test.com\tcorretor\n14160132\tCorretor Teste Visitas\tcorretor-visitas-1772840856108@test.com\tcorretor\n14160131\tCorretor Teste Visitas\tcorretor-visitas-1772840856089@test.com\tcorretor\n14160154\tJoão Silva Atualizado\tjoao.teste@exemplo.com\tcorretor\n14160160\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160158\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160164\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160156\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160161\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160162\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160159\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n14160157\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\n13929259\tJuliana Alonso\tjuliana.alonso3@gmail.com\tcorretor\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

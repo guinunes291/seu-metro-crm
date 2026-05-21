@@ -1,0 +1,460 @@
+{
+  "query": "\nSELECT \n  i.id,\n  i.corretorId,\n  u.name as corretorNome,\n  u.email,\n  i.tipo,\n  i.createdAt,\n  DATE(i.createdAt) as data_interacao\nFROM interacoes i\nLEFT JOIN users u ON i.corretorId = u.id\nWHERE u.name LIKE '%Gabriel%'\nORDER BY i.createdAt DESC\nLIMIT 50;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  i.id,\n  i.corretorId,\n  u.name as corretorNome,\n  u.email,\n  i.tipo,\n  i.createdAt,\n  DATE(i.createdAt) as data_interacao\nFROM interacoes i\nLEFT JOIN users u ON i.corretorId = u.id\nWHERE u.name LIKE '%Gabriel%'\nORDER BY i.createdAt DESC\nLIMIT 50;\n",
+  "rows": [
+    {
+      "id": "11627",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:24:32",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5808",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:24:32",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11626",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:24:13",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5807",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:24:13",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11625",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:23:52",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5806",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 22:23:52",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11623",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:28:45",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5804",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:28:45",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11622",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:27:44",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5803",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:27:44",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11621",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:40",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5802",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:40",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11620",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:34",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5801",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:34",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11619",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:31",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5800",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:31",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11618",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:28",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5799",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:28",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11617",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:25",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5798",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:25",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11616",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:20",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5797",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:26:20",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11615",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:59",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5796",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:59",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11614",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:56",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5795",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:56",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11613",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:53",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5794",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:53",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11612",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:50",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "5793",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-16 21:25:50",
+      "data_interacao": "2026-01-16"
+    },
+    {
+      "id": "11170",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:29:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5351",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:29:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11169",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:27:04",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5350",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:27:04",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11165",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:24:55",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5346",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:24:55",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11163",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:23:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5344",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:23:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11161",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:22:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5342",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:22:07",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11160",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:21:33",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5341",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:21:33",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11154",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:19:45",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5335",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:19:45",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11151",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:19:02",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5332",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:19:02",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11148",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:18:05",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5329",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:18:05",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "11146",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:15:18",
+      "data_interacao": "2026-01-15"
+    },
+    {
+      "id": "5327",
+      "corretorId": "6368447",
+      "corretorNome": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "tipo": "whatsapp",
+      "createdAt": "2026-01-15 20:15:18",
+      "data_interacao": "2026-01-15"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tcorretorNome\temail\ttipo\tcreatedAt\tdata_interacao\n11627\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:24:32\t2026-01-16\n5808\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:24:32\t2026-01-16\n11626\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:24:13\t2026-01-16\n5807\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:24:13\t2026-01-16\n11625\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:23:52\t2026-01-16\n5806\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 22:23:52\t2026-01-16\n11623\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:28:45\t2026-01-16\n5804\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:28:45\t2026-01-16\n11622\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:27:44\t2026-01-16\n5803\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:27:44\t2026-01-16\n11621\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:40\t2026-01-16\n5802\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:40\t2026-01-16\n11620\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:34\t2026-01-16\n5801\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:34\t2026-01-16\n11619\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:31\t2026-01-16\n5800\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:31\t2026-01-16\n11618\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:28\t2026-01-16\n5799\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:28\t2026-01-16\n11617\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:25\t2026-01-16\n5798\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:25\t2026-01-16\n11616\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:20\t2026-01-16\n5797\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:26:20\t2026-01-16\n11615\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:59\t2026-01-16\n5796\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:59\t2026-01-16\n11614\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:56\t2026-01-16\n5795\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:56\t2026-01-16\n11613\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:53\t2026-01-16\n5794\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:53\t2026-01-16\n11612\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:50\t2026-01-16\n5793\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-16 21:25:50\t2026-01-16\n11170\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:29:07\t2026-01-15\n5351\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:29:07\t2026-01-15\n11169\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:27:04\t2026-01-15\n5350\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:27:04\t2026-01-15\n11165\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:24:55\t2026-01-15\n5346\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:24:55\t2026-01-15\n11163\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:23:07\t2026-01-15\n5344\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:23:07\t2026-01-15\n11161\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:22:07\t2026-01-15\n5342\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:22:07\t2026-01-15\n11160\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:21:33\t2026-01-15\n5341\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:21:33\t2026-01-15\n11154\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:19:45\t2026-01-15\n5335\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:19:45\t2026-01-15\n11151\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:19:02\t2026-01-15\n5332\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:19:02\t2026-01-15\n11148\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:18:05\t2026-01-15\n5329\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:18:05\t2026-01-15\n11146\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:15:18\t2026-01-15\n5327\t6368447\tGabriel Salles\tbiel2s7777@gmail.com\twhatsapp\t2026-01-15 20:15:18\t2026-01-15\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

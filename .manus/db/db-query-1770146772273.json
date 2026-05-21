@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS equipes (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  nome VARCHAR(255) NOT NULL,\n  descricao TEXT,\n  gestorId INT NOT NULL,\n  cor VARCHAR(7) NOT NULL DEFAULT '#3b82f6',\n  metaMensal INT NOT NULL DEFAULT 10,\n  ativa BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX equipe_gestor_idx (gestorId),\n  INDEX equipe_ativa_idx (ativa)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE TABLE IF NOT EXISTS equipes (\n  id INT AUTO_INCREMENT PRIMARY KEY,\n  nome VARCHAR(255) NOT NULL,\n  descricao TEXT,\n  gestorId INT NOT NULL,\n  cor VARCHAR(7) NOT NULL DEFAULT '#3b82f6',\n  metaMensal INT NOT NULL DEFAULT 10,\n  ativa BOOLEAN NOT NULL DEFAULT TRUE,\n  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX equipe_gestor_idx (gestorId),\n  INDEX equipe_ativa_idx (ativa)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 502
+}

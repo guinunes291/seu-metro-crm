@@ -1,0 +1,60 @@
+{
+  "query": "SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE \nFROM INFORMATION_SCHEMA.COLUMNS \nWHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'follow_ups'\nORDER BY ORDINAL_POSITION;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE \nFROM INFORMATION_SCHEMA.COLUMNS \nWHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'follow_ups'\nORDER BY ORDINAL_POSITION;",
+  "rows": [
+    {
+      "COLUMN_NAME": "id",
+      "DATA_TYPE": "int",
+      "COLUMN_TYPE": "int(11)"
+    },
+    {
+      "COLUMN_NAME": "leadId",
+      "DATA_TYPE": "int",
+      "COLUMN_TYPE": "int(11)"
+    },
+    {
+      "COLUMN_NAME": "corretorId",
+      "DATA_TYPE": "int",
+      "COLUMN_TYPE": "int(11)"
+    },
+    {
+      "COLUMN_NAME": "dataFollowUp",
+      "DATA_TYPE": "timestamp",
+      "COLUMN_TYPE": "timestamp"
+    },
+    {
+      "COLUMN_NAME": "dataRegistro",
+      "DATA_TYPE": "timestamp",
+      "COLUMN_TYPE": "timestamp"
+    },
+    {
+      "COLUMN_NAME": "status",
+      "DATA_TYPE": "enum",
+      "COLUMN_TYPE": "enum('ativo','respondido','encerrado','convertido','cancelado')"
+    },
+    {
+      "COLUMN_NAME": "createdAt",
+      "DATA_TYPE": "timestamp",
+      "COLUMN_TYPE": "timestamp"
+    },
+    {
+      "COLUMN_NAME": "updatedAt",
+      "DATA_TYPE": "timestamp",
+      "COLUMN_TYPE": "timestamp"
+    },
+    {
+      "COLUMN_NAME": "resultado",
+      "DATA_TYPE": "enum",
+      "COLUMN_TYPE": "enum('respondeu','nao_respondeu')"
+    },
+    {
+      "COLUMN_NAME": "observacao",
+      "DATA_TYPE": "text",
+      "COLUMN_TYPE": "text"
+    }
+  ],
+  "messages": [],
+  "stdout": "COLUMN_NAME\tDATA_TYPE\tCOLUMN_TYPE\nid\tint\tint(11)\nleadId\tint\tint(11)\ncorretorId\tint\tint(11)\ndataFollowUp\ttimestamp\ttimestamp\ndataRegistro\ttimestamp\ttimestamp\nstatus\tenum\tenum('ativo','respondido','encerrado','convertido','cancelado')\ncreatedAt\ttimestamp\ttimestamp\nupdatedAt\ttimestamp\ttimestamp\nresultado\tenum\tenum('respondeu','nao_respondeu')\nobservacao\ttext\ttext\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

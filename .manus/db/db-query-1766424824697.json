@@ -1,0 +1,49 @@
+{
+  "query": "SELECT \n  ad.corretorId,\n  u.name as corretorNome,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.ligacoesAtendidas,\n  ad.whatsappEnviados,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.documentacoesRecolhidas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY ad.data DESC, ad.pontuacaoTotal DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  ad.corretorId,\n  u.name as corretorNome,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.ligacoesAtendidas,\n  ad.whatsappEnviados,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.documentacoesRecolhidas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY ad.data DESC, ad.pontuacaoTotal DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "corretorId": "5053030",
+      "corretorNome": "Breno Brunelli",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "22",
+      "ligacoesAtendidas": "22",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "66"
+    },
+    {
+      "corretorId": "4236208",
+      "corretorNome": "Andrew",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "4",
+      "ligacoesAtendidas": "4",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "0"
+    },
+    {
+      "corretorId": "5050301",
+      "corretorNome": "Anderson ANTOINE",
+      "data": "2025-12-22 00:00:00",
+      "ligacoesRealizadas": "17",
+      "ligacoesAtendidas": "17",
+      "whatsappEnviados": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\tcorretorNome\tdata\tligacoesRealizadas\tligacoesAtendidas\twhatsappEnviados\tagendamentosConfirmados\tvisitasRealizadas\tdocumentacoesRecolhidas\tcontratosFechados\tpontuacaoTotal\n5053030\tBreno Brunelli\t2025-12-22 00:00:00\t22\t22\t0\t0\t0\t0\t0\t66\n4236208\tAndrew\t2025-12-22 00:00:00\t4\t4\t0\t0\t0\t0\t0\t0\n5050301\tAnderson ANTOINE\t2025-12-22 00:00:00\t17\t17\t0\t0\t0\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 97
+}

@@ -1,0 +1,9 @@
+{
+  "query": "\nCREATE TABLE IF NOT EXISTS `metas_globais` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `mes` int NOT NULL,\n  `ano` int NOT NULL,\n  `metaVGV` bigint NOT NULL DEFAULT 0,\n  `observacoes` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `metas_globais_id` PRIMARY KEY(`id`),\n  INDEX `metas_globais_mes_ano_idx` (`mes`, `ano`)\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nCREATE TABLE IF NOT EXISTS `metas_globais` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `mes` int NOT NULL,\n  `ano` int NOT NULL,\n  `metaVGV` bigint NOT NULL DEFAULT 0,\n  `observacoes` text,\n  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  CONSTRAINT `metas_globais_id` PRIMARY KEY(`id`),\n  INDEX `metas_globais_mes_ano_idx` (`mes`, `ano`)\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 516
+}

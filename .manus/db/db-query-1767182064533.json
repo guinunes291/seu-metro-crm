@@ -1,0 +1,37 @@
+{
+  "query": "SELECT * FROM users WHERE name LIKE '%kauan%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT * FROM users WHERE name LIKE '%kauan%';",
+  "rows": [
+    {
+      "id": "4236243",
+      "openId": "GmaVb6YMXJpZZH9CBpV8eb",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "loginMethod": "email",
+      "role": "corretor",
+      "createdAt": "2025-12-19 19:39:07",
+      "updatedAt": "2025-12-29 18:20:37",
+      "lastSignedIn": "2025-12-29 18:20:38",
+      "status": "ausente",
+      "telefone": "NULL",
+      "fotoUrl": "https://d2xsxph8kpxj0f.cloudfront.net/310419663032188321/gjgL2sFxYNbZjhUM6i4tZH/corretores/4236243/foto-1766427605791.jpg",
+      "cpf": "NULL",
+      "dataNascimento": "NULL",
+      "creci": "NULL",
+      "dataCredenciamento": "NULL",
+      "dataDescredenciamento": "NULL",
+      "situacao": "ativo",
+      "logradouro": "NULL",
+      "numero": "NULL",
+      "complemento": "NULL",
+      "bairro": "NULL",
+      "cidade": "NULL",
+      "estado": "NULL",
+      "cep": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\tloginMethod\trole\tcreatedAt\tupdatedAt\tlastSignedIn\tstatus\ttelefone\tfotoUrl\tcpf\tdataNascimento\tcreci\tdataCredenciamento\tdataDescredenciamento\tsituacao\tlogradouro\tnumero\tcomplemento\tbairro\tcidade\testado\tcep\n4236243\tGmaVb6YMXJpZZH9CBpV8eb\tkauanthyago34\tkauanthyago34@gmail.com\temail\tcorretor\t2025-12-19 19:39:07\t2025-12-29 18:20:37\t2025-12-29 18:20:38\tausente\tNULL\thttps://d2xsxph8kpxj0f.cloudfront.net/310419663032188321/gjgL2sFxYNbZjhUM6i4tZH/corretores/4236243/foto-1766427605791.jpg\tNULL\tNULL\tNULL\tNULL\tNULL\tativo\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

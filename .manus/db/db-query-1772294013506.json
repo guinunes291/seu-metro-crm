@@ -1,0 +1,38 @@
+{
+  "query": "\nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'comissoes', COUNT(*) FROM comissoes\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'projects', COUNT(*) FROM projects;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'comissoes', COUNT(*) FROM comissoes\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'projects', COUNT(*) FROM projects;\n",
+  "rows": [
+    {
+      "tabela": "users",
+      "total": "63"
+    },
+    {
+      "tabela": "comissoes",
+      "total": "49"
+    },
+    {
+      "tabela": "agendamentos",
+      "total": "131"
+    },
+    {
+      "tabela": "contratos",
+      "total": "26"
+    },
+    {
+      "tabela": "equipes",
+      "total": "3"
+    },
+    {
+      "tabela": "projects",
+      "total": "1399"
+    },
+    {
+      "tabela": "leads",
+      "total": "28314"
+    }
+  ],
+  "messages": [],
+  "stdout": "tabela\ttotal\nusers\t63\ncomissoes\t49\nagendamentos\t131\ncontratos\t26\nequipes\t3\nprojects\t1399\nleads\t28314\n",
+  "stderr": "",
+  "execution_time_ms": 353
+}

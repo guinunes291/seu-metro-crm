@@ -1,0 +1,451 @@
+{
+  "query": "\nSELECT id, name, email, role, createdAt FROM users ORDER BY id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, name, email, role, createdAt FROM users ORDER BY id;\n",
+  "rows": [
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "createdAt": "2025-12-22 18:15:10"
+    },
+    {
+      "id": "6368447",
+      "name": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-05 16:18:19"
+    },
+    {
+      "id": "6396243",
+      "name": "Igor Nigro",
+      "email": "igor.nigro09@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-06 15:08:00"
+    },
+    {
+      "id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "createdAt": "2026-01-17 17:25:00"
+    },
+    {
+      "id": "7723881",
+      "name": "Paula Akahoshi",
+      "email": "paula.akahoshi92@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-17 17:54:14"
+    },
+    {
+      "id": "7860001",
+      "name": "Leticia Castro",
+      "email": "leticiaccastro2@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-18 12:23:57"
+    },
+    {
+      "id": "7862260",
+      "name": "Andrew Formigoni Leite",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-18 16:42:53"
+    },
+    {
+      "id": "7950004",
+      "name": "Aline Silva",
+      "email": "alinee.tsilvaa@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 13:00:46"
+    },
+    {
+      "id": "7958356",
+      "name": "Pitter Reis",
+      "email": "pitter.reissouza@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 15:12:04"
+    },
+    {
+      "id": "7961898",
+      "name": "sheldonbarbosaa",
+      "email": "sheldonbarbosaa@gmail.com",
+      "role": "gestor",
+      "createdAt": "2026-01-19 16:15:30"
+    },
+    {
+      "id": "7982154",
+      "name": "Kauan Santana",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 22:43:59"
+    },
+    {
+      "id": "8071179",
+      "name": "Hellen Rodrigues",
+      "email": "hellen.rs0710@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-20 11:36:09"
+    },
+    {
+      "id": "9816037",
+      "name": "fabio paes",
+      "email": "faberpaes@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-31 15:30:58"
+    },
+    {
+      "id": "9816082",
+      "name": "Graziele Gomes",
+      "email": "graziele.gomes.rivavendas@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-31 15:33:57"
+    },
+    {
+      "id": "10319087",
+      "name": "Daniel Lacerda",
+      "email": "lacerdaniel.imoveis@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-04 16:04:18"
+    },
+    {
+      "id": "10409127",
+      "name": "Carla Quaresma",
+      "email": "carla.quaresma.rivavendas@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-05 17:55:58"
+    },
+    {
+      "id": "10861557",
+      "name": "Alana da Costa Souza",
+      "email": "alanaimobi@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-10 12:26:08"
+    },
+    {
+      "id": "11184140",
+      "name": "Luis Carlos De Veras",
+      "email": "deveras.2025@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-15 16:18:47"
+    },
+    {
+      "id": "11288759",
+      "name": "Wesley Aquino",
+      "email": "well.sanquino@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-18 12:27:50"
+    },
+    {
+      "id": "11388281",
+      "name": "Thaynara Meneses das Dores",
+      "email": "thaynara.meneses2018@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 15:15:19"
+    },
+    {
+      "id": "11418394",
+      "name": "Felippe Andrade",
+      "email": "andradefelippe19@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 18:02:07"
+    },
+    {
+      "id": "11632920",
+      "name": "Bella Brancaccio",
+      "email": "isa.branca.carvalho@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-21 16:40:54"
+    },
+    {
+      "id": "11638016",
+      "name": "João Victor Ferreira Santos",
+      "email": "joaovitorferreiravitor@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-21 17:59:24"
+    },
+    {
+      "id": "11649527",
+      "name": "Dayane Prince Saraiva Moreira da Silva ",
+      "email": "dpconsultoria10@gmail.com",
+      "role": "superintendente",
+      "createdAt": "2026-02-21 21:35:23"
+    },
+    {
+      "id": "11824737",
+      "name": "Guilherme Marques",
+      "email": "corretor.guimarques@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-22 18:14:29"
+    },
+    {
+      "id": "11946669",
+      "name": "Letícia Brandão",
+      "email": "lee.brandao06@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-23 16:41:34"
+    },
+    {
+      "id": "11964726",
+      "name": "Nathan Nascimento",
+      "email": "nathan.n4sk@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-23 18:02:39"
+    },
+    {
+      "id": "12022299",
+      "name": "Patricia Santos",
+      "email": "patty.martirio77@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-23 22:36:39"
+    },
+    {
+      "id": "12180015",
+      "name": "Rangel",
+      "email": "douglasrangelvitor@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-25 18:40:03"
+    },
+    {
+      "id": "12353068",
+      "name": "Superintendente Teste",
+      "email": "super@test.com",
+      "role": "superintendente",
+      "createdAt": "2026-02-27 13:04:48"
+    },
+    {
+      "id": "12353069",
+      "name": "Gestor Temp",
+      "email": "gestor-temp@test.com",
+      "role": "gestor",
+      "createdAt": "2026-02-27 13:04:48"
+    },
+    {
+      "id": "12353071",
+      "name": "Gerente Teste",
+      "email": "gerente@test.com",
+      "role": "gestor",
+      "createdAt": "2026-02-27 13:04:49"
+    },
+    {
+      "id": "12402494",
+      "name": "Gabriel Antônio Martins",
+      "email": "gabriel.antonioghl7@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-27 18:51:02"
+    },
+    {
+      "id": "12442816",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245336746@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:17"
+    },
+    {
+      "id": "12442819",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245338245@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:18"
+    },
+    {
+      "id": "12442820",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245338797@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:18"
+    },
+    {
+      "id": "12442821",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245339516@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:19"
+    },
+    {
+      "id": "12442822",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245340389@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:20"
+    },
+    {
+      "id": "12442823",
+      "name": "Corretor 2",
+      "email": "corretor2-1772245341598@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:20"
+    },
+    {
+      "id": "12442827",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245342620@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:22"
+    },
+    {
+      "id": "12442828",
+      "name": "Corretor Rank 0",
+      "email": "corretor-rank-0-1772245342832@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:22"
+    },
+    {
+      "id": "12442831",
+      "name": "Corretor Rank 1",
+      "email": "corretor-rank-1-1772245342832@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:23"
+    },
+    {
+      "id": "12442832",
+      "name": "Corretor Rank 2",
+      "email": "corretor-rank-2-1772245342832@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:24"
+    },
+    {
+      "id": "12442851",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369287@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:49"
+    },
+    {
+      "id": "12442852",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369714@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:49"
+    },
+    {
+      "id": "12442853",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369819@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:49"
+    },
+    {
+      "id": "12442855",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369928@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:49"
+    },
+    {
+      "id": "12442856",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245370030@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:50"
+    },
+    {
+      "id": "12442857",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245370133@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:22:50"
+    },
+    {
+      "id": "12442872",
+      "name": "Corretor Sheets Test",
+      "email": "sheets@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:23:09"
+    },
+    {
+      "id": "12442875",
+      "name": "Corretor Batch Test",
+      "email": "sheets-batch@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:23:09"
+    },
+    {
+      "id": "12443457",
+      "name": "Corretor Teste Duplicação",
+      "email": "corretor-dup-1772246646717@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:44:07"
+    },
+    {
+      "id": "12443476",
+      "name": "NULL",
+      "email": "corretor-auto-1772246700330@teste.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:00"
+    },
+    {
+      "id": "12443496",
+      "name": "João Silva Atualizado",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:56"
+    },
+    {
+      "id": "12443497",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:56"
+    },
+    {
+      "id": "12443498",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:57"
+    },
+    {
+      "id": "12443499",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:57"
+    },
+    {
+      "id": "12443500",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:57"
+    },
+    {
+      "id": "12443501",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:57"
+    },
+    {
+      "id": "12443502",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:57"
+    },
+    {
+      "id": "12443503",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:58"
+    },
+    {
+      "id": "12443505",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 02:45:58"
+    },
+    {
+      "id": "12497299",
+      "name": "Camilla Caires",
+      "email": "camillacaires92@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-28 15:29:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tcreatedAt\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\t2025-12-22 18:15:10\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\t2026-01-05 16:18:19\n6396243\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\t2026-01-06 15:08:00\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t2026-01-17 17:25:00\n7723881\tPaula Akahoshi\tpaula.akahoshi92@gmail.com\tcorretor\t2026-01-17 17:54:14\n7860001\tLeticia Castro\tleticiaccastro2@gmail.com\tcorretor\t2026-01-18 12:23:57\n7862260\tAndrew Formigoni Leite\tandrewformigoni.corretor@gmail.com\tcorretor\t2026-01-18 16:42:53\n7950004\tAline Silva\talinee.tsilvaa@gmail.com\tcorretor\t2026-01-19 13:00:46\n7958356\tPitter Reis\tpitter.reissouza@gmail.com\tcorretor\t2026-01-19 15:12:04\n7961898\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tgestor\t2026-01-19 16:15:30\n7982154\tKauan Santana\tkauanthyago34@gmail.com\tcorretor\t2026-01-19 22:43:59\n8071179\tHellen Rodrigues\thellen.rs0710@gmail.com\tcorretor\t2026-01-20 11:36:09\n9816037\tfabio paes\tfaberpaes@gmail.com\tcorretor\t2026-01-31 15:30:58\n9816082\tGraziele Gomes\tgraziele.gomes.rivavendas@gmail.com\tcorretor\t2026-01-31 15:33:57\n10319087\tDaniel Lacerda\tlacerdaniel.imoveis@gmail.com\tcorretor\t2026-02-04 16:04:18\n10409127\tCarla Quaresma\tcarla.quaresma.rivavendas@gmail.com\tcorretor\t2026-02-05 17:55:58\n10861557\tAlana da Costa Souza\talanaimobi@gmail.com\tcorretor\t2026-02-10 12:26:08\n11184140\tLuis Carlos De Veras\tdeveras.2025@gmail.com\tcorretor\t2026-02-15 16:18:47\n11288759\tWesley Aquino\twell.sanquino@gmail.com\tcorretor\t2026-02-18 12:27:50\n11388281\tThaynara Meneses das Dores\tthaynara.meneses2018@gmail.com\tcorretor\t2026-02-19 15:15:19\n11418394\tFelippe Andrade\tandradefelippe19@gmail.com\tcorretor\t2026-02-19 18:02:07\n11632920\tBella Brancaccio\tisa.branca.carvalho@gmail.com\tcorretor\t2026-02-21 16:40:54\n11638016\tJoão Victor Ferreira Santos\tjoaovitorferreiravitor@gmail.com\tcorretor\t2026-02-21 17:59:24\n11649527\tDayane Prince Saraiva Moreira da Silva \tdpconsultoria10@gmail.com\tsuperintendente\t2026-02-21 21:35:23\n11824737\tGuilherme Marques\tcorretor.guimarques@gmail.com\tcorretor\t2026-02-22 18:14:29\n11946669\tLetícia Brandão\tlee.brandao06@gmail.com\tcorretor\t2026-02-23 16:41:34\n11964726\tNathan Nascimento\tnathan.n4sk@gmail.com\tcorretor\t2026-02-23 18:02:39\n12022299\tPatricia Santos\tpatty.martirio77@gmail.com\tcorretor\t2026-02-23 22:36:39\n12180015\tRangel\tdouglasrangelvitor@gmail.com\tcorretor\t2026-02-25 18:40:03\n12353068\tSuperintendente Teste\tsuper@test.com\tsuperintendente\t2026-02-27 13:04:48\n12353069\tGestor Temp\tgestor-temp@test.com\tgestor\t2026-02-27 13:04:48\n12353071\tGerente Teste\tgerente@test.com\tgestor\t2026-02-27 13:04:49\n12402494\tGabriel Antônio Martins\tgabriel.antonioghl7@gmail.com\tcorretor\t2026-02-27 18:51:02\n12442816\tCorretor Teste Performance\tcorretor-perf-1772245336746@test.com\tcorretor\t2026-02-28 02:22:17\n12442819\tCorretor Teste Performance\tcorretor-perf-1772245338245@test.com\tcorretor\t2026-02-28 02:22:18\n12442820\tCorretor Teste Performance\tcorretor-perf-1772245338797@test.com\tcorretor\t2026-02-28 02:22:18\n12442821\tCorretor Teste Performance\tcorretor-perf-1772245339516@test.com\tcorretor\t2026-02-28 02:22:19\n12442822\tCorretor Teste Performance\tcorretor-perf-1772245340389@test.com\tcorretor\t2026-02-28 02:22:20\n12442823\tCorretor 2\tcorretor2-1772245341598@test.com\tcorretor\t2026-02-28 02:22:20\n12442827\tCorretor Teste Performance\tcorretor-perf-1772245342620@test.com\tcorretor\t2026-02-28 02:22:22\n12442828\tCorretor Rank 0\tcorretor-rank-0-1772245342832@test.com\tcorretor\t2026-02-28 02:22:22\n12442831\tCorretor Rank 1\tcorretor-rank-1-1772245342832@test.com\tcorretor\t2026-02-28 02:22:23\n12442832\tCorretor Rank 2\tcorretor-rank-2-1772245342832@test.com\tcorretor\t2026-02-28 02:22:24\n12442851\tCorretor Teste Visitas\tcorretor-visitas-1772245369287@test.com\tcorretor\t2026-02-28 02:22:49\n12442852\tCorretor Teste Visitas\tcorretor-visitas-1772245369714@test.com\tcorretor\t2026-02-28 02:22:49\n12442853\tCorretor Teste Visitas\tcorretor-visitas-1772245369819@test.com\tcorretor\t2026-02-28 02:22:49\n12442855\tCorretor Teste Visitas\tcorretor-visitas-1772245369928@test.com\tcorretor\t2026-02-28 02:22:49\n12442856\tCorretor Teste Visitas\tcorretor-visitas-1772245370030@test.com\tcorretor\t2026-02-28 02:22:50\n12442857\tCorretor Teste Visitas\tcorretor-visitas-1772245370133@test.com\tcorretor\t2026-02-28 02:22:50\n12442872\tCorretor Sheets Test\tsheets@test.com\tcorretor\t2026-02-28 02:23:09\n12442875\tCorretor Batch Test\tsheets-batch@test.com\tcorretor\t2026-02-28 02:23:09\n12443457\tCorretor Teste Duplicação\tcorretor-dup-1772246646717@test.com\tcorretor\t2026-02-28 02:44:07\n12443476\tNULL\tcorretor-auto-1772246700330@teste.com\tcorretor\t2026-02-28 02:45:00\n12443496\tJoão Silva Atualizado\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:56\n12443497\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:56\n12443498\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:57\n12443499\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:57\n12443500\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:57\n12443501\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:57\n12443502\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:57\n12443503\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:58\n12443505\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t2026-02-28 02:45:58\n12497299\tCamilla Caires\tcamillacaires92@gmail.com\tcorretor\t2026-02-28 15:29:09\n",
+  "stderr": "",
+  "execution_time_ms": 343
+}

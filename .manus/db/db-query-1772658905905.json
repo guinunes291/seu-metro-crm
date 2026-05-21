@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, corretorId, data, contratosFechados, pontuacaoTotal, ligacoesRealizadas, whatsappEnviados, analiseCreditoEnviadas FROM atividades_diarias WHERE corretorId = 10319087 ORDER BY data DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, corretorId, data, contratosFechados, pontuacaoTotal, ligacoesRealizadas, whatsappEnviados, analiseCreditoEnviadas FROM atividades_diarias WHERE corretorId = 10319087 ORDER BY data DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "1890044",
+      "corretorId": "10319087",
+      "data": "2026-03-04 00:00:00",
+      "contratosFechados": "1",
+      "pontuacaoTotal": "256",
+      "ligacoesRealizadas": "4",
+      "whatsappEnviados": "26",
+      "analiseCreditoEnviadas": "1"
+    },
+    {
+      "id": "1920016",
+      "corretorId": "10319087",
+      "data": "2026-03-03 05:00:00",
+      "contratosFechados": "1",
+      "pontuacaoTotal": "1106",
+      "ligacoesRealizadas": "4",
+      "whatsappEnviados": "26",
+      "analiseCreditoEnviadas": "1"
+    },
+    {
+      "id": "1890009",
+      "corretorId": "10319087",
+      "data": "2026-03-03 00:00:00",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "119",
+      "ligacoesRealizadas": "23",
+      "whatsappEnviados": "4",
+      "analiseCreditoEnviadas": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tdata\tcontratosFechados\tpontuacaoTotal\tligacoesRealizadas\twhatsappEnviados\tanaliseCreditoEnviadas\n1890044\t10319087\t2026-03-04 00:00:00\t1\t256\t4\t26\t1\n1920016\t10319087\t2026-03-03 05:00:00\t1\t1106\t4\t26\t1\n1890009\t10319087\t2026-03-03 00:00:00\t0\t119\t23\t4\t0\n",
+  "stderr": "",
+  "execution_time_ms": 375
+}

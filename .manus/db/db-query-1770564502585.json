@@ -1,0 +1,54 @@
+{
+  "query": "SELECT 'lead_history' as tabela, COUNT(*) as registros FROM lead_history WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'lead_status_transitions', COUNT(*) FROM lead_status_transitions WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'visitas', COUNT(*) FROM visitas WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'distribution_log', COUNT(*) FROM distribution_log WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'notifications', COUNT(*) FROM notifications WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'tarefas', COUNT(*) FROM tarefas WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'log_transferencias', COUNT(*) FROM log_transferencias WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'follow_ups', COUNT(*) FROM follow_ups WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'interacoes', COUNT(*) FROM interacoes WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'contratos', COUNT(*) FROM contratos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT 'lead_history' as tabela, COUNT(*) as registros FROM lead_history WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'lead_status_transitions', COUNT(*) FROM lead_status_transitions WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'visitas', COUNT(*) FROM visitas WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'distribution_log', COUNT(*) FROM distribution_log WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'notifications', COUNT(*) FROM notifications WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'tarefas', COUNT(*) FROM tarefas WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'log_transferencias', COUNT(*) FROM log_transferencias WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'follow_ups', COUNT(*) FROM follow_ups WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'interacoes', COUNT(*) FROM interacoes WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%') UNION ALL SELECT 'contratos', COUNT(*) FROM contratos WHERE leadId IN (SELECT id FROM leads WHERE nome LIKE 'Lead %' OR nome LIKE 'Test%' OR nome LIKE 'Teste%');",
+  "rows": [
+    {
+      "tabela": "agendamentos",
+      "registros": "0"
+    },
+    {
+      "tabela": "visitas",
+      "registros": "0"
+    },
+    {
+      "tabela": "notifications",
+      "registros": "2"
+    },
+    {
+      "tabela": "tarefas",
+      "registros": "0"
+    },
+    {
+      "tabela": "lead_history",
+      "registros": "2"
+    },
+    {
+      "tabela": "distribution_log",
+      "registros": "2"
+    },
+    {
+      "tabela": "lead_status_transitions",
+      "registros": "8"
+    },
+    {
+      "tabela": "log_transferencias",
+      "registros": "0"
+    },
+    {
+      "tabela": "contratos",
+      "registros": "0"
+    },
+    {
+      "tabela": "interacoes",
+      "registros": "2"
+    },
+    {
+      "tabela": "follow_ups",
+      "registros": "8"
+    }
+  ],
+  "messages": [],
+  "stdout": "tabela\tregistros\nagendamentos\t0\nvisitas\t0\nnotifications\t2\ntarefas\t0\nlead_history\t2\ndistribution_log\t2\nlead_status_transitions\t8\nlog_transferencias\t0\ncontratos\t0\ninteracoes\t2\nfollow_ups\t8\n",
+  "stderr": "",
+  "execution_time_ms": 420
+}

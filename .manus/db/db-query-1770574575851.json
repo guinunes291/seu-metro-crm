@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT \n  COUNT(*) as total_agendamentos,\n  SUM(CASE WHEN status IN ('pendente', 'confirmado') THEN 1 ELSE 0 END) as agendamentos_ativos,\n  SUM(CASE WHEN status IN ('realizado', 'cancelado') THEN 1 ELSE 0 END) as agendamentos_finalizados\nFROM agendamentos;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  COUNT(*) as total_agendamentos,\n  SUM(CASE WHEN status IN ('pendente', 'confirmado') THEN 1 ELSE 0 END) as agendamentos_ativos,\n  SUM(CASE WHEN status IN ('realizado', 'cancelado') THEN 1 ELSE 0 END) as agendamentos_finalizados\nFROM agendamentos;\n",
+  "rows": [
+    {
+      "total_agendamentos": "74",
+      "agendamentos_ativos": "71",
+      "agendamentos_finalizados": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_agendamentos\tagendamentos_ativos\tagendamentos_finalizados\n74\t71\t3\n",
+  "stderr": "",
+  "execution_time_ms": 342
+}

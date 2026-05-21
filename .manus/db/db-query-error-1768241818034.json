@@ -1,0 +1,8 @@
+{
+  "query": "SELECT COUNT(*) as total_barra_superior\nFROM follow_ups f\nINNER JOIN leads l ON f.lead_id = l.id\nWHERE f.corretor_id = (SELECT id FROM users WHERE email LIKE '%andrew%' LIMIT 1)\n  AND f.status = 'ativo'\n  AND l.status = 'em_atendimento'\n  AND f.proxima_tentativa <= DATE_ADD(CURDATE(), INTERVAL 1 DAY);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total_barra_superior\nFROM follow_ups f\nINNER JOIN leads l ON f.lead_id = l.id\nWHERE f.corretor_id = (SELECT id FROM users WHERE email LIKE '%andrew%' LIMIT 1)\n  AND f.status = 'ativo'\n  AND l.status = 'em_atendimento'\n  AND f.proxima_tentativa <= DATE_ADD(CURDATE(), INTERVAL 1 DAY);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'f.lead_id' in 'on clause'"
+  ]
+}

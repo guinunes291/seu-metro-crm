@@ -1,0 +1,58 @@
+{
+  "query": "SELECT c.*, tc.nome, tc.categoria, tc.descricao\nFROM conquistas c \nJOIN tipos_conquista tc ON c.tipoConquistaId = tc.id\nWHERE c.corretorId IN (SELECT id FROM users WHERE name LIKE '%kauan%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT c.*, tc.nome, tc.categoria, tc.descricao\nFROM conquistas c \nJOIN tipos_conquista tc ON c.tipoConquistaId = tc.id\nWHERE c.corretorId IN (SELECT id FROM users WHERE name LIKE '%kauan%');",
+  "rows": [
+    {
+      "id": "30043",
+      "corretorId": "4236243",
+      "tipoConquistaId": "1",
+      "periodoInicio": "NULL",
+      "periodoFim": "NULL",
+      "valor": "10",
+      "posicao": "NULL",
+      "observacao": "Primeiro Lead",
+      "notificado": "0",
+      "notificadoEm": "NULL",
+      "createdAt": "2025-12-22 18:31:27",
+      "nome": "Top Vendedor da Semana",
+      "categoria": "vendas",
+      "descricao": "Maior VGV na semana"
+    },
+    {
+      "id": "30044",
+      "corretorId": "4236243",
+      "tipoConquistaId": "2",
+      "periodoInicio": "NULL",
+      "periodoFim": "NULL",
+      "valor": "10",
+      "posicao": "NULL",
+      "observacao": "Primeira Ligação",
+      "notificado": "0",
+      "notificadoEm": "NULL",
+      "createdAt": "2025-12-22 19:19:18",
+      "nome": "Top Vendedor do Mês",
+      "categoria": "vendas",
+      "descricao": "Maior VGV no mês"
+    },
+    {
+      "id": "30042",
+      "corretorId": "4236243",
+      "tipoConquistaId": "9",
+      "periodoInicio": "NULL",
+      "periodoFim": "NULL",
+      "valor": "10",
+      "posicao": "NULL",
+      "observacao": "Foto de Perfil",
+      "notificado": "0",
+      "notificadoEm": "NULL",
+      "createdAt": "2025-12-22 18:20:47",
+      "nome": "Streak de 10 Dias",
+      "categoria": "streak",
+      "descricao": "10 dias consecutivos batendo meta diária"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\ttipoConquistaId\tperiodoInicio\tperiodoFim\tvalor\tposicao\tobservacao\tnotificado\tnotificadoEm\tcreatedAt\tnome\tcategoria\tdescricao\n30043\t4236243\t1\tNULL\tNULL\t10\tNULL\tPrimeiro Lead\t0\tNULL\t2025-12-22 18:31:27\tTop Vendedor da Semana\tvendas\tMaior VGV na semana\n30044\t4236243\t2\tNULL\tNULL\t10\tNULL\tPrimeira Ligação\t0\tNULL\t2025-12-22 19:19:18\tTop Vendedor do Mês\tvendas\tMaior VGV no mês\n30042\t4236243\t9\tNULL\tNULL\t10\tNULL\tFoto de Perfil\t0\tNULL\t2025-12-22 18:20:47\tStreak de 10 Dias\tstreak\t10 dias consecutivos batendo meta diária\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

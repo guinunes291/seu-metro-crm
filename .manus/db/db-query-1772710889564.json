@@ -1,0 +1,35 @@
+{
+  "query": "\nSELECT role, situacao, COUNT(*) as total FROM users GROUP BY role, situacao ORDER BY role, situacao;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT role, situacao, COUNT(*) as total FROM users GROUP BY role, situacao ORDER BY role, situacao;\n",
+  "rows": [
+    {
+      "role": "admin",
+      "situacao": "ativo",
+      "total": "1"
+    },
+    {
+      "role": "superintendente",
+      "situacao": "ativo",
+      "total": "1"
+    },
+    {
+      "role": "gestor",
+      "situacao": "ativo",
+      "total": "2"
+    },
+    {
+      "role": "corretor",
+      "situacao": "ativo",
+      "total": "52"
+    },
+    {
+      "role": "corretor",
+      "situacao": "inativo",
+      "total": "6"
+    }
+  ],
+  "messages": [],
+  "stdout": "role\tsituacao\ttotal\nadmin\tativo\t1\nsuperintendente\tativo\t1\ngestor\tativo\t2\ncorretor\tativo\t52\ncorretor\tinativo\t6\n",
+  "stderr": "",
+  "execution_time_ms": 356
+}

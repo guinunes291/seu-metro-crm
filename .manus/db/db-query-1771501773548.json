@@ -1,0 +1,34 @@
+{
+  "query": "SELECT \n  u.id as corretorId,\n  u.name as corretorNome,\n  COUNT(c.id) as totalContratos,\n  COALESCE(SUM(c.valorVenda), 0) as vgvTotal\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name\nHAVING totalContratos > 0\nORDER BY vgvTotal DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id as corretorId,\n  u.name as corretorNome,\n  COUNT(c.id) as totalContratos,\n  COALESCE(SUM(c.valorVenda), 0) as vgvTotal\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name\nHAVING totalContratos > 0\nORDER BY vgvTotal DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "corretorId": "6396243",
+      "corretorNome": "Igor Nigro",
+      "totalContratos": "2",
+      "vgvTotal": "548520.00"
+    },
+    {
+      "corretorId": "7862260",
+      "corretorNome": "Andrew",
+      "totalContratos": "2",
+      "vgvTotal": "509750.97"
+    },
+    {
+      "corretorId": "11184140",
+      "corretorNome": "Luis Carlos De Veras",
+      "totalContratos": "1",
+      "vgvTotal": "416546.72"
+    },
+    {
+      "corretorId": "7982154",
+      "corretorNome": "kauanthyago34",
+      "totalContratos": "1",
+      "vgvTotal": "249900.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\tcorretorNome\ttotalContratos\tvgvTotal\n6396243\tIgor Nigro\t2\t548520.00\n7862260\tAndrew\t2\t509750.97\n11184140\tLuis Carlos De Veras\t1\t416546.72\n7982154\tkauanthyago34\t1\t249900.00\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}

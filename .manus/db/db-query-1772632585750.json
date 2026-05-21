@@ -1,0 +1,157 @@
+{
+  "query": "SELECT id, nome, email, telefone, corretorId FROM leads \nWHERE nome LIKE '%Teste%' \n   OR nome LIKE '%Test%' \n   OR nome LIKE '%Batch%' \n   OR nome LIKE '%Rank C2%' \n   OR nome LIKE '%Roleta%' \n   OR nome LIKE '%Histórico%' \n   OR nome LIKE '%Duplica%'\nORDER BY id DESC\nLIMIT 100;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, email, telefone, corretorId FROM leads \nWHERE nome LIKE '%Teste%' \n   OR nome LIKE '%Test%' \n   OR nome LIKE '%Batch%' \n   OR nome LIKE '%Rank C2%' \n   OR nome LIKE '%Roleta%' \n   OR nome LIKE '%Histórico%' \n   OR nome LIKE '%Duplica%'\nORDER BY id DESC\nLIMIT 100;",
+  "rows": [
+    {
+      "id": "4290236",
+      "nome": "Lead Teste Duplicação",
+      "email": "lead-dup@test.com",
+      "telefone": "11999999999",
+      "corretorId": "13658836"
+    },
+    {
+      "id": "4290215",
+      "nome": "Lead Batch 3",
+      "email": "NULL",
+      "telefone": "(11) 99999-8883",
+      "corretorId": "13655350"
+    },
+    {
+      "id": "4290214",
+      "nome": "Lead Batch 2",
+      "email": "NULL",
+      "telefone": "(11) 99999-8882",
+      "corretorId": "13655350"
+    },
+    {
+      "id": "4290213",
+      "nome": "Lead Batch 1",
+      "email": "NULL",
+      "telefone": "(11) 99999-8881",
+      "corretorId": "13655350"
+    },
+    {
+      "id": "4290209",
+      "nome": "Lead Teste Sheets",
+      "email": "NULL",
+      "telefone": "(11) 99999-8888",
+      "corretorId": "13655346"
+    },
+    {
+      "id": "4290208",
+      "nome": "Lead para Roleta",
+      "email": "NULL",
+      "telefone": "11777777777",
+      "corretorId": "10861557"
+    },
+    {
+      "id": "4290206",
+      "nome": "Lead Teste Histórico",
+      "email": "NULL",
+      "telefone": "(11) 99999-9997",
+      "corretorId": "2"
+    },
+    {
+      "id": "4290170",
+      "nome": "Lead Rank C2 9",
+      "email": "NULL",
+      "telefone": "11992999999",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290169",
+      "nome": "Lead Rank C2 8",
+      "email": "NULL",
+      "telefone": "11992888888",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290168",
+      "nome": "Lead Rank C2 7",
+      "email": "NULL",
+      "telefone": "11992777777",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290167",
+      "nome": "Lead Rank C2 6",
+      "email": "NULL",
+      "telefone": "11992666666",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290166",
+      "nome": "Lead Rank C2 5",
+      "email": "NULL",
+      "telefone": "11992555555",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290165",
+      "nome": "Lead Rank C2 4",
+      "email": "NULL",
+      "telefone": "11992444444",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290164",
+      "nome": "Lead Rank C2 3",
+      "email": "NULL",
+      "telefone": "11992333333",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290163",
+      "nome": "Lead Rank C2 2",
+      "email": "NULL",
+      "telefone": "11992222222",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290162",
+      "nome": "Lead Rank C2 1",
+      "email": "NULL",
+      "telefone": "11992111111",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290161",
+      "nome": "Lead Rank C2 0",
+      "email": "NULL",
+      "telefone": "11992000000",
+      "corretorId": "13655275"
+    },
+    {
+      "id": "4290080",
+      "nome": "Lead Kanban Test 4",
+      "email": "NULL",
+      "telefone": "(11) 99999-0004",
+      "corretorId": "6368447"
+    },
+    {
+      "id": "4029388",
+      "nome": "Teste Ti Dom",
+      "email": "d123456@gmail.com",
+      "telefone": "(22) 2222-2222",
+      "corretorId": "NULL"
+    },
+    {
+      "id": "4024448",
+      "nome": "Socorro Deus Agora Vai Teste Tag 3",
+      "email": "scdavt3@gmail.com",
+      "telefone": "(66) 77667-7557",
+      "corretorId": "NULL"
+    },
+    {
+      "id": "4023174",
+      "nome": "Socorro Deus Agora Vai Teste Tag 4",
+      "email": "scdavt4@gmail.com",
+      "telefone": "(66) 77667-7558",
+      "corretorId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\temail\ttelefone\tcorretorId\n4290236\tLead Teste Duplicação\tlead-dup@test.com\t11999999999\t13658836\n4290215\tLead Batch 3\tNULL\t(11) 99999-8883\t13655350\n4290214\tLead Batch 2\tNULL\t(11) 99999-8882\t13655350\n4290213\tLead Batch 1\tNULL\t(11) 99999-8881\t13655350\n4290209\tLead Teste Sheets\tNULL\t(11) 99999-8888\t13655346\n4290208\tLead para Roleta\tNULL\t11777777777\t10861557\n4290206\tLead Teste Histórico\tNULL\t(11) 99999-9997\t2\n4290170\tLead Rank C2 9\tNULL\t11992999999\t13655275\n4290169\tLead Rank C2 8\tNULL\t11992888888\t13655275\n4290168\tLead Rank C2 7\tNULL\t11992777777\t13655275\n4290167\tLead Rank C2 6\tNULL\t11992666666\t13655275\n4290166\tLead Rank C2 5\tNULL\t11992555555\t13655275\n4290165\tLead Rank C2 4\tNULL\t11992444444\t13655275\n4290164\tLead Rank C2 3\tNULL\t11992333333\t13655275\n4290163\tLead Rank C2 2\tNULL\t11992222222\t13655275\n4290162\tLead Rank C2 1\tNULL\t11992111111\t13655275\n4290161\tLead Rank C2 0\tNULL\t11992000000\t13655275\n4290080\tLead Kanban Test 4\tNULL\t(11) 99999-0004\t6368447\n4029388\tTeste Ti Dom\td123456@gmail.com\t(22) 2222-2222\tNULL\n4024448\tSocorro Deus Agora Vai Teste Tag 3\tscdavt3@gmail.com\t(66) 77667-7557\tNULL\n4023174\tSocorro Deus Agora Vai Teste Tag 4\tscdavt4@gmail.com\t(66) 77667-7558\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 414
+}

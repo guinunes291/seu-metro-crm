@@ -1,0 +1,16 @@
+{
+  "query": "SELECT COUNT(*) as total_contratos, SUM(valorVenda) as total_vgv, MIN(createdAt) as primeiro, MAX(createdAt) as ultimo FROM contratos;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total_contratos, SUM(valorVenda) as total_vgv, MIN(createdAt) as primeiro, MAX(createdAt) as ultimo FROM contratos;",
+  "rows": [
+    {
+      "total_contratos": "9",
+      "total_vgv": "2568132.56",
+      "primeiro": "2026-01-14 00:00:00",
+      "ultimo": "2026-02-07 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_contratos\ttotal_vgv\tprimeiro\tultimo\n9\t2568132.56\t2026-01-14 00:00:00\t2026-02-07 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 358
+}

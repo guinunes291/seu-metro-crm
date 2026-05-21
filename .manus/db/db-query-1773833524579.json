@@ -1,0 +1,85 @@
+{
+  "query": "SELECT TABLE_NAME, TABLE_ROWS, ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) AS size_mb FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY (DATA_LENGTH + INDEX_LENGTH) DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT TABLE_NAME, TABLE_ROWS, ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) AS size_mb FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY (DATA_LENGTH + INDEX_LENGTH) DESC LIMIT 15;",
+  "rows": [
+    {
+      "TABLE_NAME": "leads",
+      "TABLE_ROWS": "29615",
+      "size_mb": "14.38"
+    },
+    {
+      "TABLE_NAME": "notifications",
+      "TABLE_ROWS": "6024",
+      "size_mb": "0.96"
+    },
+    {
+      "TABLE_NAME": "distribution_log",
+      "TABLE_ROWS": "7182",
+      "size_mb": "0.80"
+    },
+    {
+      "TABLE_NAME": "interacoes",
+      "TABLE_ROWS": "5601",
+      "size_mb": "0.59"
+    },
+    {
+      "TABLE_NAME": "follow_ups",
+      "TABLE_ROWS": "4186",
+      "size_mb": "0.55"
+    },
+    {
+      "TABLE_NAME": "projects",
+      "TABLE_ROWS": "1398",
+      "size_mb": "0.39"
+    },
+    {
+      "TABLE_NAME": "lead_status_transitions",
+      "TABLE_ROWS": "3441",
+      "size_mb": "0.26"
+    },
+    {
+      "TABLE_NAME": "log_transferencias",
+      "TABLE_ROWS": "1992",
+      "size_mb": "0.18"
+    },
+    {
+      "TABLE_NAME": "lead_history",
+      "TABLE_ROWS": "1220",
+      "size_mb": "0.16"
+    },
+    {
+      "TABLE_NAME": "conquistas",
+      "TABLE_ROWS": "766",
+      "size_mb": "0.11"
+    },
+    {
+      "TABLE_NAME": "atividades_diarias",
+      "TABLE_ROWS": "359",
+      "size_mb": "0.06"
+    },
+    {
+      "TABLE_NAME": "historicos_precos",
+      "TABLE_ROWS": "972",
+      "size_mb": "0.05"
+    },
+    {
+      "TABLE_NAME": "propostas",
+      "TABLE_ROWS": "0",
+      "size_mb": "0.02"
+    },
+    {
+      "TABLE_NAME": "historico_presenca",
+      "TABLE_ROWS": "176",
+      "size_mb": "0.02"
+    },
+    {
+      "TABLE_NAME": "users",
+      "TABLE_ROWS": "42",
+      "size_mb": "0.02"
+    }
+  ],
+  "messages": [],
+  "stdout": "TABLE_NAME\tTABLE_ROWS\tsize_mb\nleads\t29615\t14.38\nnotifications\t6024\t0.96\ndistribution_log\t7182\t0.80\ninteracoes\t5601\t0.59\nfollow_ups\t4186\t0.55\nprojects\t1398\t0.39\nlead_status_transitions\t3441\t0.26\nlog_transferencias\t1992\t0.18\nlead_history\t1220\t0.16\nconquistas\t766\t0.11\natividades_diarias\t359\t0.06\nhistoricos_precos\t972\t0.05\npropostas\t0\t0.02\nhistorico_presenca\t176\t0.02\nusers\t42\t0.02\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

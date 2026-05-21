@@ -1,0 +1,22 @@
+{
+  "query": "SELECT \n  'HOJE' as periodo,\n  COUNT(*) as total,\n  SUM(CASE WHEN tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND DATE(lh.createdAt) = CURDATE()\nUNION ALL\nSELECT \n  'TOTAL' as periodo,\n  COUNT(*) as total,\n  SUM(CASE WHEN tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  'HOJE' as periodo,\n  COUNT(*) as total,\n  SUM(CASE WHEN tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND DATE(lh.createdAt) = CURDATE()\nUNION ALL\nSELECT \n  'TOTAL' as periodo,\n  COUNT(*) as total,\n  SUM(CASE WHEN tipo = 'ligacao' THEN 1 ELSE 0 END) as ligacoes,\n  SUM(CASE WHEN tipo = 'whatsapp' THEN 1 ELSE 0 END) as whatsapp\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%');",
+  "rows": [
+    {
+      "periodo": "HOJE",
+      "total": "67",
+      "ligacoes": "60",
+      "whatsapp": "3"
+    },
+    {
+      "periodo": "TOTAL",
+      "total": "578",
+      "ligacoes": "244",
+      "whatsapp": "330"
+    }
+  ],
+  "messages": [],
+  "stdout": "periodo\ttotal\tligacoes\twhatsapp\nHOJE\t67\t60\t3\nTOTAL\t578\t244\t330\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

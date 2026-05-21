@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, nome, valorMinimo, valorMaximo FROM projects LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, valorMinimo, valorMaximo FROM projects LIMIT 5;",
+  "rows": [
+    {
+      "id": "480185",
+      "nome": "SAO JOAQUIM",
+      "valorMinimo": "18000000",
+      "valorMaximo": "18000000"
+    },
+    {
+      "id": "480186",
+      "nome": "Plano Parque Brás",
+      "valorMinimo": "32400000",
+      "valorMaximo": "32400000"
+    },
+    {
+      "id": "480187",
+      "nome": "MAPP Rio Branco (MUNDO APTO)",
+      "valorMinimo": "32100000",
+      "valorMaximo": "32100000"
+    },
+    {
+      "id": "480188",
+      "nome": "REPUBLICA",
+      "valorMinimo": "19500000",
+      "valorMaximo": "19500000"
+    },
+    {
+      "id": "480189",
+      "nome": "LIBERDADE",
+      "valorMinimo": "19000000",
+      "valorMaximo": "19000000"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tvalorMinimo\tvalorMaximo\n480185\tSAO JOAQUIM\t18000000\t18000000\n480186\tPlano Parque Brás\t32400000\t32400000\n480187\tMAPP Rio Branco (MUNDO APTO)\t32100000\t32100000\n480188\tREPUBLICA\t19500000\t19500000\n480189\tLIBERDADE\t19000000\t19000000\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

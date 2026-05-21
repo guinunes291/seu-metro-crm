@@ -1,0 +1,16 @@
+{
+  "query": "SELECT \n  l.id,\n  l.nome,\n  l.status,\n  (SELECT COUNT(*) FROM follow_ups WHERE leadId = l.id AND status = 'pendente') as followups_pendentes\nFROM leads l\nWHERE l.corretorId = 5055943\n  AND l.status = 'em_atendimento'\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  l.id,\n  l.nome,\n  l.status,\n  (SELECT COUNT(*) FROM follow_ups WHERE leadId = l.id AND status = 'pendente') as followups_pendentes\nFROM leads l\nWHERE l.corretorId = 5055943\n  AND l.status = 'em_atendimento'\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "510215",
+      "nome": "Guilherme Nunes",
+      "status": "em_atendimento",
+      "followups_pendentes": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tstatus\tfollowups_pendentes\n510215\tGuilherme Nunes\tem_atendimento\t1\n",
+  "stderr": "",
+  "execution_time_ms": 59
+}

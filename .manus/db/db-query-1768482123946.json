@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Simular a query que getFollowUpsDoDia faz para o corretor ID 17\nSELECT \n  f.id,\n  f.leadId,\n  f.corretorId,\n  f.dataFollowUp,\n  f.status,\n  l.nome as leadNome,\n  l.telefone as leadTelefone,\n  DATE(f.dataFollowUp) as data_followup,\n  CURDATE() as data_hoje,\n  CASE \n    WHEN DATE(f.dataFollowUp) = CURDATE() THEN 'HOJE'\n    WHEN DATE(f.dataFollowUp) < CURDATE() THEN 'ATRASADO'\n    ELSE 'FUTURO'\n  END as situacao\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = 17\n  AND f.status = 'pendente'\nORDER BY f.dataFollowUp ASC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Simular a query que getFollowUpsDoDia faz para o corretor ID 17\nSELECT \n  f.id,\n  f.leadId,\n  f.corretorId,\n  f.dataFollowUp,\n  f.status,\n  l.nome as leadNome,\n  l.telefone as leadTelefone,\n  DATE(f.dataFollowUp) as data_followup,\n  CURDATE() as data_hoje,\n  CASE \n    WHEN DATE(f.dataFollowUp) = CURDATE() THEN 'HOJE'\n    WHEN DATE(f.dataFollowUp) < CURDATE() THEN 'ATRASADO'\n    ELSE 'FUTURO'\n  END as situacao\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nWHERE f.corretorId = 17\n  AND f.status = 'pendente'\nORDER BY f.dataFollowUp ASC;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 63
+}

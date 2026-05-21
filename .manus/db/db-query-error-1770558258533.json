@@ -1,0 +1,10 @@
+{
+  "query": "\n-- Buscar ID do lead\nSELECT @leadId := id FROM leads WHERE telefone = '11946863751' ORDER BY createdAt DESC LIMIT 1;\n\n-- Buscar próximo corretor disponível da fila foco\nSELECT @corretorId := corretorId FROM fila_distribuicao WHERE ativo = 1 AND filaFoco = 1 ORDER BY posicao LIMIT 1;\n\n-- Se não houver corretor na fila foco, buscar da fila geral\nSELECT @corretorId := COALESCE(@corretorId, (SELECT corretorId FROM fila_distribuicao WHERE ativo = 1 ORDER BY posicao LIMIT 1));\n\n-- Atribuir lead ao corretor\nUPDATE leads \nSET corretorId = @corretorId, status = 'aguardando_atendimento', dataDistribuicao = NOW()\nWHERE id = @leadId;\n\n-- Verificar distribuição\nSELECT l.id, l.nome, l.telefone, l.corretorId, l.status, l.faixaRenda, u.name as corretor_nome\nFROM leads l\nLEFT JOIN users u ON l.corretorId = u.openId\nWHERE l.id = @leadId;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Buscar ID do lead\nSELECT @leadId := id FROM leads WHERE telefone = '11946863751' ORDER BY createdAt DESC LIMIT 1;\n\n-- Buscar próximo corretor disponível da fila foco\nSELECT @corretorId := corretorId FROM fila_distribuicao WHERE ativo = 1 AND filaFoco = 1 ORDER BY posicao LIMIT 1;\n\n-- Se não houver corretor na fila foco, buscar da fila geral\nSELECT @corretorId := COALESCE(@corretorId, (SELECT corretorId FROM fila_distribuicao WHERE ativo = 1 ORDER BY posicao LIMIT 1));\n\n-- Atribuir lead ao corretor\nUPDATE leads \nSET corretorId = @corretorId, status = 'aguardando_atendimento', dataDistribuicao = NOW()\nWHERE id = @leadId;\n\n-- Verificar distribuição\nSELECT l.id, l.nome, l.telefone, l.corretorId, l.status, l.faixaRenda, u.name as corretor_nome\nFROM leads l\nLEFT JOIN users u ON l.corretorId = u.openId\nWHERE l.id = @leadId;\n",
+  "returncode": 1,
+  "logs": [
+    "@leadId := id",
+    "3390004",
+    "ERROR 1054 (42S22) at line 6: Unknown column 'filafoco' in 'where clause'"
+  ]
+}

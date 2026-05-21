@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `logs_sincronizacao` \nADD COLUMN `tabeloesProcessados` int,\nADD COLUMN `projetosExtraidos` int,\nADD COLUMN `materiaisExtraidos` int,\nADD INDEX `logs_sincronizacao_status_idx` (`status`),\nADD INDEX `logs_sincronizacao_created_at_idx` (`createdAt`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute ALTER TABLE `logs_sincronizacao` \nADD COLUMN `tabeloesProcessados` int,\nADD COLUMN `projetosExtraidos` int,\nADD COLUMN `materiaisExtraidos` int,\nADD INDEX `logs_sincronizacao_status_idx` (`status`),\nADD INDEX `logs_sincronizacao_created_at_idx` (`createdAt`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1793
+}

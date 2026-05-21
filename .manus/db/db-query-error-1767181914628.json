@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  ad.corretor_id,\n  u.name as corretor_nome,\n  ad.data,\n  ad.ligacoes_realizadas,\n  ad.whatsapp_enviados,\n  ad.agendamentos_confirmados,\n  ad.visitas_realizadas,\n  ad.documentacoes_recolhidas,\n  ad.pontuacao_total\nFROM atividades_diarias ad\nJOIN users u ON ad.corretor_id = u.id\nORDER BY ad.data DESC\nLIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  ad.corretor_id,\n  u.name as corretor_nome,\n  ad.data,\n  ad.ligacoes_realizadas,\n  ad.whatsapp_enviados,\n  ad.agendamentos_confirmados,\n  ad.visitas_realizadas,\n  ad.documentacoes_recolhidas,\n  ad.pontuacao_total\nFROM atividades_diarias ad\nJOIN users u ON ad.corretor_id = u.id\nORDER BY ad.data DESC\nLIMIT 30;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'ad.corretor_id' in 'on clause'"
+  ]
+}

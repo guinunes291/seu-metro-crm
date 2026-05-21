@@ -1,0 +1,306 @@
+{
+  "query": "DESCRIBE leads;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DESCRIBE leads;",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "idPrincipal",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "UNI",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "nome",
+      "Type": "varchar(255)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "email",
+      "Type": "varchar(320)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "telefone",
+      "Type": "varchar(20)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "origem",
+      "Type": "enum('facebook','google_sheets','site','indicacao','captacao_corretor','whatsapp','telefone','plantao','agendamento_self_service','chatbot','outro')",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "outro",
+      "Extra": ""
+    },
+    {
+      "Field": "projectId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "projetoCustom",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "corretorId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dataDistribuicao",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('novo','aguardando_atendimento','em_atendimento','agendado','visita_realizada','analise_credito','contrato_fechado','perdido')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "novo",
+      "Extra": ""
+    },
+    {
+      "Field": "proximoFollowup",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "diasFollowupConsecutivos",
+      "Type": "int",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "ultimoContato",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "ultimaInteracao",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "observacoes",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "motivoPerdido",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "campanha",
+      "Type": "varchar(255)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "faixaRenda",
+      "Type": "varchar(100)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "prefereContatoPor",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "finalidadeImovel",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dataHoraCriacao",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "naLixeira",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "dataMovidoLixeira",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "corretorAnteriorId",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "cpf",
+      "Type": "varchar(14)",
+      "Null": "YES",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "corretoresQueTentaram",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "origemWebhook",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "tipoFilaOrigem",
+      "Type": "enum('geral','foco')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "geral",
+      "Extra": ""
+    },
+    {
+      "Field": "timestampRecebimento",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "timerAtivo",
+      "Type": "tinyint(1)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "tentativasRedistribuicao",
+      "Type": "int",
+      "Null": "YES",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "dataUltimaInteracao",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "aguardandoTransferencia",
+      "Type": "tinyint(1)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "0",
+      "Extra": ""
+    },
+    {
+      "Field": "proximaTarefaData",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint\tNO\tPRI\tNULL\tauto_increment\nidPrincipal\tvarchar(50)\tYES\tUNI\tNULL\t\nnome\tvarchar(255)\tNO\t\tNULL\t\nemail\tvarchar(320)\tYES\tMUL\tNULL\t\ntelefone\tvarchar(20)\tNO\tMUL\tNULL\t\norigem\tenum('facebook','google_sheets','site','indicacao','captacao_corretor','whatsapp','telefone','plantao','agendamento_self_service','chatbot','outro')\tYES\tMUL\toutro\t\nprojectId\tint\tYES\tMUL\tNULL\t\nprojetoCustom\tvarchar(255)\tYES\t\tNULL\t\ncorretorId\tint\tYES\tMUL\tNULL\t\ndataDistribuicao\ttimestamp\tYES\tMUL\tNULL\t\nstatus\tenum('novo','aguardando_atendimento','em_atendimento','agendado','visita_realizada','analise_credito','contrato_fechado','perdido')\tNO\tMUL\tnovo\t\nproximoFollowup\ttimestamp\tYES\tMUL\tNULL\t\ndiasFollowupConsecutivos\tint\tNO\t\t0\t\nultimoContato\ttimestamp\tYES\t\tNULL\t\nultimaInteracao\ttimestamp\tYES\tMUL\tNULL\t\nobservacoes\ttext\tYES\t\tNULL\t\nmotivoPerdido\ttext\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\tMUL\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\ncampanha\tvarchar(255)\tYES\tMUL\tNULL\t\nfaixaRenda\tvarchar(100)\tYES\t\tNULL\t\nprefereContatoPor\tvarchar(50)\tYES\t\tNULL\t\nfinalidadeImovel\tvarchar(50)\tYES\t\tNULL\t\ndataHoraCriacao\ttimestamp\tYES\t\tNULL\t\nnaLixeira\ttinyint(1)\tNO\tMUL\t0\t\ndataMovidoLixeira\ttimestamp\tYES\t\tNULL\t\ncorretorAnteriorId\tint\tYES\t\tNULL\t\ncpf\tvarchar(14)\tYES\tMUL\tNULL\t\ncorretoresQueTentaram\ttext\tYES\t\tNULL\t\norigemWebhook\ttinyint(1)\tNO\tMUL\t0\t\ntipoFilaOrigem\tenum('geral','foco')\tYES\t\tgeral\t\ntimestampRecebimento\ttimestamp\tYES\t\tNULL\t\ntimerAtivo\ttinyint(1)\tYES\t\t0\t\ntentativasRedistribuicao\tint\tYES\t\t0\t\ndataUltimaInteracao\ttimestamp\tYES\t\tNULL\t\naguardandoTransferencia\ttinyint(1)\tNO\t\t0\t\nproximaTarefaData\ttimestamp\tYES\t\tNULL\t\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

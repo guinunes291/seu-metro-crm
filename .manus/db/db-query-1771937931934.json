@@ -1,0 +1,28 @@
+{
+  "query": "SELECT \n  e.id,\n  e.corretorId,\n  u.name as corretor_nome,\n  u.email as corretor_email,\n  DATE_FORMAT(e.data, '%Y-%m-%d %H:%i:%s') as data_formatada,\n  e.aceitouFollowUp,\n  DATE_FORMAT(e.createdAt, '%Y-%m-%d %H:%i:%s') as criado_em\nFROM escolha_diaria_follow_up e\nLEFT JOIN users u ON e.corretorId = u.id\nORDER BY e.createdAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  e.id,\n  e.corretorId,\n  u.name as corretor_nome,\n  u.email as corretor_email,\n  DATE_FORMAT(e.data, '%Y-%m-%d %H:%i:%s') as data_formatada,\n  e.aceitouFollowUp,\n  DATE_FORMAT(e.createdAt, '%Y-%m-%d %H:%i:%s') as criado_em\nFROM escolha_diaria_follow_up e\nLEFT JOIN users u ON e.corretorId = u.id\nORDER BY e.createdAt DESC;",
+  "rows": [
+    {
+      "id": "34",
+      "corretorId": "11288759",
+      "corretor_nome": "Wesley Aquino",
+      "corretor_email": "well.sanquino@gmail.com",
+      "data_formatada": "2026-02-24 03:00:00",
+      "aceitouFollowUp": "1",
+      "criado_em": "2026-02-24 12:48:14"
+    },
+    {
+      "id": "1",
+      "corretorId": "9816082",
+      "corretor_nome": "Graziele Gomes",
+      "corretor_email": "graziele.gomes.rivavendas@gmail.com",
+      "data_formatada": "2026-02-24 03:00:00",
+      "aceitouFollowUp": "0",
+      "criado_em": "2026-02-24 12:45:35"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcorretorId\tcorretor_nome\tcorretor_email\tdata_formatada\taceitouFollowUp\tcriado_em\n34\t11288759\tWesley Aquino\twell.sanquino@gmail.com\t2026-02-24 03:00:00\t1\t2026-02-24 12:48:14\n1\t9816082\tGraziele Gomes\tgraziele.gomes.rivavendas@gmail.com\t2026-02-24 03:00:00\t0\t2026-02-24 12:45:35\n",
+  "stderr": "",
+  "execution_time_ms": 70
+}

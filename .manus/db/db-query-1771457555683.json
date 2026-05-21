@@ -1,0 +1,26 @@
+{
+  "query": "SELECT \n  u.id,\n  u.name,\n  u.email,\n  u.role,\n  COUNT(c.id) as total_contratos,\n  COALESCE(SUM(c.valorVenda), 0) as vgv_total\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%'\nGROUP BY u.id, u.name, u.email, u.role\nHAVING total_contratos > 0\nORDER BY u.name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id,\n  u.name,\n  u.email,\n  u.role,\n  COUNT(c.id) as total_contratos,\n  COALESCE(SUM(c.valorVenda), 0) as vgv_total\nFROM users u\nLEFT JOIN contratos c ON c.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%'\nGROUP BY u.id, u.name, u.email, u.role\nHAVING total_contratos > 0\nORDER BY u.name;",
+  "rows": [
+    {
+      "id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "total_contratos": "6",
+      "vgv_total": "1853600.00"
+    },
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "total_contratos": "1",
+      "vgv_total": "283600.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\ttotal_contratos\tvgv_total\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t6\t1853600.00\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\t1\t283600.00\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

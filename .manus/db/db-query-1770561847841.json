@@ -1,0 +1,17 @@
+{
+  "query": "\nSELECT id, name, email, role, equipeId\nFROM users\nWHERE role = 'gestor'\nLIMIT 1;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, name, email, role, equipeId\nFROM users\nWHERE role = 'gestor'\nLIMIT 1;\n",
+  "rows": [
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "equipeId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tequipeId\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 345
+}

@@ -1,0 +1,40 @@
+{
+  "query": "\nSELECT u.name as corretor, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = MONTH(CURDATE()) AND YEAR(c.createdAt) = YEAR(CURDATE()) AND c.distrato = 0\nGROUP BY u.id, u.name\nORDER BY contratos DESC, vgv DESC\nLIMIT 15;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT u.name as corretor, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = MONTH(CURDATE()) AND YEAR(c.createdAt) = YEAR(CURDATE()) AND c.distrato = 0\nGROUP BY u.id, u.name\nORDER BY contratos DESC, vgv DESC\nLIMIT 15;\n",
+  "rows": [
+    {
+      "corretor": "graziele gomes de jesus graziele gomes",
+      "contratos": "2",
+      "vgv": "615434.00"
+    },
+    {
+      "corretor": "Luis Veras",
+      "contratos": "2",
+      "vgv": "460435.72"
+    },
+    {
+      "corretor": "lacerdaniel.imoveis",
+      "contratos": "1",
+      "vgv": "306679.46"
+    },
+    {
+      "corretor": "Andrew",
+      "contratos": "1",
+      "vgv": "263612.80"
+    },
+    {
+      "corretor": "sheldonbarbosaa",
+      "contratos": "1",
+      "vgv": "242602.46"
+    },
+    {
+      "corretor": "kauanthyago34",
+      "contratos": "1",
+      "vgv": "205330.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretor\tcontratos\tvgv\ngraziele gomes de jesus graziele gomes\t2\t615434.00\nLuis Veras\t2\t460435.72\nlacerdaniel.imoveis\t1\t306679.46\nAndrew\t1\t263612.80\nsheldonbarbosaa\t1\t242602.46\nkauanthyago34\t1\t205330.00\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

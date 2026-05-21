@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'projects', COUNT(*) FROM projects\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'metas_globais', COUNT(*) FROM metas_globais\nUNION ALL SELECT 'metas', COUNT(*) FROM metas\nUNION ALL SELECT 'atividades_diarias', COUNT(*) FROM atividades_diarias\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'visitas', COUNT(*) FROM visitas\nUNION ALL SELECT 'conquistas', COUNT(*) FROM conquistas\nUNION ALL SELECT 'quick_messages', COUNT(*) FROM quick_messages\nUNION ALL SELECT 'faq_chatbot', COUNT(*) FROM faq_chatbot\nUNION ALL SELECT 'configuracao_pontuacao', COUNT(*) FROM configuracao_pontuacao\nUNION ALL SELECT 'webhook_config', COUNT(*) FROM webhook_config;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT 'users' as tabela, COUNT(*) as total FROM users\nUNION ALL SELECT 'leads', COUNT(*) FROM leads\nUNION ALL SELECT 'projects', COUNT(*) FROM projects\nUNION ALL SELECT 'equipes', COUNT(*) FROM equipes\nUNION ALL SELECT 'metas_globais', COUNT(*) FROM metas_globais\nUNION ALL SELECT 'metas', COUNT(*) FROM metas\nUNION ALL SELECT 'atividades_diarias', COUNT(*) FROM atividades_diarias\nUNION ALL SELECT 'contratos', COUNT(*) FROM contratos\nUNION ALL SELECT 'agendamentos', COUNT(*) FROM agendamentos\nUNION ALL SELECT 'visitas', COUNT(*) FROM visitas\nUNION ALL SELECT 'conquistas', COUNT(*) FROM conquistas\nUNION ALL SELECT 'quick_messages', COUNT(*) FROM quick_messages\nUNION ALL SELECT 'faq_chatbot', COUNT(*) FROM faq_chatbot\nUNION ALL SELECT 'configuracao_pontuacao', COUNT(*) FROM configuracao_pontuacao\nUNION ALL SELECT 'webhook_config', COUNT(*) FROM webhook_config;\n",
+  "rows": [
+    {
+      "tabela": "metas_globais",
+      "total": "1"
+    },
+    {
+      "tabela": "users",
+      "total": "62"
+    },
+    {
+      "tabela": "equipes",
+      "total": "3"
+    },
+    {
+      "tabela": "projects",
+      "total": "1385"
+    },
+    {
+      "tabela": "metas",
+      "total": "0"
+    },
+    {
+      "tabela": "contratos",
+      "total": "0"
+    },
+    {
+      "tabela": "atividades_diarias",
+      "total": "3"
+    },
+    {
+      "tabela": "agendamentos",
+      "total": "0"
+    },
+    {
+      "tabela": "visitas",
+      "total": "0"
+    },
+    {
+      "tabela": "configuracao_pontuacao",
+      "total": "1"
+    },
+    {
+      "tabela": "quick_messages",
+      "total": "0"
+    },
+    {
+      "tabela": "conquistas",
+      "total": "6"
+    },
+    {
+      "tabela": "faq_chatbot",
+      "total": "0"
+    },
+    {
+      "tabela": "webhook_config",
+      "total": "15"
+    },
+    {
+      "tabela": "leads",
+      "total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "tabela\ttotal\nmetas_globais\t1\nusers\t62\nequipes\t3\nprojects\t1385\nmetas\t0\ncontratos\t0\natividades_diarias\t3\nagendamentos\t0\nvisitas\t0\nconfiguracao_pontuacao\t1\nquick_messages\t0\nconquistas\t6\nfaq_chatbot\t0\nwebhook_config\t15\nleads\t0\n",
+  "stderr": "",
+  "execution_time_ms": 361
+}

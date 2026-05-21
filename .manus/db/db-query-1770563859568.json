@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, nome, telefone, email, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as criado FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '%teste%' OR email LIKE '%teste%' OR email LIKE '%test%' OR telefone IN ('11999999999', '11888888888', '11777777777') ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, nome, telefone, email, DATE_FORMAT(createdAt, '%Y-%m-%d %H:%i') as criado FROM leads WHERE nome LIKE '%Teste%' OR nome LIKE '%teste%' OR email LIKE '%teste%' OR email LIKE '%test%' OR telefone IN ('11999999999', '11888888888', '11777777777') ORDER BY id;",
+  "rows": [
+    {
+      "id": "3390169",
+      "nome": "Lead via Webhook",
+      "telefone": "11888888888",
+      "email": "lead@webhook.com",
+      "criado": "2026-02-08 15:13"
+    },
+    {
+      "id": "3390170",
+      "nome": "Lead para Roleta",
+      "telefone": "11777777777",
+      "email": "NULL",
+      "criado": "2026-02-08 15:13"
+    },
+    {
+      "id": "3390185",
+      "nome": "Lead Teste Histórico",
+      "telefone": "(11) 99999-9997",
+      "email": "NULL",
+      "criado": "2026-02-08 15:13"
+    },
+    {
+      "id": "3390216",
+      "nome": "Lead Teste Sheets",
+      "telefone": "(11) 99999-8888",
+      "email": "NULL",
+      "criado": "2026-02-08 15:13"
+    },
+    {
+      "id": "3390231",
+      "nome": "Lead Teste Duplicação",
+      "telefone": "11999999999",
+      "email": "lead-dup@test.com",
+      "criado": "2026-02-08 15:14"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\ttelefone\temail\tcriado\n3390169\tLead via Webhook\t11888888888\tlead@webhook.com\t2026-02-08 15:13\n3390170\tLead para Roleta\t11777777777\tNULL\t2026-02-08 15:13\n3390185\tLead Teste Histórico\t(11) 99999-9997\tNULL\t2026-02-08 15:13\n3390216\tLead Teste Sheets\t(11) 99999-8888\tNULL\t2026-02-08 15:13\n3390231\tLead Teste Duplicação\t11999999999\tlead-dup@test.com\t2026-02-08 15:14\n",
+  "stderr": "",
+  "execution_time_ms": 368
+}

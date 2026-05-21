@@ -1,0 +1,115 @@
+{
+  "query": "SELECT u.name, ad.contratosFechados, ad.pontuacaoTotal, ad.ligacoesRealizadas, ad.whatsappEnviados FROM atividades_diarias ad LEFT JOIN users u ON u.id = ad.corretorId ORDER BY ad.pontuacaoTotal DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT u.name, ad.contratosFechados, ad.pontuacaoTotal, ad.ligacoesRealizadas, ad.whatsappEnviados FROM atividades_diarias ad LEFT JOIN users u ON u.id = ad.corretorId ORDER BY ad.pontuacaoTotal DESC LIMIT 15;",
+  "rows": [
+    {
+      "name": "NULL",
+      "contratosFechados": "11",
+      "pontuacaoTotal": "2940",
+      "ligacoesRealizadas": "6",
+      "whatsappEnviados": "0"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "1122",
+      "ligacoesRealizadas": "204",
+      "whatsappEnviados": "102"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "4",
+      "pontuacaoTotal": "1110",
+      "ligacoesRealizadas": "2",
+      "whatsappEnviados": "0"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "4",
+      "pontuacaoTotal": "1030",
+      "ligacoesRealizadas": "2",
+      "whatsappEnviados": "0"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "1015",
+      "ligacoesRealizadas": "203",
+      "whatsappEnviados": "0"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "942",
+      "ligacoesRealizadas": "34",
+      "whatsappEnviados": "772"
+    },
+    {
+      "name": "Igor Nigro",
+      "contratosFechados": "1",
+      "pontuacaoTotal": "910",
+      "ligacoesRealizadas": "0",
+      "whatsappEnviados": "720"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "901",
+      "ligacoesRealizadas": "0",
+      "whatsappEnviados": "1"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "839",
+      "ligacoesRealizadas": "167",
+      "whatsappEnviados": "4"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "1",
+      "pontuacaoTotal": "827",
+      "ligacoesRealizadas": "108",
+      "whatsappEnviados": "12"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "800",
+      "ligacoesRealizadas": "100",
+      "whatsappEnviados": "300"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "774",
+      "ligacoesRealizadas": "154",
+      "whatsappEnviados": "4"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "773",
+      "ligacoesRealizadas": "3",
+      "whatsappEnviados": "8"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "765",
+      "ligacoesRealizadas": "153",
+      "whatsappEnviados": "0"
+    },
+    {
+      "name": "NULL",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "756",
+      "ligacoesRealizadas": "1",
+      "whatsappEnviados": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tcontratosFechados\tpontuacaoTotal\tligacoesRealizadas\twhatsappEnviados\nNULL\t11\t2940\t6\t0\nNULL\t0\t1122\t204\t102\nNULL\t4\t1110\t2\t0\nNULL\t4\t1030\t2\t0\nNULL\t0\t1015\t203\t0\nNULL\t0\t942\t34\t772\nIgor Nigro\t1\t910\t0\t720\nNULL\t0\t901\t0\t1\nNULL\t0\t839\t167\t4\nNULL\t1\t827\t108\t12\nNULL\t0\t800\t100\t300\nNULL\t0\t774\t154\t4\nNULL\t0\t773\t3\t8\nNULL\t0\t765\t153\t0\nNULL\t0\t756\t1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 382
+}

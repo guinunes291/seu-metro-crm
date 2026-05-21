@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute DELETE FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 103
+}

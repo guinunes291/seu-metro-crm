@@ -1,0 +1,15 @@
+{
+  "query": "\nSELECT \n  NOW() as now_tidb,\n  CURDATE() as curdate_tidb,\n  CURTIME() as curtime_tidb;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  NOW() as now_tidb,\n  CURDATE() as curdate_tidb,\n  CURTIME() as curtime_tidb;\n",
+  "rows": [
+    {
+      "now_tidb": "2026-01-15 13:13:38",
+      "curdate_tidb": "2026-01-15",
+      "curtime_tidb": "13:13:38"
+    }
+  ],
+  "messages": [],
+  "stdout": "now_tidb\tcurdate_tidb\tcurtime_tidb\n2026-01-15 13:13:38\t2026-01-15\t13:13:38\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

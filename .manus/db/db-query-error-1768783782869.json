@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT \n  ad.id,\n  ad.corretorId,\n  u.name as corretorNome,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.analiseCreditoEnviadas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nLEFT JOIN users u ON ad.corretorId = u.id\nWHERE ad.data >= DATE('now', 'start of day')\nORDER BY ad.pontuacaoTotal DESC;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  ad.id,\n  ad.corretorId,\n  u.name as corretorNome,\n  ad.data,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.analiseCreditoEnviadas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nLEFT JOIN users u ON ad.corretorId = u.id\nWHERE ad.data >= DATE('now', 'start of day')\nORDER BY ad.pontuacaoTotal DESC;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1582 (42000) at line 2: Incorrect parameter count in the call to native function 'date'"
+  ]
+}

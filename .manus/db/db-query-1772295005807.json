@@ -1,0 +1,266 @@
+{
+  "query": "\nSELECT u.id, u.name, u.email, u.role,\n  (SELECT COUNT(*) FROM leads WHERE corretorId = u.id) as leads_count,\n  (SELECT COUNT(*) FROM contratos WHERE corretorId = u.id) as contratos_count\nFROM users u\nWHERE u.email LIKE '%@test.com' \n   OR u.email LIKE '%@teste.com' \n   OR u.email LIKE '%@exemplo.com'\nORDER BY u.id;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT u.id, u.name, u.email, u.role,\n  (SELECT COUNT(*) FROM leads WHERE corretorId = u.id) as leads_count,\n  (SELECT COUNT(*) FROM contratos WHERE corretorId = u.id) as contratos_count\nFROM users u\nWHERE u.email LIKE '%@test.com' \n   OR u.email LIKE '%@teste.com' \n   OR u.email LIKE '%@exemplo.com'\nORDER BY u.id;\n",
+  "rows": [
+    {
+      "id": "12353068",
+      "name": "Superintendente Teste",
+      "email": "super@test.com",
+      "role": "superintendente",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12353069",
+      "name": "Gestor Temp",
+      "email": "gestor-temp@test.com",
+      "role": "gestor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12353071",
+      "name": "Gerente Teste",
+      "email": "gerente@test.com",
+      "role": "gestor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442816",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245336746@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442819",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245338245@test.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442820",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245338797@test.com",
+      "role": "corretor",
+      "leads_count": "3",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442821",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245339516@test.com",
+      "role": "corretor",
+      "leads_count": "5",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442822",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245340389@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442823",
+      "name": "Corretor 2",
+      "email": "corretor2-1772245341598@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442827",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1772245342620@test.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442828",
+      "name": "Corretor Rank 0",
+      "email": "corretor-rank-0-1772245342832@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442831",
+      "name": "Corretor Rank 1",
+      "email": "corretor-rank-1-1772245342832@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442832",
+      "name": "Corretor Rank 2",
+      "email": "corretor-rank-2-1772245342832@test.com",
+      "role": "corretor",
+      "leads_count": "10",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442851",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369287@test.com",
+      "role": "corretor",
+      "leads_count": "31",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442852",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369714@test.com",
+      "role": "corretor",
+      "leads_count": "31",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442853",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369819@test.com",
+      "role": "corretor",
+      "leads_count": "30",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442855",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245369928@test.com",
+      "role": "corretor",
+      "leads_count": "30",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442856",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245370030@test.com",
+      "role": "corretor",
+      "leads_count": "30",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442857",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1772245370133@test.com",
+      "role": "corretor",
+      "leads_count": "30",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442872",
+      "name": "Corretor Sheets Test",
+      "email": "sheets@test.com",
+      "role": "corretor",
+      "leads_count": "31",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12442875",
+      "name": "Corretor Batch Test",
+      "email": "sheets-batch@test.com",
+      "role": "corretor",
+      "leads_count": "33",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443457",
+      "name": "Corretor Teste Duplicação",
+      "email": "corretor-dup-1772246646717@test.com",
+      "role": "corretor",
+      "leads_count": "31",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443476",
+      "name": "NULL",
+      "email": "corretor-auto-1772246700330@teste.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443496",
+      "name": "João Silva Atualizado",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "30",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443497",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443498",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443499",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443500",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443501",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443502",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443503",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    },
+    {
+      "id": "12443505",
+      "name": "João Silva Teste",
+      "email": "joao.teste@exemplo.com",
+      "role": "corretor",
+      "leads_count": "0",
+      "contratos_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tleads_count\tcontratos_count\n12353068\tSuperintendente Teste\tsuper@test.com\tsuperintendente\t0\t0\n12353069\tGestor Temp\tgestor-temp@test.com\tgestor\t0\t0\n12353071\tGerente Teste\tgerente@test.com\tgestor\t0\t0\n12442816\tCorretor Teste Performance\tcorretor-perf-1772245336746@test.com\tcorretor\t10\t0\n12442819\tCorretor Teste Performance\tcorretor-perf-1772245338245@test.com\tcorretor\t0\t0\n12442820\tCorretor Teste Performance\tcorretor-perf-1772245338797@test.com\tcorretor\t3\t0\n12442821\tCorretor Teste Performance\tcorretor-perf-1772245339516@test.com\tcorretor\t5\t0\n12442822\tCorretor Teste Performance\tcorretor-perf-1772245340389@test.com\tcorretor\t10\t0\n12442823\tCorretor 2\tcorretor2-1772245341598@test.com\tcorretor\t10\t0\n12442827\tCorretor Teste Performance\tcorretor-perf-1772245342620@test.com\tcorretor\t0\t0\n12442828\tCorretor Rank 0\tcorretor-rank-0-1772245342832@test.com\tcorretor\t10\t0\n12442831\tCorretor Rank 1\tcorretor-rank-1-1772245342832@test.com\tcorretor\t10\t0\n12442832\tCorretor Rank 2\tcorretor-rank-2-1772245342832@test.com\tcorretor\t10\t0\n12442851\tCorretor Teste Visitas\tcorretor-visitas-1772245369287@test.com\tcorretor\t31\t0\n12442852\tCorretor Teste Visitas\tcorretor-visitas-1772245369714@test.com\tcorretor\t31\t0\n12442853\tCorretor Teste Visitas\tcorretor-visitas-1772245369819@test.com\tcorretor\t30\t0\n12442855\tCorretor Teste Visitas\tcorretor-visitas-1772245369928@test.com\tcorretor\t30\t0\n12442856\tCorretor Teste Visitas\tcorretor-visitas-1772245370030@test.com\tcorretor\t30\t0\n12442857\tCorretor Teste Visitas\tcorretor-visitas-1772245370133@test.com\tcorretor\t30\t0\n12442872\tCorretor Sheets Test\tsheets@test.com\tcorretor\t31\t0\n12442875\tCorretor Batch Test\tsheets-batch@test.com\tcorretor\t33\t0\n12443457\tCorretor Teste Duplicação\tcorretor-dup-1772246646717@test.com\tcorretor\t31\t0\n12443476\tNULL\tcorretor-auto-1772246700330@teste.com\tcorretor\t0\t0\n12443496\tJoão Silva Atualizado\tjoao.teste@exemplo.com\tcorretor\t30\t0\n12443497\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443498\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443499\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443500\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443501\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443502\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443503\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n12443505\tJoão Silva Teste\tjoao.teste@exemplo.com\tcorretor\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 359
+}

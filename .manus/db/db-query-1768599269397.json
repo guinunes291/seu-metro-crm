@@ -1,0 +1,75 @@
+{
+  "query": "SELECT \n  u.name,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.whatsappRespondidos,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.documentacoesRecolhidas,\n  ad.analiseCreditoEnviadas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal,\n  ad.data\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nWHERE u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%'\nORDER BY ad.data DESC\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.name,\n  ad.ligacoesRealizadas,\n  ad.whatsappEnviados,\n  ad.whatsappRespondidos,\n  ad.agendamentosConfirmados,\n  ad.visitasRealizadas,\n  ad.documentacoesRecolhidas,\n  ad.analiseCreditoEnviadas,\n  ad.contratosFechados,\n  ad.pontuacaoTotal,\n  ad.data\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nWHERE u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%'\nORDER BY ad.data DESC\nLIMIT 5;",
+  "rows": [
+    {
+      "name": "Leticia Castro",
+      "ligacoesRealizadas": "60",
+      "whatsappEnviados": "3",
+      "whatsappRespondidos": "3",
+      "agendamentosConfirmados": "3",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "analiseCreditoEnviadas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "423",
+      "data": "2026-01-16 05:00:00"
+    },
+    {
+      "name": "Leticia Castro",
+      "ligacoesRealizadas": "60",
+      "whatsappEnviados": "3",
+      "whatsappRespondidos": "3",
+      "agendamentosConfirmados": "3",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "analiseCreditoEnviadas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "423",
+      "data": "2026-01-16 00:00:00"
+    },
+    {
+      "name": "Leticia Castro",
+      "ligacoesRealizadas": "0",
+      "whatsappEnviados": "0",
+      "whatsappRespondidos": "0",
+      "agendamentosConfirmados": "3",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "analiseCreditoEnviadas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "0",
+      "data": "2026-01-15 05:00:00"
+    },
+    {
+      "name": "Leticia Castro",
+      "ligacoesRealizadas": "4",
+      "whatsappEnviados": "0",
+      "whatsappRespondidos": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "analiseCreditoEnviadas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "22",
+      "data": "2026-01-13 00:00:00"
+    },
+    {
+      "name": "Leticia Castro",
+      "ligacoesRealizadas": "12",
+      "whatsappEnviados": "0",
+      "whatsappRespondidos": "0",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "analiseCreditoEnviadas": "0",
+      "contratosFechados": "0",
+      "pontuacaoTotal": "66",
+      "data": "2026-01-11 00:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tligacoesRealizadas\twhatsappEnviados\twhatsappRespondidos\tagendamentosConfirmados\tvisitasRealizadas\tdocumentacoesRecolhidas\tanaliseCreditoEnviadas\tcontratosFechados\tpontuacaoTotal\tdata\nLeticia Castro\t60\t3\t3\t3\t0\t0\t0\t0\t423\t2026-01-16 05:00:00\nLeticia Castro\t60\t3\t3\t3\t0\t0\t0\t0\t423\t2026-01-16 00:00:00\nLeticia Castro\t0\t0\t0\t3\t0\t0\t0\t0\t0\t2026-01-15 05:00:00\nLeticia Castro\t4\t0\t0\t0\t0\t0\t0\t0\t22\t2026-01-13 00:00:00\nLeticia Castro\t12\t0\t0\t0\t0\t0\t0\t0\t66\t2026-01-11 00:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 73
+}

@@ -1,0 +1,172 @@
+{
+  "query": "SELECT c.id, c.nome, c.logoUrl, COUNT(p.id) as total FROM construtoras c INNER JOIN projects p ON p.construtoraId = c.id GROUP BY c.id, c.nome, c.logoUrl ORDER BY c.nome",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT c.id, c.nome, c.logoUrl, COUNT(p.id) as total FROM construtoras c INNER JOIN projects p ON p.construtoraId = c.id GROUP BY c.id, c.nome, c.logoUrl ORDER BY c.nome",
+  "rows": [
+    {
+      "id": "1",
+      "nome": "CANOPUS",
+      "logoUrl": "NULL",
+      "total": "15"
+    },
+    {
+      "id": "2",
+      "nome": "CONX",
+      "logoUrl": "NULL",
+      "total": "64"
+    },
+    {
+      "id": "3",
+      "nome": "CP RESIDENCIAL",
+      "logoUrl": "NULL",
+      "total": "4"
+    },
+    {
+      "id": "4",
+      "nome": "CURY",
+      "logoUrl": "NULL",
+      "total": "111"
+    },
+    {
+      "id": "28",
+      "nome": "CYRELA E CIA",
+      "logoUrl": "NULL",
+      "total": "53"
+    },
+    {
+      "id": "29",
+      "nome": "DIALOGO",
+      "logoUrl": "NULL",
+      "total": "31"
+    },
+    {
+      "id": "5",
+      "nome": "DING",
+      "logoUrl": "NULL",
+      "total": "2"
+    },
+    {
+      "id": "7",
+      "nome": "EPH",
+      "logoUrl": "NULL",
+      "total": "28"
+    },
+    {
+      "id": "8",
+      "nome": "EVEN",
+      "logoUrl": "NULL",
+      "total": "39"
+    },
+    {
+      "id": "9",
+      "nome": "EXTO",
+      "logoUrl": "NULL",
+      "total": "43"
+    },
+    {
+      "id": "10",
+      "nome": "EZTEC",
+      "logoUrl": "NULL",
+      "total": "95"
+    },
+    {
+      "id": "11",
+      "nome": "FIBRA EXPERTS",
+      "logoUrl": "NULL",
+      "total": "16"
+    },
+    {
+      "id": "12",
+      "nome": "GAMARO",
+      "logoUrl": "NULL",
+      "total": "8"
+    },
+    {
+      "id": "13",
+      "nome": "GRAAL",
+      "logoUrl": "NULL",
+      "total": "84"
+    },
+    {
+      "id": "14",
+      "nome": "GRUPO LAR",
+      "logoUrl": "NULL",
+      "total": "5"
+    },
+    {
+      "id": "15",
+      "nome": "KAZZAS",
+      "logoUrl": "NULL",
+      "total": "35"
+    },
+    {
+      "id": "16",
+      "nome": "LAVVI",
+      "logoUrl": "NULL",
+      "total": "17"
+    },
+    {
+      "id": "17",
+      "nome": "MAC",
+      "logoUrl": "NULL",
+      "total": "18"
+    },
+    {
+      "id": "18",
+      "nome": "MAGIK",
+      "logoUrl": "NULL",
+      "total": "1"
+    },
+    {
+      "id": "19",
+      "nome": "MARQUES CONSTRUTORA",
+      "logoUrl": "NULL",
+      "total": "18"
+    },
+    {
+      "id": "21",
+      "nome": "METROCASA",
+      "logoUrl": "NULL",
+      "total": "128"
+    },
+    {
+      "id": "22",
+      "nome": "PLANO&PLANO",
+      "logoUrl": "NULL",
+      "total": "64"
+    },
+    {
+      "id": "23",
+      "nome": "RSF",
+      "logoUrl": "NULL",
+      "total": "12"
+    },
+    {
+      "id": "24",
+      "nome": "TEGRA",
+      "logoUrl": "NULL",
+      "total": "24"
+    },
+    {
+      "id": "25",
+      "nome": "THINK",
+      "logoUrl": "NULL",
+      "total": "9"
+    },
+    {
+      "id": "26",
+      "nome": "TRISUL",
+      "logoUrl": "NULL",
+      "total": "37"
+    },
+    {
+      "id": "27",
+      "nome": "VIBRA",
+      "logoUrl": "NULL",
+      "total": "23"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tlogoUrl\ttotal\n1\tCANOPUS\tNULL\t15\n2\tCONX\tNULL\t64\n3\tCP RESIDENCIAL\tNULL\t4\n4\tCURY\tNULL\t111\n28\tCYRELA E CIA\tNULL\t53\n29\tDIALOGO\tNULL\t31\n5\tDING\tNULL\t2\n7\tEPH\tNULL\t28\n8\tEVEN\tNULL\t39\n9\tEXTO\tNULL\t43\n10\tEZTEC\tNULL\t95\n11\tFIBRA EXPERTS\tNULL\t16\n12\tGAMARO\tNULL\t8\n13\tGRAAL\tNULL\t84\n14\tGRUPO LAR\tNULL\t5\n15\tKAZZAS\tNULL\t35\n16\tLAVVI\tNULL\t17\n17\tMAC\tNULL\t18\n18\tMAGIK\tNULL\t1\n19\tMARQUES CONSTRUTORA\tNULL\t18\n21\tMETROCASA\tNULL\t128\n22\tPLANO&PLANO\tNULL\t64\n23\tRSF\tNULL\t12\n24\tTEGRA\tNULL\t24\n25\tTHINK\tNULL\t9\n26\tTRISUL\tNULL\t37\n27\tVIBRA\tNULL\t23\n",
+  "stderr": "",
+  "execution_time_ms": 395
+}

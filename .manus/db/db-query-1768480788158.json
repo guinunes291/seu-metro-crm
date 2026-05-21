@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO follow_ups (leadId, corretorId, dataFollowUp, status, createdAt, updatedAt) VALUES (4572, 1, '2026-01-15 09:00:00', 'pendente', NOW(), NOW());",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute INSERT INTO follow_ups (leadId, corretorId, dataFollowUp, status, createdAt, updatedAt) VALUES (4572, 1, '2026-01-15 09:00:00', 'pendente', NOW(), NOW());",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 63
+}

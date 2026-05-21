@@ -1,0 +1,19 @@
+{
+  "query": "\n-- Verificar ID da Equipe Guilherme Nunes e ID de kauanthyago34\nSELECT id, nome FROM equipes WHERE nome LIKE '%Guilherme%';\n\nSELECT id, name, equipeId FROM users WHERE name LIKE '%kauan%';\n\n-- Adicionar kauanthyago34 à Equipe Guilherme Nunes (ID 1)\nUPDATE users \nSET equipeId = 1 \nWHERE name = 'kauanthyago34';\n\n-- Verificar a atualização\nSELECT \n  u.id,\n  u.name AS corretor,\n  e.nome AS equipe,\n  COUNT(c.id) AS total_contratos\nFROM users u\nLEFT JOIN equipes e ON u.equipeId = e.id\nLEFT JOIN contratos c ON u.id = c.corretorId\nWHERE u.name = 'kauanthyago34'\nGROUP BY u.id, u.name, e.nome;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Verificar ID da Equipe Guilherme Nunes e ID de kauanthyago34\nSELECT id, nome FROM equipes WHERE nome LIKE '%Guilherme%';\n\nSELECT id, name, equipeId FROM users WHERE name LIKE '%kauan%';\n\n-- Adicionar kauanthyago34 à Equipe Guilherme Nunes (ID 1)\nUPDATE users \nSET equipeId = 1 \nWHERE name = 'kauanthyago34';\n\n-- Verificar a atualização\nSELECT \n  u.id,\n  u.name AS corretor,\n  e.nome AS equipe,\n  COUNT(c.id) AS total_contratos\nFROM users u\nLEFT JOIN equipes e ON u.equipeId = e.id\nLEFT JOIN contratos c ON u.id = c.corretorId\nWHERE u.name = 'kauanthyago34'\nGROUP BY u.id, u.name, e.nome;\n",
+  "rows": [
+    {
+      "id": "1",
+      "nome": "Equipe Guilherme Nunes"
+    }
+  ],
+  "messages": [
+    "id\tname\tequipeId",
+    "7982154\tkauanthyago34\t1",
+    "id\tcorretor\tequipe\ttotal_contratos",
+    "7982154\tkauanthyago34\tEquipe Guilherme Nunes\t1"
+  ],
+  "stdout": "id\tnome\n1\tEquipe Guilherme Nunes\nid\tname\tequipeId\n7982154\tkauanthyago34\t1\nid\tcorretor\tequipe\ttotal_contratos\n7982154\tkauanthyago34\tEquipe Guilherme Nunes\t1\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

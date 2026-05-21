@@ -1,0 +1,18 @@
+{
+  "query": "SELECT \n  ligacoesRealizadas, whatsappEnviados, agendamentosConfirmados,\n  visitasRealizadas, documentacoesRecolhidas, pontuacaoTotal\nFROM atividades_diarias \nWHERE corretorId = (SELECT id FROM users WHERE name LIKE '%Andrew%') \nAND DATE(data) = CURDATE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  ligacoesRealizadas, whatsappEnviados, agendamentosConfirmados,\n  visitasRealizadas, documentacoesRecolhidas, pontuacaoTotal\nFROM atividades_diarias \nWHERE corretorId = (SELECT id FROM users WHERE name LIKE '%Andrew%') \nAND DATE(data) = CURDATE();",
+  "rows": [
+    {
+      "ligacoesRealizadas": "0",
+      "whatsappEnviados": "36",
+      "agendamentosConfirmados": "0",
+      "visitasRealizadas": "0",
+      "documentacoesRecolhidas": "0",
+      "pontuacaoTotal": "436"
+    }
+  ],
+  "messages": [],
+  "stdout": "ligacoesRealizadas\twhatsappEnviados\tagendamentosConfirmados\tvisitasRealizadas\tdocumentacoesRecolhidas\tpontuacaoTotal\n0\t36\t0\t0\t0\t436\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

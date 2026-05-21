@@ -1,0 +1,22 @@
+{
+  "query": "SELECT timerAtivo, COUNT(*) as qtd FROM leads WHERE origemWebhook = 1 GROUP BY timerAtivo UNION ALL SELECT 'total_webhook' as timerAtivo, COUNT(*) FROM leads WHERE origemWebhook = 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT timerAtivo, COUNT(*) as qtd FROM leads WHERE origemWebhook = 1 GROUP BY timerAtivo UNION ALL SELECT 'total_webhook' as timerAtivo, COUNT(*) FROM leads WHERE origemWebhook = 1;",
+  "rows": [
+    {
+      "timerAtivo": "total_webhook",
+      "qtd": "884"
+    },
+    {
+      "timerAtivo": "0",
+      "qtd": "883"
+    },
+    {
+      "timerAtivo": "1",
+      "qtd": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "timerAtivo\tqtd\ntotal_webhook\t884\n0\t883\n1\t1\n",
+  "stderr": "",
+  "execution_time_ms": 372
+}

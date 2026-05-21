@@ -1,0 +1,58 @@
+{
+  "query": "SELECT \n  id,\n  leadId, \n  corretorId, \n  dataFollowUp,\n  dataRegistro,\n  status\nFROM follow_ups\nWHERE leadId IN (\n  SELECT leadId \n  FROM follow_ups \n  WHERE status = 'pendente'\n  GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  HAVING COUNT(*) > 1\n  LIMIT 3\n)\nAND status = 'pendente'\nORDER BY leadId, dataFollowUp\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  id,\n  leadId, \n  corretorId, \n  dataFollowUp,\n  dataRegistro,\n  status\nFROM follow_ups\nWHERE leadId IN (\n  SELECT leadId \n  FROM follow_ups \n  WHERE status = 'pendente'\n  GROUP BY leadId, corretorId, DATE(dataFollowUp)\n  HAVING COUNT(*) > 1\n  LIMIT 3\n)\nAND status = 'pendente'\nORDER BY leadId, dataFollowUp\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "30440",
+      "leadId": "570181",
+      "corretorId": "6851110",
+      "dataFollowUp": "2026-01-16 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    },
+    {
+      "id": "30441",
+      "leadId": "570181",
+      "corretorId": "6851110",
+      "dataFollowUp": "2026-01-16 12:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    },
+    {
+      "id": "570200",
+      "leadId": "1320091",
+      "corretorId": "8082380",
+      "dataFollowUp": "2026-01-21 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    },
+    {
+      "id": "570201",
+      "leadId": "1320091",
+      "corretorId": "8082380",
+      "dataFollowUp": "2026-01-21 12:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    },
+    {
+      "id": "1770081",
+      "leadId": "1800204",
+      "corretorId": "8071179",
+      "dataFollowUp": "2026-02-04 09:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    },
+    {
+      "id": "1770082",
+      "leadId": "1800204",
+      "corretorId": "8071179",
+      "dataFollowUp": "2026-02-04 12:00:00",
+      "dataRegistro": "NULL",
+      "status": "pendente"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tleadId\tcorretorId\tdataFollowUp\tdataRegistro\tstatus\n30440\t570181\t6851110\t2026-01-16 09:00:00\tNULL\tpendente\n30441\t570181\t6851110\t2026-01-16 12:00:00\tNULL\tpendente\n570200\t1320091\t8082380\t2026-01-21 09:00:00\tNULL\tpendente\n570201\t1320091\t8082380\t2026-01-21 12:00:00\tNULL\tpendente\n1770081\t1800204\t8071179\t2026-02-04 09:00:00\tNULL\tpendente\n1770082\t1800204\t8071179\t2026-02-04 12:00:00\tNULL\tpendente\n",
+  "stderr": "",
+  "execution_time_ms": 364
+}

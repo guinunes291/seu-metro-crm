@@ -1,0 +1,26 @@
+{
+  "query": "SELECT id, name, email, role, openId, equipeId FROM users WHERE email LIKE '%guilherme%' OR name LIKE '%Guilherme%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, openId, equipeId FROM users WHERE email LIKE '%guilherme%' OR name LIKE '%Guilherme%';",
+  "rows": [
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "openId": "WwoHyMjBNUMkPz8f9gZCPm",
+      "equipeId": "NULL"
+    },
+    {
+      "id": "7722800",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "openId": "ZGmJndhAtLH26sZ7wR7gLD",
+      "equipeId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\topenId\tequipeId\n5055943\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\tWwoHyMjBNUMkPz8f9gZCPm\tNULL\n7722800\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\tZGmJndhAtLH26sZ7wR7gLD\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 367
+}

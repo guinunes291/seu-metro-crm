@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE contratos \nSET corretorId = (SELECT id FROM users WHERE email = 'guilherme.97fn@gmail.com')\nWHERE corretorId IN (\n  SELECT id FROM users WHERE name LIKE '%Guilherme%Nunes%' AND role = 'admin'\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute UPDATE contratos \nSET corretorId = (SELECT id FROM users WHERE email = 'guilherme.97fn@gmail.com')\nWHERE corretorId IN (\n  SELECT id FROM users WHERE name LIKE '%Guilherme%Nunes%' AND role = 'admin'\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 57
+}

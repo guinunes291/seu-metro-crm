@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO users (openId, name, email, role, status, perfilCompleto, createdAt) \nVALUES ('test_corretor_onboarding_123', 'Corretor Teste Onboarding', 'corretor.teste@example.com', 'user', 'ausente', false, NOW())",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute INSERT INTO users (openId, name, email, role, status, perfilCompleto, createdAt) \nVALUES ('test_corretor_onboarding_123', 'Corretor Teste Onboarding', 'corretor.teste@example.com', 'user', 'ausente', false, NOW())",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column 'role' at row 1"
+  ]
+}

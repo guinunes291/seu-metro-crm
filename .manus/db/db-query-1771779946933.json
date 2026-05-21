@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  COUNT(*) as total_sem_projeto,\n  (SELECT COUNT(*) FROM leads) as total_leads,\n  ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM leads), 2) as percentual\nFROM leads \nWHERE projetoCustom IS NULL OR projetoCustom = '';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  COUNT(*) as total_sem_projeto,\n  (SELECT COUNT(*) FROM leads) as total_leads,\n  ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM leads), 2) as percentual\nFROM leads \nWHERE projetoCustom IS NULL OR projetoCustom = '';",
+  "rows": [
+    {
+      "total_sem_projeto": "20541",
+      "total_leads": "21024",
+      "percentual": "97.70"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_sem_projeto\ttotal_leads\tpercentual\n20541\t21024\t97.70\n",
+  "stderr": "",
+  "execution_time_ms": 111
+}

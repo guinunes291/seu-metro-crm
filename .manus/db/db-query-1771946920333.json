@@ -1,0 +1,172 @@
+{
+  "query": "SELECT \n  corretorId,\n  SUM(ligacoesRealizadas) as total_ligacoes,\n  SUM(whatsappEnviados) as total_whatsapp,\n  SUM(agendamentosConfirmados) as total_agendamentos,\n  SUM(visitasRealizadas) as total_visitas,\n  SUM(documentacoesRecolhidas) as total_docs,\n  SUM(pontuacaoTotal) as total_pontos\nFROM atividades_diarias\nWHERE DATE(data) = CURDATE()\nGROUP BY corretorId\nORDER BY total_pontos DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  corretorId,\n  SUM(ligacoesRealizadas) as total_ligacoes,\n  SUM(whatsappEnviados) as total_whatsapp,\n  SUM(agendamentosConfirmados) as total_agendamentos,\n  SUM(visitasRealizadas) as total_visitas,\n  SUM(documentacoesRecolhidas) as total_docs,\n  SUM(pontuacaoTotal) as total_pontos\nFROM atividades_diarias\nWHERE DATE(data) = CURDATE()\nGROUP BY corretorId\nORDER BY total_pontos DESC;",
+  "rows": [
+    {
+      "corretorId": "11388281",
+      "total_ligacoes": "35",
+      "total_whatsapp": "10",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "80"
+    },
+    {
+      "corretorId": "11418394",
+      "total_ligacoes": "19",
+      "total_whatsapp": "31",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "69"
+    },
+    {
+      "corretorId": "7958356",
+      "total_ligacoes": "10",
+      "total_whatsapp": "40",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "60"
+    },
+    {
+      "corretorId": "7950004",
+      "total_ligacoes": "2",
+      "total_whatsapp": "53",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "57"
+    },
+    {
+      "corretorId": "11288759",
+      "total_ligacoes": "25",
+      "total_whatsapp": "2",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "52"
+    },
+    {
+      "corretorId": "7862260",
+      "total_ligacoes": "0",
+      "total_whatsapp": "34",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "34"
+    },
+    {
+      "corretorId": "9816082",
+      "total_ligacoes": "0",
+      "total_whatsapp": "24",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "24"
+    },
+    {
+      "corretorId": "10319087",
+      "total_ligacoes": "2",
+      "total_whatsapp": "19",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "23"
+    },
+    {
+      "corretorId": "7860001",
+      "total_ligacoes": "0",
+      "total_whatsapp": "18",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "18"
+    },
+    {
+      "corretorId": "11184140",
+      "total_ligacoes": "0",
+      "total_whatsapp": "1",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "1"
+    },
+    {
+      "corretorId": "11632920",
+      "total_ligacoes": "0",
+      "total_whatsapp": "1",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "1"
+    },
+    {
+      "corretorId": "6368447",
+      "total_ligacoes": "0",
+      "total_whatsapp": "1",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "1"
+    },
+    {
+      "corretorId": "8071179",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    },
+    {
+      "corretorId": "11946669",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    },
+    {
+      "corretorId": "2",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    },
+    {
+      "corretorId": "11638016",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    },
+    {
+      "corretorId": "11964726",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    },
+    {
+      "corretorId": "7982154",
+      "total_ligacoes": "0",
+      "total_whatsapp": "0",
+      "total_agendamentos": "0",
+      "total_visitas": "0",
+      "total_docs": "0",
+      "total_pontos": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretorId\ttotal_ligacoes\ttotal_whatsapp\ttotal_agendamentos\ttotal_visitas\ttotal_docs\ttotal_pontos\n11388281\t35\t10\t0\t0\t0\t80\n11418394\t19\t31\t0\t0\t0\t69\n7958356\t10\t40\t0\t0\t0\t60\n7950004\t2\t53\t0\t0\t0\t57\n11288759\t25\t2\t0\t0\t0\t52\n7862260\t0\t34\t0\t0\t0\t34\n9816082\t0\t24\t0\t0\t0\t24\n10319087\t2\t19\t0\t0\t0\t23\n7860001\t0\t18\t0\t0\t0\t18\n11184140\t0\t1\t0\t0\t0\t1\n11632920\t0\t1\t0\t0\t0\t1\n6368447\t0\t1\t0\t0\t0\t1\n8071179\t0\t0\t0\t0\t0\t0\n11946669\t0\t0\t0\t0\t0\t0\n2\t0\t0\t0\t0\t0\t0\n11638016\t0\t0\t0\t0\t0\t0\n11964726\t0\t0\t0\t0\t0\t0\n7982154\t0\t0\t0\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

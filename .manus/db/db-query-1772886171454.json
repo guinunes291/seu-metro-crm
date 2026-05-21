@@ -1,0 +1,19 @@
+{
+  "query": "SELECT COUNT(*) as total_geral FROM leads;\nSELECT COUNT(*) as total_leads_reais FROM leads WHERE corretorId NOT IN (\n  SELECT id FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso'\n) AND nome NOT LIKE 'Lead Teste%' AND nome NOT LIKE 'Lead Batch%' AND nome NOT LIKE 'Lead Rank%' AND nome NOT LIKE 'Lead C0 %' AND nome NOT LIKE 'Lead C1 %' AND nome NOT LIKE 'Lead C2 %' AND nome NOT LIKE 'Lead Kanban Test%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT COUNT(*) as total_geral FROM leads;\nSELECT COUNT(*) as total_leads_reais FROM leads WHERE corretorId NOT IN (\n  SELECT id FROM users WHERE name LIKE '%Teste%' OR name LIKE '%Test%' OR name LIKE '%Rank%' OR name LIKE '%Batch%' OR name LIKE '%Sheets%' OR name LIKE '%Duplica%' OR name LIKE '%Visitas%' OR name LIKE '%Performance%' OR name = 'Corretor 2' OR name = 'João Silva Atualizado' OR name LIKE 'João Silva Teste%' OR name = 'Sem nome' OR name = 'Juliana Alonso'\n) AND nome NOT LIKE 'Lead Teste%' AND nome NOT LIKE 'Lead Batch%' AND nome NOT LIKE 'Lead Rank%' AND nome NOT LIKE 'Lead C0 %' AND nome NOT LIKE 'Lead C1 %' AND nome NOT LIKE 'Lead C2 %' AND nome NOT LIKE 'Lead Kanban Test%';",
+  "rows": [
+    {
+      "total_geral": "25375"
+    },
+    {
+      "total_geral": "total_leads_reais"
+    },
+    {
+      "total_geral": "1226"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_geral\n25375\ntotal_leads_reais\n1226\n",
+  "stderr": "",
+  "execution_time_ms": 303
+}

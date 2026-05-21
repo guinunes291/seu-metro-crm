@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  leadId, \n  corretorId, \n  DATE(dataFollowUp) as data, \n  COUNT(*) as count\nFROM followUps\nWHERE status = 'pendente'\nGROUP BY leadId, corretorId, DATE(dataFollowUp)\nHAVING COUNT(*) > 1\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  leadId, \n  corretorId, \n  DATE(dataFollowUp) as data, \n  COUNT(*) as count\nFROM followUps\nWHERE status = 'pendente'\nGROUP BY leadId, corretorId, DATE(dataFollowUp)\nHAVING COUNT(*) > 1\nLIMIT 20;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'gjgl2sfxynbzjhum6i4tzh.followUps' doesn't exist"
+  ]
+}

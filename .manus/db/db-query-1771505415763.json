@@ -1,0 +1,362 @@
+{
+  "query": "SELECT id, openId, name, email, role, createdAt FROM users ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, openId, name, email, role, createdAt FROM users ORDER BY id;",
+  "rows": [
+    {
+      "id": "5055943",
+      "openId": "WwoHyMjBNUMkPz8f9gZCPm",
+      "name": "Guilherme Nunes",
+      "email": "guilherme.97fn@gmail.com",
+      "role": "gestor",
+      "createdAt": "2025-12-22 18:15:10"
+    },
+    {
+      "id": "6368447",
+      "openId": "7Qw5UawydJFsd9ryowjanh",
+      "name": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-05 16:18:19"
+    },
+    {
+      "id": "6396243",
+      "openId": "B7rP6jojXMRrYMdG2jVhaa",
+      "name": "Igor Nigro",
+      "email": "igor.nigro09@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-06 15:08:00"
+    },
+    {
+      "id": "7722800",
+      "openId": "ZGmJndhAtLH26sZ7wR7gLD",
+      "name": "Guilherme Nunes",
+      "email": "guilherme_97fm@outlook.com",
+      "role": "admin",
+      "createdAt": "2026-01-17 17:25:00"
+    },
+    {
+      "id": "7723881",
+      "openId": "iVWMbcdhcadg5WpJWQEtrr",
+      "name": "Paula Akahoshi",
+      "email": "paula.akahoshi92@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-17 17:54:14"
+    },
+    {
+      "id": "7860001",
+      "openId": "2ZGBczFch5gfKby2U3b2cw",
+      "name": "Leticia Castro",
+      "email": "leticiaccastro2@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-18 12:23:57"
+    },
+    {
+      "id": "7862260",
+      "openId": "Eyt79uZJL79GPtUzfLJ9Hd",
+      "name": "Andrew",
+      "email": "andrewformigoni.corretor@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-18 16:42:53"
+    },
+    {
+      "id": "7950004",
+      "openId": "UNcZU9yqpbXxoc6t2XSMhn",
+      "name": "Aline Silva",
+      "email": "alinee.tsilvaa@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 13:00:46"
+    },
+    {
+      "id": "7958356",
+      "openId": "mzDf8Atsk8nbKbgQ2NGtoG",
+      "name": "Pitter Reis",
+      "email": "pitter.reissouza@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 15:12:04"
+    },
+    {
+      "id": "7961898",
+      "openId": "aqYUDgKPDBbgDi2ZNMubeR",
+      "name": "sheldonbarbosaa",
+      "email": "sheldonbarbosaa@gmail.com",
+      "role": "gestor",
+      "createdAt": "2026-01-19 16:15:30"
+    },
+    {
+      "id": "7982154",
+      "openId": "GmaVb6YMXJpZZH9CBpV8eb",
+      "name": "kauanthyago34",
+      "email": "kauanthyago34@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-19 22:43:59"
+    },
+    {
+      "id": "8071179",
+      "openId": "3VtukLsfU44xc5AxewfxoG",
+      "name": "Hellen Rodrigues",
+      "email": "hellen.rs0710@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-20 11:36:09"
+    },
+    {
+      "id": "8082380",
+      "openId": "dt4v8VkZLTemx7aigk4Zbb",
+      "name": "Breno Brunelli",
+      "email": "imoveis.brunelli@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-20 14:07:34"
+    },
+    {
+      "id": "8213299",
+      "openId": "TmmJsbxLDjwnLfHhpkAp4i",
+      "name": "mathewsff10",
+      "email": "mathewsff10@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-21 20:25:49"
+    },
+    {
+      "id": "9000728",
+      "openId": "Su5W9nwq7TzfzmXn95WyPn",
+      "name": "Gabriel Prado",
+      "email": "partnergabrielprado@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-26 13:02:37"
+    },
+    {
+      "id": "9149159",
+      "openId": "Az6hiCe2Y9d4evYt2iXMCM",
+      "name": "Kamila Silva",
+      "email": "millakamila42@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-27 19:37:06"
+    },
+    {
+      "id": "9816037",
+      "openId": "ndngM6HECd7BnzwMySnGrK",
+      "name": "fabio paes",
+      "email": "faberpaes@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-31 15:30:58"
+    },
+    {
+      "id": "9816082",
+      "openId": "GAFu5p4KGnB3RQW3jEDAeX",
+      "name": "Graziele Gomes",
+      "email": "graziele.gomes.rivavendas@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-01-31 15:33:57"
+    },
+    {
+      "id": "10053012",
+      "openId": "Qmdv2QL5GXa85e282TS3Bo",
+      "name": "Paloma Beatriz",
+      "email": "palomabeatriz2001@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-02 14:02:03"
+    },
+    {
+      "id": "10291266",
+      "openId": "QoxPaVn6B2sh6JTdVr9Ncx",
+      "name": "Bianca Haikel",
+      "email": "haikelbianca18@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-04 11:38:00"
+    },
+    {
+      "id": "10319087",
+      "openId": "eF6gvCnhacXaK2HLehZ8cG",
+      "name": "Daniel Lacerda",
+      "email": "lacerdaniel.imoveis@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-04 16:04:18"
+    },
+    {
+      "id": "10409127",
+      "openId": "apRLAX2u8gJTRUe7M3jnPF",
+      "name": "Carla Quaresma",
+      "email": "carla.quaresma.rivavendas@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-05 17:55:58"
+    },
+    {
+      "id": "10861557",
+      "openId": "3VnonupPzovuvSGrXzAGMi",
+      "name": "Alana Imobi",
+      "email": "alanaimobi@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-10 12:26:08"
+    },
+    {
+      "id": "11133410",
+      "openId": "WoJFyx2HwABsgcyw6u6ba2",
+      "name": "giliardeharper007",
+      "email": "giliardeharper007@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-13 20:19:30"
+    },
+    {
+      "id": "11184140",
+      "openId": "WFtHbPzgf35LsYHG7GYsvP",
+      "name": "Luis Carlos De Veras",
+      "email": "deveras.2025@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-15 16:18:47"
+    },
+    {
+      "id": "11288759",
+      "openId": "HUaE7zASXh2NPBUfsWPJwz",
+      "name": "Wesley Aquino",
+      "email": "well.sanquino@gmail.com",
+      "role": "corretor",
+      "createdAt": "2026-02-18 12:27:50"
+    },
+    {
+      "id": "11369920",
+      "openId": "test-corretor-1771505122082",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505122082@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369921",
+      "openId": "test-corretor-1771505122469",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505122469@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369922",
+      "openId": "test-corretor-1771505122550",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505122550@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369924",
+      "openId": "test-corretor-1771505122692",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505122692@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369927",
+      "openId": "test-corretor-1771505122836",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505122836@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369929",
+      "openId": "test-corretor-2-1771505123871",
+      "name": "Corretor 2",
+      "email": "corretor2-1771505123871@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:22"
+    },
+    {
+      "id": "11369932",
+      "openId": "test-corretor-1771505123364",
+      "name": "Corretor Teste Performance",
+      "email": "corretor-perf-1771505123364@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:23"
+    },
+    {
+      "id": "11369933",
+      "openId": "test-corretor-rank-0-1771505123409",
+      "name": "Corretor Rank 0",
+      "email": "corretor-rank-0-1771505123409@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:23"
+    },
+    {
+      "id": "11369936",
+      "openId": "test-corretor-rank-1-1771505123409",
+      "name": "Corretor Rank 1",
+      "email": "corretor-rank-1-1771505123409@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:23"
+    },
+    {
+      "id": "11369937",
+      "openId": "test-corretor-rank-2-1771505123409",
+      "name": "Corretor Rank 2",
+      "email": "corretor-rank-2-1771505123409@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:23"
+    },
+    {
+      "id": "11369968",
+      "openId": "test-corretor-visita-1771505141469",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141469@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369969",
+      "openId": "test-corretor-visita-1771505141639",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141639@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369970",
+      "openId": "test-corretor-visita-1771505141663",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141663@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369971",
+      "openId": "test-corretor-visita-1771505141680",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141680@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369972",
+      "openId": "test-corretor-visita-1771505141698",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141698@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369973",
+      "openId": "test-corretor-visita-1771505141715",
+      "name": "Corretor Teste Visitas",
+      "email": "corretor-visitas-1771505141715@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:41"
+    },
+    {
+      "id": "11369989",
+      "openId": "corretor-sheets-test-1771505151004",
+      "name": "Corretor Sheets Test",
+      "email": "sheets@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:51"
+    },
+    {
+      "id": "11369990",
+      "openId": "corretor-batch-1771505151075",
+      "name": "Corretor Batch Test",
+      "email": "sheets-batch@test.com",
+      "role": "corretor",
+      "createdAt": "2026-02-19 12:45:51"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\trole\tcreatedAt\n5055943\tWwoHyMjBNUMkPz8f9gZCPm\tGuilherme Nunes\tguilherme.97fn@gmail.com\tgestor\t2025-12-22 18:15:10\n6368447\t7Qw5UawydJFsd9ryowjanh\tGabriel Salles\tbiel2s7777@gmail.com\tcorretor\t2026-01-05 16:18:19\n6396243\tB7rP6jojXMRrYMdG2jVhaa\tIgor Nigro\tigor.nigro09@gmail.com\tcorretor\t2026-01-06 15:08:00\n7722800\tZGmJndhAtLH26sZ7wR7gLD\tGuilherme Nunes\tguilherme_97fm@outlook.com\tadmin\t2026-01-17 17:25:00\n7723881\tiVWMbcdhcadg5WpJWQEtrr\tPaula Akahoshi\tpaula.akahoshi92@gmail.com\tcorretor\t2026-01-17 17:54:14\n7860001\t2ZGBczFch5gfKby2U3b2cw\tLeticia Castro\tleticiaccastro2@gmail.com\tcorretor\t2026-01-18 12:23:57\n7862260\tEyt79uZJL79GPtUzfLJ9Hd\tAndrew\tandrewformigoni.corretor@gmail.com\tcorretor\t2026-01-18 16:42:53\n7950004\tUNcZU9yqpbXxoc6t2XSMhn\tAline Silva\talinee.tsilvaa@gmail.com\tcorretor\t2026-01-19 13:00:46\n7958356\tmzDf8Atsk8nbKbgQ2NGtoG\tPitter Reis\tpitter.reissouza@gmail.com\tcorretor\t2026-01-19 15:12:04\n7961898\taqYUDgKPDBbgDi2ZNMubeR\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tgestor\t2026-01-19 16:15:30\n7982154\tGmaVb6YMXJpZZH9CBpV8eb\tkauanthyago34\tkauanthyago34@gmail.com\tcorretor\t2026-01-19 22:43:59\n8071179\t3VtukLsfU44xc5AxewfxoG\tHellen Rodrigues\thellen.rs0710@gmail.com\tcorretor\t2026-01-20 11:36:09\n8082380\tdt4v8VkZLTemx7aigk4Zbb\tBreno Brunelli\timoveis.brunelli@gmail.com\tcorretor\t2026-01-20 14:07:34\n8213299\tTmmJsbxLDjwnLfHhpkAp4i\tmathewsff10\tmathewsff10@gmail.com\tcorretor\t2026-01-21 20:25:49\n9000728\tSu5W9nwq7TzfzmXn95WyPn\tGabriel Prado\tpartnergabrielprado@gmail.com\tcorretor\t2026-01-26 13:02:37\n9149159\tAz6hiCe2Y9d4evYt2iXMCM\tKamila Silva\tmillakamila42@gmail.com\tcorretor\t2026-01-27 19:37:06\n9816037\tndngM6HECd7BnzwMySnGrK\tfabio paes\tfaberpaes@gmail.com\tcorretor\t2026-01-31 15:30:58\n9816082\tGAFu5p4KGnB3RQW3jEDAeX\tGraziele Gomes\tgraziele.gomes.rivavendas@gmail.com\tcorretor\t2026-01-31 15:33:57\n10053012\tQmdv2QL5GXa85e282TS3Bo\tPaloma Beatriz\tpalomabeatriz2001@gmail.com\tcorretor\t2026-02-02 14:02:03\n10291266\tQoxPaVn6B2sh6JTdVr9Ncx\tBianca Haikel\thaikelbianca18@gmail.com\tcorretor\t2026-02-04 11:38:00\n10319087\teF6gvCnhacXaK2HLehZ8cG\tDaniel Lacerda\tlacerdaniel.imoveis@gmail.com\tcorretor\t2026-02-04 16:04:18\n10409127\tapRLAX2u8gJTRUe7M3jnPF\tCarla Quaresma\tcarla.quaresma.rivavendas@gmail.com\tcorretor\t2026-02-05 17:55:58\n10861557\t3VnonupPzovuvSGrXzAGMi\tAlana Imobi\talanaimobi@gmail.com\tcorretor\t2026-02-10 12:26:08\n11133410\tWoJFyx2HwABsgcyw6u6ba2\tgiliardeharper007\tgiliardeharper007@gmail.com\tcorretor\t2026-02-13 20:19:30\n11184140\tWFtHbPzgf35LsYHG7GYsvP\tLuis Carlos De Veras\tdeveras.2025@gmail.com\tcorretor\t2026-02-15 16:18:47\n11288759\tHUaE7zASXh2NPBUfsWPJwz\tWesley Aquino\twell.sanquino@gmail.com\tcorretor\t2026-02-18 12:27:50\n11369920\ttest-corretor-1771505122082\tCorretor Teste Performance\tcorretor-perf-1771505122082@test.com\tcorretor\t2026-02-19 12:45:22\n11369921\ttest-corretor-1771505122469\tCorretor Teste Performance\tcorretor-perf-1771505122469@test.com\tcorretor\t2026-02-19 12:45:22\n11369922\ttest-corretor-1771505122550\tCorretor Teste Performance\tcorretor-perf-1771505122550@test.com\tcorretor\t2026-02-19 12:45:22\n11369924\ttest-corretor-1771505122692\tCorretor Teste Performance\tcorretor-perf-1771505122692@test.com\tcorretor\t2026-02-19 12:45:22\n11369927\ttest-corretor-1771505122836\tCorretor Teste Performance\tcorretor-perf-1771505122836@test.com\tcorretor\t2026-02-19 12:45:22\n11369929\ttest-corretor-2-1771505123871\tCorretor 2\tcorretor2-1771505123871@test.com\tcorretor\t2026-02-19 12:45:22\n11369932\ttest-corretor-1771505123364\tCorretor Teste Performance\tcorretor-perf-1771505123364@test.com\tcorretor\t2026-02-19 12:45:23\n11369933\ttest-corretor-rank-0-1771505123409\tCorretor Rank 0\tcorretor-rank-0-1771505123409@test.com\tcorretor\t2026-02-19 12:45:23\n11369936\ttest-corretor-rank-1-1771505123409\tCorretor Rank 1\tcorretor-rank-1-1771505123409@test.com\tcorretor\t2026-02-19 12:45:23\n11369937\ttest-corretor-rank-2-1771505123409\tCorretor Rank 2\tcorretor-rank-2-1771505123409@test.com\tcorretor\t2026-02-19 12:45:23\n11369968\ttest-corretor-visita-1771505141469\tCorretor Teste Visitas\tcorretor-visitas-1771505141469@test.com\tcorretor\t2026-02-19 12:45:41\n11369969\ttest-corretor-visita-1771505141639\tCorretor Teste Visitas\tcorretor-visitas-1771505141639@test.com\tcorretor\t2026-02-19 12:45:41\n11369970\ttest-corretor-visita-1771505141663\tCorretor Teste Visitas\tcorretor-visitas-1771505141663@test.com\tcorretor\t2026-02-19 12:45:41\n11369971\ttest-corretor-visita-1771505141680\tCorretor Teste Visitas\tcorretor-visitas-1771505141680@test.com\tcorretor\t2026-02-19 12:45:41\n11369972\ttest-corretor-visita-1771505141698\tCorretor Teste Visitas\tcorretor-visitas-1771505141698@test.com\tcorretor\t2026-02-19 12:45:41\n11369973\ttest-corretor-visita-1771505141715\tCorretor Teste Visitas\tcorretor-visitas-1771505141715@test.com\tcorretor\t2026-02-19 12:45:41\n11369989\tcorretor-sheets-test-1771505151004\tCorretor Sheets Test\tsheets@test.com\tcorretor\t2026-02-19 12:45:51\n11369990\tcorretor-batch-1771505151075\tCorretor Batch Test\tsheets-batch@test.com\tcorretor\t2026-02-19 12:45:51\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

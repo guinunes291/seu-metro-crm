@@ -1,0 +1,40 @@
+{
+  "query": "\nSELECT u.name as corretor, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = 2 AND YEAR(c.createdAt) = 2026 AND c.distrato = 0\nGROUP BY u.id, u.name\nORDER BY contratos DESC, vgv DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT u.name as corretor, COUNT(c.id) as contratos, SUM(CAST(c.valorVenda AS DECIMAL(15,2))) as vgv\nFROM contratos c\nJOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = 2 AND YEAR(c.createdAt) = 2026 AND c.distrato = 0\nGROUP BY u.id, u.name\nORDER BY contratos DESC, vgv DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "corretor": "Guilherme Nunes",
+      "contratos": "7",
+      "vgv": "1933824.00"
+    },
+    {
+      "corretor": "Andrew",
+      "contratos": "6",
+      "vgv": "1883206.03"
+    },
+    {
+      "corretor": "sheldonbarbosaa",
+      "contratos": "3",
+      "vgv": "668591.73"
+    },
+    {
+      "corretor": "Luis Veras",
+      "contratos": "1",
+      "vgv": "416546.72"
+    },
+    {
+      "corretor": "fabio paes",
+      "contratos": "1",
+      "vgv": "393779.10"
+    },
+    {
+      "corretor": "Igor Nigro",
+      "contratos": "1",
+      "vgv": "316000.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretor\tcontratos\tvgv\nGuilherme Nunes\t7\t1933824.00\nAndrew\t6\t1883206.03\nsheldonbarbosaa\t3\t668591.73\nLuis Veras\t1\t416546.72\nfabio paes\t1\t393779.10\nIgor Nigro\t1\t316000.00\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

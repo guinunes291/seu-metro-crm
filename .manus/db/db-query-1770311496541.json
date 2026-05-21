@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, email, role, equipeId FROM users WHERE equipeId = 1 AND role = 'corretor';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role, equipeId FROM users WHERE equipeId = 1 AND role = 'corretor';",
+  "rows": [
+    {
+      "id": "8082380",
+      "name": "Breno Brunelli",
+      "email": "imoveis.brunelli@gmail.com",
+      "role": "corretor",
+      "equipeId": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tequipeId\n8082380\tBreno Brunelli\timoveis.brunelli@gmail.com\tcorretor\t1\n",
+  "stderr": "",
+  "execution_time_ms": 351
+}

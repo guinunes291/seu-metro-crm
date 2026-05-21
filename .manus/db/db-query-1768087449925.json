@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, ultimoDesbloqueio FROM users WHERE email = 'leticiaccastro2@gmail.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, ultimoDesbloqueio FROM users WHERE email = 'leticiaccastro2@gmail.com';",
+  "rows": [
+    {
+      "id": "5052575",
+      "name": "Leticia Castro",
+      "email": "leticiaccastro2@gmail.com",
+      "ultimoDesbloqueio": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tultimoDesbloqueio\n5052575\tLeticia Castro\tleticiaccastro2@gmail.com\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 745
+}

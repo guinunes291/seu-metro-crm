@@ -1,0 +1,27 @@
+{
+  "query": "\nSELECT COUNT(*) as total_contratos, \n  SUM(valorVenda) as vgv_total,\n  SUM(CASE WHEN MONTH(createdAt) = MONTH(NOW()) AND YEAR(createdAt) = YEAR(NOW()) THEN 1 ELSE 0 END) as contratos_mes,\n  SUM(CASE WHEN MONTH(createdAt) = MONTH(NOW()) AND YEAR(createdAt) = YEAR(NOW()) THEN valorVenda ELSE 0 END) as vgv_mes\nFROM contratos WHERE distrato = 0;\n\nSELECT u.name, COUNT(c.id) as contratos, SUM(c.valorVenda) as vgv_total\nFROM contratos c JOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = MONTH(NOW()) AND YEAR(c.createdAt) = YEAR(NOW()) AND c.distrato = 0\nGROUP BY u.id, u.name ORDER BY vgv_total DESC LIMIT 8;\n\nSELECT COUNT(*) as total_leads,\n  SUM(CASE WHEN status = 'novo' THEN 1 ELSE 0 END) as aguardando,\n  SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento,\n  SUM(CASE WHEN status = 'contrato_fechado' THEN 1 ELSE 0 END) as contratos_fechados,\n  COUNT(DISTINCT corretorId) as corretores_ativos\nFROM leads WHERE corretorId IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT COUNT(*) as total_contratos, \n  SUM(valorVenda) as vgv_total,\n  SUM(CASE WHEN MONTH(createdAt) = MONTH(NOW()) AND YEAR(createdAt) = YEAR(NOW()) THEN 1 ELSE 0 END) as contratos_mes,\n  SUM(CASE WHEN MONTH(createdAt) = MONTH(NOW()) AND YEAR(createdAt) = YEAR(NOW()) THEN valorVenda ELSE 0 END) as vgv_mes\nFROM contratos WHERE distrato = 0;\n\nSELECT u.name, COUNT(c.id) as contratos, SUM(c.valorVenda) as vgv_total\nFROM contratos c JOIN users u ON c.corretorId = u.id\nWHERE MONTH(c.createdAt) = MONTH(NOW()) AND YEAR(c.createdAt) = YEAR(NOW()) AND c.distrato = 0\nGROUP BY u.id, u.name ORDER BY vgv_total DESC LIMIT 8;\n\nSELECT COUNT(*) as total_leads,\n  SUM(CASE WHEN status = 'novo' THEN 1 ELSE 0 END) as aguardando,\n  SUM(CASE WHEN status = 'em_atendimento' THEN 1 ELSE 0 END) as em_atendimento,\n  SUM(CASE WHEN status = 'contrato_fechado' THEN 1 ELSE 0 END) as contratos_fechados,\n  COUNT(DISTINCT corretorId) as corretores_ativos\nFROM leads WHERE corretorId IS NOT NULL;\n",
+  "rows": [
+    {
+      "total_contratos": "34",
+      "vgv_total": "9469435.00",
+      "contratos_mes": "9",
+      "vgv_mes": "2317994.44"
+    }
+  ],
+  "messages": [
+    "name\tcontratos\tvgv_total",
+    "Graziele Gomes de Jesus\t2\t615434.00",
+    "Luis Veras\t2\t460435.72",
+    "lacerdaniel.imoveis\t1\t306679.46",
+    "Andrew\t1\t263612.80",
+    "sheldonbarbosaa\t1\t242602.46",
+    "Pitter Reis\t1\t223900.00",
+    "kauanthyago34\t1\t205330.00",
+    "total_leads\taguardando\tem_atendimento\tcontratos_fechados\tcorretores_ativos",
+    "5989\t0\t855\t35\t50"
+  ],
+  "stdout": "total_contratos\tvgv_total\tcontratos_mes\tvgv_mes\n34\t9469435.00\t9\t2317994.44\nname\tcontratos\tvgv_total\nGraziele Gomes de Jesus\t2\t615434.00\nLuis Veras\t2\t460435.72\nlacerdaniel.imoveis\t1\t306679.46\nAndrew\t1\t263612.80\nsheldonbarbosaa\t1\t242602.46\nPitter Reis\t1\t223900.00\nkauanthyago34\t1\t205330.00\ntotal_leads\taguardando\tem_atendimento\tcontratos_fechados\tcorretores_ativos\n5989\t0\t855\t35\t50\n",
+  "stderr": "",
+  "execution_time_ms": 76
+}

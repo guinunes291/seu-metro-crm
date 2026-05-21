@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT id, nome, telefone, projetoCustom, projectId, createdAt \nFROM leads \nWHERE createdAt > DATE_SUB(NOW(), INTERVAL 10 MINUTE)\nORDER BY createdAt DESC \nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT id, nome, telefone, projetoCustom, projectId, createdAt \nFROM leads \nWHERE createdAt > DATE_SUB(NOW(), INTERVAL 10 MINUTE)\nORDER BY createdAt DESC \nLIMIT 20;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 2: Unknown column 'projetocustom' in 'field list'"
+  ]
+}

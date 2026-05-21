@@ -1,0 +1,80 @@
+{
+  "query": "\nSELECT \n  l.nome,\n  l.origem,\n  l.status,\n  l.origemWebhook,\n  DATE_FORMAT(l.createdAt, '%Y-%m-%d %H:%i') as created\nFROM leads l\nINNER JOIN users u ON l.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%' \n  AND l.origem = 'facebook' \n  AND l.status = 'aguardando_atendimento'\nORDER BY l.createdAt DESC\nLIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  l.nome,\n  l.origem,\n  l.status,\n  l.origemWebhook,\n  DATE_FORMAT(l.createdAt, '%Y-%m-%d %H:%i') as created\nFROM leads l\nINNER JOIN users u ON l.corretorId = u.id\nWHERE u.name LIKE '%Guilherme%' \n  AND l.origem = 'facebook' \n  AND l.status = 'aguardando_atendimento'\nORDER BY l.createdAt DESC\nLIMIT 10;\n",
+  "rows": [
+    {
+      "nome": "André",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-29 14:48"
+    },
+    {
+      "nome": "Helena",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 20:22"
+    },
+    {
+      "nome": "Natália Alves De",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 17:53"
+    },
+    {
+      "nome": "Felipe",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 17:21"
+    },
+    {
+      "nome": "Gabriela",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 13:03"
+    },
+    {
+      "nome": "Jones",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 11:52"
+    },
+    {
+      "nome": "Álef",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 11:22"
+    },
+    {
+      "nome": "Jefferson",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 09:01"
+    },
+    {
+      "nome": "Mayara",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 02:25"
+    },
+    {
+      "nome": "Edson",
+      "origem": "facebook",
+      "status": "aguardando_atendimento",
+      "origemWebhook": "1",
+      "created": "2026-01-26 01:46"
+    }
+  ],
+  "messages": [],
+  "stdout": "nome\torigem\tstatus\torigemWebhook\tcreated\nAndré\tfacebook\taguardando_atendimento\t1\t2026-01-29 14:48\nHelena\tfacebook\taguardando_atendimento\t1\t2026-01-26 20:22\nNatália Alves De\tfacebook\taguardando_atendimento\t1\t2026-01-26 17:53\nFelipe\tfacebook\taguardando_atendimento\t1\t2026-01-26 17:21\nGabriela\tfacebook\taguardando_atendimento\t1\t2026-01-26 13:03\nJones\tfacebook\taguardando_atendimento\t1\t2026-01-26 11:52\nÁlef\tfacebook\taguardando_atendimento\t1\t2026-01-26 11:22\nJefferson\tfacebook\taguardando_atendimento\t1\t2026-01-26 09:01\nMayara\tfacebook\taguardando_atendimento\t1\t2026-01-26 02:25\nEdson\tfacebook\taguardando_atendimento\t1\t2026-01-26 01:46\n",
+  "stderr": "",
+  "execution_time_ms": 110
+}

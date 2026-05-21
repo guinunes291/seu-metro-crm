@@ -1,0 +1,20 @@
+{
+  "query": "SELECT id, mes, ano, metaVGV, metaContratos, metaLeads, metaAgendamentos, metaVisitas FROM metas_globais;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, mes, ano, metaVGV, metaContratos, metaLeads, metaAgendamentos, metaVisitas FROM metas_globais;",
+  "rows": [
+    {
+      "id": "1",
+      "mes": "2",
+      "ano": "2026",
+      "metaVGV": "100000000.00",
+      "metaContratos": "20",
+      "metaLeads": "200",
+      "metaAgendamentos": "50",
+      "metaVisitas": "30"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tmes\tano\tmetaVGV\tmetaContratos\tmetaLeads\tmetaAgendamentos\tmetaVisitas\n1\t2\t2026\t100000000.00\t20\t200\t50\t30\n",
+  "stderr": "",
+  "execution_time_ms": 360
+}

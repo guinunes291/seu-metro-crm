@@ -1,0 +1,100 @@
+{
+  "query": "SELECT \n  lh.id,\n  lh.tipo,\n  lh.createdAt,\n  DATE(lh.createdAt) as data_criacao,\n  FROM_UNIXTIME(1768539600000/1000) as inicio_hoje_calculado,\n  FROM_UNIXTIME(1768625999999/1000) as fim_hoje_calculado,\n  CASE \n    WHEN lh.createdAt >= FROM_UNIXTIME(1768539600000/1000) AND lh.createdAt <= FROM_UNIXTIME(1768625999999/1000) THEN 'SIM'\n    ELSE 'NÃO'\n  END as esta_no_intervalo\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND lh.tipo IN ('ligacao', 'whatsapp')\nORDER BY lh.createdAt DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  lh.id,\n  lh.tipo,\n  lh.createdAt,\n  DATE(lh.createdAt) as data_criacao,\n  FROM_UNIXTIME(1768539600000/1000) as inicio_hoje_calculado,\n  FROM_UNIXTIME(1768625999999/1000) as fim_hoje_calculado,\n  CASE \n    WHEN lh.createdAt >= FROM_UNIXTIME(1768539600000/1000) AND lh.createdAt <= FROM_UNIXTIME(1768625999999/1000) THEN 'SIM'\n    ELSE 'NÃO'\n  END as esta_no_intervalo\nFROM lead_history lh\nJOIN users u ON lh.corretorId = u.id\nWHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%')\n  AND lh.tipo IN ('ligacao', 'whatsapp')\nORDER BY lh.createdAt DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "540422",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:40:37",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540421",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:39:55",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540419",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:38:45",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540416",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:38:04",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540415",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:37:02",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540414",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:36:23",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540412",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:35:32",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540411",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:34:45",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540410",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:34:00",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    },
+    {
+      "id": "540408",
+      "tipo": "ligacao",
+      "createdAt": "2026-01-16 19:33:05",
+      "data_criacao": "2026-01-16",
+      "inicio_hoje_calculado": "2026-01-16 05:00:00.0000",
+      "fim_hoje_calculado": "2026-01-17 04:59:59.9990",
+      "esta_no_intervalo": "SIM"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttipo\tcreatedAt\tdata_criacao\tinicio_hoje_calculado\tfim_hoje_calculado\testa_no_intervalo\n540422\tligacao\t2026-01-16 19:40:37\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540421\tligacao\t2026-01-16 19:39:55\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540419\tligacao\t2026-01-16 19:38:45\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540416\tligacao\t2026-01-16 19:38:04\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540415\tligacao\t2026-01-16 19:37:02\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540414\tligacao\t2026-01-16 19:36:23\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540412\tligacao\t2026-01-16 19:35:32\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540411\tligacao\t2026-01-16 19:34:45\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540410\tligacao\t2026-01-16 19:34:00\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n540408\tligacao\t2026-01-16 19:33:05\t2026-01-16\t2026-01-16 05:00:00.0000\t2026-01-17 04:59:59.9990\tSIM\n",
+  "stderr": "",
+  "execution_time_ms": 63
+}

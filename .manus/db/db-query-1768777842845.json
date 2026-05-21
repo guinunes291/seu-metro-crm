@@ -1,0 +1,15 @@
+{
+  "query": "\n-- Buscar ID do Gabriel\nSELECT id, name, email FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%gabriel%' LIMIT 5;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Buscar ID do Gabriel\nSELECT id, name, email FROM users WHERE name LIKE '%Gabriel%' OR email LIKE '%gabriel%' LIMIT 5;\n",
+  "rows": [
+    {
+      "id": "6368447",
+      "name": "Gabriel Salles",
+      "email": "biel2s7777@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 5939
+}

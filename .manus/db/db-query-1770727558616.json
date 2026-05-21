@@ -1,0 +1,15 @@
+{
+  "query": "SELECT mes, ano, metaVGV FROM metas_globais WHERE ano = 2026 AND mes = 2;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT mes, ano, metaVGV FROM metas_globais WHERE ano = 2026 AND mes = 2;",
+  "rows": [
+    {
+      "mes": "2",
+      "ano": "2026",
+      "metaVGV": "625000000.00"
+    }
+  ],
+  "messages": [],
+  "stdout": "mes\tano\tmetaVGV\n2\t2026\t625000000.00\n",
+  "stderr": "",
+  "execution_time_ms": 52
+}

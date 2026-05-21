@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, construtoraId, mes, ano, statusProcessamento, mensagemErro, s3PdfUrl IS NOT NULL as tem_s3 FROM tabeloes ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, construtoraId, mes, ano, statusProcessamento, mensagemErro, s3PdfUrl IS NOT NULL as tem_s3 FROM tabeloes ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "27",
+      "construtoraId": "27",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "26",
+      "construtoraId": "26",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "25",
+      "construtoraId": "25",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "24",
+      "construtoraId": "24",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "23",
+      "construtoraId": "23",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "22",
+      "construtoraId": "22",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "21",
+      "construtoraId": "21",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "20",
+      "construtoraId": "20",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "19",
+      "construtoraId": "19",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    },
+    {
+      "id": "18",
+      "construtoraId": "18",
+      "mes": "2",
+      "ano": "2026",
+      "statusProcessamento": "concluido",
+      "mensagemErro": "NULL",
+      "tem_s3": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tconstrutoraId\tmes\tano\tstatusProcessamento\tmensagemErro\ttem_s3\n27\t27\t2\t2026\tconcluido\tNULL\t1\n26\t26\t2\t2026\tconcluido\tNULL\t1\n25\t25\t2\t2026\tconcluido\tNULL\t1\n24\t24\t2\t2026\tconcluido\tNULL\t1\n23\t23\t2\t2026\tconcluido\tNULL\t1\n22\t22\t2\t2026\tconcluido\tNULL\t1\n21\t21\t2\t2026\tconcluido\tNULL\t1\n20\t20\t2\t2026\tconcluido\tNULL\t1\n19\t19\t2\t2026\tconcluido\tNULL\t1\n18\t18\t2\t2026\tconcluido\tNULL\t1\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}

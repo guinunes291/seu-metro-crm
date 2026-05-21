@@ -1,0 +1,70 @@
+{
+  "query": "\n-- Verificar leads do corretor Guilherme Nunes (ID 5055943)\nSELECT id, nome, status, corretorId FROM leads WHERE corretorId = 5055943 LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Verificar leads do corretor Guilherme Nunes (ID 5055943)\nSELECT id, nome, status, corretorId FROM leads WHERE corretorId = 5055943 LIMIT 10;\n",
+  "rows": [
+    {
+      "id": "60628",
+      "nome": "Ednei Felipe",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60702",
+      "nome": "Cili Navas",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60703",
+      "nome": "Carol Bela Tobaru",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60704",
+      "nome": "Ana Liza Santana",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60705",
+      "nome": "Carl Roichman",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60706",
+      "nome": "Marcelo Cerqueira",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60707",
+      "nome": "César Paulino",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60708",
+      "nome": "Marcos Guerreiro",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60709",
+      "nome": "Toninho Astros",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    },
+    {
+      "id": "60710",
+      "nome": "Leandro Gomes",
+      "status": "aguardando_atendimento",
+      "corretorId": "5055943"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tnome\tstatus\tcorretorId\n60628\tEdnei Felipe\taguardando_atendimento\t5055943\n60702\tCili Navas\taguardando_atendimento\t5055943\n60703\tCarol Bela Tobaru\taguardando_atendimento\t5055943\n60704\tAna Liza Santana\taguardando_atendimento\t5055943\n60705\tCarl Roichman\taguardando_atendimento\t5055943\n60706\tMarcelo Cerqueira\taguardando_atendimento\t5055943\n60707\tCésar Paulino\taguardando_atendimento\t5055943\n60708\tMarcos Guerreiro\taguardando_atendimento\t5055943\n60709\tToninho Astros\taguardando_atendimento\t5055943\n60710\tLeandro Gomes\taguardando_atendimento\t5055943\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

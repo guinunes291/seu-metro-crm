@@ -1,0 +1,13 @@
+{
+  "query": "SELECT id FROM leads WHERE nome = 'Lead Teste Notificação' ORDER BY id DESC LIMIT 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id FROM leads WHERE nome = 'Lead Teste Notificação' ORDER BY id DESC LIMIT 1",
+  "rows": [
+    {
+      "id": "2694"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\n2694\n",
+  "stderr": "",
+  "execution_time_ms": 48
+}

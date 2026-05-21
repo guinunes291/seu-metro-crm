@@ -62,10 +62,6 @@ import AtualizarProjetosEmMassa from "@/pages/AtualizarProjetosEmMassa";
 import LimparProjetosOrfaos from "@/pages/LimparProjetosOrfaos";
 import RelatorioEscolhasDiarias from "@/pages/RelatorioEscolhasDiarias";
 import CarteiraAtiva from "@/pages/CarteiraAtiva";
-import OfertaAtiva from "@/pages/OfertaAtiva";
-import NovaOfertaAtiva from "@/pages/NovaOfertaAtiva";
-import KanbanOfertaAtiva from "@/pages/KanbanOfertaAtiva";
-import SessoesOferta from "@/pages/SessoesOferta";
 import ScriptsVendas from "@/pages/ScriptsVendas";
 import CentralAlertas from "@/pages/CentralAlertas";
 import BuscadorProjetos from "@/pages/BuscadorProjetos";
@@ -138,10 +134,6 @@ function Router() {
       <Route path="/gestao-equipes" component={GestaoEquipes} />
       <Route path="/minha-equipe" component={MinhaEquipe} />
       <Route path="/carteira-ativa" component={CarteiraAtiva} />
-      <Route path="/oferta-ativa" component={OfertaAtiva} />
-      <Route path="/oferta-ativa/nova" component={NovaOfertaAtiva} />
-      <Route path="/oferta-ativa/:id" component={KanbanOfertaAtiva} />
-      <Route path="/sessoes-oferta" component={SessoesOferta} />
       <Route path="/scripts" component={ScriptsVendas} />
       <Route path="/central-alertas" component={CentralAlertas} />
       <Route path="/buscador-projetos" component={BuscadorProjetos} />

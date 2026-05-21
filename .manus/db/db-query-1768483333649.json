@@ -1,0 +1,22 @@
+{
+  "query": "\n-- Verificar usuário Guilherme Nunes\nSELECT id, name, role, email FROM users WHERE name LIKE '%Guilherme%' OR email LIKE '%guilherme%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Verificar usuário Guilherme Nunes\nSELECT id, name, role, email FROM users WHERE name LIKE '%Guilherme%' OR email LIKE '%guilherme%';\n",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Guilherme Nunes",
+      "role": "gestor",
+      "email": "guilherme_97fm@outlook.com"
+    },
+    {
+      "id": "5055943",
+      "name": "Guilherme Nunes ",
+      "role": "corretor",
+      "email": "guilherme.97fn@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\trole\temail\n1\tGuilherme Nunes\tgestor\tguilherme_97fm@outlook.com\n5055943\tGuilherme Nunes \tcorretor\tguilherme.97fn@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 64
+}

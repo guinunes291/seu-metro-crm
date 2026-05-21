@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, role, email, openId FROM users WHERE name LIKE '%test%' OR name LIKE '%Teste%' OR name LIKE '%Test%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, role, email, openId FROM users WHERE name LIKE '%test%' OR name LIKE '%Teste%' OR name LIKE '%Test%';",
+  "rows": [
+    {
+      "id": "10627393",
+      "name": "Corretor Sheets Test",
+      "role": "corretor",
+      "email": "sheets@test.com",
+      "openId": "corretor-sheets-test-1770563637404"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\trole\temail\topenId\n10627393\tCorretor Sheets Test\tcorretor\tsheets@test.com\tcorretor-sheets-test-1770563637404\n",
+  "stderr": "",
+  "execution_time_ms": 359
+}

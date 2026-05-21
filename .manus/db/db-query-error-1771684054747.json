@@ -1,0 +1,8 @@
+{
+  "query": "SELECT l.id, l.nome, l.corretorId, l.naLixeira, u.name as corretor_nome, u.equipeId FROM leads l LEFT JOIN users u ON l.corretorId = u.open_id WHERE l.status = 'contrato_fechado' ORDER BY l.id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT l.id, l.nome, l.corretorId, l.naLixeira, u.name as corretor_nome, u.equipeId FROM leads l LEFT JOIN users u ON l.corretorId = u.open_id WHERE l.status = 'contrato_fechado' ORDER BY l.id",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'u.open_id' in 'on clause'"
+  ]
+}

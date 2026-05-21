@@ -1,0 +1,82 @@
+{
+  "query": "\n-- Primeiro, garantir que Guilherme seja gestor\nUPDATE users SET role = 'gestor' WHERE email = 'guilherme_97fm@outlook.com';\n\n-- Inserir ou atualizar corretores (usando INSERT IGNORE para evitar duplicatas)\nINSERT IGNORE INTO users (openId, name, email, role, status, createdAt, updatedAt) VALUES\n('andrew-formigoni', 'Andrew', 'andrewformigoni.corretor@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('kamila-silva', 'Kamila Silva', 'millakamila42@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('aline-silva', 'Aline Silva', 'alinee.tsilvaa@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('hellen-rodrigues', 'Hellen Rodrigues', 'hellen.rs0710@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('igor-nigro', 'Igor Nigro', 'igor.nigro09@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('gustavo-alves', 'Gustavo Alves', 'gustav0.profission4l@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('gabriel-salles', 'Gabriel Salles', 'biel2s7777@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('sheldon-barbosa', 'sheldonbarbosaa', 'sheldonbarbosaa@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('breno-brunelli', 'Breno Brunelli', 'imoveis.brunelli@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('parra-work', 'parra.work14', 'parra.work14@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('leticia-castro', 'Leticia Castro', 'leticiaccastro2@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('paula-akahoshi', 'Paula Akahoshi', 'paula.akahoshi92@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('ivens-pagule', 'ivenspagule', 'ivenspagule@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('mikael-alves', 'Mikael Alves', 'mikaelalves2000@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('guilherme-nunes-2', 'Guilherme Nunes', 'guilherme.97fn@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('kauan-thyago', 'kauanthyago34', 'kauanthyago34@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('ana-carolina', 'Ana Carolina Santos', 'anasantos222017@gmail.com', 'corretor', 'presente', NOW(), NOW());\n\n-- Verificar total de corretores\nSELECT COUNT(*) as total_corretores FROM users WHERE role = 'corretor';\n\n-- Listar todos os corretores\nSELECT id, name, email, status FROM users WHERE role = 'corretor' ORDER BY name;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Primeiro, garantir que Guilherme seja gestor\nUPDATE users SET role = 'gestor' WHERE email = 'guilherme_97fm@outlook.com';\n\n-- Inserir ou atualizar corretores (usando INSERT IGNORE para evitar duplicatas)\nINSERT IGNORE INTO users (openId, name, email, role, status, createdAt, updatedAt) VALUES\n('andrew-formigoni', 'Andrew', 'andrewformigoni.corretor@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('kamila-silva', 'Kamila Silva', 'millakamila42@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('aline-silva', 'Aline Silva', 'alinee.tsilvaa@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('hellen-rodrigues', 'Hellen Rodrigues', 'hellen.rs0710@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('igor-nigro', 'Igor Nigro', 'igor.nigro09@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('gustavo-alves', 'Gustavo Alves', 'gustav0.profission4l@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('gabriel-salles', 'Gabriel Salles', 'biel2s7777@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('sheldon-barbosa', 'sheldonbarbosaa', 'sheldonbarbosaa@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('breno-brunelli', 'Breno Brunelli', 'imoveis.brunelli@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('parra-work', 'parra.work14', 'parra.work14@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('leticia-castro', 'Leticia Castro', 'leticiaccastro2@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('paula-akahoshi', 'Paula Akahoshi', 'paula.akahoshi92@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('ivens-pagule', 'ivenspagule', 'ivenspagule@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('mikael-alves', 'Mikael Alves', 'mikaelalves2000@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('guilherme-nunes-2', 'Guilherme Nunes', 'guilherme.97fn@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('kauan-thyago', 'kauanthyago34', 'kauanthyago34@gmail.com', 'corretor', 'presente', NOW(), NOW()),\n('ana-carolina', 'Ana Carolina Santos', 'anasantos222017@gmail.com', 'corretor', 'presente', NOW(), NOW());\n\n-- Verificar total de corretores\nSELECT COUNT(*) as total_corretores FROM users WHERE role = 'corretor';\n\n-- Listar todos os corretores\nSELECT id, name, email, status FROM users WHERE role = 'corretor' ORDER BY name;\n",
+  "rows": [
+    {
+      "total_corretores": "22"
+    },
+    {
+      "total_corretores": "id\tname\temail\tstatus"
+    },
+    {
+      "total_corretores": "7723641\tAline Silva\talinee.tsilvaa@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723655\tAna Carolina Santos\tanasantos222017@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723639\tAndrew\tandrewformigoni.corretor@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723647\tBreno Brunelli\timoveis.brunelli@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "6368447\tGabriel Salles\tbiel2s7777@gmail.com\tausente"
+    },
+    {
+      "total_corretores": "7723645\tGabriel Salles\tbiel2s7777@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tausente"
+    },
+    {
+      "total_corretores": "7723653\tGuilherme Nunes\tguilherme.97fn@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723644\tGustavo Alves\tgustav0.profission4l@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723642\tHellen Rodrigues\thellen.rs0710@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "6396243\tIgor Nigro\tigor.nigro09@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723643\tIgor Nigro\tigor.nigro09@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723651\tivenspagule\tivenspagule@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "6364694\tivenspagule\tivenspagule@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723640\tKamila Silva\tmillakamila42@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723654\tkauanthyago34\tkauanthyago34@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723649\tLeticia Castro\tleticiaccastro2@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723652\tMikael Alves\tmikaelalves2000@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723648\tparra.work14\tparra.work14@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7723650\tPaula Akahoshi\tpaula.akahoshi92@gmail.com\tpresente"
+    },
+    {
+      "total_corretores": "7438593\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tausente"
+    },
+    {
+      "total_corretores": "7723646\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tpresente"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_corretores\n22\nid\tname\temail\tstatus\n7723641\tAline Silva\talinee.tsilvaa@gmail.com\tpresente\n7723655\tAna Carolina Santos\tanasantos222017@gmail.com\tpresente\n7723639\tAndrew\tandrewformigoni.corretor@gmail.com\tpresente\n7723647\tBreno Brunelli\timoveis.brunelli@gmail.com\tpresente\n6368447\tGabriel Salles\tbiel2s7777@gmail.com\tausente\n7723645\tGabriel Salles\tbiel2s7777@gmail.com\tpresente\n5055943\tGuilherme Nunes \tguilherme.97fn@gmail.com\tausente\n7723653\tGuilherme Nunes\tguilherme.97fn@gmail.com\tpresente\n7723644\tGustavo Alves\tgustav0.profission4l@gmail.com\tpresente\n7723642\tHellen Rodrigues\thellen.rs0710@gmail.com\tpresente\n6396243\tIgor Nigro\tigor.nigro09@gmail.com\tpresente\n7723643\tIgor Nigro\tigor.nigro09@gmail.com\tpresente\n7723651\tivenspagule\tivenspagule@gmail.com\tpresente\n6364694\tivenspagule\tivenspagule@gmail.com\tpresente\n7723640\tKamila Silva\tmillakamila42@gmail.com\tpresente\n7723654\tkauanthyago34\tkauanthyago34@gmail.com\tpresente\n7723649\tLeticia Castro\tleticiaccastro2@gmail.com\tpresente\n7723652\tMikael Alves\tmikaelalves2000@gmail.com\tpresente\n7723648\tparra.work14\tparra.work14@gmail.com\tpresente\n7723650\tPaula Akahoshi\tpaula.akahoshi92@gmail.com\tpresente\n7438593\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tausente\n7723646\tsheldonbarbosaa\tsheldonbarbosaa@gmail.com\tpresente\n",
+  "stderr": "",
+  "execution_time_ms": 95
+}

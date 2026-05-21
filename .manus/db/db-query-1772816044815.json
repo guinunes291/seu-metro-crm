@@ -1,0 +1,210 @@
+{
+  "query": "SELECT n.id, n.userId, u.name, u.role, n.tipo, n.titulo, n.lida, n.createdAt FROM notifications n JOIN users u ON n.userId = u.id ORDER BY n.createdAt DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT n.id, n.userId, u.name, u.role, n.tipo, n.titulo, n.lida, n.createdAt FROM notifications n JOIN users u ON n.userId = u.id ORDER BY n.createdAt DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "3870247",
+      "userId": "6396243",
+      "name": "Igor Nigro",
+      "role": "corretor",
+      "tipo": "lead_recebido",
+      "titulo": "Novo lead recebido!",
+      "lida": "0",
+      "createdAt": "2026-03-06 16:34:15"
+    },
+    {
+      "id": "3870246",
+      "userId": "7862260",
+      "name": "Andrew Formigoni Leite",
+      "role": "corretor",
+      "tipo": "lead_recebido",
+      "titulo": "Novo lead recebido!",
+      "lida": "0",
+      "createdAt": "2026-03-06 16:17:44"
+    },
+    {
+      "id": "3870236",
+      "userId": "7950004",
+      "name": "Aline Silva",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "1",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870241",
+      "userId": "9816082",
+      "name": "Graziele Gomes De Jesus ",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870244",
+      "userId": "10861557",
+      "name": "Alana da Costa Souza",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870234",
+      "userId": "7860001",
+      "name": "Leticia Castro",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870237",
+      "userId": "7958356",
+      "name": "Pitter Reis",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870231",
+      "userId": "6368447",
+      "name": "Gabriel Salles",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870233",
+      "userId": "7723881",
+      "name": "Paula Akahoshi",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870235",
+      "userId": "7862260",
+      "name": "Andrew Formigoni Leite",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870239",
+      "userId": "8071179",
+      "name": "Hellen Rodrigues",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870243",
+      "userId": "10409127",
+      "name": "Carla Quaresma",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870238",
+      "userId": "7982154",
+      "name": "kauanthyago34",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870242",
+      "userId": "10319087",
+      "name": "Daniel Lacerda",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870245",
+      "userId": "11184140",
+      "name": "Luis Carlos De Veras",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870240",
+      "userId": "9816037",
+      "name": "fabio paes",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870232",
+      "userId": "6396243",
+      "name": "Igor Nigro",
+      "role": "corretor",
+      "tipo": "sistema",
+      "titulo": "🏆 Novo Líder no Ranking!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:13:52"
+    },
+    {
+      "id": "3870223",
+      "userId": "13835170",
+      "name": "Jefferson Luiz",
+      "role": "corretor",
+      "tipo": "lead_recebido",
+      "titulo": "Novo lead recebido!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:05:06"
+    },
+    {
+      "id": "3870217",
+      "userId": "13835170",
+      "name": "Jefferson Luiz",
+      "role": "corretor",
+      "tipo": "lead_recebido",
+      "titulo": "Novo lead recebido!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:05:06"
+    },
+    {
+      "id": "3870216",
+      "userId": "13835170",
+      "name": "Jefferson Luiz",
+      "role": "corretor",
+      "tipo": "lead_recebido",
+      "titulo": "Novo lead recebido!",
+      "lida": "0",
+      "createdAt": "2026-03-06 15:05:06"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tname\trole\ttipo\ttitulo\tlida\tcreatedAt\n3870247\t6396243\tIgor Nigro\tcorretor\tlead_recebido\tNovo lead recebido!\t0\t2026-03-06 16:34:15\n3870246\t7862260\tAndrew Formigoni Leite\tcorretor\tlead_recebido\tNovo lead recebido!\t0\t2026-03-06 16:17:44\n3870236\t7950004\tAline Silva\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t1\t2026-03-06 15:13:52\n3870241\t9816082\tGraziele Gomes De Jesus \tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870244\t10861557\tAlana da Costa Souza\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870234\t7860001\tLeticia Castro\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870237\t7958356\tPitter Reis\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870231\t6368447\tGabriel Salles\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870233\t7723881\tPaula Akahoshi\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870235\t7862260\tAndrew Formigoni Leite\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870239\t8071179\tHellen Rodrigues\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870243\t10409127\tCarla Quaresma\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870238\t7982154\tkauanthyago34\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870242\t10319087\tDaniel Lacerda\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870245\t11184140\tLuis Carlos De Veras\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870240\t9816037\tfabio paes\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870232\t6396243\tIgor Nigro\tcorretor\tsistema\t🏆 Novo Líder no Ranking!\t0\t2026-03-06 15:13:52\n3870223\t13835170\tJefferson Luiz\tcorretor\tlead_recebido\tNovo lead recebido!\t0\t2026-03-06 15:05:06\n3870217\t13835170\tJefferson Luiz\tcorretor\tlead_recebido\tNovo lead recebido!\t0\t2026-03-06 15:05:06\n3870216\t13835170\tJefferson Luiz\tcorretor\tlead_recebido\tNovo lead recebido!\t0\t2026-03-06 15:05:06\n",
+  "stderr": "",
+  "execution_time_ms": 65
+}

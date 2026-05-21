@@ -1,0 +1,210 @@
+{
+  "query": "\nSELECT \n  u.name,\n  u.status as corretor_status,\n  COUNT(l.id) as total_leads,\n  SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as trabalhados,\n  SUM(CASE WHEN l.status = 'aguardando_atendimento' THEN 1 ELSE 0 END) as aguardando,\n  ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) as pct_trabalhado,\n  CASE WHEN COUNT(l.id) < 40 OR ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) >= 90 THEN 'SIM' ELSE 'NAO' END as elegivel_90pct,\n  CASE WHEN COUNT(l.id) < 40 OR ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) >= 60 THEN 'SIM' ELSE 'NAO' END as elegivel_60pct\nFROM users u\nLEFT JOIN leads l ON l.corretorId = u.id AND l.naLixeira = 0\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name, u.status\nORDER BY total_leads DESC\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT \n  u.name,\n  u.status as corretor_status,\n  COUNT(l.id) as total_leads,\n  SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) as trabalhados,\n  SUM(CASE WHEN l.status = 'aguardando_atendimento' THEN 1 ELSE 0 END) as aguardando,\n  ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) as pct_trabalhado,\n  CASE WHEN COUNT(l.id) < 40 OR ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) >= 90 THEN 'SIM' ELSE 'NAO' END as elegivel_90pct,\n  CASE WHEN COUNT(l.id) < 40 OR ROUND(SUM(CASE WHEN l.status != 'aguardando_atendimento' THEN 1 ELSE 0 END) / COUNT(l.id) * 100, 1) >= 60 THEN 'SIM' ELSE 'NAO' END as elegivel_60pct\nFROM users u\nLEFT JOIN leads l ON l.corretorId = u.id AND l.naLixeira = 0\nWHERE u.role = 'corretor'\nGROUP BY u.id, u.name, u.status\nORDER BY total_leads DESC\nLIMIT 20;\n",
+  "rows": [
+    {
+      "name": "Gabriel Salles",
+      "corretor_status": "ausente",
+      "total_leads": "4545",
+      "trabalhados": "0",
+      "aguardando": "4545",
+      "pct_trabalhado": "0.0",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Taynara Souza Consultora Imobiliária",
+      "corretor_status": "presente",
+      "total_leads": "279",
+      "trabalhados": "68",
+      "aguardando": "211",
+      "pct_trabalhado": "24.4",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Bella Brancaccio",
+      "corretor_status": "ausente",
+      "total_leads": "242",
+      "trabalhados": "18",
+      "aguardando": "224",
+      "pct_trabalhado": "7.4",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Maria Clara",
+      "corretor_status": "presente",
+      "total_leads": "233",
+      "trabalhados": "32",
+      "aguardando": "201",
+      "pct_trabalhado": "13.7",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "jcmds94",
+      "corretor_status": "presente",
+      "total_leads": "225",
+      "trabalhados": "0",
+      "aguardando": "225",
+      "pct_trabalhado": "0.0",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Pitter Reis",
+      "corretor_status": "presente",
+      "total_leads": "221",
+      "trabalhados": "7",
+      "aguardando": "214",
+      "pct_trabalhado": "3.2",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Thauany Cobra",
+      "corretor_status": "ausente",
+      "total_leads": "219",
+      "trabalhados": "12",
+      "aguardando": "207",
+      "pct_trabalhado": "5.5",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "lacerdaniel.imoveis",
+      "corretor_status": "presente",
+      "total_leads": "206",
+      "trabalhados": "17",
+      "aguardando": "189",
+      "pct_trabalhado": "8.3",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Camille Derolle",
+      "corretor_status": "ausente",
+      "total_leads": "203",
+      "trabalhados": "20",
+      "aguardando": "183",
+      "pct_trabalhado": "9.9",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Leticia Castro",
+      "corretor_status": "presente",
+      "total_leads": "195",
+      "trabalhados": "63",
+      "aguardando": "132",
+      "pct_trabalhado": "32.3",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Aline Silva",
+      "corretor_status": "presente",
+      "total_leads": "189",
+      "trabalhados": "28",
+      "aguardando": "161",
+      "pct_trabalhado": "14.8",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "ramon barrato ",
+      "corretor_status": "presente",
+      "total_leads": "185",
+      "trabalhados": "1",
+      "aguardando": "184",
+      "pct_trabalhado": "0.5",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Igor Nigro",
+      "corretor_status": "presente",
+      "total_leads": "174",
+      "trabalhados": "13",
+      "aguardando": "161",
+      "pct_trabalhado": "7.5",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Emilly Vitória",
+      "corretor_status": "presente",
+      "total_leads": "171",
+      "trabalhados": "19",
+      "aguardando": "152",
+      "pct_trabalhado": "11.1",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "giliardepedro",
+      "corretor_status": "ausente",
+      "total_leads": "170",
+      "trabalhados": "49",
+      "aguardando": "121",
+      "pct_trabalhado": "28.8",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Gabriel Soares",
+      "corretor_status": "presente",
+      "total_leads": "166",
+      "trabalhados": "0",
+      "aguardando": "166",
+      "pct_trabalhado": "0.0",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Thaynara Meneses",
+      "corretor_status": "presente",
+      "total_leads": "156",
+      "trabalhados": "29",
+      "aguardando": "127",
+      "pct_trabalhado": "18.6",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Andrew",
+      "corretor_status": "presente",
+      "total_leads": "120",
+      "trabalhados": "65",
+      "aguardando": "55",
+      "pct_trabalhado": "54.2",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    },
+    {
+      "name": "Luis Veras",
+      "corretor_status": "presente",
+      "total_leads": "104",
+      "trabalhados": "84",
+      "aguardando": "20",
+      "pct_trabalhado": "80.8",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "SIM"
+    },
+    {
+      "name": "João Victor Ferreira Santos",
+      "corretor_status": "ausente",
+      "total_leads": "98",
+      "trabalhados": "0",
+      "aguardando": "98",
+      "pct_trabalhado": "0.0",
+      "elegivel_90pct": "NAO",
+      "elegivel_60pct": "NAO"
+    }
+  ],
+  "messages": [],
+  "stdout": "name\tcorretor_status\ttotal_leads\ttrabalhados\taguardando\tpct_trabalhado\telegivel_90pct\telegivel_60pct\nGabriel Salles\tausente\t4545\t0\t4545\t0.0\tNAO\tNAO\nTaynara Souza Consultora Imobiliária\tpresente\t279\t68\t211\t24.4\tNAO\tNAO\nBella Brancaccio\tausente\t242\t18\t224\t7.4\tNAO\tNAO\nMaria Clara\tpresente\t233\t32\t201\t13.7\tNAO\tNAO\njcmds94\tpresente\t225\t0\t225\t0.0\tNAO\tNAO\nPitter Reis\tpresente\t221\t7\t214\t3.2\tNAO\tNAO\nThauany Cobra\tausente\t219\t12\t207\t5.5\tNAO\tNAO\nlacerdaniel.imoveis\tpresente\t206\t17\t189\t8.3\tNAO\tNAO\nCamille Derolle\tausente\t203\t20\t183\t9.9\tNAO\tNAO\nLeticia Castro\tpresente\t195\t63\t132\t32.3\tNAO\tNAO\nAline Silva\tpresente\t189\t28\t161\t14.8\tNAO\tNAO\nramon barrato \tpresente\t185\t1\t184\t0.5\tNAO\tNAO\nIgor Nigro\tpresente\t174\t13\t161\t7.5\tNAO\tNAO\nEmilly Vitória\tpresente\t171\t19\t152\t11.1\tNAO\tNAO\ngiliardepedro\tausente\t170\t49\t121\t28.8\tNAO\tNAO\nGabriel Soares\tpresente\t166\t0\t166\t0.0\tNAO\tNAO\nThaynara Meneses\tpresente\t156\t29\t127\t18.6\tNAO\tNAO\nAndrew\tpresente\t120\t65\t55\t54.2\tNAO\tNAO\nLuis Veras\tpresente\t104\t84\t20\t80.8\tNAO\tSIM\nJoão Victor Ferreira Santos\tausente\t98\t0\t98\t0.0\tNAO\tNAO\n",
+  "stderr": "",
+  "execution_time_ms": 225
+}

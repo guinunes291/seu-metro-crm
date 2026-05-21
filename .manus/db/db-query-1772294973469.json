@@ -1,0 +1,70 @@
+{
+  "query": "\nSELECT c.id, l.nome as cliente, c.valorVenda, c.createdAt \nFROM contratos c \nJOIN leads l ON c.leadId = l.id\nORDER BY c.createdAt ASC LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT c.id, l.nome as cliente, c.valorVenda, c.createdAt \nFROM contratos c \nJOIN leads l ON c.leadId = l.id\nORDER BY c.createdAt ASC LIMIT 10;\n",
+  "rows": [
+    {
+      "id": "3",
+      "cliente": "JUSTINE MARIA DOS SANTOS ",
+      "valorVenda": "338092.98",
+      "createdAt": "2026-01-19 00:00:00"
+    },
+    {
+      "id": "1",
+      "cliente": "André Alves de",
+      "valorVenda": "199629.58",
+      "createdAt": "2026-01-26 15:00:00"
+    },
+    {
+      "id": "2",
+      "cliente": "Julia Gonçalves Severino",
+      "valorVenda": "299800.00",
+      "createdAt": "2026-01-26 15:00:00"
+    },
+    {
+      "id": "30001",
+      "cliente": "CARLOS EDUARDO RODRIGUES DOS SANTOS DE OLIVEIRA",
+      "valorVenda": "265000.00",
+      "createdAt": "2026-01-27 15:00:00"
+    },
+    {
+      "id": "60001",
+      "cliente": "Ronaldo",
+      "valorVenda": "249900.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "210002",
+      "cliente": "Emerson Rosário Dos Santos",
+      "valorVenda": "226900.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "210003",
+      "cliente": "Gabriel Vieira Da Silva",
+      "valorVenda": "321620.00",
+      "createdAt": "2026-01-29 00:00:00"
+    },
+    {
+      "id": "30002",
+      "cliente": "Luanna Benício Coelho",
+      "valorVenda": "275000.00",
+      "createdAt": "2026-01-29 15:00:00"
+    },
+    {
+      "id": "150001",
+      "cliente": "Julia Alves Santos",
+      "valorVenda": "310800.00",
+      "createdAt": "2026-02-05 00:00:00"
+    },
+    {
+      "id": "90001",
+      "cliente": "Vitor Dos Santos Marcos",
+      "valorVenda": "323000.00",
+      "createdAt": "2026-02-05 15:00:00"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tcliente\tvalorVenda\tcreatedAt\n3\tJUSTINE MARIA DOS SANTOS \t338092.98\t2026-01-19 00:00:00\n1\tAndré Alves de\t199629.58\t2026-01-26 15:00:00\n2\tJulia Gonçalves Severino\t299800.00\t2026-01-26 15:00:00\n30001\tCARLOS EDUARDO RODRIGUES DOS SANTOS DE OLIVEIRA\t265000.00\t2026-01-27 15:00:00\n60001\tRonaldo\t249900.00\t2026-01-29 00:00:00\n210002\tEmerson Rosário Dos Santos\t226900.00\t2026-01-29 00:00:00\n210003\tGabriel Vieira Da Silva\t321620.00\t2026-01-29 00:00:00\n30002\tLuanna Benício Coelho\t275000.00\t2026-01-29 15:00:00\n150001\tJulia Alves Santos\t310800.00\t2026-02-05 00:00:00\n90001\tVitor Dos Santos Marcos\t323000.00\t2026-02-05 15:00:00\n",
+  "stderr": "",
+  "execution_time_ms": 347
+}

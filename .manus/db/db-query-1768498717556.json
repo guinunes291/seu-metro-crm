@@ -1,0 +1,22 @@
+{
+  "query": "\n-- Verificação pós-limpeza\nSELECT 'Total de leads restantes:' as info, COUNT(*) as total FROM leads;\n\n-- Verificar se ainda há leads com telefones sequenciais\nSELECT 'Leads com telefones sequenciais restantes (deve ser 0):' as info, COUNT(*) as total\nFROM leads\nWHERE \n  telefone LIKE '%00000%'\n  OR telefone LIKE '%11111%'\n  OR telefone LIKE '%22222%'\n  OR telefone LIKE '%33333%'\n  OR telefone LIKE '%44444%'\n  OR telefone LIKE '%55555%'\n  OR telefone LIKE '%66666%'\n  OR telefone LIKE '%77777%'\n  OR telefone LIKE '%88888%'\n  OR telefone LIKE '%99999%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Verificação pós-limpeza\nSELECT 'Total de leads restantes:' as info, COUNT(*) as total FROM leads;\n\n-- Verificar se ainda há leads com telefones sequenciais\nSELECT 'Leads com telefones sequenciais restantes (deve ser 0):' as info, COUNT(*) as total\nFROM leads\nWHERE \n  telefone LIKE '%00000%'\n  OR telefone LIKE '%11111%'\n  OR telefone LIKE '%22222%'\n  OR telefone LIKE '%33333%'\n  OR telefone LIKE '%44444%'\n  OR telefone LIKE '%55555%'\n  OR telefone LIKE '%66666%'\n  OR telefone LIKE '%77777%'\n  OR telefone LIKE '%88888%'\n  OR telefone LIKE '%99999%';\n",
+  "rows": [
+    {
+      "info": "Total de leads restantes:",
+      "total": "4437"
+    },
+    {
+      "info": "info",
+      "total": "total"
+    },
+    {
+      "info": "Leads com telefones sequenciais restantes (deve ser 0):",
+      "total": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "info\ttotal\nTotal de leads restantes:\t4437\ninfo\ttotal\nLeads com telefones sequenciais restantes (deve ser 0):\t0\n",
+  "stderr": "",
+  "execution_time_ms": 77
+}

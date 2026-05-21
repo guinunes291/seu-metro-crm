@@ -1,0 +1,25 @@
+{
+  "query": "SELECT \n  u.name as corretor,\n  ad.ligacoesRealizadas,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY ad.pontuacaoTotal DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.name as corretor,\n  ad.ligacoesRealizadas,\n  ad.pontuacaoTotal\nFROM atividades_diarias ad\nJOIN users u ON ad.corretorId = u.id\nORDER BY ad.pontuacaoTotal DESC;",
+  "rows": [
+    {
+      "corretor": "Breno Brunelli",
+      "ligacoesRealizadas": "26",
+      "pontuacaoTotal": "26"
+    },
+    {
+      "corretor": "Anderson ANTOINE",
+      "ligacoesRealizadas": "17",
+      "pontuacaoTotal": "17"
+    },
+    {
+      "corretor": "Andrew",
+      "ligacoesRealizadas": "4",
+      "pontuacaoTotal": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "corretor\tligacoesRealizadas\tpontuacaoTotal\nBreno Brunelli\t26\t26\nAnderson ANTOINE\t17\t17\nAndrew\t4\t4\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

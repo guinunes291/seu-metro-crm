@@ -31,13 +31,13 @@ import { useIsMobile } from "@/hooks/useMobile";
 import ModalOnboardingObrigatorio from "@/components/ModalOnboardingObrigatorio";
 import { TimezoneFooter } from "@/components/TimezoneFooter";
 import { 
-  LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle,
-  BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell,
-  Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy,
+  LayoutDashboard, LogOut, PanelLeft, Users, Building2, UserCircle, 
+  BarChart3, Settings, FileSpreadsheet, Users2, TrendingUp, Bell, 
+  Kanban, Target, Shuffle, History, BookOpen, ClipboardList, Trophy, 
   UserCheck, UserX, Circle, Trash2, ChevronDown, Tv, FolderOpen,
   UserCog, Import, Home, Clock, CalendarCheck, Sun, Moon, Calendar,
   FileText, MessageCircle, Link2, Activity, Lock, ArrowRightLeft, Database, Trash,
-  Shield, Briefcase, Calculator, Phone, DollarSign, Zap, AlertTriangle, Bot, Megaphone
+  Shield, Briefcase, Calculator, Phone, DollarSign, Zap, AlertTriangle, Bot
 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CSSProperties, useCallback, useEffect, useRef, useState } from "react";
@@ -84,7 +84,6 @@ const menuGroups = [
       { icon: Bell, label: "Notificações", path: "/notificacoes", roles: ["user", "corretor"], showBadge: true },
       { icon: Zap, label: "Modo Blitz", path: "/modo-blitz", roles: ["corretor"] },
       { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
-      { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
     ],
   },
   {
@@ -138,7 +137,6 @@ const menuGroups = [
     items: [
       { icon: Users, label: "Minha Equipe", path: "/minha-equipe", roles: ["gestor"] },
       { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", roles: ["gestor", "admin", "superintendente"] },
-      { icon: Megaphone, label: "Sessões de Oferta", path: "/sessoes-oferta", roles: ["gestor", "admin", "superintendente"] },
       { icon: Activity, label: "Monitoramento Follow-ups", path: "/monitoramento-followups", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users2, label: "Corretores", path: "/corretores", roles: ["gestor", "admin", "superintendente"] },
       { icon: Users, label: "Gestão de Equipes", path: "/gestao-equipes", roles: ["admin", "superintendente"] },
@@ -187,7 +185,6 @@ const menuGroupsCorretor = [
     icon: Users,
     items: [
       { icon: Users, label: "Meus Leads", path: "/leads", showLeadsBadge: true },
-      { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: Calendar, label: "Minha Agenda", path: "/minha-agenda" },
       { icon: FileText, label: "Propostas", path: "/propostas" },
@@ -244,8 +241,6 @@ const menuGroupsGestor = [
     icon: Users,
     items: [
       { icon: Users, label: "Todos os Leads", path: "/leads" },
-      { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
-      { icon: Megaphone, label: "Sessões de Oferta", path: "/sessoes-oferta" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: BookOpen, label: "Scripts de Vendas", path: "/scripts" },
     ],
@@ -293,8 +288,6 @@ const menuGroupsAdmin = [
     items: [
       { icon: Users, label: "Todos os Leads", path: "/leads" },
       { icon: Users, label: "Leads por Corretor", path: "/leads-por-corretor" },
-      { icon: Megaphone, label: "Oferta Ativa", path: "/oferta-ativa" },
-      { icon: Megaphone, label: "Sessões de Oferta", path: "/sessoes-oferta" },
       { icon: CalendarCheck, label: "Agendamentos", path: "/agendamentos" },
       { icon: Calendar, label: "Calendário Geral", path: "/calendario-gestor" },
       { icon: Users2, label: "Corretores", path: "/corretores" },
@@ -553,8 +546,8 @@ function DashboardContent({
   // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 2 * 60 * 1000, // 2 min — SSE invalida instantaneamente; polling é só fallback
-    staleTime: 30 * 1000,
+    refetchInterval: 30 * 1000,
+    staleTime: 0,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +

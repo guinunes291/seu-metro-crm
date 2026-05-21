@@ -1,0 +1,17 @@
+{
+  "query": "SELECT \n  NOW() as agora_banco,\n  CURDATE() as hoje_banco,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo IN ('ligacao', 'whatsapp')) as total_historico,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo = 'ligacao' AND DATE(lh.createdAt) = CURDATE()) as ligacoes_hoje,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo = 'whatsapp' AND DATE(lh.createdAt) = CURDATE()) as whatsapp_hoje;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  NOW() as agora_banco,\n  CURDATE() as hoje_banco,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo IN ('ligacao', 'whatsapp')) as total_historico,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo = 'ligacao' AND DATE(lh.createdAt) = CURDATE()) as ligacoes_hoje,\n  (SELECT COUNT(*) FROM lead_history lh JOIN users u ON lh.corretorId = u.id WHERE (u.name LIKE '%Leticia%' OR u.name LIKE '%Letícia%') AND tipo = 'whatsapp' AND DATE(lh.createdAt) = CURDATE()) as whatsapp_hoje;",
+  "rows": [
+    {
+      "agora_banco": "2026-01-16 21:36:12",
+      "hoje_banco": "2026-01-16",
+      "total_historico": "574",
+      "ligacoes_hoje": "60",
+      "whatsapp_hoje": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "agora_banco\thoje_banco\ttotal_historico\tligacoes_hoje\twhatsapp_hoje\n2026-01-16 21:36:12\t2026-01-16\t574\t60\t3\n",
+  "stderr": "",
+  "execution_time_ms": 69
+}

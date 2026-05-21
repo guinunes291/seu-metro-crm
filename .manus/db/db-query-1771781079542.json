@@ -1,0 +1,15 @@
+{
+  "query": "SELECT \n  (SELECT COUNT(*) FROM projects) as total_projetos,\n  (SELECT COUNT(DISTINCT projectId) FROM leads WHERE projectId IS NOT NULL) as projetos_com_leads,\n  (SELECT COUNT(*) FROM projects WHERE id NOT IN (SELECT DISTINCT projectId FROM leads WHERE projectId IS NOT NULL)) as projetos_sem_leads;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  (SELECT COUNT(*) FROM projects) as total_projetos,\n  (SELECT COUNT(DISTINCT projectId) FROM leads WHERE projectId IS NOT NULL) as projetos_com_leads,\n  (SELECT COUNT(*) FROM projects WHERE id NOT IN (SELECT DISTINCT projectId FROM leads WHERE projectId IS NOT NULL)) as projetos_sem_leads;",
+  "rows": [
+    {
+      "total_projetos": "1384",
+      "projetos_com_leads": "193",
+      "projetos_sem_leads": "1191"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_projetos\tprojetos_com_leads\tprojetos_sem_leads\n1384\t193\t1191\n",
+  "stderr": "",
+  "execution_time_ms": 118
+}

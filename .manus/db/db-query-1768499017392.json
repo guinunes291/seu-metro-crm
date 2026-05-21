@@ -1,0 +1,16 @@
+{
+  "query": "SHOW TABLES LIKE 'historico%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SHOW TABLES LIKE 'historico%';",
+  "rows": [
+    {
+      "Tables_in_gjgL2sFxYNbZjhUM6i4tZH (historico%)": "historico_atribuicoes"
+    },
+    {
+      "Tables_in_gjgL2sFxYNbZjhUM6i4tZH (historico%)": "historico_presenca"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_gjgL2sFxYNbZjhUM6i4tZH (historico%)\nhistorico_atribuicoes\nhistorico_presenca\n",
+  "stderr": "",
+  "execution_time_ms": 75
+}

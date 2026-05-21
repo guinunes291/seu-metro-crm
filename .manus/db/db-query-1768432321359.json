@@ -1,0 +1,9 @@
+{
+  "query": "SELECT \n  DATE(dataFollowUp) as data,\n  COUNT(*) as total\nFROM follow_ups\nWHERE corretorId = 1 AND status = 'pendente'\nGROUP BY DATE(dataFollowUp)\nORDER BY data DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  DATE(dataFollowUp) as data,\n  COUNT(*) as total\nFROM follow_ups\nWHERE corretorId = 1 AND status = 'pendente'\nGROUP BY DATE(dataFollowUp)\nORDER BY data DESC\nLIMIT 10;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 71
+}

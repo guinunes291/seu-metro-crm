@@ -1,0 +1,93 @@
+{
+  "query": "\n-- Limpar todos os follow-ups existentes\nDELETE FROM follow_ups;\n\n-- Verificar estrutura da tabela\nDESCRIBE follow_ups;\n\n-- Verificar data atual do banco\nSELECT NOW() as agora, CURDATE() as hoje, CURTIME() as hora;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Limpar todos os follow-ups existentes\nDELETE FROM follow_ups;\n\n-- Verificar estrutura da tabela\nDESCRIBE follow_ups;\n\n-- Verificar data atual do banco\nSELECT NOW() as agora, CURDATE() as hoje, CURTIME() as hora;\n",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "leadId",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "corretorId",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "dataFollowUp",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "dataRegistro",
+      "Type": "timestamp",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "status",
+      "Type": "enum('pendente','concluido','cancelado')",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "pendente",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    },
+    {
+      "Field": "updatedAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP"
+    },
+    {
+      "Field": "resultado",
+      "Type": "enum('respondeu','nao_respondeu')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "observacao",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    }
+  ],
+  "messages": [
+    "agora\thoje\thora",
+    "2026-01-15 13:20:17\t2026-01-15\t13:20:17"
+  ],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nleadId\tint(11)\tNO\tMUL\tNULL\t\ncorretorId\tint(11)\tNO\tMUL\tNULL\t\ndataFollowUp\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\ndataRegistro\ttimestamp\tYES\t\tNULL\t\nstatus\tenum('pendente','concluido','cancelado')\tNO\tMUL\tpendente\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\nupdatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP\nresultado\tenum('respondeu','nao_respondeu')\tYES\t\tNULL\t\nobservacao\ttext\tYES\t\tNULL\t\nagora\thoje\thora\n2026-01-15 13:20:17\t2026-01-15\t13:20:17\n",
+  "stderr": "",
+  "execution_time_ms": 67
+}

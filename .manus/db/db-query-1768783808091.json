@@ -1,0 +1,13 @@
+{
+  "query": "\nSELECT COUNT(DISTINCT corretorId) as total_corretores_hoje\nFROM atividades_diarias\nWHERE data >= CURDATE();\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \nSELECT COUNT(DISTINCT corretorId) as total_corretores_hoje\nFROM atividades_diarias\nWHERE data >= CURDATE();\n",
+  "rows": [
+    {
+      "total_corretores_hoje": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "total_corretores_hoje\n0\n",
+  "stderr": "",
+  "execution_time_ms": 66
+}

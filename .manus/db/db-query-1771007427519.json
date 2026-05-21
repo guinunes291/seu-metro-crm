@@ -1,0 +1,448 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE role = 'corretor' AND (name IS NULL OR name = '' OR name = 'Sem nome');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT id, name, email, role FROM users WHERE role = 'corretor' AND (name IS NULL OR name = '' OR name = 'Sem nome');",
+  "rows": [
+    {
+      "id": "11113619",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003277470@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113621",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003277725@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113622",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003277826@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113623",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003277960@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113624",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003278084@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113625",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003278204@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113691",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003327788@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113694",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003328052@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113695",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003328144@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113696",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003328270@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113697",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003328419@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113698",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003328548@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113728",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003342586@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113729",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003342827@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113730",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003342910@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113731",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003343022@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113732",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003343132@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113734",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003343262@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113755",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003355544@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113756",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003355786@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113757",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003355865@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113758",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003355985@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113759",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003356108@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113760",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003356222@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113805",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003386793@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113806",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003387066@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113808",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003387162@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113809",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003387298@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113810",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003387439@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113811",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003387570@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113864",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003416995@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113866",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003417401@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113867",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003417589@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113869",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003417794@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113871",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003417947@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113872",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003418081@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113893",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003430725@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113895",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003431010@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113897",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003431104@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113898",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003431238@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113900",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003431373@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113901",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003431506@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11113999",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003490236@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114001",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003490515@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114002",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003490689@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114003",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003490875@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114006",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003491047@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114008",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003491224@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114028",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003503095@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114029",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003503382@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114030",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003503524@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114031",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003503687@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114033",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003503843@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114034",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003504005@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114056",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003516196@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114058",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003516506@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114060",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003516667@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114061",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003516845@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114062",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003517021@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114063",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003517191@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114163",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003576051@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114171",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003580811@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114181",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003585916@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114186",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003589495@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114191",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003593002@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114196",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003596559@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114204",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003602234@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114214",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003607094@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114227",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003612197@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114233",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003615948@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114237",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003619716@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114243",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003623572@test.com",
+      "role": "corretor"
+    },
+    {
+      "id": "11114269",
+      "name": "NULL",
+      "email": "_T_ALERTA_teste-alerta-1771003641175@test.com",
+      "role": "corretor"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n11113619\tNULL\t_T_ALERTA_teste-alerta-1771003277470@test.com\tcorretor\n11113621\tNULL\t_T_ALERTA_teste-alerta-1771003277725@test.com\tcorretor\n11113622\tNULL\t_T_ALERTA_teste-alerta-1771003277826@test.com\tcorretor\n11113623\tNULL\t_T_ALERTA_teste-alerta-1771003277960@test.com\tcorretor\n11113624\tNULL\t_T_ALERTA_teste-alerta-1771003278084@test.com\tcorretor\n11113625\tNULL\t_T_ALERTA_teste-alerta-1771003278204@test.com\tcorretor\n11113691\tNULL\t_T_ALERTA_teste-alerta-1771003327788@test.com\tcorretor\n11113694\tNULL\t_T_ALERTA_teste-alerta-1771003328052@test.com\tcorretor\n11113695\tNULL\t_T_ALERTA_teste-alerta-1771003328144@test.com\tcorretor\n11113696\tNULL\t_T_ALERTA_teste-alerta-1771003328270@test.com\tcorretor\n11113697\tNULL\t_T_ALERTA_teste-alerta-1771003328419@test.com\tcorretor\n11113698\tNULL\t_T_ALERTA_teste-alerta-1771003328548@test.com\tcorretor\n11113728\tNULL\t_T_ALERTA_teste-alerta-1771003342586@test.com\tcorretor\n11113729\tNULL\t_T_ALERTA_teste-alerta-1771003342827@test.com\tcorretor\n11113730\tNULL\t_T_ALERTA_teste-alerta-1771003342910@test.com\tcorretor\n11113731\tNULL\t_T_ALERTA_teste-alerta-1771003343022@test.com\tcorretor\n11113732\tNULL\t_T_ALERTA_teste-alerta-1771003343132@test.com\tcorretor\n11113734\tNULL\t_T_ALERTA_teste-alerta-1771003343262@test.com\tcorretor\n11113755\tNULL\t_T_ALERTA_teste-alerta-1771003355544@test.com\tcorretor\n11113756\tNULL\t_T_ALERTA_teste-alerta-1771003355786@test.com\tcorretor\n11113757\tNULL\t_T_ALERTA_teste-alerta-1771003355865@test.com\tcorretor\n11113758\tNULL\t_T_ALERTA_teste-alerta-1771003355985@test.com\tcorretor\n11113759\tNULL\t_T_ALERTA_teste-alerta-1771003356108@test.com\tcorretor\n11113760\tNULL\t_T_ALERTA_teste-alerta-1771003356222@test.com\tcorretor\n11113805\tNULL\t_T_ALERTA_teste-alerta-1771003386793@test.com\tcorretor\n11113806\tNULL\t_T_ALERTA_teste-alerta-1771003387066@test.com\tcorretor\n11113808\tNULL\t_T_ALERTA_teste-alerta-1771003387162@test.com\tcorretor\n11113809\tNULL\t_T_ALERTA_teste-alerta-1771003387298@test.com\tcorretor\n11113810\tNULL\t_T_ALERTA_teste-alerta-1771003387439@test.com\tcorretor\n11113811\tNULL\t_T_ALERTA_teste-alerta-1771003387570@test.com\tcorretor\n11113864\tNULL\t_T_ALERTA_teste-alerta-1771003416995@test.com\tcorretor\n11113866\tNULL\t_T_ALERTA_teste-alerta-1771003417401@test.com\tcorretor\n11113867\tNULL\t_T_ALERTA_teste-alerta-1771003417589@test.com\tcorretor\n11113869\tNULL\t_T_ALERTA_teste-alerta-1771003417794@test.com\tcorretor\n11113871\tNULL\t_T_ALERTA_teste-alerta-1771003417947@test.com\tcorretor\n11113872\tNULL\t_T_ALERTA_teste-alerta-1771003418081@test.com\tcorretor\n11113893\tNULL\t_T_ALERTA_teste-alerta-1771003430725@test.com\tcorretor\n11113895\tNULL\t_T_ALERTA_teste-alerta-1771003431010@test.com\tcorretor\n11113897\tNULL\t_T_ALERTA_teste-alerta-1771003431104@test.com\tcorretor\n11113898\tNULL\t_T_ALERTA_teste-alerta-1771003431238@test.com\tcorretor\n11113900\tNULL\t_T_ALERTA_teste-alerta-1771003431373@test.com\tcorretor\n11113901\tNULL\t_T_ALERTA_teste-alerta-1771003431506@test.com\tcorretor\n11113999\tNULL\t_T_ALERTA_teste-alerta-1771003490236@test.com\tcorretor\n11114001\tNULL\t_T_ALERTA_teste-alerta-1771003490515@test.com\tcorretor\n11114002\tNULL\t_T_ALERTA_teste-alerta-1771003490689@test.com\tcorretor\n11114003\tNULL\t_T_ALERTA_teste-alerta-1771003490875@test.com\tcorretor\n11114006\tNULL\t_T_ALERTA_teste-alerta-1771003491047@test.com\tcorretor\n11114008\tNULL\t_T_ALERTA_teste-alerta-1771003491224@test.com\tcorretor\n11114028\tNULL\t_T_ALERTA_teste-alerta-1771003503095@test.com\tcorretor\n11114029\tNULL\t_T_ALERTA_teste-alerta-1771003503382@test.com\tcorretor\n11114030\tNULL\t_T_ALERTA_teste-alerta-1771003503524@test.com\tcorretor\n11114031\tNULL\t_T_ALERTA_teste-alerta-1771003503687@test.com\tcorretor\n11114033\tNULL\t_T_ALERTA_teste-alerta-1771003503843@test.com\tcorretor\n11114034\tNULL\t_T_ALERTA_teste-alerta-1771003504005@test.com\tcorretor\n11114056\tNULL\t_T_ALERTA_teste-alerta-1771003516196@test.com\tcorretor\n11114058\tNULL\t_T_ALERTA_teste-alerta-1771003516506@test.com\tcorretor\n11114060\tNULL\t_T_ALERTA_teste-alerta-1771003516667@test.com\tcorretor\n11114061\tNULL\t_T_ALERTA_teste-alerta-1771003516845@test.com\tcorretor\n11114062\tNULL\t_T_ALERTA_teste-alerta-1771003517021@test.com\tcorretor\n11114063\tNULL\t_T_ALERTA_teste-alerta-1771003517191@test.com\tcorretor\n11114163\tNULL\t_T_ALERTA_teste-alerta-1771003576051@test.com\tcorretor\n11114171\tNULL\t_T_ALERTA_teste-alerta-1771003580811@test.com\tcorretor\n11114181\tNULL\t_T_ALERTA_teste-alerta-1771003585916@test.com\tcorretor\n11114186\tNULL\t_T_ALERTA_teste-alerta-1771003589495@test.com\tcorretor\n11114191\tNULL\t_T_ALERTA_teste-alerta-1771003593002@test.com\tcorretor\n11114196\tNULL\t_T_ALERTA_teste-alerta-1771003596559@test.com\tcorretor\n11114204\tNULL\t_T_ALERTA_teste-alerta-1771003602234@test.com\tcorretor\n11114214\tNULL\t_T_ALERTA_teste-alerta-1771003607094@test.com\tcorretor\n11114227\tNULL\t_T_ALERTA_teste-alerta-1771003612197@test.com\tcorretor\n11114233\tNULL\t_T_ALERTA_teste-alerta-1771003615948@test.com\tcorretor\n11114237\tNULL\t_T_ALERTA_teste-alerta-1771003619716@test.com\tcorretor\n11114243\tNULL\t_T_ALERTA_teste-alerta-1771003623572@test.com\tcorretor\n11114269\tNULL\t_T_ALERTA_teste-alerta-1771003641175@test.com\tcorretor\n",
+  "stderr": "",
+  "execution_time_ms": 119
+}

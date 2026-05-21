@@ -1,0 +1,18 @@
+{
+  "query": "\n-- Criar novo corretor de teste\nINSERT INTO users (openId, name, email, role, createdAt, updatedAt)\nVALUES ('test-corretor-123', 'Corretor Teste Follow-up', 'corretor.teste.followup@example.com', 'corretor', NOW(), NOW());\n\n-- Pegar o ID do novo corretor\nSELECT id, name, email, role FROM users WHERE email = 'corretor.teste.followup@example.com';\n\n-- Atualizar follow-up do Marcio Lira para o novo corretor\nUPDATE follow_ups \nSET corretorId = (SELECT id FROM users WHERE email = 'corretor.teste.followup@example.com' LIMIT 1)\nWHERE leadId = 4572;\n\n-- Atualizar lead Marcio Lira para o novo corretor\nUPDATE leads\nSET corretorId = (SELECT id FROM users WHERE email = 'corretor.teste.followup@example.com' LIMIT 1)\nWHERE id = 4572;\n\n-- Verificar\nSELECT \n  u.id as corretorId,\n  u.name as corretor,\n  l.nome as lead,\n  f.dataFollowUp,\n  f.status,\n  DATE(f.dataFollowUp) as data,\n  CURDATE() as hoje\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nINNER JOIN users u ON f.corretorId = u.id\nWHERE u.email = 'corretor.teste.followup@example.com';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute \n-- Criar novo corretor de teste\nINSERT INTO users (openId, name, email, role, createdAt, updatedAt)\nVALUES ('test-corretor-123', 'Corretor Teste Follow-up', 'corretor.teste.followup@example.com', 'corretor', NOW(), NOW());\n\n-- Pegar o ID do novo corretor\nSELECT id, name, email, role FROM users WHERE email = 'corretor.teste.followup@example.com';\n\n-- Atualizar follow-up do Marcio Lira para o novo corretor\nUPDATE follow_ups \nSET corretorId = (SELECT id FROM users WHERE email = 'corretor.teste.followup@example.com' LIMIT 1)\nWHERE leadId = 4572;\n\n-- Atualizar lead Marcio Lira para o novo corretor\nUPDATE leads\nSET corretorId = (SELECT id FROM users WHERE email = 'corretor.teste.followup@example.com' LIMIT 1)\nWHERE id = 4572;\n\n-- Verificar\nSELECT \n  u.id as corretorId,\n  u.name as corretor,\n  l.nome as lead,\n  f.dataFollowUp,\n  f.status,\n  DATE(f.dataFollowUp) as data,\n  CURDATE() as hoje\nFROM follow_ups f\nINNER JOIN leads l ON f.leadId = l.id\nINNER JOIN users u ON f.corretorId = u.id\nWHERE u.email = 'corretor.teste.followup@example.com';\n",
+  "returncode": 1,
+  "logs": [
+    "id\tname\temail\trole",
+    "7418334\tCorretor Teste Follow-up\tcorretor.teste.followup@example.com\tcorretor",
+    "ERROR 1064 (42000) at line 20: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 4 column 17 near \"lead,",
+    "  f.dataFollowUp,",
+    "  f.status,",
+    "  DATE(f.dataFollowUp) as data,",
+    "  CURDATE() as hoje",
+    "FROM follow_ups f",
+    "INNER JOIN leads l ON f.leadId = l.id",
+    "INNER JOIN users u ON f.corretorId = u.id",
+    "WHERE u.email = 'corretor.teste.followup@example.com'\""
+  ]
+}

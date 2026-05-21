@@ -1,0 +1,8 @@
+{
+  "query": "SELECT \n  u.id as corretorId,\n  u.name as corretorNome,\n  u.foto_url as corretorFoto,\n  COUNT(c.id) as contratosFechados,\n  COALESCE(SUM(c.valor_venda), 0) as vgvTotal\nFROM users u\nLEFT JOIN contratos c ON c.corretor_id = u.id\nWHERE u.role IN ('corretor', 'gestor', 'admin')\nGROUP BY u.id, u.name, u.foto_url\nHAVING COUNT(c.id) > 0\nORDER BY vgvTotal DESC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute SELECT \n  u.id as corretorId,\n  u.name as corretorNome,\n  u.foto_url as corretorFoto,\n  COUNT(c.id) as contratosFechados,\n  COALESCE(SUM(c.valor_venda), 0) as vgvTotal\nFROM users u\nLEFT JOIN contratos c ON c.corretor_id = u.id\nWHERE u.role IN ('corretor', 'gestor', 'admin')\nGROUP BY u.id, u.name, u.foto_url\nHAVING COUNT(c.id) > 0\nORDER BY vgvTotal DESC",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'c.corretor_id' in 'on clause'"
+  ]
+}

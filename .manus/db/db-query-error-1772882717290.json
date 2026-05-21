@@ -1,0 +1,8 @@
+{
+  "query": "CREATE INDEX idx_notifications_user_created ON notifications (userId, createdAt)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute CREATE INDEX idx_notifications_user_created ON notifications (userId, createdAt)",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1061 (42000) at line 1: Duplicate key name 'idx_notifications_user_created'"
+  ]
+}

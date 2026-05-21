@@ -1,0 +1,9 @@
+{
+  "query": "-- Adicionar campo ultimaInteracao (rastreia qualquer tipo de interação)\nALTER TABLE leads ADD COLUMN ultimaInteracao TIMESTAMP NULL AFTER ultimoContato;\n\n-- Copiar valores de ultimoContato para ultimaInteracao (migração de dados existentes)\nUPDATE leads SET ultimaInteracao = ultimoContato WHERE ultimoContato IS NOT NULL;\n\n-- Para leads sem ultimoContato, usar createdAt como base\nUPDATE leads SET ultimaInteracao = createdAt WHERE ultimaInteracao IS NULL;\n\n-- Criar índice para performance nas queries de transferência automática\nCREATE INDEX ultima_interacao_idx ON leads(ultimaInteracao);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2jGgPCERyrvb2fZ.e6480e658f64 --database gjgL2sFxYNbZjhUM6i4tZH --execute -- Adicionar campo ultimaInteracao (rastreia qualquer tipo de interação)\nALTER TABLE leads ADD COLUMN ultimaInteracao TIMESTAMP NULL AFTER ultimoContato;\n\n-- Copiar valores de ultimoContato para ultimaInteracao (migração de dados existentes)\nUPDATE leads SET ultimaInteracao = ultimoContato WHERE ultimoContato IS NOT NULL;\n\n-- Para leads sem ultimoContato, usar createdAt como base\nUPDATE leads SET ultimaInteracao = createdAt WHERE ultimaInteracao IS NULL;\n\n-- Criar índice para performance nas queries de transferência automática\nCREATE INDEX ultima_interacao_idx ON leads(ultimaInteracao);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1460
+}
