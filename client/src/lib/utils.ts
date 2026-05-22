@@ -12,7 +12,7 @@ export function cn(...inputs: ClassValue[]) {
 export function normalizeSearch(text: string | null | undefined): string {
   return (text || "")
     .normalize("NFD")                    // decompõe caracteres acentuados
-    .replace(/[\u0300-\u036f]/g, "")     // remove diacríticos (acentos, til, etc.)
+    .replace(/[̀-ͯ]/g, "")     // remove diacríticos (acentos, til, etc.)
     .replace(/ç/gi, "c")                 // cedilha residual
     .replace(/[^a-z0-9]/gi, "")          // remove tudo que não é letra ou dígito
     .toLowerCase();
@@ -28,4 +28,19 @@ export function matchesNormalizedSearch(
 ): boolean {
   if (!searchNorm) return true;
   return normalizeSearch(field).includes(searchNorm);
+}
+
+export function formatTimeAgo(date: Date | string | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(d.getTime())) return "—";
+  const diffMs = Date.now() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "agora";
+  if (diffMin < 60) return `${diffMin}min atrás`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH}h atrás`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 30) return `${diffD}d atrás`;
+  return d.toLocaleDateString("pt-BR");
 }
