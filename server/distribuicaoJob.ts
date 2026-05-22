@@ -80,12 +80,12 @@ export function agendarDistribuicaoAutomatica() {
     executarTimerLeads().catch(console.error);
   }, 90000);
 
-  // Timer de leads: a cada 1 minuto — garante redistribuição em ≤ 1 min após vencimento do timer de 5 min
+  // Timer de leads: a cada 3 minutos — garante redistribuição em ≤ 3 min após vencimento do timer (reduzido de 1min — economia de Cloud)
   setInterval(() => {
     executarTimerLeads().catch(console.error);
-  }, 1 * 60 * 1000);
+  }, 3 * 60 * 1000);
 
-  console.log("[Job] Verificação de timer de leads agendada para executar a cada 1 minuto");
+  console.log("[Job] Verificação de timer de leads agendada para executar a cada 3 minutos");
 
   // Agente de Priorização Diária: executa às 7h SP
   agendarPriorizacaoDiaria();

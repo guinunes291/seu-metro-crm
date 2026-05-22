@@ -543,11 +543,11 @@ function DashboardContent({
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
 
   // Leads prioritários para badge, banner e modal agenda
-  // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
+  // SSE invalida a query instantaneamente; 2min é fallback para quando a conexão cai (reduzido de 30s — economia de Cloud)
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
-    refetchInterval: 30 * 1000,
-    staleTime: 0,
+    refetchInterval: 2 * 60 * 1000, // 2 minutos
+    staleTime: 30 * 1000,
   });
   const totalAcoesLeads = (leadsPrioritarios?.followUpsVencidos?.length ?? 0) +
     (leadsPrioritarios?.leadsQuentes?.length ?? 0) +
@@ -745,8 +745,8 @@ function DashboardContent({
   const isGestorOuSuperior = user?.role === 'gestor' || user?.role === 'admin' || user?.role === 'superintendente';
   const { data: alertasGestor } = trpc.alertasGestor.lista.useQuery(undefined, {
     enabled: isGestorOuSuperior,
-    refetchInterval: 3 * 60 * 1000,
-    staleTime: 2 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000, // 10 minutos (reduzido de 3min — economia de Cloud)
+    staleTime: 5 * 60 * 1000,
   });
   const totalAlertasEquipe = isGestorOuSuperior ? (
     (alertasGestor?.followUpsVencidos?.length ?? 0) +

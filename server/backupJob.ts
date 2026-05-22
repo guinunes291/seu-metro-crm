@@ -1,7 +1,7 @@
 /**
  * Job de Backup Automático — versão robusta
  *
- * Estratégia: setInterval a cada 60 segundos verificando se chegou o horário.
+ * Estratégia: setInterval a cada 10 minutos verificando se chegou o horário.
  * Isso garante funcionamento mesmo após reinicializações, pois não depende de
  * um único setTimeout que pode ser perdido quando o servidor hiberna.
  *
@@ -102,7 +102,7 @@ async function runBackup(reason: string = "agendado"): Promise<void> {
  * Inicia o job de backup automático.
  *
  * - Executa backup imediato na inicialização se o backup de hoje ainda não foi feito.
- * - Verifica a cada 60 segundos se chegou o horário (3h em Brasília).
+ * - Verifica a cada 10 minutos se chegou o horário (3h em Brasília).
  * - Resistente a hibernações e reinicializações do servidor.
  */
 export async function startBackupJob(): Promise<void> {
@@ -125,7 +125,7 @@ export async function startBackupJob(): Promise<void> {
     );
   }
 
-  // Verificar a cada 60 segundos se chegou o horário do backup diário
+  // Verificar a cada 10 minutos se chegou o horário do backup diário (reduzido de 60s — economia de Cloud)
   checkInterval = setInterval(async () => {
     const hour = hourBrasilia();
     const currentDate = todayBrasilia();
@@ -138,10 +138,10 @@ export async function startBackupJob(): Promise<void> {
       );
       await runBackup("diário agendado");
     }
-  }, 60_000);
+  }, 10 * 60_000);
 
   console.log(
-    "[Backup Job] Job de backup automático inicializado (verificação a cada 1 minuto)"
+    "[Backup Job] Job de backup automático inicializado (verificação a cada 10 minutos)"
   );
 }
 

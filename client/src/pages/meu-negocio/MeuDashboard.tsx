@@ -79,7 +79,7 @@ function calcularReverso(params: {
 
 function FocoCard() {
   const { data: foco } = trpc.meuNegocio.getFocoDoDia.useQuery(undefined, {
-    refetchInterval: 60_000,
+    refetchInterval: 5 * 60_000, // 5 minutos (reduzido de 60s — economia de Cloud)
   });
 
   const urgentes = foco ? (

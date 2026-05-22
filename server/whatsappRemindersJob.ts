@@ -1,7 +1,7 @@
 /**
  * Job de Lembretes WhatsApp — D-1 para agendamentos
  *
- * Estratégia: setInterval a cada 60 segundos verificando se chegou o horário.
+ * Estratégia: setInterval a cada 5 minutos verificando se chegou o horário.
  * Executa diariamente às 18h (fuso Brasília) para enviar lembretes
  * dos agendamentos do dia seguinte ainda pendentes/confirmados.
  *
@@ -220,12 +220,12 @@ export function startWhatsAppRemindersJob() {
 
   console.log("[WhatsApp Lembretes] Job iniciado — lembretes D-1 às 18h SP, boas-vindas a cada 10min");
 
-  // Lembretes D-1: verifica a cada 60s se já é 18h e ainda não executou hoje
+  // Lembretes D-1: verifica a cada 5 minutos se já é 18h e ainda não executou hoje (reduzido de 60s — economia de Cloud)
   setInterval(async () => {
     if (horaAtualSP() === 18) {
       await enviarLembretesDia1();
     }
-  }, 60_000);
+  }, 5 * 60_000);
 
   // Boas-vindas para novos leads: a cada 10 minutos
   setInterval(async () => {

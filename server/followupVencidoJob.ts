@@ -192,12 +192,12 @@ export function startFollowupVencidoJob() {
 
   console.log("[WhatsApp Follow-up] Job iniciado — avisos de follow-up vencido às 09h SP");
 
-  // Verifica a cada 60s se já é 09h e ainda não executou hoje
+  // Verifica a cada 5 minutos se já é 09h e ainda não executou hoje (reduzido de 60s — economia de Cloud)
   setInterval(async () => {
     if (horaAtualSP() === 9) {
       await enviarAvisosFollowupVencido();
     }
-  }, 60_000);
+  }, 5 * 60_000);
 
   // Execução imediata ao iniciar (caso servidor reiniciou após 09h)
   enviarAvisosFollowupVencido().catch(() => {});

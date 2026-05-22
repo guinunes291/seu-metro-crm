@@ -2,7 +2,8 @@
  * Job de Sincronização de Métricas
  * 
  * Sincroniza todas as métricas de performance pela data de criação dos registros.
- * Executa a cada 5 minutos para manter dados atualizados no Ranking TV e Dashboard.
+ * Executa a cada 30 minutos para manter dados atualizados no Ranking TV e Dashboard.
+ * (Reduzido de 5min → 30min = 6x menos queries, economia significativa de Cloud)
  */
 
 import { sincronizarTodasMetricasDoDia } from "./db";
@@ -10,15 +11,15 @@ import { sincronizarTodasMetricasDoDia } from "./db";
 let isRunning = false;
 
 export async function startMetricasSyncJob() {
-  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 5 minutos)");
+  console.log("[Métricas Sync Job] Iniciando job de sincronização de métricas (intervalo: 30 minutos)");
   
   // Executar imediatamente na inicialização
   await runSync();
   
-  // Executar a cada 5 minutos para manter dados atualizados
+  // Executar a cada 30 minutos para manter dados atualizados
   setInterval(async () => {
     await runSync();
-  }, 5 * 60 * 1000); // 5 minutos
+  }, 30 * 60 * 1000); // 30 minutos (reduzido de 5min — 6x menos queries)
 }
 
 async function runSync() {
