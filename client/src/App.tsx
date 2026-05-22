@@ -75,6 +75,8 @@ import ModeFoco from "@/pages/meu-negocio/ModeFoco";
 import RelatorioDiarioCorretor from "@/pages/meu-negocio/RelatorioDiarioCorretor";
 import { AlertasNotification } from "./components/AlertasNotification";
 import { CorretorNotifications } from "./components/CorretorNotifications";
+import DashboardPage from "./features/dashboard/DashboardPage";
+import PerformancePage from "./features/performance/PerformancePage";
 
 
 
@@ -83,6 +85,8 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path="/dashboard-v2" component={DashboardPage} />
+      <Route path="/performance" component={PerformancePage} />
       <Route path="/projetos" component={Projetos} />
       <Route path="/aprovar-projetos" component={AprovarProjetos} />
       <Route path="/leads" component={Leads} />
@@ -128,7 +132,6 @@ function Router() {
       <Route path="/configuracao-webhooks" component={ConfiguracaoWebhooks} />
       <Route path="/controle-limites" component={ControleLimites} />
       <Route path="/projeto-foco" component={ProjetoFoco} />
-      <Route path="/configuracoes" component={Configuracoes} />
       <Route path="/sistema/log-transferencias" component={LogTransferencias} />
       <Route path="/log-transferencias" component={LogTransferencias} />
       <Route path="/gestao-equipes" component={GestaoEquipes} />
