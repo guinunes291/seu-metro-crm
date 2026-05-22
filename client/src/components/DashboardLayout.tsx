@@ -64,7 +64,7 @@ const menuGroups = [
     icon: Home,
     items: [
       { icon: BookOpen, label: "Boas-Vindas", path: "/boas-vindas" },
-      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard-v2" },
       { icon: ClipboardList, label: "Tarefas do Dia", path: "/tarefas-do-dia", roles: ["corretor"], showAlert: true },
     ],
   },
@@ -120,9 +120,7 @@ const menuGroups = [
     icon: TrendingUp,
     items: [
       { icon: Trophy, label: "Conquistas", path: "/meu-perfil" },
-      // Corretor acessa seu painel unificado
       { icon: BarChart3, label: "Meu Painel", path: "/meu-painel", roles: ["corretor"] },
-      // Gestor e Admin acessam ranking do time / geral
       { icon: Trophy, label: "Corrida dos Campeões", path: "/ranking-tv", roles: ["gestor", "admin", "superintendente"] },
       { icon: Tv, label: "Performance TV", path: "/performance-tv", roles: ["gestor", "admin", "superintendente"] },
       { icon: Target, label: "Metas Mensais", path: "/metas", roles: ["admin", "superintendente"] },
@@ -175,6 +173,7 @@ const menuGroupsCorretor = [
     label: "Início",
     icon: Home,
     items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard-v2" },
       { icon: Home, label: "Início", path: "/meu-painel" },
       { icon: ClipboardList, label: "Tarefas do Dia", path: "/tarefas-do-dia", showAlert: true },
     ],
@@ -221,7 +220,7 @@ const menuGroupsGestor = [
     label: "Início",
     icon: Home,
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard-v2", showAlertasBadge: true },
       { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
     ],
   },
@@ -277,7 +276,7 @@ const menuGroupsAdmin = [
     label: "Início",
     icon: Home,
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard-v2", showAlertasBadge: true },
       { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
     ],
   },
@@ -339,14 +338,13 @@ const menuGroupsAdmin = [
 ];
 
 // Menu para superintendente — visão da equipe, sem distribuição ou sistema
-// Hierarquia: ADMIN → SUPT → Gestores → Corretores
 const menuGroupsSuperintendente = [
   {
     id: "inicio",
     label: "Início",
     icon: Home,
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", showAlertasBadge: true },
+      { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard-v2", showAlertasBadge: true },
       { icon: AlertTriangle, label: "Central de Alertas", path: "/central-alertas", showAlertasBadge: true },
     ],
   },
@@ -486,7 +484,7 @@ export default function DashboardLayout({
 // Componente para badge de notificações
 function NotificationBadge() {
   const { data: count } = trpc.notifications.unreadCount.useQuery(undefined, {
-    refetchInterval: 5 * 60 * 1000, // 5 minutos (reduzido de 60s — badge de notificações não precisa de polling agressivo)
+    refetchInterval: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     staleTime: 2 * 60 * 1000,
   });
@@ -543,7 +541,6 @@ function DashboardContent({
   const perfilIncompleto = verificacaoOnboarding && !verificacaoOnboarding.completo && verificacaoOnboarding.user?.role !== 'admin' && verificacaoOnboarding.user?.role !== 'superintendente';
 
   // Leads prioritários para badge, banner e modal agenda
-  // SSE invalida a query instantaneamente; 30s é apenas fallback para quando a conexão cai
   const { data: leadsPrioritarios } = trpc.dashboard.leadsPrioritarios.useQuery(undefined, {
     enabled: user?.role === 'corretor',
     refetchInterval: 30 * 1000,
@@ -602,11 +599,9 @@ function DashboardContent({
       try {
         return JSON.parse(saved);
       } catch {
-        // Todas as abas fechadas por padrão
         return {};
       }
     }
-    // Todas as abas fechadas por padrão
     return {};
   });
 
@@ -638,14 +633,14 @@ function DashboardContent({
     setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
-  // Buscar status do corretor (polling a cada 2 min — reduzido de 30s para economizar recursos)
+  // Buscar status do corretor (polling a cada 2 min)
   const { data: corretorStatus } = trpc.corretores.meuStatus.useQuery(undefined, {
     enabled: user?.role === 'corretor',
     refetchInterval: 2 * 60 * 1000,
     staleTime: 60 * 1000,
   });
 
-  // Função para tocar som ao mudar status — reutiliza AudioContext singleton para evitar memory leak
+  // Função para tocar som ao mudar status
   const playStatusSound = useCallback((isPresente: boolean) => {
     try {
       if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
@@ -767,7 +762,6 @@ function DashboardContent({
   };
 
   // Filtrar grupos baseado no role do usuário
-  // Hierarquia: ADMIN (tudo) → SUPTD (equipe, sem distribuição/sistema) → gestor → corretor
   const activeMenuGroups = isCorretor
     ? menuGroupsCorretor
     : user?.role === 'gestor'
@@ -781,7 +775,6 @@ function DashboardContent({
     if ((group as any).roles && !(group as any).roles.includes(user?.role || "")) {
       return false;
     }
-    // Verificar se há pelo menos um item visível no grupo
     const visibleItems = group.items.filter(item =>
       !(item as any).roles || (item as any).roles.includes(user?.role || "")
     );
@@ -884,7 +877,6 @@ function DashboardContent({
               const GroupIcon = group.icon;
 
               if (isCollapsed) {
-                // Quando colapsado, mostrar apenas os ícones dos itens
                 return (
                   <div key={group.id} className="space-y-0.5">
                     {visibleItems.map(item => {
@@ -1123,10 +1115,8 @@ function DashboardContent({
             </div>
           )}
           {children}
-          {/* Overlay de bloqueio se não atingiu follow-ups E perfil está completo E não está em páginas liberadas (APENAS CORRETORES) */}
-          {/* Quando perfil está incompleto, NÃO mostra overlay de follow-up para permitir acesso à página de configurações */}
-          {/* Só mostra overlay se o corretor ACEITOU fazer follow-ups (escolhaDiariaFeita && aceitouFollowUp === true) */}
-          {isCorretor && !desbloqueado && !perfilIncompleto && escolhaDiariaFeita && aceitouFollowUp === true && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && location !== "/configuracoes" && (
+          {/* Overlay de bloqueio — APENAS CORRETORES que aceitaram fazer follow-ups */}
+          {isCorretor && !desbloqueado && !perfilIncompleto && escolhaDiariaFeita && aceitouFollowUp === true && location !== "/tarefas-do-dia" && location !== "/modo-blitz" && location !== "/configuracoes" && location !== "/dashboard-v2" && (
             <LockedTabOverlay
               total={total}
               concluidos={concluidos}
@@ -1137,8 +1127,7 @@ function DashboardContent({
         <TimezoneFooter />
       </SidebarInset>
       
-      {/* Modal de agenda diária (aparece ACIMA do bloqueio, z-100) */}
-      {/* Mostra para corretores que têm qualquer tarefa hoje e ainda não fizeram a escolha */}
+      {/* Modal de agenda diária */}
       {isCorretor && !perfilIncompleto && !agendaDiariaFeitaHoje && !escolhaDiariaFeita &&
         (total > 0 || leadsAguardandoCount > 0 || agendamentosHojeCount > 0) && (
         <ModalAgendaDia
@@ -1150,7 +1139,7 @@ function DashboardContent({
         />
       )}
       
-      {/* Modal de agenda matinal do gestor — aparece uma vez por dia quando há alertas */}
+      {/* Modal de agenda matinal do gestor */}
       {isGestorOuSuperior && !perfilIncompleto && !agendaGestorFeitaHoje && alertasGestor && (
         alertasGestor.followUpsVencidos.length > 0 ||
         alertasGestor.corretoresSemAtividade.length > 0 ||
@@ -1163,10 +1152,10 @@ function DashboardContent({
         />
       )}
 
-      {/* Widget flutuante de contador de leads Facebook (apenas para corretores) */}
+      {/* Widget flutuante de contador de leads Facebook */}
       <ContadorLeadsFacebook isCorretor={isCorretor} />
 
-      {/* Modal de onboarding obrigatório (1ª camada de bloqueio) */}
+      {/* Modal de onboarding obrigatório */}
       <ModalOnboardingObrigatorio />
     </>
   );
