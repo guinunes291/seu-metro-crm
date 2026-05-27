@@ -24,6 +24,25 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Reduzir consumo de memória durante o build
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      maxParallelFileOps: 2,
+      output: {
+        // Dividir em chunks menores para reduzir pico de memória
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom')) return 'react-dom';
+            if (id.includes('/react/')) return 'react-vendor';
+            if (id.includes('@radix-ui')) return 'radix-vendor';
+            if (id.includes('recharts') || id.includes('d3-')) return 'chart-vendor';
+            if (id.includes('@tanstack') || id.includes('@trpc')) return 'data-vendor';
+            if (id.includes('lucide-react')) return 'icons-vendor';
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
   server: {
     host: true,
